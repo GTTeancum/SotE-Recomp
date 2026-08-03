@@ -1,0 +1,68 @@
+diff --git a/librecomp/src/ai.cpp b/librecomp/src/ai.cpp
+index 0195f2b..e851f5b 100644
+--- a/librecomp/src/ai.cpp
++++ b/librecomp/src/ai.cpp
+@@ -1,4 +1,6 @@
+ #include "recomp.h"
++#include <atomic>
++#include <cstdlib>
+ #include <cstdio>
+ #include <string>
+ #include <ultramodern/ultra64.h>
+@@ -6,6 +8,10 @@
+ 
+ #define VI_NTSC_CLOCK 48681812
+ 
++static std::atomic<uint32_t> last_audio_buffer_bytes = 0;
++static std::atomic<uint64_t> audio_submit_count = 0;
++static std::atomic<uint64_t> audio_status_count = 0;
++
+ extern "C" void osAiSetFrequency_recomp(uint8_t* rdram, recomp_context* ctx) {
+     uint32_t freq = ctx->r4;
+     // This makes actual audio frequency more accurate to console, but may not be desirable
+@@ -16,6 +22,16 @@ extern "C" void osAiSetFrequency_recomp(uint8_t* rdram, recomp_context* ctx) {
+ }
+ 
+ extern "C" void osAiSetNextBuffer_recomp(uint8_t* rdram, recomp_context* ctx) {
++    last_audio_buffer_bytes = ctx->r5;
++    const uint64_t submit = ++audio_submit_count;
++    if (std::getenv("SOTE_TRACE_AUDIO_AI") != nullptr &&
++        (submit <= 10 || submit % 30 == 0)) {
++        std::printf(
++            "[sote] AI submit=%llu bytes=%u\n",
++            static_cast<unsigned long long>(submit),
++            static_cast<uint32_t>(ctx->r5));
++        std::fflush(stdout);
++    }
+     ultramodern::queue_audio_buffer(rdram, ctx->r4, ctx->r5);
+     ctx->r2 = 0;
+ }
+@@ -25,5 +41,27 @@ extern "C" void osAiGetLength_recomp(uint8_t* rdram, recomp_context* ctx) {
+ }
+ 
+ extern "C" void osAiGetStatus_recomp(uint8_t* rdram, recomp_context* ctx) {
+-    ctx->r2 = 0x00000000; // Pretend the audio DMAs finish instantly
++    const uint32_t buffer_bytes = last_audio_buffer_bytes.load();
++    const uint32_t remaining_bytes =
++        ultramodern::get_remaining_audio_bytes();
++    // AI_STATUS_FIFO_FULL is the sign bit. The host queue represents the
++    // active DMA plus the one-entry AI FIFO, so report full once at least one
++    // complete guest buffer remains. This prevents games from enqueueing an
++    // unbounded catch-up burst after a host-side stall.
++    const bool fifo_full =
++        buffer_bytes != 0 && remaining_bytes >= buffer_bytes
++            ? true
++            : false;
++    ctx->r2 = fifo_full ? 0x80000000U : 0x00000000U;
++    const uint64_t status = ++audio_status_count;
++    if (std::getenv("SOTE_TRACE_AUDIO_AI") != nullptr &&
++        (status <= 20 || status % 60 == 0)) {
++        std::printf(
++            "[sote] AI status=%llu last=%u remaining=%u full=%d\n",
++            static_cast<unsigned long long>(status),
++            buffer_bytes,
++            remaining_bytes,
++            fifo_full ? 1 : 0);
++        std::fflush(stdout);
++    }
+ }

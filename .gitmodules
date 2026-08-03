@@ -1,0 +1,12 @@
+[submodule "third_party/N64Recomp"]
+	path = third_party/N64Recomp
+	url = https://github.com/N64Recomp/N64Recomp.git
+[submodule "third_party/N64ModernRuntime"]
+	path = third_party/N64ModernRuntime
+	url = https://github.com/N64Recomp/N64ModernRuntime.git
+[submodule "third_party/n64sym"]
+	path = third_party/n64sym
+	url = https://github.com/shygoo/n64sym.git
+[submodule "third_party/rt64"]
+	path = third_party/rt64
+	url = https://github.com/rt64/rt64.git

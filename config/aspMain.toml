@@ -1,0 +1,18 @@
+# RSPRecomp configuration for Shadows of the Empire's M_AUDTASK microcode.
+#
+# The decompressed executable is appended to generated/recomp.z64 at ROM
+# 0xC00000 and loaded at RDRAM 0x80001EC0. The task points at 0x800CF890,
+# so the corresponding ROM offset is:
+#   0xC00000 + (0x800CF890 - 0x80001EC0) = 0xCCD9D0
+#
+# rspboot loads the program at IMEM 0x1080. The code ends with `j 0x1118`
+# and its delay-slot nop at IMEM 0x1E94/0x1E98; data begins at 0x1E9C.
+text_offset = 0xCCD9D0
+text_size = 0xE1C
+text_address = 0x04001080
+rom_file_path = "../generated/recomp.z64"
+output_file_path = "../generated/aspMain.cpp"
+output_function_name = "aspMain"
+# The 16 ACMD handler entry points are the big-endian halfwords at offset
+# 0x10 in the task's ucode-data blob (ROM 0xCEC5C0, RDRAM 0x800EE480).
+extra_indirect_branch_targets = [0x1118, 0x1470, 0x11DC, 0x1B38, 0x1214, 0x187C, 0x1254, 0x12D0, 0x12EC, 0x1328, 0x140C, 0x1294, 0x1E24, 0x138C, 0x170C, 0x144C]

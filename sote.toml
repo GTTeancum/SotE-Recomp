@@ -1,0 +1,63 @@
+# N64Recomp configuration for Shadows of the Empire, USA Rev 1.2.
+
+[input]
+entrypoint = 0x80000400
+output_func_path = "generated/RecompiledFuncs"
+rom_file_path = "generated/recomp.z64"
+symbols_file_path = "config/sote.syms.toml"
+
+[patches]
+stubs = []
+ignored = []
+renamed = []
+hook = [
+    # Extend the game's own 80-entry UI table immediately before its native
+    # text renderer walks it. This keeps Graphics inside the original Options
+    # screen and uses the retail font, colors, panel, and draw path.
+    { func = "func_80008778", before_vram = 0x80008778, text = "sote_update_graphics_menu(rdram);" },
+    # The recomp loop otherwise runs as fast as the host can submit display
+    # lists. Limit it to one gameplay iteration per 60 Hz VI.
+    { func = "func_80017CC8", before_vram = 0x80017EE4, text = "sote_wait_for_game_frame();" },
+    # The original timer can occasionally publish its absolute host-clock
+    # value instead of a per-frame delta. Repair the shared value immediately
+    # after the timer update, before camera, player, or vehicle simulation.
+    { func = "func_80017CC8", before_vram = 0x80017EA8, text = "sote_sanitize_global_frame_delta(rdram);" },
+    # Scripted-object dispatch temporarily installs an absolute timeline value
+    # in the global simulation-delta slot. Sanitize it before any dispatched
+    # player, vehicle, or camera controller can consume it. The controller
+    # hooks remain as diagnostics and defense in depth.
+    { func = "func_80027E9C", before_vram = 0x80028090, text = "ctx->f18.d = sote_sanitize_frame_delta(ctx->f18.d);" },
+    # Mark execution of the bike controller and distinguish the controller's
+    # two life-loss paths in persistent diagnostics.
+    { func = "func_8002A13C", before_vram = 0x8002A13C, text = "if (sote_enter_bike_controller(rdram, (uint32_t)ctx->r4)) return;" },
+    { func = "func_800700F0", before_vram = 0x800700F0, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x800700F0U, (uint32_t)ctx->r5);" },
+    { func = "func_8008BF00", before_vram = 0x8008BF00, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x8008BF00U, (uint32_t)ctx->r5);" },
+    { func = "func_80096E14", before_vram = 0x80096E14, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x80096E14U, (uint32_t)ctx->r5);" },
+    { func = "func_800A7D70", before_vram = 0x800A7D70, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x800A7D70U, (uint32_t)ctx->r5);" },
+    { func = "func_800B8D60", before_vram = 0x800B8D60, text = "ctx->f12.d = sote_sanitize_frame_delta(ctx->f12.d);" },
+    { func = "func_800B8CE8", before_vram = 0x800B8D44, text = "ctx->f0.d = sote_sanitize_frame_delta(ctx->f0.d); SD(ctx->f0.u64, 0x6B10, S32(0x800E << 16));" },
+    { func = "func_80028E18", before_vram = 0x80029058, text = "if (!sote_allow_life_loss(rdram, 0x80029058U, (uint32_t)ctx->r17, 0U)) ctx->r9 = ADD32(ctx->r9, 1); sote_note_bike_life_loss(rdram, 1);" },
+    { func = "func_8002A13C", before_vram = 0x8002A678, text = "if (!sote_allow_life_loss(rdram, 0x8002A678U, (uint32_t)MEM_W(ctx->r29, 0xD0), 0U)) ctx->r24 = ADD32(ctx->r24, 1); sote_note_bike_life_loss(rdram, 2);" },
+    { func = "func_800700F0", before_vram = 0x8007148C, text = "if (!sote_allow_life_loss(rdram, 0x8007148CU, (uint32_t)ctx->r17, 0U)) ctx->r12 = ADD32(ctx->r12, 1);" },
+    { func = "func_8008BF00", before_vram = 0x8008C638, text = "if (!sote_allow_life_loss(rdram, 0x8008C638U, (uint32_t)ctx->r17, (uint32_t)MEM_W(ctx->r29, 0xB4))) ctx->r9 = ADD32(ctx->r9, 1);" },
+    { func = "func_80096E14", before_vram = 0x8009724C, text = "if (!sote_allow_life_loss(rdram, 0x8009724CU, (uint32_t)ctx->r16, (uint32_t)MEM_W(ctx->r16, 0x230))) ctx->r11 = ADD32(ctx->r11, 1);" },
+    { func = "func_800A7D70", before_vram = 0x800A84F4, text = "if (!sote_allow_life_loss(rdram, 0x800A84F4U, (uint32_t)MEM_W(ctx->r29, 0x88), 0U)) ctx->r15 = ADD32(ctx->r15, 1);" },
+    # The audio volume approximation squares an integer exponent with an
+    # arithmetic right shift. A negative corrupted exponent therefore remains
+    # -1 forever. Convert it to the equivalent positive reciprocal power.
+    { func = "func_800C6424", before_vram = 0x800C6570, text = "if (SIGNED(ctx->r16) < 0) { sote_note_audio_negative_exponent((int32_t)ctx->r16); ctx->r16 = (uint32_t)(-(int64_t)SIGNED(ctx->r16)); ctx->f0.d = 1.0 / ctx->f0.d; }" },
+    # Simultaneous aiming and movement can leave an effect-motion object in a
+    # zero-duration state cycle. The original inner state-transition loop then
+    # never returns to the game thread. Normal transitions need only a handful
+    # of passes, so abandon the malformed update after 8 and log its state.
+    { func = "func_8007D3B8", before_vram = 0x8007D3B8, text = "uint32_t sote_motion_guard = 0;" },
+    { func = "func_8007D3B8", before_vram = 0x8007D5A4, text = "if (sote_normalize_zero_velocity_motion(rdram, (uint32_t)ctx->r16)) goto L_8007D810; if (++sote_motion_guard >= 8) { sote_note_motion_loop_guard(rdram, (uint32_t)ctx->r16); goto L_8007D810; }" },
+    # The Asteroid Field animation selector computes three consecutive
+    # frame indices with signed `% 8`. A renderer or host scheduling stall
+    # can make the phase delta briefly negative; the original code then
+    # indexes before its eight-pointer table and treats a float as a pointer.
+    # Wrapping the signed residues preserves the intended circular lookup.
+    { func = "func_80028B84", before_vram = 0x80028C3C, text = "ctx->r8 &= 7;" },
+    { func = "func_80028B84", before_vram = 0x80028C7C, text = "ctx->r11 &= 7;" },
+    { func = "func_80028B84", before_vram = 0x80028CC4, text = "ctx->r14 &= 7;" },
+]

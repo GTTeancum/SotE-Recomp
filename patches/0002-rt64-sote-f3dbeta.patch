@@ -1,0 +1,78 @@
+diff --git a/src/gbi/rt64_gbi.cpp b/src/gbi/rt64_gbi.cpp
+index 7006549..f891b53 100644
+--- a/src/gbi/rt64_gbi.cpp
++++ b/src/gbi/rt64_gbi.cpp
+@@ -160,7 +160,7 @@ namespace RT64 {
+     // 
+     //                  Length      Hash                    Known instances               
+     //     
+-    static std::array<GBISegment, 94> textSegments = {
++    static std::array<GBISegment, 95> textSegments = {
+             GBISegment{ 0x1408,     0x9C0926F5E466BE70ULL,  { &F3D_SDK_E } }, // Needs confirmation.
+             GBISegment{ 0x1400,     0x34EAA6E921BCF1B2ULL,  { &F3D_SDK_F, &F3D_SDK_UNKNOWN_G, &F3D_SDK_UNKNOWN_H } }, // Needs confirmation.
+             GBISegment{ 0x1408,     0x3E05E9BBE814C700ULL,  { &F3D_FIFO_SDK_E } }, // Needs confirmation.
+@@ -175,6 +175,7 @@ namespace RT64 {
+             GBISegment{ 0x1418,     0xAEBF9966DD0486DDULL,  { &F3D_PD } },
+             GBISegment{ 0x1420,     0xEDA47A4C2B7E69F8ULL,  { &F3D_GOLDEN } }, // Needs confirmation.
+             GBISegment{ 0x1430,     0x547A4F6CEDE3C737ULL,  { &F3D_WAVE } }, // Needs confirmation.
++            GBISegment{ 0x1430,     0xD33F14DF63CEA3ACULL,  { &F3D_WAVE } }, // Star Wars: Shadows of the Empire (U) (v1.2).
+             GBISegment{ 0x13E0,     0x28825EEF49EE29CFULL,  { &F3DEX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x1410,     0xF1CC01CCC3607D27ULL,  { &F3DLX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x13A0,     0x2DAE911B08F94FCFULL,  { &F3DEX_0_96, &F3DEX_1_00 } }, // Needs confirmation.
+@@ -257,7 +258,7 @@ namespace RT64 {
+             GBISegment{ 0x10B0,     0xE8028E4BC6529E6EULL,  { &ZSORTP_0_33 } }, // Needs confirmation.
+     };
+ 
+-    static std::array<GBISegment, 105> dataSegments = {
++    static std::array<GBISegment, 106> dataSegments = {
+             GBISegment{ 0x800,      0xEEB10D73400213B3ULL,  { &F3D_SDK_E } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x49651E384B48F694ULL,  { &F3D_SDK_F } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x1A736198F90E81C5ULL,  { &F3D_SDK_UNKNOWN_G } }, // Needs confirmation.
+@@ -275,6 +276,7 @@ namespace RT64 {
+             GBISegment{ 0x800,      0x72AD2373CEC74AA7ULL,  { &F3D_PD } },
+             GBISegment{ 0x800,      0xB2152361A81ED3B0ULL,  { &F3D_GOLDEN } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x3E7A693EA9A18E45ULL,  { &F3D_WAVE } }, // Needs confirmation.
++            GBISegment{ 0x800,      0xBD0BAAE05C1B4EE0ULL,  { &F3D_WAVE } }, // Star Wars: Shadows of the Empire (U) (v1.2).
+             GBISegment{ 0x800,      0x4BB61D72241EFD23ULL,  { &F3DEX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x58641378A6D4FF0CULL,  { &F3DLX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x1D53DE103B933358ULL,  { &F3DEX_0_96 } }, // Needs confirmation.
+diff --git a/src/gbi/rt64_gbi_f3dwave.cpp b/src/gbi/rt64_gbi_f3dwave.cpp
+index 3b4530f..6714937 100644
+--- a/src/gbi/rt64_gbi_f3dwave.cpp
++++ b/src/gbi/rt64_gbi_f3dwave.cpp
+@@ -32,10 +32,14 @@ namespace RT64 {
+             state->rsp->drawIndexedTri(v0, v2, v3);
+         }
+ 
++        void perspNormalize(State *state, DisplayList **dl) {
++            state->rsp->setPerspNorm((*dl)->w1);
++        }
++
+         void setup(GBI *gbi) {
+             GBI_F3D::setup(gbi);
+ 
+-            gbi->map[F3DWAVE_G_UNKNOWN] = nullptr; // FIXME: Replaces a function set by base F3D with nothing until it's figured out.
++            gbi->map[F3DWAVE_G_PERSPNORM] = &perspNormalize;
+             gbi->map[F3DWAVE_G_RDPHALF_1] = &GBI_F3D::rdpHalf1;
+             gbi->map[F3DWAVE_G_RDPHALF_2] = &GBI_F3D::rdpHalf2;
+             gbi->map[F3D_G_VTX] = vertex;
+diff --git a/src/gbi/rt64_gbi_f3dwave.h b/src/gbi/rt64_gbi_f3dwave.h
+index 693f01b..a49f589 100644
+--- a/src/gbi/rt64_gbi_f3dwave.h
++++ b/src/gbi/rt64_gbi_f3dwave.h
+@@ -6,13 +6,14 @@
+ 
+ #include "rt64_gbi.h"
+ 
+-#define F3DWAVE_G_UNKNOWN       0xB4
++#define F3DWAVE_G_PERSPNORM     0xB4
+ #define F3DWAVE_G_RDPHALF_1     0xB3
+ #define F3DWAVE_G_RDPHALF_2     0xB2
+ #define F3DWAVE_G_TRI2          0xB1
+ 
+ namespace RT64 {
+     namespace GBI_F3DWAVE {
++        void perspNormalize(State *state, DisplayList **dl);
+         void setup(GBI *ucode);
+     };
+ };

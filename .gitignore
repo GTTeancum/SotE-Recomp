@@ -1,0 +1,21 @@
+# User-supplied game images must never be committed.
+*.z64
+*.n64
+*.v64
+
+# Generated extraction and recompilation artifacts.
+build/
+out/
+generated/
+assets/extracted/
+.reference/
+.tools/
+SotE_Recompiled/
+
+# Local development state.
+.vs/
+.vscode/
+CMakeUserPresets.json
+*.user
+*.suo
+*.log
