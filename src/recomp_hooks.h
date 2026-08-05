@@ -27,6 +27,7 @@ uint32_t sote_normalize_zero_velocity_motion(
     uint32_t object);
 void sote_note_motion_loop_guard(uint8_t* rdram, uint32_t object);
 void sote_update_graphics_menu(uint8_t* rdram);
+uint32_t sote_is_bike_stage_active(void);
 
 #ifdef __cplusplus
 }

@@ -3,9 +3,17 @@
 These ideas are non-priority enhancements. Current work remains focused on
 making the original game fully playable and validating a complete playthrough.
 
-- Dual-analog aiming support
-- Configurable controller mappings
-- Optional first-person mode
+- Modern control scheme with dual-analog aiming and configurable controller
+  mappings
+  - Add a pre-tuned `Classic` / `Modern` control choice for the speeder-bike
+    stage. Modern uses RT for throttle, LT for brake, the left stick for
+    steering, and RB for firing, with a fixed progressive steering curve,
+    reduced high-speed sensitivity, mild steering stabilization, and smoother
+    camera behavior. Do not expose separate bike-tuning options.
+- Optional first-person mode with Dash's hand and equipped weapon visible while
+  keeping the gameplay HUD active
+- Allow the player to choose among original N64-style cutscenes, the PC
+  release's FMVs, and a Hybrid mode using N64 visuals with PC audio
 - Accessible in-game menus for all configuration options
 - Original Xbox port
 

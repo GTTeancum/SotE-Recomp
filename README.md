@@ -204,6 +204,41 @@ Physical keyboard and controller input is accepted only while the game window
 has focus. This prevents normal desktop typing from steering an unattended
 game.
 
+### Control scheme
+
+The injected Options entry cycles between `Graphics` and `Controls` with Left
+and Right. The `Controls` submenu offers a single player-facing choice:
+
+- `Classic` — the original N64 mapping described above.
+- `Modern` — speeder-bike stages only. Right trigger is throttle, left
+  trigger is brake, the left stick steers, and the right shoulder button
+  fires. Steering uses a progressive curve, loses sensitivity as throttle
+  rises, and is lightly stabilized.
+
+`Modern` engages only while the recompiled bike controller is actually
+running, so on-foot and vehicle stages keep the Classic mapping regardless of
+this setting. Highlight `Apply` to persist the choice to `sote_controls.json`
+next to the executable.
+
+Bike handling constants are deliberately not exposed in the menu. They are
+read from `bike_tuning.ini` in the game folder, which is written with the
+default values on first run and re-read whenever it changes on disk.
+`config\bike_tuning.ini` carries the same defaults with fuller commentary on
+what each one does.
+
+### Control-scheme harness
+
+The scheme selection, the `bike_tuning.ini` reader, and the Modern steering
+math run outside the recompiled guest, so they are covered by a host-side
+harness that needs neither a ROM nor a graphics device:
+
+```powershell
+.\build\runtime\Release\controls_harness.exe
+```
+
+The crash smoke above feeds scripted inputs and never reaches the SDL
+controller path, so it does not exercise this code.
+
 ## Repository notes
 
 Generated game code and ROM-derived data are deliberately ignored. The

@@ -1,6 +1,8 @@
 #define SDL_MAIN_HANDLED
 
 #include "frontend.hpp"
+#include "controls_menu.hpp"
+#include "recomp_hooks.h"
 #include "graphics_menu.hpp"
 
 #include <algorithm>
@@ -9,6 +11,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <mutex>
 #include <vector>
 
@@ -78,6 +81,90 @@ void update_muted_audio_clock_locked() {
         0.0,
         muted_queued_frames - elapsed.count() * source_frequency);
     muted_audio_clock = now;
+}
+
+// Modern speeder-bike scheme: RT throttle, LT brake, left stick steers,
+// RB fires. This assumes Classic's bike control reads the left stick's
+// Y axis as throttle-forward/brake-back and X axis as steering -- i.e.
+// Modern's whole point is moving throttle/brake off the stick and onto
+// triggers, leaving the stick to steering only. That assumption is NOT
+// verified against the original bike controller logic; if the bike
+// doesn't respond to speed changes correctly under Modern, this is the
+// first place to check. Fire-button identity is equally unverified --
+// see fire_button in bike_tuning.ini.
+// The curve/falloff/stabilization math itself lives in controls_menu so it
+// can be exercised without SDL by tools/controls_harness.
+sote::controls_menu::ModernBikeFilterState modern_bike_filter;
+
+void apply_modern_bike_scheme(
+    SDL_GameController* pad,
+    uint16_t& buttons,
+    float& x,
+    float& y) {
+    const sote::controls_menu::BikeTuning tuning =
+        sote::controls_menu::bike_tuning();
+
+    float throttle_raw = std::max(
+        0.0f,
+        SDL_GameControllerGetAxis(
+            pad,
+            SDL_CONTROLLER_AXIS_TRIGGERRIGHT) / 32767.0f);
+    float brake_raw = std::max(
+        0.0f,
+        SDL_GameControllerGetAxis(
+            pad,
+            SDL_CONTROLLER_AXIS_TRIGGERLEFT) / 32767.0f);
+
+    // Triggers are unreachable from the scripted-input diagnostics, so allow
+    // a forced level for testing the Modern path without a physical pad.
+    if (const char* forced = std::getenv("SOTE_FORCE_BIKE_THROTTLE")) {
+        throttle_raw = std::clamp(
+            static_cast<float>(std::atof(forced)), 0.0f, 1.0f);
+    }
+    if (const char* forced = std::getenv("SOTE_FORCE_BIKE_BRAKE")) {
+        brake_raw = std::clamp(
+            static_cast<float>(std::atof(forced)), 0.0f, 1.0f);
+    }
+
+    const Sint16 raw_steer_x =
+        SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTX);
+    float steering = raw_steer_x >= 0
+        ? raw_steer_x / 32767.0f
+        : raw_steer_x / 32768.0f;
+    if (steering > -stick_deadzone / 32768.0f &&
+        steering < stick_deadzone / 32768.0f) {
+        steering = 0.0f;
+    }
+
+    const sote::controls_menu::ModernBikeAxes axes =
+        sote::controls_menu::compute_modern_bike_axes(
+            steering,
+            throttle_raw,
+            brake_raw,
+            tuning,
+            modern_bike_filter);
+
+    // Steering stays on the stick, which the bike genuinely reads as an
+    // analog value. Throttle and brake drive the game's actual Accelerate
+    // and Brakes buttons (A and B per its own control diagram) on a duty
+    // cycle, since those inputs are digital and cannot take a level.
+    x = axes.x * n64_stick_scale;
+
+    const sote::controls_menu::ModernBikeButtons bike_buttons =
+        sote::controls_menu::compute_modern_bike_buttons(
+            throttle_raw, brake_raw, modern_bike_filter);
+    if (bike_buttons.accelerate) {
+        buttons |= n64_a;
+    }
+    if (bike_buttons.brake) {
+        buttons |= n64_b;
+    }
+
+    // No fire binding: the bike's Fire and Kick actions were never used by
+    // the game, so pressing a pad button through to one of them would only
+    // trigger whatever that N64 button does on the bike instead.
+    (void)tuning;
+    (void)y;
 }
 
 bool process_owns_foreground_window() {
@@ -322,6 +409,20 @@ void poll_input() {
             SDL_CONTROLLER_AXIS_LEFTY);
         x = normalize_axis(raw_lx);
         y = -normalize_axis(raw_ly);
+
+        if (sote::controls_menu::bike_modern_scheme_active()) {
+            // Modern redefines A and B as Accelerate/Brakes driven by the
+            // triggers, and LT no longer means Z, so drop those Classic
+            // bits before the Modern mapping sets them.
+            buttons &=
+                static_cast<uint16_t>(~(n64_a | n64_b | n64_z));
+            apply_modern_bike_scheme(controller, buttons, x, y);
+        } else {
+            // Leaving the bike stage clears the damping carry, so the next
+            // bike section starts from center instead of easing out of the
+            // previous one's held throttle and lean.
+            modern_bike_filter = {};
+        }
     }
 
     // Keyboard fallback: WASD is the N64 stick; Z/X/C are A/B/Z.
@@ -398,6 +499,49 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
         127.0f;
     *y = (scripted_y != 0 ? scripted_y : static_cast<int8_t>(snapshot >> 24)) /
         127.0f;
+    // Diagnostic path for exercising Modern's analog throttle without a
+    // physical pad: poll_input is skipped entirely when the window is not
+    // focused, which is always the case for offscreen captures.
+    if (const char* forced = std::getenv("SOTE_FORCE_BIKE_THROTTLE")) {
+        if (sote_is_bike_stage_active() != 0) {
+            float throttle = std::clamp(
+                static_cast<float>(std::atof(forced)), 0.0f, 1.0f);
+            // "sweep" walks 0, 25, 50, 75, 100 percent, holding each for a
+            // few seconds, so a live run visibly shows speed tracking the
+            // trigger level without needing a physical pad.
+            if (std::strcmp(forced, "sweep") == 0) {
+                static const auto start =
+                    std::chrono::steady_clock::now();
+                const auto elapsed =
+                    std::chrono::duration_cast<std::chrono::seconds>(
+                        std::chrono::steady_clock::now() - start).count();
+                const int step = static_cast<int>((elapsed / 5) % 5);
+                throttle = static_cast<float>(step) * 0.25f;
+                static int last_step = -1;
+                if (step != last_step) {
+                    last_step = step;
+                    std::printf(
+                        "[sote][throttle] sweep -> %d%%\n", step * 25);
+                    std::fflush(stdout);
+                }
+            }
+            float brake = 0.0f;
+            if (const char* forced_brake =
+                    std::getenv("SOTE_FORCE_BIKE_BRAKE")) {
+                brake = std::clamp(
+                    static_cast<float>(std::atof(forced_brake)), 0.0f, 1.0f);
+            }
+            const sote::controls_menu::ModernBikeButtons bike_buttons =
+                sote::controls_menu::compute_modern_bike_buttons(
+                    throttle, brake, modern_bike_filter);
+            if (bike_buttons.accelerate) {
+                *buttons |= n64_a;
+            }
+            if (bike_buttons.brake) {
+                *buttons |= n64_b;
+            }
+        }
+    }
     sote::graphics_menu::filter_input(buttons, x, y);
     return true;
 }

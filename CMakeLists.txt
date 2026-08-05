@@ -62,6 +62,7 @@ else()
 endif()
 
 set(SOTE_RUNTIME_SOURCES
+    src/controls_menu.cpp
     src/frontend.cpp
     src/graphics_menu.cpp
     src/libultra_stubs.c
@@ -109,6 +110,21 @@ target_compile_definitions(sote_recomp PRIVATE NOMINMAX)
 set(RT64_SDL_BIN
     "${RT64_DIR}/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3")
 target_link_directories(sote_recomp PRIVATE "${RT64_SDL_BIN}/lib/x64")
+
+# Host-side harness for the control-scheme module. It links only
+# controls_menu.cpp, so it needs neither the ROM nor a graphics device, and
+# stubs the one guest hook that module calls.
+add_executable(controls_harness
+    tools/controls_harness.cpp
+    src/controls_menu.cpp
+)
+target_include_directories(controls_harness PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src")
+if(MSVC)
+    target_compile_options(controls_harness PRIVATE /W4)
+endif()
+enable_testing()
+add_test(NAME controls_harness COMMAND controls_harness)
 
 if(MSVC)
     target_compile_options(sote_recomp PRIVATE /W4 /Zi)

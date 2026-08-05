@@ -22,6 +22,7 @@
 #include "librecomp/game.hpp"
 #include "librecomp/overlays.hpp"
 #include "librecomp/rsp.hpp"
+#include "controls_menu.hpp"
 #include "frontend.hpp"
 #include "graphics_menu.hpp"
 #include "rt64_renderer.hpp"
@@ -76,6 +77,8 @@ std::atomic<uint32_t> rapid_life_loss_count{0};
 std::atomic<uint32_t> duplicate_life_loss_suppression_count{0};
 std::atomic<uint32_t> committed_life_loss_count{0};
 std::atomic<uint16_t> current_scripted_buttons{0};
+std::atomic<int8_t> current_scripted_stick_x{0};
+std::atomic<int8_t> current_scripted_stick_y{0};
 int last_life_loss_vi = -10000;
 int16_t last_life_loss_event = -1;
 int last_committed_life_loss_vi = -10000;
@@ -820,6 +823,21 @@ bool parse_scripted_button(
     else if (name == "stick_down") y = -80;
     else if (name == "stick_left") x = -80;
     else if (name == "stick_right") x = 80;
+    // Explicit magnitudes, e.g. stick_y=40. The four named directions above
+    // only ever produce full deflection, which cannot distinguish a control
+    // path that scales with stick travel from one that merely tests a
+    // threshold.
+    else if (name.substr(0, 8) == "stick_x=" ||
+             name.substr(0, 8) == "stick_y=") {
+        const std::string magnitude{name.substr(8)};
+        if (magnitude.empty()) return false;
+        const int value = std::clamp(std::atoi(magnitude.c_str()), -80, 80);
+        if (name[6] == 'x') {
+            x = static_cast<int8_t>(value);
+        } else {
+            y = static_cast<int8_t>(value);
+        }
+    }
     else return false;
     return true;
 }
@@ -1503,6 +1521,192 @@ void on_vi() {
     const int count = ++vi_count;
     game_frame_cv.notify_all();
     log_bike_telemetry(count);
+    // Within one run: snapshot every float at viA, compare at viB, and
+    // report those that moved. Held input starts between the two, so a
+    // speed-like value shows up as a large sustained change without the
+    // cross-run nondeterminism that makes whole-RDRAM diffing useless.
+    // SOTE_SCAN_FLOAT="<viA>:<viB>"
+    // Three-phase float scan: idle, then accelerating, then coasting after
+    // release. A speed value is one that rises while accelerating and falls
+    // once released, which almost nothing else in RDRAM does.
+    // SOTE_SCAN_FLOAT="<idleVI>:<acceleratingVI>:<releasedVI>"
+    if (const char* scan = std::getenv("SOTE_SCAN_FLOAT")) {
+        static std::vector<float> idle;
+        static std::vector<float> accelerating;
+        static int vi1 = -1, vi2 = -1, vi3 = -1;
+        if (vi1 < 0) {
+            vi1 = std::atoi(scan);
+            const char* c1 = std::strchr(scan, ':');
+            vi2 = c1 != nullptr ? std::atoi(c1 + 1) : -1;
+            const char* c2 = c1 != nullptr ? std::strchr(c1 + 1, ':')
+                                           : nullptr;
+            vi3 = c2 != nullptr ? std::atoi(c2 + 1) : -1;
+        }
+        constexpr uint32_t scan_bytes = 0x800000U;
+        auto capture = [&](std::vector<float>& into) {
+            into.resize(scan_bytes / 4);
+            for (uint32_t off = 0; off < scan_bytes; off += 4) {
+                into[off / 4] =
+                    read_guest_float(game_rdram, 0x80000000U + off);
+            }
+        };
+        if (game_rdram != nullptr && count == vi1) {
+            capture(idle);
+            std::printf("[sote][fscan] idle snapshot VI=%d\n", count);
+            std::fflush(stdout);
+        } else if (game_rdram != nullptr && count == vi2) {
+            capture(accelerating);
+            std::printf("[sote][fscan] accel snapshot VI=%d\n", count);
+            std::fflush(stdout);
+        } else if (game_rdram != nullptr && count == vi3 &&
+                   !idle.empty() && !accelerating.empty()) {
+            int reported = 0;
+            for (uint32_t off = 0; off < scan_bytes; off += 4) {
+                const float a = idle[off / 4];
+                const float b = accelerating[off / 4];
+                const float c =
+                    read_guest_float(game_rdram, 0x80000000U + off);
+                if (!std::isfinite(a) || !std::isfinite(b) ||
+                    !std::isfinite(c)) {
+                    continue;
+                }
+                if (std::fabs(b) > 5000.0f) continue;
+                // Rose while accelerating, then fell after release.
+                const float rise = b - a;
+                const float fall = b - c;
+                if (rise < 0.25f || fall < 0.25f) continue;
+                if (reported++ >= 60) break;
+                std::printf(
+                    "[sote][fscan] 0x%08X idle=%.3f accel=%.3f freed=%.3f\n",
+                    0x80000000U + off, a, b, c);
+            }
+            std::printf("[sote][fscan] %d speed-shaped candidates\n",
+                        reported);
+            std::fflush(stdout);
+        }
+    }
+    // Write all of RDRAM to a file at one VI. Two runs that differ only in
+    // held input can then be diffed offline to locate the variables that
+    // input actually drives. SOTE_DUMP_RDRAM="<vi>:<path>"
+    if (const char* dump = std::getenv("SOTE_DUMP_RDRAM")) {
+        const char* colon = std::strchr(dump, ':');
+        if (colon != nullptr && game_rdram != nullptr &&
+            count == std::atoi(dump)) {
+            std::FILE* file = std::fopen(colon + 1, "wb");
+            if (file != nullptr) {
+                std::fwrite(game_rdram, 1, 0x800000U, file);
+                std::fclose(file);
+                std::printf(
+                    "[sote][dump] wrote RDRAM at VI=%d to %s\n",
+                    count, colon + 1);
+                std::fflush(stdout);
+            }
+        }
+    }
+    // Snapshot RDRAM at one VI and report every halfword that changed by a
+    // small amount by another VI. Used to locate menu selection variables
+    // whose owning function cannot be identified statically.
+    // SOTE_SCAN_SELECTION="<snapshotVI>:<compareVI>"
+    if (const char* scan = std::getenv("SOTE_SCAN_SELECTION")) {
+        static std::vector<uint16_t> snapshot;
+        static int snapshot_vi = -1;
+        static int compare_vi = -1;
+        if (snapshot_vi < 0) {
+            snapshot_vi = std::atoi(scan);
+            const char* colon = std::strchr(scan, ':');
+            compare_vi = colon != nullptr ? std::atoi(colon + 1) : -1;
+        }
+        constexpr uint32_t scan_bytes = 0x800000U;
+        if (game_rdram != nullptr && count == snapshot_vi) {
+            snapshot.resize(scan_bytes / 2);
+            for (uint32_t offset = 0; offset < scan_bytes; offset += 2) {
+                snapshot[offset / 2] =
+                    read_guest_half(game_rdram, 0x80000000U + offset);
+            }
+            std::printf("[sote][scan] snapshot at VI=%d\n", count);
+            std::fflush(stdout);
+        } else if (game_rdram != nullptr && count == compare_vi &&
+                   !snapshot.empty()) {
+            int reported = 0;
+            for (uint32_t offset = 0; offset < scan_bytes && reported < 200;
+                 offset += 2) {
+                const int16_t before =
+                    static_cast<int16_t>(snapshot[offset / 2]);
+                const int16_t after = static_cast<int16_t>(
+                    read_guest_half(game_rdram, 0x80000000U + offset));
+                if (before == after) {
+                    continue;
+                }
+                if (before < -1 || before > 15 || after < -1 || after > 15) {
+                    continue;
+                }
+                ++reported;
+                std::printf(
+                    "[sote][scan] 0x%08X %d -> %d\n",
+                    0x80000000U + offset, before, after);
+            }
+            std::printf("[sote][scan] %d candidates at VI=%d\n",
+                        reported, count);
+            std::fflush(stdout);
+        }
+    }
+    // Profile-screen selection state, from func_8003B480: 0x800DD750 holds
+    // -1 when focus is on the Options/Rename/Clear row and 0-3 for the four
+    // player slots; 0x800DD754 is the index within that row (bounded by 3).
+    if (std::getenv("SOTE_TRACE_PROFILE") != nullptr &&
+        game_rdram != nullptr && count % 15 == 0) {
+        // Per-entry focus flags, stride 4, located by RDRAM diffing across
+        // single D-pad presses: 0x800D08E2 is the first player slot.
+        // Entries past the four slots should cover Options/Rename/Clear.
+        constexpr uint32_t focus_flags = 0x800D08E2U;
+        constexpr int flag_count = 8;
+        static int last[flag_count] = {-999};
+        int now[flag_count];
+        bool changed = false;
+        for (int i = 0; i < flag_count; ++i) {
+            now[i] = static_cast<int16_t>(read_guest_half(
+                game_rdram, focus_flags + static_cast<uint32_t>(i * 4)));
+            if (now[i] != last[i]) {
+                changed = true;
+            }
+        }
+        if (changed) {
+            for (int i = 0; i < flag_count; ++i) {
+                last[i] = now[i];
+            }
+            std::printf(
+                "[sote][profile] VI=%d flags=[%d %d %d %d %d %d %d %d] "
+                "buttons=%04X\n",
+                count, now[0], now[1], now[2], now[3], now[4], now[5],
+                now[6], now[7],
+                current_scripted_buttons.load(std::memory_order_relaxed));
+            std::fflush(stdout);
+        }
+    }
+    // The game copies the controller pad into its own input struct at
+    // 0x80113098: stick_x and stick_y as signed halfwords at +0x00/+0x02,
+    // buttons at +0x14 (func_800130B4). Logging it here shows what the
+    // guest actually has to work with, independent of which controller
+    // ends up consuming it.
+    if (std::getenv("SOTE_TRACE_GUEST_INPUT") != nullptr &&
+        game_rdram != nullptr && count % 15 == 0) {
+        constexpr uint32_t guest_input_struct = 0x80113098U;
+        std::printf(
+            "[sote][guest-input] VI=%d host_stick=%d,%d "
+            "guest_stick=%d,%d guest_buttons=%04X\n",
+            count,
+            static_cast<int>(
+                current_scripted_stick_x.load(std::memory_order_relaxed)),
+            static_cast<int>(
+                current_scripted_stick_y.load(std::memory_order_relaxed)),
+            static_cast<int>(static_cast<int16_t>(
+                read_guest_half(game_rdram, guest_input_struct))),
+            static_cast<int>(static_cast<int16_t>(
+                read_guest_half(game_rdram, guest_input_struct + 2U))),
+            static_cast<uint32_t>(
+                read_guest_word(game_rdram, guest_input_struct + 0x14U)));
+        std::fflush(stdout);
+    }
     log_general_failure_telemetry(count);
     const int current_display_lists =
         display_list_count.load(std::memory_order_relaxed);
@@ -1568,6 +1772,10 @@ void on_vi() {
         scripted_buttons, scripted_x, scripted_y);
     current_scripted_buttons.store(
         scripted_buttons, std::memory_order_relaxed);
+    current_scripted_stick_x.store(
+        scripted_x, std::memory_order_relaxed);
+    current_scripted_stick_y.store(
+        scripted_y, std::memory_order_relaxed);
     if (count == 1 || count % 30 == 0 ||
         std::getenv("SOTE_TRACE_EVERY_VI") != nullptr) {
         std::printf(
@@ -1638,6 +1846,15 @@ extern "C" void sote_wait_for_game_frame() {
     game_frame_count.fetch_add(1, std::memory_order_relaxed);
 }
 
+extern "C" uint32_t sote_is_bike_stage_active() {
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    const int last =
+        bike_controller_last_vi.load(std::memory_order_relaxed);
+    // Same 2-VI freshness window log_bike_telemetry uses to decide whether
+    // a previous sample is still valid.
+    return (vi - last) <= 2 ? 1u : 0u;
+}
+
 extern "C" uint32_t sote_enter_bike_controller(
     uint8_t* rdram,
     uint32_t object) {
@@ -1652,6 +1869,32 @@ extern "C" uint32_t sote_enter_bike_controller(
         frame_delta < 0.0 ||
         frame_delta > 0.1;
     if (!timeline_traversal) {
+        // Position/velocity for the bike object, at the same offsets the
+        // player-state trace reads. Used to tell whether bike motion scales
+        // with analog stick travel or only with a threshold crossing.
+        if (std::getenv("SOTE_TRACE_BIKE_STATE") != nullptr &&
+            object >= 0x80000000U && object < 0x80800000U) {
+            static int last_bike_state_vi = -1;
+            if (vi != last_bike_state_vi && vi % 15 == 0) {
+                last_bike_state_vi = vi;
+                std::printf(
+                    "[sote][bike-state] VI=%d object=%08X stick=%d,%d "
+                    "buttons=%04X pos=%.3f,%.3f,%.3f velocity=%.3f\n",
+                    vi,
+                    object,
+                    static_cast<int>(current_scripted_stick_x.load(
+                        std::memory_order_relaxed)),
+                    static_cast<int>(current_scripted_stick_y.load(
+                        std::memory_order_relaxed)),
+                    current_scripted_buttons.load(
+                        std::memory_order_relaxed),
+                    read_guest_float(rdram, object + 0x50U),
+                    read_guest_float(rdram, object + 0x54U),
+                    read_guest_float(rdram, object + 0x58U),
+                    read_guest_float(rdram, object + 0x60U));
+                std::fflush(stdout);
+            }
+        }
         if (std::getenv("SOTE_TRACE_BIKE_CALLS") != nullptr) {
             std::printf(
                 "[sote][bike-call] VI=%d object=%08X flags=%08X "
@@ -1719,12 +1962,16 @@ extern "C" void sote_enter_player_controller(
             last_player_state_vi = controller_vi;
             std::printf(
                 "[sote][player-state] VI=%d controller=%08X object=%08X "
-                "buttons=%04X action=%u pos=%.3f,%.3f,%.3f "
+                "buttons=%04X stick=%d,%d action=%u pos=%.3f,%.3f,%.3f "
                 "velocity=%.3f flags=%08X event=%d\n",
                 controller_vi,
                 controller,
                 object,
                 current_scripted_buttons.load(std::memory_order_relaxed),
+                static_cast<int>(
+                    current_scripted_stick_x.load(std::memory_order_relaxed)),
+                static_cast<int>(
+                    current_scripted_stick_y.load(std::memory_order_relaxed)),
                 action,
                 read_guest_float(rdram, object + 0x50U),
                 read_guest_float(rdram, object + 0x54U),
@@ -2157,6 +2404,7 @@ int main(int argc, char** argv) {
 
     runtime_directory = get_executable_directory();
     sote::graphics_menu::initialize(runtime_directory);
+    sote::controls_menu::initialize(runtime_directory);
     portable_layout =
         std::filesystem::is_regular_file(runtime_directory / "main.bin");
     std::filesystem::path rom_path =
