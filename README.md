@@ -7,11 +7,11 @@ Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 
 | Main menu | On-foot level |
 | --- | --- |
-| ![Main menu](docs/screenshots/main_menu.png) | ![Gall Spaceport](docs/screenshots/on_foot_gall.png) |
+| ![Main menu](docs/screenshots/main_menu.png) | ![Escape from Echo Base](docs/screenshots/on_foot_echo_base.png) |
 
 | Space level | Speeder bike level |
 | --- | --- |
-| ![Asteroid Field](docs/screenshots/space_asteroid.png) | ![Battle of Hoth](docs/screenshots/bike_hoth.png) |
+| ![Asteroid Field](docs/screenshots/space_asteroid.png) | ![Mos Eisley/Beggar's Canyon](docs/screenshots/bike_mos_eisley.png) |
 
 ## Target
 
