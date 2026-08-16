@@ -1,5 +1,5 @@
 diff --git a/librecomp/src/ai.cpp b/librecomp/src/ai.cpp
-index 0195f2b..e851f5b 100644
+index 0195f2b..34a20a6 100644
 --- a/librecomp/src/ai.cpp
 +++ b/librecomp/src/ai.cpp
 @@ -1,4 +1,6 @@
@@ -66,3 +66,53 @@ index 0195f2b..e851f5b 100644
 +        std::fflush(stdout);
 +    }
  }
+diff --git a/ultramodern/src/events.cpp b/ultramodern/src/events.cpp
+index 518529d..fc9d6a0 100644
+--- a/ultramodern/src/events.cpp
++++ b/ultramodern/src/events.cpp
+@@ -68,6 +68,10 @@ static struct {
+         void update_vi() {
+             ViState* next_state = get_next_state();
+             const OSViMode* next_mode = next_state->mode;
++            if (next_mode == nullptr) {
++                return;
++            }
++
+             const OSViCommonRegs* common_regs = &next_mode->comRegs;
+             const OSViFieldRegs* field_regs = &next_mode->fldRegs[field];
+             PTR(void) framebuffer = osVirtualToPhysical(next_state->framebuffer);
+@@ -209,19 +213,23 @@ void vi_thread_func() {
+         }
+         total_vis = new_total_vis;
+ 
+-        // If the game hasn't started yet, set a dummy VI mode and origin.
+-        if (!ultramodern::is_game_started()) {
+-            static bool odd = false;
+-            set_dummy_vi(odd);
+-            odd = !odd;
+-        }
++        {
++            std::lock_guard lock{ events_context.message_mutex };
+ 
+-        // Queue a screen update for the graphics thread with the current VI register state.
+-        // Doing this before the VI update is equivalent to updating the screen after the previous frame's scanout finished.
+-        events_context.action_queue.enqueue(ScreenUpdateAction{ events_context.vi.regs });
++            // If the game hasn't started yet, set a dummy VI mode and origin.
++            if (!ultramodern::is_game_started()) {
++                static bool odd = false;
++                set_dummy_vi(odd);
++                odd = !odd;
++            }
++
++            // Queue a screen update for the graphics thread with the current VI register state.
++            // Doing this before the VI update is equivalent to updating the screen after the previous frame's scanout finished.
++            events_context.action_queue.enqueue(ScreenUpdateAction{ events_context.vi.regs });
+ 
+-        // Update VI registers and swap VI modes.
+-        events_context.vi.update_vi();
++            // Update VI registers and swap VI modes.
++            events_context.vi.update_vi();
++        }
+ 
+         // If the game has started, handle sending VI and AI events.
+         if (ultramodern::is_game_started()) {

@@ -20,7 +20,7 @@ enum class SchemeSlot : int {
 
 // Speeder-bike-specific tuning. Not exposed in the in-game menu on purpose
 // (per design: only Classic/Modern is player-facing). Tune by editing
-// bike_tuning.ini in the game root; hot-reloaded at runtime.
+// CONTROLS_MODERN.INI in the game root; hot-reloaded at runtime.
 struct BikeTuning {
     // Steering: input^curve_exponent (1.0 = linear passthrough).
     float steering_curve_exponent = 1.6f;
@@ -41,6 +41,29 @@ struct BikeTuning {
     // actually reads a different button for firing, override this in the
     // INI (fire_button = A|B|Z|L|R) rather than trusting this default.
     uint16_t fire_button_bit = 0x8000; // n64_a
+};
+
+struct ModernControlsTuning {
+    // Left stick deadzone before any movement/steering is emitted.
+    float movement_deadzone = 8000.0f / 32768.0f;
+    // Left stick scalar after deadzone normalization.
+    float movement_sensitivity = 1.0f;
+    // Right stick deadzone before any C-button/camera input is emitted.
+    float aim_deadzone = 12000.0f / 32768.0f;
+    // Right stick scalar used to lower or raise the effective C-button
+    // activation point.
+    float aim_sensitivity = 1.0f;
+    // Trigger deadzone before LT/RT are treated as pressed.
+    float trigger_deadzone = 8000.0f / 32767.0f;
+    // Trigger scalar after deadzone normalization.
+    float trigger_sensitivity = 1.0f;
+    // Optional C-button tap after the right stick returns to neutral. Off by
+    // default because this is game-feel tuning, not verified original logic.
+    bool look_snap_back_enabled = false;
+    float look_snap_back_delay_seconds = 0.35f;
+    float look_snap_back_duration_seconds = 0.08f;
+    uint16_t look_snap_back_button_bit = 0x0008; // n64_cu
+    BikeTuning bike{};
 };
 
 // Per-poll low-pass carry for the Modern bike scheme. Owned by the caller
@@ -112,6 +135,7 @@ int scheme_legend(
     const LegendEntry** entries,
     int max_entries);
 
+ModernControlsTuning modern_controls_tuning();
 BikeTuning bike_tuning();
 // True only when scheme == Modern AND the recompiled bike controller has
 // run within the last couple of vertical-interrupt frames (see

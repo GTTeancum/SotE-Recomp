@@ -3,6 +3,16 @@
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 
+## Screenshots
+
+| Main menu | On-foot level |
+| --- | --- |
+| ![Main menu](docs/screenshots/main_menu.png) | ![Gall Spaceport](docs/screenshots/on_foot_gall.png) |
+
+| Space level | Speeder bike level |
+| --- | --- |
+| ![Asteroid Field](docs/screenshots/space_asteroid.png) | ![Battle of Hoth](docs/screenshots/bike_hoth.png) |
+
 ## Target
 
 - Region: USA
@@ -16,12 +26,18 @@ legally obtained matching ROM is required locally to build and run the port.
 
 ## Status
 
-The port boots through the legal screens and menus into gameplay. Graphics,
-music and sound effects, keyboard and controller input, rumble, and EEPROM
-saves are connected. Automated crash testing navigates the in-game Change
-Level menu and has exercised all ten levels. Longer input-driven runs cover
-the Asteroid Field, Gall Spaceport, Mos Eisley/Beggar's Canyon, and Skyhook
-gameplay modes specifically.
+The 0.9 beta is playable on Windows. Graphics, music and sound effects,
+keyboard and controller input, rumble, EEPROM saves, widescreen rendering,
+MSAA, and the in-game graphics/options hooks are connected. Automated crash
+testing navigates the in-game Change Level menu and has exercised all ten
+levels. Longer input-driven runs cover on-foot, speeder bike, spacecraft,
+turret, and jetpack gameplay paths.
+
+Public release packages contain the executable, required runtime DLLs, and
+configuration files only. They do not include a ROM, `main.bin`, saves, the
+`Sdata` folder, texture dumps, texture packs, or other extracted game data.
+At runtime, the executable validates the user's local USA v1.2 big-endian ROM
+and reconstructs the retail executable image in memory.
 
 The renderer includes the game's F3DBETA microcode identification and
 perspective-normalization behavior. It also avoids RT64's early-present path,
@@ -42,6 +58,13 @@ mission timers several times too fast even though presentation itself was
 properly synchronized.
 
 ## Requirements
+
+For the release zip:
+
+- Windows 10 or 11
+- A legally obtained ROM matching the SHA-256 above
+
+For building from source:
 
 - Windows 10 or 11
 - Visual Studio 2022 with **Desktop development with C++**
@@ -76,7 +99,16 @@ trees.
 
 ## Run
 
-The build creates a self-contained play folder:
+For the release zip, extract the archive and place the matching ROM next to
+`Shadows of the Empire.exe` with either of these names:
+
+```text
+sote.us.v1.2.z64
+Star Wars - Shadows of the Empire (U) (V1.2) [!].z64
+```
+
+For local builds, the build script creates the same self-contained play
+folder:
 
 ```text
 SotE_Recompiled\
@@ -209,26 +241,30 @@ game.
 The injected Options entry cycles between `Graphics` and `Controls` with Left
 and Right. The `Controls` submenu offers a single player-facing choice:
 
-- `Classic` — the original N64 mapping described above.
-- `Modern` — speeder-bike stages only. Right trigger is throttle, left
-  trigger is brake, the left stick steers, and the right shoulder button
-  fires. Steering uses a progressive curve, loses sensitivity as throttle
-  rises, and is lightly stabilized.
+- `Classic` - the original N64 mapping described above.
+- `Modern` - controller-focused aiming, movement, and vehicle tuning.
+  Speeder-bike stages use right trigger for throttle, left trigger for brake,
+  left stick steering, and right shoulder fire. Bike steering uses a
+  progressive curve, can lose sensitivity as throttle rises, and is lightly
+  stabilized.
 
-`Modern` engages only while the recompiled bike controller is actually
-running, so on-foot and vehicle stages keep the Classic mapping regardless of
-this setting. Highlight `Apply` to persist the choice to `sote_controls.json`
-next to the executable.
+Highlight `Apply` to persist the choice to `sote_controls.json` next to the
+executable.
 
-Bike handling constants are deliberately not exposed in the menu. They are
-read from `bike_tuning.ini` in the game folder, which is written with the
-default values on first run and re-read whenever it changes on disk.
-`config\bike_tuning.ini` carries the same defaults with fuller commentary on
-what each one does.
+Modern-control tuning is kept in `CONTROLS_MODERN.INI` next to the
+executable. The file is written with defaults on first run and re-read when it
+changes on disk. Each setting has comments describing its valid range and what
+higher or lower values do. Tunables include movement deadzone and sensitivity,
+aim deadzone and sensitivity, trigger deadzone and sensitivity, optional
+look-forward snap back, and speeder-bike steering curve, high-speed falloff,
+minimum steering scale, stabilization, camera smoothing, and fire binding.
+
+Beta testers are encouraged to tune `CONTROLS_MODERN.INI` for real controllers
+and submit the best-feeling setups with controller model details.
 
 ### Control-scheme harness
 
-The scheme selection, the `bike_tuning.ini` reader, and the Modern steering
+The scheme selection, the `CONTROLS_MODERN.INI` reader, and the Modern input
 math run outside the recompiled guest, so they are covered by a host-side
 harness that needs neither a ROM nor a graphics device:
 

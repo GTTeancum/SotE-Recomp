@@ -36,6 +36,13 @@ index 7006549..f891b53 100644
              GBISegment{ 0x800,      0x4BB61D72241EFD23ULL,  { &F3DEX_0_95 } }, // Needs confirmation.
              GBISegment{ 0x800,      0x58641378A6D4FF0CULL,  { &F3DLX_0_95 } }, // Needs confirmation.
              GBISegment{ 0x800,      0x1D53DE103B933358ULL,  { &F3DEX_0_96 } }, // Needs confirmation.
+@@ -558,4 +560,4 @@ namespace RT64 {
+     GBIFunction GBIManager::getExtendedFunction() const {
+         return &GBI_EXTENDED::extendedOp;
+     }
+-};
+\ No newline at end of file
++};
 diff --git a/src/gbi/rt64_gbi_f3dwave.cpp b/src/gbi/rt64_gbi_f3dwave.cpp
 index 3b4530f..6714937 100644
 --- a/src/gbi/rt64_gbi_f3dwave.cpp
@@ -56,6 +63,13 @@ index 3b4530f..6714937 100644
              gbi->map[F3DWAVE_G_RDPHALF_1] = &GBI_F3D::rdpHalf1;
              gbi->map[F3DWAVE_G_RDPHALF_2] = &GBI_F3D::rdpHalf2;
              gbi->map[F3D_G_VTX] = vertex;
+@@ -44,4 +48,4 @@ namespace RT64 {
+             gbi->map[F3D_G_QUAD] = quad;
+         }
+     }
+-};
+\ No newline at end of file
++};
 diff --git a/src/gbi/rt64_gbi_f3dwave.h b/src/gbi/rt64_gbi_f3dwave.h
 index 693f01b..a49f589 100644
 --- a/src/gbi/rt64_gbi_f3dwave.h
@@ -75,4 +89,543 @@ index 693f01b..a49f589 100644
 +        void perspNormalize(State *state, DisplayList **dl);
          void setup(GBI *ucode);
      };
- };
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
+index 3227ab1..2734970 100644
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -9,7 +9,221 @@
+ 
+ #include "rt64_workload_queue.h"
+ 
++#include <algorithm>
++#include <cstdio>
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <memory>
++#include <string>
++#include <vector>
++
+ namespace RT64 {
++    namespace {
++        constexpr uint32_t SwapChainBytesPerPixel = 4;
++        constexpr uint32_t TextureDataPitchAlignment = 256;
++
++        struct VisibleCapture {
++            std::unique_ptr<RenderBuffer> readbackBuffer;
++            std::filesystem::path output;
++            uint64_t presentId = 0;
++            uint32_t width = 0;
++            uint32_t height = 0;
++            uint32_t rowPitch = 0;
++        };
++
++        struct VisibleCaptureState {
++            bool initialized = false;
++            bool enabled = false;
++            std::filesystem::path directory;
++            std::vector<uint64_t> presentIds;
++            size_t nextPresentId = 0;
++        };
++
++        VisibleCaptureState &visibleCaptureState() {
++            static VisibleCaptureState state;
++            if (state.initialized) {
++                return state;
++            }
++
++            state.initialized = true;
++            const char *capturePath = std::getenv("SOTE_VISIBLE_CAPTURE_PATH");
++            const char *capturePresents =
++                std::getenv("SOTE_VISIBLE_CAPTURE_PRESENTS");
++            if ((capturePath == nullptr) || (capturePath[0] == '\0') ||
++                (capturePresents == nullptr) || (capturePresents[0] == '\0')) {
++                return state;
++            }
++
++            const char *cursor = capturePresents;
++            while (*cursor != '\0') {
++                char *end = nullptr;
++                const unsigned long long value =
++                    std::strtoull(cursor, &end, 10);
++                if (end == cursor) {
++                    ++cursor;
++                    continue;
++                }
++                if (value > 0) {
++                    state.presentIds.emplace_back(uint64_t(value));
++                }
++                cursor = end;
++            }
++
++            std::sort(state.presentIds.begin(), state.presentIds.end());
++            state.presentIds.erase(
++                std::unique(state.presentIds.begin(), state.presentIds.end()),
++                state.presentIds.end());
++            if (state.presentIds.empty()) {
++                return state;
++            }
++
++            state.directory = std::filesystem::path(capturePath);
++            std::error_code ec;
++            std::filesystem::create_directories(state.directory, ec);
++            state.enabled = !ec;
++            if (state.enabled) {
++                std::printf(
++                    "[sote][visible-capture] path=%s count=%zu\n",
++                    state.directory.string().c_str(),
++                    state.presentIds.size());
++                std::fflush(stdout);
++            }
++
++            return state;
++        }
++
++        bool shouldCaptureVisible(uint64_t presentId) {
++            VisibleCaptureState &state = visibleCaptureState();
++            if (!state.enabled) {
++                return false;
++            }
++
++            while ((state.nextPresentId < state.presentIds.size()) &&
++                   (state.presentIds[state.nextPresentId] < presentId)) {
++                ++state.nextPresentId;
++            }
++
++            return (state.nextPresentId < state.presentIds.size()) &&
++                (state.presentIds[state.nextPresentId] == presentId);
++        }
++
++        VisibleCapture queueVisibleCapture(
++            RenderDevice *device,
++            RenderCommandList *commandList,
++            RenderTexture *swapChainTexture,
++            uint64_t presentId,
++            uint32_t width,
++            uint32_t height) {
++            VisibleCapture capture;
++            if ((device == nullptr) || (commandList == nullptr) ||
++                (swapChainTexture == nullptr) || (width == 0) ||
++                (height == 0) || !shouldCaptureVisible(presentId)) {
++                return capture;
++            }
++
++            VisibleCaptureState &state = visibleCaptureState();
++            ++state.nextPresentId;
++            const uint32_t rowPitch =
++                ((width * SwapChainBytesPerPixel +
++                    TextureDataPitchAlignment - 1) /
++                    TextureDataPitchAlignment) *
++                TextureDataPitchAlignment;
++            const uint32_t rowWidth = rowPitch / SwapChainBytesPerPixel;
++            const uint64_t byteCount = uint64_t(rowPitch) * height;
++            capture.readbackBuffer =
++                device->createBuffer(RenderBufferDesc::ReadbackBuffer(byteCount));
++            capture.output =
++                state.directory /
++                ("present_" + std::to_string(presentId) + ".ppm");
++            capture.presentId = presentId;
++            capture.width = width;
++            capture.height = height;
++            capture.rowPitch = rowPitch;
++
++            commandList->barriers(
++                RenderBarrierStage::COPY,
++                RenderTextureBarrier(
++                    swapChainTexture,
++                    RenderTextureLayout::COPY_SOURCE));
++            commandList->copyTextureRegion(
++                RenderTextureCopyLocation::PlacedFootprint(
++                    capture.readbackBuffer.get(),
++                    RenderFormat::B8G8R8A8_UNORM,
++                    width,
++                    height,
++                    1,
++                    rowWidth),
++                RenderTextureCopyLocation::Subresource(swapChainTexture));
++
++            return capture;
++        }
++
++        void writeVisibleCapture(const VisibleCapture &capture) {
++            if (capture.readbackBuffer == nullptr || capture.width == 0 ||
++                capture.height == 0 || capture.rowPitch == 0) {
++                return;
++            }
++
++            const uint64_t byteCount =
++                uint64_t(capture.rowPitch) * capture.height;
++            RenderRange readRange = { 0, byteCount };
++            const uint8_t *readbackData =
++                reinterpret_cast<const uint8_t *>(
++                    capture.readbackBuffer->map(0, &readRange));
++            if (readbackData == nullptr) {
++                return;
++            }
++
++            std::ofstream file(capture.output, std::ios::binary);
++            if (!file) {
++                capture.readbackBuffer->unmap();
++                return;
++            }
++
++            file << "P6\n" << capture.width << " " << capture.height
++                 << "\n255\n";
++            uint64_t lavender = 0;
++            uint64_t black = 0;
++            uint64_t white = 0;
++            const uint64_t pixelCount =
++                uint64_t(capture.width) * uint64_t(capture.height);
++            for (uint32_t y = 0; y < capture.height; ++y) {
++                const uint8_t *row =
++                    readbackData + uint64_t(y) * capture.rowPitch;
++                for (uint32_t x = 0; x < capture.width; ++x) {
++                    const uint8_t b = row[x * 4 + 0];
++                    const uint8_t g = row[x * 4 + 1];
++                    const uint8_t r = row[x * 4 + 2];
++                    const uint8_t rgb[3] = { r, g, b };
++                    if (b > r + 8 && b > g + 8 && r > 80 && g > 80) {
++                        ++lavender;
++                    }
++                    if (r < 8 && g < 8 && b < 8) {
++                        ++black;
++                    }
++                    if (r > 248 && g > 248 && b > 248) {
++                        ++white;
++                    }
++                    file.write(reinterpret_cast<const char *>(rgb), 3);
++                }
++            }
++            capture.readbackBuffer->unmap();
++
++            std::printf(
++                "[sote][visible-capture] present=%llu wrote=%s "
++                "size=%ux%u lavender=%.3f%% black=%.3f%% white=%.3f%%\n",
++                static_cast<unsigned long long>(capture.presentId),
++                capture.output.string().c_str(),
++                capture.width,
++                capture.height,
++                double(lavender) * 100.0 / double(pixelCount),
++                double(black) * 100.0 / double(pixelCount),
++                double(white) * 100.0 / double(pixelCount));
++            std::fflush(stdout);
++        }
++    }
++
+     // PresentQueue
+ 
+     PresentQueue::PresentQueue() {
+@@ -115,6 +329,8 @@ namespace RT64 {
+         }
+ 
+         RenderTarget *colorTarget = nullptr;
++        const char *sotePresentSource = "none";
++        uint32_t sotePresentFbAddress = 0;
+         int32_t framesToPresent = 1;
+         bool lockedWorkloadMutex = false;
+         InterpolatedFrameCounters &frameCounters = ext.sharedResources->interpolatedFrames[ext.sharedResources->interpolatedFramesIndex];
+@@ -155,6 +371,8 @@ namespace RT64 {
+             }
+             
+             if ((presentFb != nullptr) && (viFb != nullptr)) {
++                sotePresentSource = "rt64-framebuffer";
++                sotePresentFbAddress = presentFb->addressStart;
+                 for (uint32_t colorAddress : ext.sharedResources->colorImageAddressVector) {
+                     Framebuffer *colorFb = fbManager.find(colorAddress);
+                     if (colorFb == nullptr) {
+@@ -186,7 +404,8 @@ namespace RT64 {
+                     }
+                 }
+ 
+-                if (presentFb->interpolationEnabled) {
++                if (presentFb->interpolationEnabled &&
++                    (refreshRate != UserConfiguration::RefreshRate::Original)) {
+                     framesToPresent = frameCounters.count;
+                 }
+                 else {
+@@ -218,6 +437,8 @@ namespace RT64 {
+             }
+             else {
+                 uint32_t fbAddress = present.screenVI.fbAddress();
++                sotePresentSource = "rdram-scratch";
++                sotePresentFbAddress = fbAddress;
+ 
+                 // Use a scratch framebuffer to upload the RAM to the render target.
+                 hlslpp::uint2 fbSize = present.screenVI.fbSize();
+@@ -288,6 +509,7 @@ namespace RT64 {
+                 if (i < framesToPresent) {
+                     uint32_t targetIndex = usingMSAA ? i : (i - 1);
+                     colorTarget = ext.sharedResources->interpolatedColorTargets[targetIndex].get();
++                    sotePresentSource = "interpolated";
+                 }
+                 else {
+                     colorTarget = nullptr;
+@@ -341,7 +563,7 @@ namespace RT64 {
+                 }
+                 
+                 commandList->setFramebuffer(swapChainFramebuffer);
+-                commandList->clearColor();
++                commandList->clearColor(0, RenderColor(0.0f, 0.0f, 0.0f, 1.0f));
+ 
+                 if (renderParams.texture != nullptr) {
+                     commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(renderParams.texture, RenderTextureLayout::SHADER_READ));
+@@ -359,6 +581,29 @@ namespace RT64 {
+                         inspector->draw(commandList);
+                     }
+                     
++                    VisibleCapture visibleCapture = queueVisibleCapture(
++                        ext.device,
++                        commandList,
++                        swapChainTexture,
++                        present.presentId,
++                        ext.swapChain->getWidth(),
++                        ext.swapChain->getHeight());
++                    if (std::getenv("SOTE_TRACE_PRESENT_SOURCE") != nullptr) {
++                        std::printf(
++                            "[sote][present-source] present=%llu frame=%d/%d "
++                            "source=%s fb=%08X color_target=%s "
++                            "visible=%d vi_fb=%08X refresh=%d\n",
++                            static_cast<unsigned long long>(present.presentId),
++                            i + 1,
++                            framesToPresent,
++                            sotePresentSource,
++                            sotePresentFbAddress,
++                            colorTarget != nullptr ? "yes" : "no",
++                            present.screenVI.visible() ? 1 : 0,
++                            present.screenVI.fbAddress(),
++                            static_cast<int>(refreshRate));
++                        std::fflush(stdout);
++                    }
+                     commandList->barriers(RenderBarrierStage::NONE, RenderTextureBarrier(swapChainTexture, RenderTextureLayout::PRESENT));
+                     commandList->end();
+                     const RenderCommandList *commandList = ext.presentGraphicsWorker->commandList.get();
+@@ -366,6 +611,7 @@ namespace RT64 {
+                     RenderCommandSemaphore *signalSemaphore = drawSemaphores[swapChainIndex].get();
+                     ext.presentGraphicsWorker->commandQueue->executeCommandLists(&commandList, 1, &waitSemaphore, 1, &signalSemaphore, 1, ext.presentGraphicsWorker->commandFence.get());
+                     ext.presentGraphicsWorker->wait();
++                    writeVisibleCapture(visibleCapture);
+                 }
+             }
+ 
+diff --git a/src/hle/rt64_state.cpp b/src/hle/rt64_state.cpp
+index 2970e71..7cae864 100644
+--- a/src/hle/rt64_state.cpp
++++ b/src/hle/rt64_state.cpp
+@@ -6,6 +6,7 @@
+ 
+ #include <cassert>
+ #include <cinttypes>
++#include <cstdlib>
+ 
+ #include "im3d/im3d.h"
+ #include "im3d/im3d_math.h"
+@@ -61,6 +62,16 @@ namespace RT64 {
+         rsp = std::make_unique<RSP>(this);
+         rdp = std::make_unique<RDP>(this);
+ 
++        if (const char *textureDumpPath = std::getenv("SOTE_TEXTURE_DUMP_PATH")) {
++            if (textureDumpPath[0] != '\0') {
++                dumpingTexturesDirectory = std::filesystem::u8path(textureDumpPath);
++                std::filesystem::create_directories(dumpingTexturesDirectory);
++                textureManager.dumpedSet.clear();
++                fprintf(stderr, "[rt64][texture-dump] dumping textures to %s\n", dumpingTexturesDirectory.string().c_str());
++                fflush(stderr);
++            }
++        }
++
+         reset();
+     }
+ 
+@@ -2801,4 +2812,4 @@ namespace RT64 {
+             break;
+         }
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/render/rt64_render_target.cpp b/src/render/rt64_render_target.cpp
+index 81917bc..da66605 100644
+--- a/src/render/rt64_render_target.cpp
++++ b/src/render/rt64_render_target.cpp
+@@ -96,6 +96,7 @@ namespace RT64 {
+             resolvedTextureView = resolvedTexture->createTextureView(RenderTextureViewDesc::Texture2D(format));
+             resolvedTexture->setName("Render Target Color Resolved #" + std::to_string(addressForName));
+         }
++
+     }
+ 
+     void RenderTarget::setupDepth(RenderWorker *worker, uint32_t width, uint32_t height) {
+@@ -512,4 +513,4 @@ namespace RT64 {
+     RenderFormat RenderTarget::depthBufferFormat() {
+         return RenderFormat::D32_FLOAT;
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/render/rt64_render_target.h b/src/render/rt64_render_target.h
+index 82d8a36..3937fc9 100644
+--- a/src/render/rt64_render_target.h
++++ b/src/render/rt64_render_target.h
+@@ -75,4 +75,4 @@ namespace RT64 {
+         static RenderFormat colorBufferFormat(bool usesHDR);
+         static RenderFormat depthBufferFormat();
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/render/rt64_texture_cache.cpp b/src/render/rt64_texture_cache.cpp
+index 0848f3e..950bc1b 100644
+--- a/src/render/rt64_texture_cache.cpp
++++ b/src/render/rt64_texture_cache.cpp
+@@ -20,6 +20,12 @@
+ 
+ #include "rt64_texture_cache.h"
+ 
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <iomanip>
++#include <unordered_set>
++
+ #define ONLY_USE_LOW_MIP_CACHE 0
+ 
+ namespace RT64 {
+@@ -29,6 +35,48 @@ namespace RT64 {
+     static const uint32_t TextureDataPitchAlignment = 256;
+     static const uint32_t TextureDataPlacementAlignment = 512;
+ 
++    static bool traceTextureReplacements() {
++        const char *trace = std::getenv("SOTE_TEXTURE_REPLACEMENT_TRACE");
++        return (trace != nullptr) && (trace[0] != '\0') && (trace[0] != '0');
++    }
++
++    static void logTextureHashUse(uint64_t hash, uint64_t submissionFrame, uint32_t textureIndex, const interop::float3 &dimensions, bool replaced) {
++        const char *logPath = std::getenv("SOTE_TEXTURE_HASH_LOG");
++        if ((logPath == nullptr) || (logPath[0] == '\0')) {
++            return;
++        }
++
++        static std::ofstream log;
++        static std::unordered_set<uint64_t> seenHashes;
++        if (!log.is_open()) {
++            const std::filesystem::path path = std::filesystem::u8path(logPath);
++            const std::filesystem::path parent = path.parent_path();
++            if (!parent.empty()) {
++                std::filesystem::create_directories(parent);
++            }
++
++            log.open(path, std::ios::out | std::ios::trunc);
++            if (log.is_open()) {
++                log << "hash\tfirst_submission_frame\ttexture_index\twidth\theight\tmips\treplaced\n";
++            }
++        }
++
++        if (!log.is_open() || !seenHashes.insert(hash).second) {
++            return;
++        }
++
++        log << std::hex << std::setw(16) << std::setfill('0') << hash
++            << std::dec << std::setfill(' ')
++            << '\t' << submissionFrame
++            << '\t' << textureIndex
++            << '\t' << static_cast<uint32_t>(dimensions.x)
++            << '\t' << static_cast<uint32_t>(dimensions.y)
++            << '\t' << static_cast<uint32_t>(dimensions.z)
++            << '\t' << (replaced ? 1 : 0)
++            << '\n';
++        log.flush();
++    }
++
+     ReplacementMap::ReplacementMap() {
+         // Empty constructor.
+     }
+@@ -313,6 +361,13 @@ namespace RT64 {
+             textureDimensions = cachedTextureDimensions[textureIndex];
+         }
+ 
++        logTextureHashUse(
++            hash,
++            submissionFrame,
++            textureIndex,
++            cachedTextureDimensions[textureIndex],
++            textureReplaced);
++
+         // Remove the existing entry from the list if it exists.
+         AccessList::iterator listIt = listIterators[textureIndex];
+         if (listIt != accessList.end()) {
+@@ -435,12 +490,22 @@ namespace RT64 {
+                 textureCache->addStreamLoadTime(elapsedTimer.elapsedMicroseconds());
+ 
+                 if (fileLoaded) {
++                    if (traceTextureReplacements()) {
++                        fprintf(stderr, "[rt64][replacement] stream load path=%s bytes=%zu\n", streamDesc.relativePath.c_str(), replacementBytes.size());
++                        fflush(stderr);
++                    }
++
+                     worker->commandList->begin();
+                     Texture *texture = TextureCache::loadTextureFromBytes(worker->device, worker->commandList.get(), replacementBytes, uploadResource);
+                     worker->commandList->end();
+ 
+                     // Only execute the command list and wait if the texture was loaded successfully.
+                     if (texture != nullptr) {
++                        if (traceTextureReplacements()) {
++                            fprintf(stderr, "[rt64][replacement] stream decoded path=%s size=%ux%u mips=%u format=%u\n", streamDesc.relativePath.c_str(), texture->width, texture->height, texture->mipmaps, uint32_t(texture->format));
++                            fflush(stderr);
++                        }
++
+                         worker->execute();
+                         worker->wait();
+                         textureCache->uploadQueueMutex.lock();
+@@ -448,6 +513,14 @@ namespace RT64 {
+                         textureCache->uploadQueueMutex.unlock();
+                         textureCache->uploadQueueChanged.notify_all();
+                     }
++                    else if (traceTextureReplacements()) {
++                        fprintf(stderr, "[rt64][replacement] stream decode failed path=%s\n", streamDesc.relativePath.c_str());
++                        fflush(stderr);
++                    }
++                }
++                else if (traceTextureReplacements()) {
++                    fprintf(stderr, "[rt64][replacement] stream missing path=%s\n", streamDesc.relativePath.c_str());
++                    fflush(stderr);
+                 }
+             }
+         }
+@@ -1142,6 +1215,11 @@ namespace RT64 {
+                             // Make sure the replacement map hasn't queued or loaded the relative path already.
+                             auto &streamSet = textureMap.replacementMap.fileSystemStreamSets[resolvedPath.fileSystemIndex];
+                             if (streamSet.find(resolvedPath.relativePath) == streamSet.end()) {
++                                if (traceTextureReplacements()) {
++                                    fprintf(stderr, "[rt64][replacement] match hash=%016llx path=%s op=stream\n", static_cast<unsigned long long>(resolvedPath.textureHash), resolvedPath.relativePath.c_str());
++                                    fflush(stderr);
++                                }
++
+                                 streamSet.insert(resolvedPath.relativePath);
+ 
+                                 // Push to the streaming queue.
+@@ -1160,8 +1238,22 @@ namespace RT64 {
+                         }
+                         // Load the texture directly on this thread (operation was defined as Stall).
+                         else if (textureMap.replacementMap.fileSystems[resolvedPath.fileSystemIndex]->load(resolvedPath.relativePath, replacementBytes)) {
++                            if (traceTextureReplacements()) {
++                                fprintf(stderr, "[rt64][replacement] match hash=%016llx path=%s op=stall bytes=%zu\n", static_cast<unsigned long long>(resolvedPath.textureHash), resolvedPath.relativePath.c_str(), replacementBytes.size());
++                                fflush(stderr);
++                            }
++
+                             replacementUploadResources.emplace_back();
+                             replacementTexture = TextureCache::loadTextureFromBytes(copyWorker->device, copyWorker->commandList.get(), replacementBytes, replacementUploadResources.back());
++                            if (replacementTexture == nullptr) {
++                                if (traceTextureReplacements()) {
++                                    fprintf(stderr, "[rt64][replacement] stall decode failed path=%s\n", resolvedPath.relativePath.c_str());
++                                    fflush(stderr);
++                                }
++
++                                continue;
++                            }
++
+                             textureMapMutex.lock();
+                             textureMap.replacementMap.addLoadedTexture(replacementTexture, resolvedPath.fileSystemIndex, resolvedPath.relativePath, true);
+                             textureMapMutex.unlock();

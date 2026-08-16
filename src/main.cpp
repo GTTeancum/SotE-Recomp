@@ -1,4 +1,5 @@
 #include <atomic>
+#include <array>
 #include <chrono>
 #include <cmath>
 #include <condition_variable>
@@ -13,6 +14,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
 #include <Windows.h>
@@ -25,6 +27,8 @@
 #include "controls_menu.hpp"
 #include "frontend.hpp"
 #include "graphics_menu.hpp"
+#include "hd_audio.hpp"
+#include "hd_music.hpp"
 #include "rt64_renderer.hpp"
 #include "ultramodern/error_handling.hpp"
 #include "ultramodern/events.hpp"
@@ -33,6 +37,7 @@
 #include "ultramodern/ultramodern.hpp"
 
 extern "C" void recomp_entrypoint(uint8_t* rdram, recomp_context* ctx);
+extern "C" void func_80000E64(uint8_t* rdram, recomp_context* ctx);
 extern "C" void func_80017B60(uint8_t* rdram, recomp_context* ctx);
 extern "C" void osPiReadIo_recomp(uint8_t* rdram, recomp_context* ctx) {
     constexpr uint32_t cart_physical_base = 0x10000000U;
@@ -79,6 +84,13 @@ std::atomic<uint32_t> committed_life_loss_count{0};
 std::atomic<uint16_t> current_scripted_buttons{0};
 std::atomic<int8_t> current_scripted_stick_x{0};
 std::atomic<int8_t> current_scripted_stick_y{0};
+std::atomic<int> hd_music_last_level{-10000};
+std::atomic<int> hd_music_stable_vis{0};
+std::atomic<uint32_t> gall_dfob_text_pointer{0};
+std::mutex droid_candidate_mutex;
+std::mutex droid_voice_mutex;
+std::array<uint32_t, 64> droid_visual_candidate_objects{};
+std::unordered_set<std::string> attempted_droid_voice_texts;
 int last_life_loss_vi = -10000;
 int16_t last_life_loss_event = -1;
 int last_committed_life_loss_vi = -10000;
@@ -108,6 +120,7 @@ uint64_t smoke_observation_start_game_frames = 0;
 int smoke_expected_level_index = -1;
 std::string smoke_expected_level_name;
 std::filesystem::path runtime_directory;
+std::filesystem::path selected_rom_path;
 bool graphics_fullscreen = false;
 HWND graphics_window = nullptr;
 WINDOWPLACEMENT windowed_placement{sizeof(WINDOWPLACEMENT)};
@@ -141,6 +154,112 @@ std::filesystem::path get_executable_directory() {
     return std::filesystem::path(
         path_buffer.data(),
         path_buffer.data() + path_length).parent_path();
+}
+
+uint32_t read_u32_be(const std::vector<uint8_t>& bytes, size_t offset) {
+    if (offset + 4 > bytes.size()) {
+        std::fprintf(stderr, "[sote] ROM read past end at 0x%zX\n", offset);
+        std::_Exit(EXIT_FAILURE);
+    }
+    return (static_cast<uint32_t>(bytes[offset]) << 24) |
+        (static_cast<uint32_t>(bytes[offset + 1]) << 16) |
+        (static_cast<uint32_t>(bytes[offset + 2]) << 8) |
+        static_cast<uint32_t>(bytes[offset + 3]);
+}
+
+std::vector<uint8_t> read_file_bytes(const std::filesystem::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    if (!input) {
+        std::fprintf(
+            stderr,
+            "[sote] failed to open %s\n",
+            path.string().c_str());
+        std::_Exit(EXIT_FAILURE);
+    }
+
+    input.seekg(0, std::ios::end);
+    const std::streamoff size = input.tellg();
+    input.seekg(0, std::ios::beg);
+    if (size <= 0) {
+        std::fprintf(
+            stderr,
+            "[sote] empty file: %s\n",
+            path.string().c_str());
+        std::_Exit(EXIT_FAILURE);
+    }
+
+    std::vector<uint8_t> bytes(static_cast<size_t>(size));
+    input.read(
+        reinterpret_cast<char*>(bytes.data()),
+        static_cast<std::streamsize>(bytes.size()));
+    if (input.gcount() != static_cast<std::streamsize>(bytes.size())) {
+        std::fprintf(
+            stderr,
+            "[sote] short read: %s\n",
+            path.string().c_str());
+        std::_Exit(EXIT_FAILURE);
+    }
+    return bytes;
+}
+
+void load_retail_image_from_rom(uint8_t* rdram, recomp_context* ctx) {
+    constexpr size_t ogre_header_offset = 0x1F30;
+    constexpr size_t compressed_staging_offset = 0x00300000;
+    constexpr uint32_t compressed_staging_address = 0x80300000U;
+    constexpr uint32_t decompressed_address = 0x80001EC0U;
+    constexpr uint32_t stack_address = 0x807FF000U;
+    constexpr size_t rdram_size = 0x00800000;
+
+    const std::vector<uint8_t> rom = read_file_bytes(selected_rom_path);
+    if (rom.size() <= ogre_header_offset + 16 ||
+        std::memcmp(rom.data() + ogre_header_offset, "Ogre", 4) != 0) {
+        std::fprintf(
+            stderr,
+            "[sote] Ogre executable header missing in %s\n",
+            selected_rom_path.string().c_str());
+        std::_Exit(EXIT_FAILURE);
+    }
+
+    const uint32_t compressed_start =
+        read_u32_be(rom, ogre_header_offset + 8);
+    const uint32_t compressed_end =
+        read_u32_be(rom, ogre_header_offset + 12);
+    if (compressed_start <= ogre_header_offset ||
+        compressed_end <= compressed_start ||
+        compressed_end > rom.size()) {
+        std::fprintf(
+            stderr,
+            "[sote] invalid Ogre compressed range %08X-%08X\n",
+            compressed_start,
+            compressed_end);
+        std::_Exit(EXIT_FAILURE);
+    }
+
+    const size_t compressed_size = compressed_end - compressed_start;
+    if (compressed_staging_offset + compressed_size > rdram_size) {
+        std::fprintf(stderr, "[sote] compressed executable is too large\n");
+        std::_Exit(EXIT_FAILURE);
+    }
+
+    for (size_t i = 0; i < compressed_size; ++i) {
+        MEM_B(i, static_cast<int32_t>(compressed_staging_address)) =
+            rom[compressed_start + i];
+    }
+    ctx->r4 = static_cast<int32_t>(compressed_staging_address);
+    ctx->r5 = static_cast<int32_t>(decompressed_address);
+    ctx->r29 = static_cast<int32_t>(stack_address);
+    func_80000E64(rdram, ctx);
+    if (static_cast<uint32_t>(ctx->r2) != decompressed_address + 0xEC880U) {
+        std::fprintf(
+            stderr,
+            "[sote] ROM decompressor returned %08X\n",
+            static_cast<uint32_t>(ctx->r2));
+        std::_Exit(EXIT_FAILURE);
+    }
+    std::printf(
+        "[sote] retail executable decompressed from ROM: %zu bytes\n",
+        compressed_size);
+    std::fflush(stdout);
 }
 
 void initialize_persistent_logging() {
@@ -330,6 +449,51 @@ const char* level_name_for_index(int level_index) {
         return "unknown";
     }
     return names[level_index];
+}
+
+void update_hd_music_from_game_state(uint8_t* rdram) {
+    if (rdram == nullptr || !sote::hd_music::is_enabled() ||
+        std::getenv("SOTE_DISABLE_HD_MUSIC") != nullptr) {
+        return;
+    }
+
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    const int16_t event =
+        static_cast<int16_t>(read_guest_half(rdram, 0x8013CE0EU));
+    const int32_t result =
+        static_cast<int32_t>(read_guest_word(rdram, 0x800DD2B0U));
+    const int32_t lives =
+        static_cast<int32_t>(read_guest_word(rdram, 0x800E0EB0U));
+    if (result == 4 || lives < 0) {
+        sote::hd_music::set_slot("game_over");
+        return;
+    }
+
+    const int level_index = level_index_for_event(event);
+    if (result != 2 || level_index < 0) {
+        hd_music_last_level.store(-10000, std::memory_order_relaxed);
+        hd_music_stable_vis.store(0, std::memory_order_relaxed);
+        sote::hd_music::stop();
+        return;
+    }
+
+    const int previous_level =
+        hd_music_last_level.exchange(level_index, std::memory_order_relaxed);
+    if (previous_level != level_index) {
+        hd_music_stable_vis.store(vi, std::memory_order_relaxed);
+        sote::hd_music::stop();
+        return;
+    }
+
+    constexpr int stable_gameplay_vis_before_music = 90;
+    const int stable_since =
+        hd_music_stable_vis.load(std::memory_order_relaxed);
+    if (stable_since <= 0 ||
+        vi - stable_since < stable_gameplay_vis_before_music) {
+        return;
+    }
+
+    sote::hd_music::set_slot(level_name_for_index(level_index));
 }
 
 void note_life_loss_cadence(
@@ -1117,27 +1281,28 @@ void retail_entrypoint(uint8_t* rdram, recomp_context* ctx) {
         portable_layout
             ? runtime_directory / "main.bin"
             : std::filesystem::current_path() / "generated" / "main.bin";
-    std::ifstream image(image_path, std::ios::binary);
-    if (!image) {
-        std::fprintf(
-            stderr,
-            "[sote] retail image is missing: %s\n",
-            image_path.string().c_str());
-        std::_Exit(EXIT_FAILURE);
-    }
-    std::vector<uint8_t> executable(main_size);
-    image.read(
-        reinterpret_cast<char*>(executable.data()),
-        static_cast<std::streamsize>(executable.size()));
-    if (image.gcount() != static_cast<std::streamsize>(main_size)) {
-        std::fprintf(stderr, "[sote] generated/main.bin has the wrong size\n");
-        std::_Exit(EXIT_FAILURE);
-    }
     constexpr gpr main_address = static_cast<gpr>(
         static_cast<int32_t>(0x80001EC0U));
-    for (size_t i = 0; i < executable.size(); ++i) {
-        MEM_B(i, main_address) = executable[i];
+    if (std::filesystem::is_regular_file(image_path)) {
+        std::ifstream image(image_path, std::ios::binary);
+        std::vector<uint8_t> executable(main_size);
+        image.read(
+            reinterpret_cast<char*>(executable.data()),
+            static_cast<std::streamsize>(executable.size()));
+        if (image.gcount() != static_cast<std::streamsize>(main_size)) {
+            std::fprintf(
+                stderr,
+                "[sote] generated/main.bin has the wrong size\n");
+            std::_Exit(EXIT_FAILURE);
+        }
+        for (size_t i = 0; i < executable.size(); ++i) {
+            MEM_B(i, main_address) = executable[i];
+        }
+    } else {
+        load_retail_image_from_rom(rdram, ctx);
     }
+
+    ctx->r29 = static_cast<int32_t>(0x80113440U);
 
     // The retail Ogre loader leaves the entire region between the decompressed
     // image and its bootstrap stack zeroed. Explicitly clear it: the runtime's
@@ -1521,6 +1686,7 @@ void on_vi() {
     const int count = ++vi_count;
     game_frame_cv.notify_all();
     log_bike_telemetry(count);
+    update_hd_music_from_game_state(game_rdram);
     // Within one run: snapshot every float at viA, compare at viB, and
     // report those that moved. Held input starts between the two, so a
     // speed-like value shows up as a large sustained change without the
@@ -2279,6 +2445,664 @@ extern "C" void sote_note_audio_negative_exponent(int32_t exponent) {
     }
 }
 
+std::string read_guest_ascii_string(
+    uint8_t* rdram,
+    uint32_t address,
+    size_t max_length = 256) {
+    if (rdram == nullptr ||
+        address < 0x80000000U ||
+        address >= 0x80800000U) {
+        return {};
+    }
+
+    std::string text;
+    text.reserve(max_length);
+    size_t printable_count = 0;
+    for (size_t i = 0; i < max_length; ++i) {
+        const uint32_t current_address = address + static_cast<uint32_t>(i);
+        if (current_address >= 0x80800000U) {
+            break;
+        }
+        const uint8_t byte = read_guest_byte(rdram, current_address);
+        if (byte == 0) {
+            break;
+        }
+        if (byte == '\n' || byte == '\r' || byte == '\t' ||
+            (byte >= 0x20 && byte < 0x7F)) {
+            text.push_back(static_cast<char>(byte));
+            if (byte >= 0x20 && byte < 0x7F) {
+                ++printable_count;
+            }
+        } else {
+            return {};
+        }
+    }
+    if (printable_count < 3) {
+        return {};
+    }
+    return text;
+}
+
+bool is_guest_address(uint32_t address) {
+    return address >= 0x80000000U && address < 0x80800000U;
+}
+
+bool text_matches_gall_droid_prompt(std::string_view text) {
+    std::string lower_text{text};
+    std::transform(
+        lower_text.begin(),
+        lower_text.end(),
+        lower_text.begin(),
+        [](unsigned char ch) {
+            return static_cast<char>(std::tolower(ch));
+        });
+    return lower_text.find("dfob") != std::string::npos ||
+        lower_text.find("watch the ship") != std::string::npos;
+}
+
+bool text_matches_droid_voice_candidate(std::string_view text) {
+    std::string lower_text{text};
+    std::transform(
+        lower_text.begin(),
+        lower_text.end(),
+        lower_text.begin(),
+        [](unsigned char ch) {
+            return static_cast<char>(std::tolower(ch));
+        });
+
+    return lower_text.find("dfob") != std::string::npos ||
+        lower_text.find("watch the ship") != std::string::npos ||
+        lower_text.find("boba fett") != std::string::npos ||
+        lower_text.find("empire has destroyed") != std::string::npos ||
+        lower_text.find("bay 3") != std::string::npos ||
+        lower_text.find("fly us to the skyhook") != std::string::npos ||
+        lower_text.find("xizor's fighters") != std::string::npos ||
+        lower_text.find("gun turret") != std::string::npos;
+}
+
+std::string droid_voice_key(std::string_view text) {
+    std::string normalized;
+    normalized.reserve(text.size());
+    bool in_control = false;
+    bool last_space = true;
+    for (const char c : text) {
+        const unsigned char byte = static_cast<unsigned char>(c);
+        if (c == '~') {
+            in_control = true;
+            continue;
+        }
+        if (in_control) {
+            if ((c == 'n' || c == 'N' || c == 'r' || c == 'R' ||
+                    c == 't' || c == 'T') &&
+                !last_space) {
+                normalized.push_back(' ');
+                last_space = true;
+            }
+            in_control = false;
+            continue;
+        }
+        if (std::isspace(byte)) {
+            if (!last_space) {
+                normalized.push_back(' ');
+                last_space = true;
+            }
+            continue;
+        }
+        if (byte >= 0x20 && byte < 0x7F) {
+            normalized.push_back(
+                static_cast<char>(std::tolower(byte)));
+            last_space = false;
+        }
+    }
+    if (!normalized.empty() && normalized.back() == ' ') {
+        normalized.pop_back();
+    }
+    return normalized;
+}
+
+bool text_is_confirmed_droid_overlay(std::string_view text) {
+    const std::string key = droid_voice_key(text);
+    return key.find("the empire has destroyed the main generator") !=
+            std::string::npos ||
+        key.find("watch the ship") != std::string::npos ||
+        key.find("fly us to the skyhook") != std::string::npos;
+}
+
+const char* fallback_droid_voice_file(std::string_view text) {
+    return text_matches_gall_droid_prompt(text) ? "ILB11.WAV" : nullptr;
+}
+
+bool claim_droid_voice_attempt(std::string key) {
+    if (key.empty()) {
+        return false;
+    }
+
+    std::lock_guard lock{droid_voice_mutex};
+    return attempted_droid_voice_texts.insert(std::move(key)).second;
+}
+
+std::string read_probable_message_text(
+    uint8_t* rdram,
+    uint32_t message_object) {
+    if (!is_guest_address(message_object)) {
+        return {};
+    }
+
+    std::string text = read_guest_ascii_string(rdram, message_object);
+    if (!text.empty()) {
+        return text;
+    }
+
+    constexpr std::array<uint32_t, 8> candidate_offsets{
+        0x0U,
+        0x4U,
+        0x38U,
+        0x3CU,
+        0x60U,
+        0x64U,
+        0x98U,
+        0xA0U,
+    };
+    for (const uint32_t offset : candidate_offsets) {
+        const uint32_t pointer =
+            read_guest_word(rdram, message_object + offset);
+        text = read_guest_ascii_string(rdram, pointer);
+        if (!text.empty()) {
+            return text;
+        }
+    }
+
+    return {};
+}
+
+std::string read_text_slot_buffer(uint8_t* rdram, uint32_t slot) {
+    if (slot >= 80U) {
+        return {};
+    }
+
+    const uint32_t text_table = read_guest_word(rdram, 0x8013CE30U);
+    if (!is_guest_address(text_table)) {
+        return {};
+    }
+
+    const uint32_t text_buffer =
+        read_guest_word(rdram, text_table + slot * sizeof(uint32_t));
+    return read_guest_ascii_string(rdram, text_buffer, 512);
+}
+
+void remember_droid_visual_candidate_object(uint32_t object) {
+    if (!is_guest_address(object)) {
+        return;
+    }
+
+    std::lock_guard lock{droid_candidate_mutex};
+    for (uint32_t& candidate : droid_visual_candidate_objects) {
+        if (candidate == object) {
+            return;
+        }
+        if (candidate == 0) {
+            candidate = object;
+            return;
+        }
+    }
+}
+
+bool is_remembered_droid_visual_candidate_object(uint32_t object) {
+    if (!is_guest_address(object)) {
+        return false;
+    }
+
+    std::lock_guard lock{droid_candidate_mutex};
+    for (const uint32_t candidate : droid_visual_candidate_objects) {
+        if (candidate == object) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void log_droid_candidate_state(
+    uint8_t* rdram,
+    const char* tag,
+    uint32_t source,
+    uint32_t object,
+    uint32_t aux0,
+    uint32_t aux1,
+    uint32_t aux2) {
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    const bool valid_object = is_guest_address(object);
+    const uint32_t flags10 =
+        valid_object ? read_guest_word(rdram, object + 0x10U) : 0U;
+    const uint32_t flags68 =
+        valid_object ? read_guest_half(rdram, object + 0x68U) : 0U;
+    const uint32_t callback84 =
+        valid_object ? read_guest_word(rdram, object + 0x84U) : 0U;
+    const uint32_t linked98 =
+        valid_object ? read_guest_word(rdram, object + 0x98U) : 0U;
+    const uint32_t linked_a0 =
+        valid_object ? read_guest_word(rdram, object + 0xA0U) : 0U;
+    const std::string text = read_probable_message_text(rdram, object);
+
+    std::printf(
+        "[sote][droid-%s] source=%08X object=%08X aux0=%08X aux1=%08X "
+        "aux2=%08X VI=%d event=%d flags10=%08X flags68=%04X cb84=%08X "
+        "p98=%08X pA0=%08X text=\"%.96s\"\n",
+        tag,
+        source,
+        object,
+        aux0,
+        aux1,
+        aux2,
+        vi,
+        static_cast<int>(event),
+        flags10,
+        flags68,
+        callback84,
+        linked98,
+        linked_a0,
+        text.c_str());
+    std::fflush(stdout);
+}
+
+extern "C" void sote_trace_droid_visual_candidate(
+    uint8_t* rdram,
+    uint32_t source,
+    uint32_t message_key,
+    uint32_t message_object,
+    uint32_t aux) {
+    if (std::getenv("SOTE_TRACE_DROID_VISUAL") == nullptr) {
+        return;
+    }
+
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    const bool valid_object = is_guest_address(message_object);
+    const uint32_t flags68 =
+        valid_object ? read_guest_half(rdram, message_object + 0x68U) : 0U;
+    const uint32_t callback84 =
+        valid_object ? read_guest_word(rdram, message_object + 0x84U) : 0U;
+    const uint32_t linked98 =
+        valid_object ? read_guest_word(rdram, message_object + 0x98U) : 0U;
+    const uint32_t linked_a0 =
+        valid_object ? read_guest_word(rdram, message_object + 0xA0U) : 0U;
+    const std::string text =
+        read_probable_message_text(rdram, message_object);
+    if (source == 0x8000C89CU) {
+        remember_droid_visual_candidate_object(message_object);
+        if (is_guest_address(aux)) {
+            remember_droid_visual_candidate_object(read_guest_word(rdram, aux));
+        }
+    }
+
+    std::printf(
+        "[sote][droid-visual] source=%08X key=%u object=%08X aux=%08X "
+        "VI=%d event=%d flags68=%04X cb84=%08X p98=%08X pA0=%08X "
+        "text=\"%.96s\"\n",
+        source,
+        message_key,
+        message_object,
+        aux,
+        vi,
+        static_cast<int>(event),
+        flags68,
+        callback84,
+        linked98,
+        linked_a0,
+        text.c_str());
+    std::fflush(stdout);
+}
+
+extern "C" void sote_trace_droid_render_candidate(
+    uint8_t* rdram,
+    uint32_t source,
+    uint32_t object,
+    uint32_t aux0,
+    uint32_t aux1,
+    uint32_t aux2) {
+    if (std::getenv("SOTE_TRACE_DROID_VISUAL") == nullptr) {
+        return;
+    }
+    if (!is_remembered_droid_visual_candidate_object(object)) {
+        return;
+    }
+
+    log_droid_candidate_state(
+        rdram,
+        "render",
+        source,
+        object,
+        aux0,
+        aux1,
+        aux2);
+}
+
+extern "C" void sote_trace_text_draw_candidate(
+    uint8_t* rdram,
+    uint32_t display_list_pointer,
+    uint32_t text_pointer,
+    uint32_t caller) {
+    if (std::getenv("SOTE_TRACE_DROID_VISUAL") == nullptr) {
+        return;
+    }
+
+    const std::string text =
+        read_guest_ascii_string(rdram, text_pointer, 512);
+    if (!text_matches_droid_voice_candidate(text)) {
+        return;
+    }
+
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    std::printf(
+        "[sote][text-draw] dl=%08X text_pointer=%08X caller=%08X "
+        "VI=%d event=%d text=\"%.160s\"\n",
+        display_list_pointer,
+        text_pointer,
+        caller,
+        vi_count.load(std::memory_order_relaxed),
+        static_cast<int>(event),
+        text.c_str());
+    std::fflush(stdout);
+}
+
+extern "C" void sote_trace_text_stage_candidate(
+    uint8_t* rdram,
+    uint32_t source,
+    uint32_t slot,
+    uint32_t text_pointer,
+    uint32_t aux0,
+    uint32_t aux1) {
+    if (std::getenv("SOTE_TRACE_DROID_VISUAL") == nullptr) {
+        return;
+    }
+
+    const std::string text =
+        read_guest_ascii_string(rdram, text_pointer, 512);
+    if (!text_matches_droid_voice_candidate(text)) {
+        return;
+    }
+
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    std::printf(
+        "[sote][text-stage] source=%08X slot=%u text_pointer=%08X "
+        "aux0=%08X aux1=%08X VI=%d event=%d text=\"%.160s\"\n",
+        source,
+        slot,
+        text_pointer,
+        aux0,
+        aux1,
+        vi_count.load(std::memory_order_relaxed),
+        static_cast<int>(event),
+        text.c_str());
+    std::fflush(stdout);
+}
+
+extern "C" void sote_trace_text_slot_render_candidate(
+    uint8_t* rdram,
+    uint32_t source,
+    uint32_t slot,
+    uint32_t object,
+    uint32_t slot_flags_pointer,
+    uint32_t position_pointer) {
+    if (std::getenv("SOTE_TRACE_DROID_VISUAL") == nullptr) {
+        return;
+    }
+
+    const std::string text = read_text_slot_buffer(rdram, slot);
+    if (!text_matches_droid_voice_candidate(text)) {
+        return;
+    }
+
+    const bool valid_object = is_guest_address(object);
+    const bool valid_position = is_guest_address(position_pointer);
+    const bool valid_slot_flags = is_guest_address(slot_flags_pointer);
+    const uint32_t object_flags =
+        valid_object ? read_guest_half(rdram, object + 0x10U) : 0U;
+    const int16_t object_x =
+        valid_object ? static_cast<int16_t>(read_guest_half(rdram, object)) : 0;
+    const int16_t object_y = valid_object
+        ? static_cast<int16_t>(read_guest_half(rdram, object + 0x2U))
+        : 0;
+    const int16_t object_w = valid_object
+        ? static_cast<int16_t>(read_guest_half(rdram, object + 0x4U))
+        : 0;
+    const int16_t object_h = valid_object
+        ? static_cast<int16_t>(read_guest_half(rdram, object + 0x6U))
+        : 0;
+    const int16_t position_x = valid_position
+        ? static_cast<int16_t>(read_guest_half(rdram, position_pointer))
+        : 0;
+    const int16_t position_y = valid_position
+        ? static_cast<int16_t>(read_guest_half(rdram, position_pointer + 0x2U))
+        : 0;
+    const uint32_t slot_flags =
+        valid_slot_flags ? read_guest_byte(rdram, slot_flags_pointer) : 0U;
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+
+    std::printf(
+        "[sote][text-slot-render] source=%08X slot=%u object=%08X "
+        "slot_flags=%02X object_flags=%04X pos=%d,%d rect=%d,%d,%d,%d "
+        "VI=%d event=%d text=\"%.160s\"\n",
+        source,
+        slot,
+        object,
+        slot_flags,
+        object_flags,
+        position_x,
+        position_y,
+        object_x,
+        object_y,
+        object_w,
+        object_h,
+        vi_count.load(std::memory_order_relaxed),
+        static_cast<int>(event),
+        text.c_str());
+    std::fflush(stdout);
+}
+
+extern "C" void sote_note_droid_text_buffer_draw(
+    uint8_t* rdram,
+    uint32_t source,
+    uint32_t slot,
+    uint32_t text_pointer,
+    uint32_t position_pointer,
+    uint32_t color_pointer) {
+    if (slot != 31U) {
+        return;
+    }
+
+    const std::string text =
+        read_guest_ascii_string(rdram, text_pointer, 512);
+    if (!text_is_confirmed_droid_overlay(text)) {
+        return;
+    }
+
+    const bool valid_position = is_guest_address(position_pointer);
+    const bool valid_color = is_guest_address(color_pointer);
+    const int16_t position_x = valid_position
+        ? static_cast<int16_t>(read_guest_half(rdram, position_pointer))
+        : 0;
+    const int16_t position_y = valid_position
+        ? static_cast<int16_t>(read_guest_half(rdram, position_pointer + 0x2U))
+        : 0;
+    const uint32_t r = valid_color ? read_guest_byte(rdram, color_pointer) : 0U;
+    const uint32_t g =
+        valid_color ? read_guest_byte(rdram, color_pointer + 0x1U) : 0U;
+    const uint32_t b =
+        valid_color ? read_guest_byte(rdram, color_pointer + 0x2U) : 0U;
+    const uint32_t a =
+        valid_color ? read_guest_byte(rdram, color_pointer + 0x3U) : 0U;
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+
+    if (std::getenv("SOTE_TRACE_DROID_VISUAL") != nullptr) {
+        std::printf(
+            "[sote][droid-text-draw] source=%08X slot=%u "
+            "text_pointer=%08X pos=%d,%d color=%02X,%02X,%02X,%02X "
+            "VI=%d event=%d text=\"%.160s\"\n",
+            source,
+            slot,
+            text_pointer,
+            position_x,
+            position_y,
+            r,
+            g,
+            b,
+            a,
+            vi_count.load(std::memory_order_relaxed),
+            static_cast<int>(event),
+            text.c_str());
+        std::fflush(stdout);
+    }
+
+    std::string key = droid_voice_key(text);
+    if (!claim_droid_voice_attempt(std::move(key))) {
+        return;
+    }
+
+    const bool mapped_voice = sote::hd_audio::play_voice_for_text(text);
+    const char* fallback_file = fallback_droid_voice_file(text);
+    const bool fallback_voice =
+        !mapped_voice && fallback_file != nullptr &&
+        sote::hd_audio::play_file(fallback_file);
+    const bool queued = mapped_voice || fallback_voice;
+    std::printf(
+        "[sote][hd-audio] droid text draw %s%s%s "
+        "source=%08X slot=%u text_pointer=%08X VI=%d event=%d "
+        "text=\"%.96s\"\n",
+        queued
+            ? "queued "
+            : "failed ",
+        mapped_voice ? "mapped voice" : "",
+        fallback_voice ? fallback_file : "",
+        source,
+        slot,
+        text_pointer,
+        vi_count.load(std::memory_order_relaxed),
+        static_cast<int>(event),
+        text.c_str());
+    std::fflush(stdout);
+}
+
+extern "C" uint32_t sote_play_hd_sound_request(
+    uint8_t* rdram,
+    int32_t sound_id) {
+    (void)rdram;
+    return sote::hd_audio::play_sound_id(sound_id);
+}
+
+extern "C" void sote_note_message_lookup(
+    uint8_t* rdram,
+    uint32_t message_key,
+    uint32_t text_pointer,
+    uint32_t caller) {
+    const std::string text =
+        read_guest_ascii_string(rdram, text_pointer);
+    if (text.empty()) {
+        return;
+    }
+
+    sote::hd_audio::note_message_text(message_key, text, caller);
+    if (text_matches_gall_droid_prompt(text)) {
+        gall_dfob_text_pointer.store(
+            text_pointer,
+            std::memory_order_relaxed);
+        if (std::getenv("SOTE_TRACE_DROID_LOOKUP") != nullptr) {
+            const int16_t event = static_cast<int16_t>(
+                read_guest_half(rdram, 0x8013CE0EU));
+            std::printf(
+                "[sote][droid-lookup] key=%u text_pointer=%08X caller=%08X "
+                "VI=%d event=%d text=\"%.80s\"\n",
+                message_key,
+                text_pointer,
+                caller,
+                vi_count.load(std::memory_order_relaxed),
+                static_cast<int>(event),
+                text.c_str());
+            std::fflush(stdout);
+        }
+    }
+}
+
+extern "C" void sote_note_droid_overlay_message_activate(
+    uint8_t* rdram,
+    uint32_t message_table,
+    uint32_t message_key,
+    uint32_t text_pointer) {
+    const std::string text =
+        read_guest_ascii_string(rdram, text_pointer);
+    const bool trace_prompt =
+        std::getenv("SOTE_TRACE_DROID_PROMPT") != nullptr;
+    if (trace_prompt || text_matches_gall_droid_prompt(text)) {
+        std::printf(
+            "[sote][hd-audio] droid overlay activate "
+            "table=%08X key=%u text_pointer=%08X VI=%d text=\"%.80s\"\n",
+            message_table,
+            message_key,
+            text_pointer,
+            vi_count.load(std::memory_order_relaxed),
+            text.c_str());
+        std::fflush(stdout);
+    }
+
+    if (message_key == 0x17U && text_matches_gall_droid_prompt(text)) {
+        gall_dfob_text_pointer.store(text_pointer, std::memory_order_relaxed);
+    }
+}
+
+extern "C" void sote_note_droid_prompt_display(
+    uint8_t* rdram,
+    uint32_t source,
+    uint32_t message_object) {
+    const bool trace_prompt =
+        std::getenv("SOTE_TRACE_DROID_PROMPT") != nullptr;
+    if (!is_guest_address(message_object)) {
+        if (trace_prompt) {
+            std::printf(
+                "[sote][hd-audio] droid prompt display invalid "
+                "source=%08X message=%08X VI=%d\n",
+                source,
+                message_object,
+                vi_count.load(std::memory_order_relaxed));
+            std::fflush(stdout);
+        }
+        return;
+    }
+
+    std::string text = read_guest_ascii_string(rdram, message_object);
+    if (text.empty()) {
+        const uint32_t remembered_text =
+            gall_dfob_text_pointer.load(std::memory_order_relaxed);
+        const int16_t event = static_cast<int16_t>(
+            read_guest_half(rdram, 0x8013CE0EU));
+        const bool gall_display_site =
+            source == 0x8005B244U || source == 0x8005B270U;
+        if (!gall_display_site ||
+            remembered_text == 0 ||
+            !event_matches_level(4, event)) {
+            return;
+        }
+        text = read_guest_ascii_string(rdram, remembered_text);
+    }
+
+    if (trace_prompt) {
+        std::printf(
+            "[sote][hd-audio] droid prompt display "
+            "source=%08X message=%08X VI=%d text=\"%.80s\"\n",
+            source,
+            message_object,
+            vi_count.load(std::memory_order_relaxed),
+            text.c_str());
+        std::fflush(stdout);
+    }
+
+}
+
 extern "C" void sote_note_bike_life_loss(
     uint8_t* rdram,
     uint32_t source) {
@@ -2405,13 +3229,28 @@ int main(int argc, char** argv) {
     runtime_directory = get_executable_directory();
     sote::graphics_menu::initialize(runtime_directory);
     sote::controls_menu::initialize(runtime_directory);
+    sote::hd_music::initialize(runtime_directory);
+    sote::hd_audio::initialize(runtime_directory);
+    const std::filesystem::path packaged_rom =
+        runtime_directory / "sote.us.v1.2.z64";
+    const std::filesystem::path named_rom =
+        runtime_directory /
+        "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64";
     portable_layout =
-        std::filesystem::is_regular_file(runtime_directory / "main.bin");
-    std::filesystem::path rom_path =
-        portable_layout
-            ? runtime_directory / "sote.us.v1.2.z64"
-            : std::filesystem::current_path() /
-                "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64";
+        std::filesystem::is_regular_file(runtime_directory / "main.bin") ||
+        std::filesystem::is_regular_file(runtime_directory / "rt64.json") ||
+        std::filesystem::is_regular_file(runtime_directory / "CONTROLS_MODERN.INI") ||
+        std::filesystem::is_regular_file(packaged_rom) ||
+        std::filesystem::is_regular_file(named_rom);
+    std::filesystem::path rom_path;
+    if (std::filesystem::is_regular_file(packaged_rom)) {
+        rom_path = packaged_rom;
+    } else if (std::filesystem::is_regular_file(named_rom)) {
+        rom_path = named_rom;
+    } else {
+        rom_path = std::filesystem::current_path() /
+            "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64";
+    }
     for (int i = 1; i < argc; ++i) {
         if (std::string_view{argv[i]} == "--headless-smoke") {
             smoke_test = true;
@@ -2522,6 +3361,7 @@ int main(int argc, char** argv) {
     std::printf(
         "[sote] ROM validated: %s\n",
         rom_path.string().c_str());
+    selected_rom_path = rom_path;
 
     // RT64 device/swap-chain creation can outlast the first VI interval. Give
     // the VI thread time to seed its dummy mode before marking the game

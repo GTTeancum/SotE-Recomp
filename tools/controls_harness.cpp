@@ -1,6 +1,6 @@
 // Host-side harness for the Classic/Modern control-scheme module.
 //
-// The bike scheme's steering math, the bike_tuning.ini reader, and the
+// The bike scheme's steering math, the CONTROLS_MODERN.INI reader, and the
 // scheme persistence all run outside the recompiled guest, so they can be
 // exercised without a ROM, a window, or a controller. tools/smoke_levels.ps1
 // still covers the in-game side; this covers the parts that script cannot
@@ -73,6 +73,7 @@ using sote::controls_menu::ControlScheme;
 using Slot = sote::controls_menu::SchemeSlot;
 using sote::controls_menu::ModernBikeAxes;
 using sote::controls_menu::ModernBikeFilterState;
+using sote::controls_menu::ModernControlsTuning;
 
 // Steering is shaped by an exponent curve, then scaled down as the throttle
 // rises, then low-passed. Each of those is checked separately so a
@@ -282,7 +283,7 @@ void test_defaults_without_ini(const std::filesystem::path& scratch) {
     std::filesystem::create_directories(directory);
 
     sote::controls_menu::initialize(directory);
-    check(std::filesystem::exists(directory / "bike_tuning.ini"),
+    check(std::filesystem::exists(directory / "CONTROLS_MODERN.INI"),
           "ini: a template is written when none exists");
     check(sote::controls_menu::current_scheme(Slot::Bike) == ControlScheme::Classic,
           "scheme: defaults to Classic with no saved settings");
@@ -290,45 +291,89 @@ void test_defaults_without_ini(const std::filesystem::path& scratch) {
     // The written template must parse back to the same values it documents,
     // otherwise first-run players silently get different handling than a
     // fresh default.
-    const BikeTuning written = sote::controls_menu::bike_tuning();
-    const BikeTuning defaults{};
-    check_near(written.steering_curve_exponent,
-               defaults.steering_curve_exponent, 1e-4f,
+    const ModernControlsTuning written =
+        sote::controls_menu::modern_controls_tuning();
+    const ModernControlsTuning defaults{};
+    check_near(written.movement_deadzone,
+               defaults.movement_deadzone, 1e-4f,
+               "ini: template round-trips movement_deadzone");
+    check_near(written.aim_deadzone,
+               defaults.aim_deadzone, 1e-4f,
+               "ini: template round-trips aim_deadzone");
+    check_near(written.trigger_deadzone,
+               defaults.trigger_deadzone, 1e-4f,
+               "ini: template round-trips trigger_deadzone");
+    check(written.look_snap_back_enabled == defaults.look_snap_back_enabled,
+          "ini: template round-trips look_snap_back_enabled");
+    check_near(written.bike.steering_curve_exponent,
+               defaults.bike.steering_curve_exponent, 1e-4f,
                "ini: template round-trips steering_curve_exponent");
-    check_near(written.high_speed_sensitivity_falloff,
-               defaults.high_speed_sensitivity_falloff, 1e-4f,
+    check_near(written.bike.high_speed_sensitivity_falloff,
+               defaults.bike.high_speed_sensitivity_falloff, 1e-4f,
                "ini: template round-trips high_speed_sensitivity_falloff");
-    check_near(written.high_speed_min_scale,
-               defaults.high_speed_min_scale, 1e-4f,
+    check_near(written.bike.high_speed_min_scale,
+               defaults.bike.high_speed_min_scale, 1e-4f,
                "ini: template round-trips high_speed_min_scale");
-    check_near(written.steering_stabilization,
-               defaults.steering_stabilization, 1e-4f,
+    check_near(written.bike.steering_stabilization,
+               defaults.bike.steering_stabilization, 1e-4f,
                "ini: template round-trips steering_stabilization");
-    check_near(written.camera_smoothing,
-               defaults.camera_smoothing, 1e-4f,
+    check_near(written.bike.camera_smoothing,
+               defaults.bike.camera_smoothing, 1e-4f,
                "ini: template round-trips camera_smoothing");
-    check(written.fire_button_bit == defaults.fire_button_bit,
+    check(written.bike.fire_button_bit == defaults.bike.fire_button_bit,
           "ini: template round-trips fire_button");
 }
 
 void test_ini_parsing(const std::filesystem::path& scratch) {
     const std::filesystem::path directory = scratch / "parsing";
     std::filesystem::create_directories(directory);
-    const std::filesystem::path ini = directory / "bike_tuning.ini";
+    const std::filesystem::path ini = directory / "CONTROLS_MODERN.INI";
 
     write_file(ini,
         "; leading comment\n"
-        "  steering_curve_exponent = 2.5   # trailing comment\n"
-        "high_speed_sensitivity_falloff=0.75\n"
-        "\thigh_speed_min_scale\t=\t0.2\n"
-        "steering_stabilization = 0.4\n"
-        "camera_smoothing = 0.6\n"
-        "fire_button = B\n"
+        "  movement_deadzone = 0.12   # trailing comment\n"
+        "movement_sensitivity=1.5\n"
+        "aim_deadzone = 0.22\n"
+        "aim_sensitivity = 1.4\n"
+        "trigger_deadzone = 0.10\n"
+        "trigger_sensitivity = 1.7\n"
+        "look_snap_back_enabled = yes\n"
+        "look_snap_back_delay_seconds = 0.5\n"
+        "look_snap_back_duration_seconds = 0.2\n"
+        "look_snap_back_button = C_RIGHT\n"
+        "  bike_steering_curve_exponent = 2.5\n"
+        "bike_high_speed_sensitivity_falloff=0.75\n"
+        "\tbike_high_speed_min_scale\t=\t0.2\n"
+        "bike_steering_stabilization = 0.4\n"
+        "bike_camera_smoothing = 0.6\n"
+        "bike_fire_button = B\n"
         "not_a_setting = 1\n"
         "garbage line with no equals\n");
     sote::controls_menu::initialize(directory);
 
-    BikeTuning tuning = sote::controls_menu::bike_tuning();
+    ModernControlsTuning controls =
+        sote::controls_menu::modern_controls_tuning();
+    BikeTuning tuning = controls.bike;
+    check_near(controls.movement_deadzone, 0.12f, 1e-5f,
+               "ini: parses movement_deadzone");
+    check_near(controls.movement_sensitivity, 1.5f, 1e-5f,
+               "ini: parses movement_sensitivity");
+    check_near(controls.aim_deadzone, 0.22f, 1e-5f,
+               "ini: parses aim_deadzone");
+    check_near(controls.aim_sensitivity, 1.4f, 1e-5f,
+               "ini: parses aim_sensitivity");
+    check_near(controls.trigger_deadzone, 0.10f, 1e-5f,
+               "ini: parses trigger_deadzone");
+    check_near(controls.trigger_sensitivity, 1.7f, 1e-5f,
+               "ini: parses trigger_sensitivity");
+    check(controls.look_snap_back_enabled,
+          "ini: parses look_snap_back_enabled");
+    check_near(controls.look_snap_back_delay_seconds, 0.5f, 1e-5f,
+               "ini: parses look_snap_back_delay_seconds");
+    check_near(controls.look_snap_back_duration_seconds, 0.2f, 1e-5f,
+               "ini: parses look_snap_back_duration_seconds");
+    check(controls.look_snap_back_button_bit == 0x0001,
+          "ini: parses look_snap_back_button");
     check_near(tuning.steering_curve_exponent, 2.5f, 1e-5f,
                "ini: parses a value with surrounding whitespace");
     check_near(tuning.high_speed_sensitivity_falloff, 0.75f, 1e-5f,
@@ -353,7 +398,7 @@ void test_ini_parsing(const std::filesystem::path& scratch) {
         {"nonsense", 0x8000},
     };
     for (const auto& entry : fire_buttons) {
-        write_file(ini, std::string{"fire_button = "} + entry.token + "\n");
+        write_file(ini, std::string{"bike_fire_button = "} + entry.token + "\n");
         sote::controls_menu::initialize(directory);
         tuning = sote::controls_menu::bike_tuning();
         check(tuning.fire_button_bit == entry.bit,
@@ -362,7 +407,7 @@ void test_ini_parsing(const std::filesystem::path& scratch) {
 
     // A file that sets only one key must leave the rest at defaults, not at
     // whatever the previously loaded file had.
-    write_file(ini, "camera_smoothing = 0.9\n");
+    write_file(ini, "bike_camera_smoothing = 0.9\n");
     sote::controls_menu::initialize(directory);
     tuning = sote::controls_menu::bike_tuning();
     const BikeTuning defaults{};
@@ -378,9 +423,9 @@ void test_ini_parsing(const std::filesystem::path& scratch) {
 void test_ini_hot_reload(const std::filesystem::path& scratch) {
     const std::filesystem::path directory = scratch / "hot_reload";
     std::filesystem::create_directories(directory);
-    const std::filesystem::path ini = directory / "bike_tuning.ini";
+    const std::filesystem::path ini = directory / "CONTROLS_MODERN.INI";
 
-    write_file(ini, "steering_curve_exponent = 1.0\n");
+    write_file(ini, "bike_steering_curve_exponent = 1.0\n");
     sote::controls_menu::initialize(directory);
     check_near(sote::controls_menu::bike_tuning().steering_curve_exponent,
                1.0f, 1e-5f, "reload: initial value is loaded");
@@ -388,7 +433,7 @@ void test_ini_hot_reload(const std::filesystem::path& scratch) {
     // Reload is mtime-driven. Filesystem timestamp granularity means a
     // rewrite within the same tick can compare equal, so move the stamp
     // explicitly rather than sleeping and hoping.
-    write_file(ini, "steering_curve_exponent = 3.0\n");
+    write_file(ini, "bike_steering_curve_exponent = 3.0\n");
     std::filesystem::last_write_time(
         ini,
         std::filesystem::last_write_time(ini) + std::chrono::seconds{5});
@@ -407,6 +452,28 @@ void test_ini_hot_reload(const std::filesystem::path& scratch) {
     std::filesystem::remove(ini);
     check_near(sote::controls_menu::bike_tuning().steering_curve_exponent,
                3.0f, 1e-5f, "reload: a deleted file keeps the last values");
+}
+
+void test_legacy_bike_ini_migration(const std::filesystem::path& scratch) {
+    const std::filesystem::path directory = scratch / "legacy_migration";
+    std::filesystem::create_directories(directory);
+
+    write_file(
+        directory / "bike_tuning.ini",
+        "steering_curve_exponent = 2.25\n"
+        "camera_smoothing = 0.7\n"
+        "fire_button = R\n");
+
+    sote::controls_menu::initialize(directory);
+    check(std::filesystem::exists(directory / "CONTROLS_MODERN.INI"),
+          "migration: new controls ini is written");
+    const BikeTuning tuning = sote::controls_menu::bike_tuning();
+    check_near(tuning.steering_curve_exponent, 2.25f, 1e-5f,
+               "migration: legacy steering value is preserved");
+    check_near(tuning.camera_smoothing, 0.7f, 1e-5f,
+               "migration: legacy smoothing value is preserved");
+    check(tuning.fire_button_bit == 0x0010,
+          "migration: legacy fire button is preserved");
 }
 
 void test_scheme_cycle_and_persistence(
@@ -503,6 +570,7 @@ int main() {
     test_defaults_without_ini(scratch);
     test_ini_parsing(scratch);
     test_ini_hot_reload(scratch);
+    test_legacy_bike_ini_migration(scratch);
     test_scheme_cycle_and_persistence(scratch);
     test_modern_gating(scratch);
 

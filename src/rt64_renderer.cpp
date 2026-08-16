@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <filesystem>
 #include <memory>
+#include <string>
+#include <vector>
 
 #include <unknwn.h>
 #include <objidl.h>
@@ -19,6 +21,7 @@
 #include "gbi/rt64_gbi_rdp.h"
 #include "hle/rt64_application.h"
 #include "hle/rt64_state.h"
+#include "render/rt64_texture_cache.h"
 
 #include "ultramodern/config.hpp"
 #include "ultramodern/ultramodern.hpp"
@@ -44,6 +47,79 @@ uint32_t dpc_pipebusy = 0;
 uint32_t dpc_tmem = 0;
 
 void check_interrupts() {}
+
+void append_texture_pack_directory(
+    std::vector<RT64::ReplacementDirectory>& replacement_directories,
+    const std::filesystem::path& directory) {
+    std::error_code ec;
+    if (std::filesystem::is_regular_file(directory, ec)) {
+        replacement_directories.emplace_back(directory);
+        return;
+    }
+
+    if (!std::filesystem::is_directory(directory, ec)) {
+        return;
+    }
+
+    if (std::filesystem::is_regular_file(directory / "rt64.json", ec)) {
+        replacement_directories.emplace_back(directory);
+    }
+
+    std::vector<std::filesystem::path> child_pack_directories;
+    for (const auto& entry : std::filesystem::directory_iterator(directory, ec)) {
+        if (ec) {
+            break;
+        }
+
+        const std::filesystem::path child = entry.path();
+        if (entry.is_directory(ec) &&
+            std::filesystem::is_regular_file(child / "rt64.json", ec)) {
+            child_pack_directories.emplace_back(child);
+        }
+    }
+
+    std::sort(child_pack_directories.begin(), child_pack_directories.end());
+    for (const auto& child : child_pack_directories) {
+        replacement_directories.emplace_back(child);
+    }
+}
+
+std::vector<RT64::ReplacementDirectory> discover_texture_pack_directories(
+    const std::filesystem::path& texture_pack_path) {
+    std::vector<RT64::ReplacementDirectory> replacement_directories;
+    append_texture_pack_directory(replacement_directories, texture_pack_path);
+    return replacement_directories;
+}
+
+std::vector<RT64::ReplacementDirectory> discover_texture_pack_directories(
+    const char* texture_pack_path) {
+    std::vector<RT64::ReplacementDirectory> replacement_directories;
+    if ((texture_pack_path == nullptr) || (texture_pack_path[0] == '\0')) {
+        return replacement_directories;
+    }
+
+    const std::string path_list = texture_pack_path;
+    size_t start = 0;
+    while (start <= path_list.size()) {
+        const size_t end = path_list.find(';', start);
+        const std::string entry = path_list.substr(
+            start,
+            (end == std::string::npos) ? std::string::npos : end - start);
+        if (!entry.empty()) {
+            append_texture_pack_directory(
+                replacement_directories,
+                std::filesystem::u8path(entry));
+        }
+
+        if (end == std::string::npos) {
+            break;
+        }
+
+        start = end + 1;
+    }
+
+    return replacement_directories;
+}
 
 ultramodern::renderer::SetupResult map_setup_result(
     RT64::Application::SetupResult result) {
@@ -129,6 +205,8 @@ public:
             std::getenv("SOTE_DIAGNOSTIC_LEGACY_GRAPHICS") == nullptr;
 
         app = std::make_unique<RT64::Application>(core, config);
+        app->emulatorConfig.dither.postBlendNoise = false;
+        app->emulatorConfig.dither.postBlendNoiseNegative = false;
         app->userConfig.graphicsAPI =
             RT64::UserConfiguration::GraphicsAPI::Automatic;
         app->userConfig.resolution =
@@ -141,6 +219,11 @@ public:
             RT64::UserConfiguration::AspectRatio::Expand;
         app->userConfig.antialiasing =
             RT64::UserConfiguration::Antialiasing::MSAA4X;
+        app->userConfig.filtering =
+            RT64::UserConfiguration::Filtering::Linear;
+        app->userConfig.threePointFiltering = false;
+        app->userConfig.upscale2D =
+            RT64::UserConfiguration::Upscale2D::Original;
         app->userConfig.refreshRate =
             RT64::UserConfiguration::RefreshRate::Original;
         app->userConfig.internalColorFormat =
@@ -167,6 +250,35 @@ public:
                 static_cast<int>(chosen_api));
             app.reset();
             return;
+        }
+
+        const char* texture_pack_path = std::getenv("SOTE_TEXTURE_PACK_PATH");
+        std::vector<RT64::ReplacementDirectory> replacement_directories;
+        if (texture_pack_path != nullptr && texture_pack_path[0] != '\0') {
+            replacement_directories =
+                discover_texture_pack_directories(texture_pack_path);
+        } else {
+            const std::filesystem::path default_texture_pack_directory =
+                data_directory / "textures";
+            if (std::filesystem::is_directory(default_texture_pack_directory)) {
+                replacement_directories = discover_texture_pack_directories(
+                    default_texture_pack_directory);
+            }
+        }
+
+        if (!replacement_directories.empty()) {
+            const bool loaded = app->textureCache->loadReplacementDirectories(
+                replacement_directories);
+            std::printf(
+                "[sote] RT64 texture pack %s: %zu pack path(s)\n",
+                loaded ? "loaded" : "failed",
+                replacement_directories.size());
+            for (const auto& directory : replacement_directories) {
+                std::printf(
+                    "[sote]   texture pack path: %s\n",
+                    directory.dirOrZipPath.string().c_str());
+            }
+            std::fflush(stdout);
         }
 
         // Match Zelda64Recomp's conservative defaults for F3DEX-family games.

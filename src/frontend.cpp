@@ -4,6 +4,8 @@
 #include "controls_menu.hpp"
 #include "recomp_hooks.h"
 #include "graphics_menu.hpp"
+#include "hd_audio.hpp"
+#include "hd_music.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -37,9 +39,6 @@ constexpr uint16_t n64_cl = 0x0002;
 constexpr uint16_t n64_cr = 0x0001;
 
 constexpr float n64_stick_scale = 80.0f / 127.0f;
-constexpr Sint16 stick_deadzone = 8000;
-constexpr Sint16 c_deadzone = 12000;
-constexpr Sint16 trigger_threshold = 8000;
 
 std::atomic<uint32_t> input_snapshot{0};
 std::atomic<uint32_t> scripted_input_snapshot{0};
@@ -91,29 +90,87 @@ void update_muted_audio_clock_locked() {
 // verified against the original bike controller logic; if the bike
 // doesn't respond to speed changes correctly under Modern, this is the
 // first place to check. Fire-button identity is equally unverified --
-// see fire_button in bike_tuning.ini.
+// see bike_fire_button in CONTROLS_MODERN.INI.
 // The curve/falloff/stabilization math itself lives in controls_menu so it
 // can be exercised without SDL by tools/controls_harness.
 sote::controls_menu::ModernBikeFilterState modern_bike_filter;
+bool right_stick_was_active = false;
+bool look_snap_back_queued = false;
+bool look_snap_back_active = false;
+std::chrono::steady_clock::time_point right_stick_release_time{};
+std::chrono::steady_clock::time_point look_snap_back_end_time{};
+
+float raw_axis_to_unit(Sint16 value) {
+    const float normalized =
+        value >= 0 ? value / 32767.0f : value / 32768.0f;
+    return std::clamp(normalized, -1.0f, 1.0f);
+}
+
+float apply_deadzone_and_sensitivity(
+    float normalized,
+    float deadzone,
+    float sensitivity) {
+    if (deadzone >= 1.0f) {
+        return 0.0f;
+    }
+    const float clamped_deadzone = std::clamp(deadzone, 0.0f, 0.999f);
+    const float clamped_sensitivity = std::max(0.1f, sensitivity);
+    const float magnitude = std::fabs(normalized);
+    if (magnitude <= clamped_deadzone) {
+        return 0.0f;
+    }
+
+    const float sign = normalized < 0.0f ? -1.0f : 1.0f;
+    const float scaled =
+        ((magnitude - clamped_deadzone) / (1.0f - clamped_deadzone)) *
+        clamped_sensitivity;
+    return sign * std::clamp(scaled, 0.0f, 1.0f);
+}
+
+float normalize_trigger(
+    Sint16 value,
+    const sote::controls_menu::ModernControlsTuning& tuning) {
+    const float normalized = std::max(0.0f, value / 32767.0f);
+    return std::max(
+        0.0f,
+        apply_deadzone_and_sensitivity(
+            normalized,
+            tuning.trigger_deadzone,
+            tuning.trigger_sensitivity));
+}
+
+bool aim_direction_pressed(
+    Sint16 value,
+    float deadzone,
+    float sensitivity,
+    bool positive) {
+    if (deadzone >= 1.0f) {
+        return false;
+    }
+    float effective_deadzone = std::clamp(deadzone, 0.0f, 1.0f);
+    effective_deadzone = std::clamp(
+        effective_deadzone / std::max(0.1f, sensitivity),
+        0.0f,
+        0.999f);
+    const float normalized = raw_axis_to_unit(value);
+    return positive ? normalized > effective_deadzone
+                    : normalized < -effective_deadzone;
+}
 
 void apply_modern_bike_scheme(
     SDL_GameController* pad,
     uint16_t& buttons,
     float& x,
-    float& y) {
-    const sote::controls_menu::BikeTuning tuning =
-        sote::controls_menu::bike_tuning();
+    float& y,
+    const sote::controls_menu::ModernControlsTuning& controls) {
+    const sote::controls_menu::BikeTuning& tuning = controls.bike;
 
-    float throttle_raw = std::max(
-        0.0f,
-        SDL_GameControllerGetAxis(
-            pad,
-            SDL_CONTROLLER_AXIS_TRIGGERRIGHT) / 32767.0f);
-    float brake_raw = std::max(
-        0.0f,
-        SDL_GameControllerGetAxis(
-            pad,
-            SDL_CONTROLLER_AXIS_TRIGGERLEFT) / 32767.0f);
+    float throttle_raw = normalize_trigger(
+        SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_TRIGGERRIGHT),
+        controls);
+    float brake_raw = normalize_trigger(
+        SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_TRIGGERLEFT),
+        controls);
 
     // Triggers are unreachable from the scripted-input diagnostics, so allow
     // a forced level for testing the Modern path without a physical pad.
@@ -128,13 +185,10 @@ void apply_modern_bike_scheme(
 
     const Sint16 raw_steer_x =
         SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTX);
-    float steering = raw_steer_x >= 0
-        ? raw_steer_x / 32767.0f
-        : raw_steer_x / 32768.0f;
-    if (steering > -stick_deadzone / 32768.0f &&
-        steering < stick_deadzone / 32768.0f) {
-        steering = 0.0f;
-    }
+    const float steering = apply_deadzone_and_sensitivity(
+        raw_axis_to_unit(raw_steer_x),
+        controls.movement_deadzone,
+        controls.movement_sensitivity);
 
     const sote::controls_menu::ModernBikeAxes axes =
         sote::controls_menu::compute_modern_bike_axes(
@@ -177,13 +231,13 @@ bool process_owns_foreground_window() {
     return foreground_process == GetCurrentProcessId();
 }
 
-float normalize_axis(Sint16 value) {
-    if (value > -stick_deadzone && value < stick_deadzone) {
-        return 0.0f;
-    }
-    const float normalized =
-        value >= 0 ? value / 32767.0f : value / 32768.0f;
-    return std::clamp(normalized, -1.0f, 1.0f) * n64_stick_scale;
+float normalize_axis(
+    Sint16 value,
+    const sote::controls_menu::ModernControlsTuning& tuning) {
+    return apply_deadzone_and_sensitivity(
+        raw_axis_to_unit(value),
+        tuning.movement_deadzone,
+        tuning.movement_sensitivity) * n64_stick_scale;
 }
 
 void find_controller() {
@@ -359,6 +413,8 @@ void poll_input() {
         find_controller();
     }
 
+    const sote::controls_menu::ModernControlsTuning controls =
+        sote::controls_menu::modern_controls_tuning();
     uint16_t buttons = 0;
     float x = 0.0f;
     float y = 0.0f;
@@ -384,9 +440,11 @@ void poll_input() {
         if (pressed(SDL_CONTROLLER_BUTTON_DPAD_DOWN)) buttons |= n64_dd;
         if (pressed(SDL_CONTROLLER_BUTTON_DPAD_LEFT)) buttons |= n64_dl;
         if (pressed(SDL_CONTROLLER_BUTTON_DPAD_RIGHT)) buttons |= n64_dr;
-        if (SDL_GameControllerGetAxis(
-                controller,
-                SDL_CONTROLLER_AXIS_TRIGGERLEFT) > trigger_threshold) {
+        if (normalize_trigger(
+                SDL_GameControllerGetAxis(
+                    controller,
+                    SDL_CONTROLLER_AXIS_TRIGGERLEFT),
+                controls) > 0.0f) {
             buttons |= n64_z;
         }
 
@@ -396,10 +454,18 @@ void poll_input() {
         raw_ry = SDL_GameControllerGetAxis(
             controller,
             SDL_CONTROLLER_AXIS_RIGHTY);
-        if (raw_rx > c_deadzone) buttons |= n64_cr;
-        if (raw_rx < -c_deadzone) buttons |= n64_cl;
-        if (raw_ry > c_deadzone) buttons |= n64_cd;
-        if (raw_ry < -c_deadzone) buttons |= n64_cu;
+        const bool aim_right = aim_direction_pressed(
+            raw_rx, controls.aim_deadzone, controls.aim_sensitivity, true);
+        const bool aim_left = aim_direction_pressed(
+            raw_rx, controls.aim_deadzone, controls.aim_sensitivity, false);
+        const bool aim_down = aim_direction_pressed(
+            raw_ry, controls.aim_deadzone, controls.aim_sensitivity, true);
+        const bool aim_up = aim_direction_pressed(
+            raw_ry, controls.aim_deadzone, controls.aim_sensitivity, false);
+        if (aim_right) buttons |= n64_cr;
+        if (aim_left) buttons |= n64_cl;
+        if (aim_down) buttons |= n64_cd;
+        if (aim_up) buttons |= n64_cu;
 
         raw_lx = SDL_GameControllerGetAxis(
             controller,
@@ -407,21 +473,58 @@ void poll_input() {
         raw_ly = SDL_GameControllerGetAxis(
             controller,
             SDL_CONTROLLER_AXIS_LEFTY);
-        x = normalize_axis(raw_lx);
-        y = -normalize_axis(raw_ly);
+        x = normalize_axis(raw_lx, controls);
+        y = -normalize_axis(raw_ly, controls);
 
-        if (sote::controls_menu::bike_modern_scheme_active()) {
+        const bool bike_modern_active =
+            sote::controls_menu::bike_modern_scheme_active();
+        if (bike_modern_active) {
             // Modern redefines A and B as Accelerate/Brakes driven by the
             // triggers, and LT no longer means Z, so drop those Classic
             // bits before the Modern mapping sets them.
             buttons &=
                 static_cast<uint16_t>(~(n64_a | n64_b | n64_z));
-            apply_modern_bike_scheme(controller, buttons, x, y);
+            apply_modern_bike_scheme(controller, buttons, x, y, controls);
         } else {
             // Leaving the bike stage clears the damping carry, so the next
             // bike section starts from center instead of easing out of the
             // previous one's held throttle and lean.
             modern_bike_filter = {};
+
+            const bool right_stick_active =
+                aim_right || aim_left || aim_down || aim_up;
+            const auto now = std::chrono::steady_clock::now();
+            if (right_stick_active) {
+                right_stick_was_active = true;
+                look_snap_back_queued = false;
+                look_snap_back_active = false;
+            } else if (right_stick_was_active) {
+                right_stick_was_active = false;
+                look_snap_back_queued = controls.look_snap_back_enabled;
+                right_stick_release_time = now;
+            }
+
+            if (look_snap_back_queued &&
+                now - right_stick_release_time >=
+                    std::chrono::duration<float>(
+                        controls.look_snap_back_delay_seconds)) {
+                look_snap_back_queued = false;
+                look_snap_back_active =
+                    controls.look_snap_back_duration_seconds > 0.0f;
+                look_snap_back_end_time =
+                    now + std::chrono::duration_cast<
+                        std::chrono::steady_clock::duration>(
+                        std::chrono::duration<float>(
+                            controls.look_snap_back_duration_seconds));
+            }
+
+            if (look_snap_back_active) {
+                if (now < look_snap_back_end_time) {
+                    buttons |= controls.look_snap_back_button_bit;
+                } else {
+                    look_snap_back_active = false;
+                }
+            }
         }
     }
 
@@ -608,6 +711,15 @@ void queue_samples(int16_t* samples, size_t sample_count) {
     if (i < sample_count) {
         swapped_samples[i] = samples[i];
     }
+
+    sote::hd_music::mix_into(
+        swapped_samples.data(),
+        swapped_samples.size(),
+        source_frequency);
+    sote::hd_audio::mix_into(
+        swapped_samples.data(),
+        swapped_samples.size(),
+        source_frequency);
 
     if (!audio_dump_checked) {
         audio_dump_checked = true;

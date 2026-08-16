@@ -65,11 +65,17 @@ set(SOTE_RUNTIME_SOURCES
     src/controls_menu.cpp
     src/frontend.cpp
     src/graphics_menu.cpp
+    src/hd_audio.cpp
+    src/hd_music.cpp
     src/libultra_stubs.c
     src/main.cpp
     src/register_overlays.cpp
     src/rt64_renderer.cpp
 )
+
+if(WIN32)
+    list(APPEND SOTE_RUNTIME_SOURCES src/sote_recomp.rc)
+endif()
 
 # Generated from the ROM's audio microcode by RSPRecomp. Keeping it under
 # generated/ makes the checked-in source tree independent of copyrighted ROM

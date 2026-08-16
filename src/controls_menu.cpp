@@ -22,9 +22,10 @@ struct State {
         ControlScheme::Classic,
         ControlScheme::Classic,
     };
-    BikeTuning tuning{};
+    ModernControlsTuning tuning{};
     std::filesystem::path settings_path;
     std::filesystem::path tuning_ini_path;
+    std::filesystem::path legacy_bike_tuning_ini_path;
     std::filesystem::file_time_type tuning_mtime{};
     bool tuning_mtime_valid = false;
 };
@@ -49,13 +50,117 @@ uint16_t parse_fire_button(const std::string& token) {
     return 0x8000;
 }
 
-// Minimal `key = value` INI reader, one entry per line, '#' or ';' starts
-// a comment. No sections needed for a single flat tuning block.
-void load_tuning_ini_locked() {
-    BikeTuning defaults{};
-    state.tuning = defaults;
+uint16_t parse_c_button(const std::string& token) {
+    if (token == "C_UP" || token == "CU" || token == "UP") return 0x0008;
+    if (token == "C_DOWN" || token == "CD" || token == "DOWN") return 0x0004;
+    if (token == "C_LEFT" || token == "CL" || token == "LEFT") return 0x0002;
+    if (token == "C_RIGHT" || token == "CR" || token == "RIGHT") return 0x0001;
+    return 0x0008;
+}
 
-    std::ifstream input{state.tuning_ini_path};
+const char* fire_button_name(uint16_t bit) {
+    switch (bit) {
+        case 0x8000: return "A";
+        case 0x4000: return "B";
+        case 0x2000: return "Z";
+        case 0x0020: return "L";
+        case 0x0010: return "R";
+        default: return "A";
+    }
+}
+
+const char* c_button_name(uint16_t bit) {
+    switch (bit) {
+        case 0x0008: return "C_UP";
+        case 0x0004: return "C_DOWN";
+        case 0x0002: return "C_LEFT";
+        case 0x0001: return "C_RIGHT";
+        default: return "C_UP";
+    }
+}
+
+bool parse_bool(const std::string& token) {
+    return token == "1" || token == "true" || token == "TRUE" ||
+        token == "yes" || token == "YES" || token == "on" || token == "ON";
+}
+
+float parse_float_clamped(
+    const std::string& value,
+    float fallback,
+    float minimum,
+    float maximum) {
+    char* end = nullptr;
+    const float parsed = std::strtof(value.c_str(), &end);
+    if (end == value.c_str() || !std::isfinite(parsed)) {
+        return fallback;
+    }
+    return std::clamp(parsed, minimum, maximum);
+}
+
+void apply_tuning_value(
+    ModernControlsTuning& tuning,
+    const std::string& key,
+    const std::string& value) {
+    const ModernControlsTuning defaults{};
+    if (key == "movement_deadzone") {
+        tuning.movement_deadzone = parse_float_clamped(
+            value, defaults.movement_deadzone, 0.0f, 1.0f);
+    } else if (key == "movement_sensitivity") {
+        tuning.movement_sensitivity = parse_float_clamped(
+            value, defaults.movement_sensitivity, 0.1f, 3.0f);
+    } else if (key == "aim_deadzone") {
+        tuning.aim_deadzone = parse_float_clamped(
+            value, defaults.aim_deadzone, 0.0f, 1.0f);
+    } else if (key == "aim_sensitivity") {
+        tuning.aim_sensitivity = parse_float_clamped(
+            value, defaults.aim_sensitivity, 0.1f, 3.0f);
+    } else if (key == "trigger_deadzone") {
+        tuning.trigger_deadzone = parse_float_clamped(
+            value, defaults.trigger_deadzone, 0.0f, 1.0f);
+    } else if (key == "trigger_sensitivity") {
+        tuning.trigger_sensitivity = parse_float_clamped(
+            value, defaults.trigger_sensitivity, 0.1f, 3.0f);
+    } else if (key == "look_snap_back_enabled") {
+        tuning.look_snap_back_enabled = parse_bool(value);
+    } else if (key == "look_snap_back_delay_seconds") {
+        tuning.look_snap_back_delay_seconds = parse_float_clamped(
+            value, defaults.look_snap_back_delay_seconds, 0.0f, 5.0f);
+    } else if (key == "look_snap_back_duration_seconds") {
+        tuning.look_snap_back_duration_seconds = parse_float_clamped(
+            value, defaults.look_snap_back_duration_seconds, 0.0f, 1.0f);
+    } else if (key == "look_snap_back_button") {
+        tuning.look_snap_back_button_bit = parse_c_button(value);
+    } else if (key == "bike_steering_curve_exponent" ||
+               key == "steering_curve_exponent") {
+        tuning.bike.steering_curve_exponent = parse_float_clamped(
+            value, defaults.bike.steering_curve_exponent, 0.25f, 4.0f);
+    } else if (key == "bike_high_speed_sensitivity_falloff" ||
+               key == "high_speed_sensitivity_falloff") {
+        tuning.bike.high_speed_sensitivity_falloff = parse_float_clamped(
+            value, defaults.bike.high_speed_sensitivity_falloff, 0.0f, 1.0f);
+    } else if (key == "bike_high_speed_min_scale" ||
+               key == "high_speed_min_scale") {
+        tuning.bike.high_speed_min_scale = parse_float_clamped(
+            value, defaults.bike.high_speed_min_scale, 0.0f, 1.0f);
+    } else if (key == "bike_steering_stabilization" ||
+               key == "steering_stabilization") {
+        tuning.bike.steering_stabilization = parse_float_clamped(
+            value, defaults.bike.steering_stabilization, 0.0f, 0.99f);
+    } else if (key == "bike_camera_smoothing" ||
+               key == "camera_smoothing") {
+        tuning.bike.camera_smoothing = parse_float_clamped(
+            value, defaults.bike.camera_smoothing, 0.0f, 0.99f);
+    } else if (key == "bike_fire_button" || key == "fire_button") {
+        tuning.bike.fire_button_bit = parse_fire_button(value);
+    }
+}
+
+// Minimal `key = value` INI reader, one entry per line, '#' or ';' starts
+// a comment. Sections are ignored so testers can group settings visually.
+void load_tuning_file_into_locked(
+    const std::filesystem::path& path,
+    ModernControlsTuning& tuning) {
+    std::ifstream input{path};
     if (!input.is_open()) {
         return;
     }
@@ -74,24 +179,20 @@ void load_tuning_ini_locked() {
         if (value.empty()) {
             continue;
         }
-        if (key == "steering_curve_exponent") {
-            state.tuning.steering_curve_exponent =
-                std::strtof(value.c_str(), nullptr);
-        } else if (key == "high_speed_sensitivity_falloff") {
-            state.tuning.high_speed_sensitivity_falloff =
-                std::strtof(value.c_str(), nullptr);
-        } else if (key == "high_speed_min_scale") {
-            state.tuning.high_speed_min_scale =
-                std::strtof(value.c_str(), nullptr);
-        } else if (key == "steering_stabilization") {
-            state.tuning.steering_stabilization =
-                std::strtof(value.c_str(), nullptr);
-        } else if (key == "camera_smoothing") {
-            state.tuning.camera_smoothing =
-                std::strtof(value.c_str(), nullptr);
-        } else if (key == "fire_button") {
-            state.tuning.fire_button_bit = parse_fire_button(value);
-        }
+        apply_tuning_value(tuning, key, value);
+    }
+}
+
+void load_tuning_ini_locked() {
+    ModernControlsTuning defaults{};
+    state.tuning = defaults;
+
+    load_tuning_file_into_locked(state.tuning_ini_path, state.tuning);
+    if (!std::filesystem::exists(state.tuning_ini_path) &&
+        std::filesystem::exists(state.legacy_bike_tuning_ini_path)) {
+        load_tuning_file_into_locked(
+            state.legacy_bike_tuning_ini_path,
+            state.tuning);
     }
 }
 
@@ -100,22 +201,103 @@ void write_default_tuning_ini_locked() {
     if (!output.is_open()) {
         return;
     }
-    const BikeTuning d{};
+    const ModernControlsTuning d = state.tuning;
     output <<
-        "; Speeder-bike Modern control scheme tuning.\n"
-        "; Only read while Control Scheme = Modern. Edited values apply\n"
-        "; the next time the bike stage is (re)entered; the file is also\n"
-        "; polled for changes while the game is running.\n"
-        "; fire_button: which physical N64 button Modern's RB maps to.\n"
-        "; UNVERIFIED against the original bike sequence -- defaults to A.\n"
-        "; Valid values: A, B, Z, L, R\n"
-        "fire_button = A\n\n"
-        "steering_curve_exponent = " << d.steering_curve_exponent << "\n"
-        "high_speed_sensitivity_falloff = "
-            << d.high_speed_sensitivity_falloff << "\n"
-        "high_speed_min_scale = " << d.high_speed_min_scale << "\n"
-        "steering_stabilization = " << d.steering_stabilization << "\n"
-        "camera_smoothing = " << d.camera_smoothing << "\n";
+        "; Shadows of the Empire Recompiled - Modern Controls tuning.\n"
+        "; This file is hot-reloaded while the game is running. Values here\n"
+        "; affect only the port's Modern control helpers; the in-game Controls\n"
+        "; menu still chooses Classic or Modern per control category.\n"
+        "; Lines beginning with ';' or '#' are comments.\n\n"
+
+        "[General]\n"
+        "; movement_deadzone is 0.0 to 1.0. 0.0 means no left-stick deadzone;\n"
+        "; 1.0 means the left stick is fully ignored. Higher values prevent\n"
+        "; drift but require more stick travel before Dash or the bike moves.\n"
+        "movement_deadzone = " << d.movement_deadzone << "\n\n"
+
+        "; movement_sensitivity is 0.1 to 3.0. 1.0 is normal. Lower values\n"
+        "; reduce left-stick output after the deadzone. Higher values reach\n"
+        "; full N64 stick sooner and can make movement/steering more abrupt.\n"
+        "movement_sensitivity = " << d.movement_sensitivity << "\n\n"
+
+        "; aim_deadzone is 0.0 to 1.0. 0.0 means no right-stick deadzone;\n"
+        "; 1.0 means the right stick never sends C-button/camera input.\n"
+        "; Increase this if the camera or aiming drifts when the stick rests.\n"
+        "aim_deadzone = " << d.aim_deadzone << "\n\n"
+
+        "; aim_sensitivity is 0.1 to 3.0. 1.0 is normal. Because the N64 C\n"
+        "; buttons are digital, this changes how easily right-stick motion\n"
+        "; crosses the C-button activation point rather than true analog speed.\n"
+        "aim_sensitivity = " << d.aim_sensitivity << "\n\n"
+
+        "; trigger_deadzone is 0.0 to 1.0. 0.0 means LT/RT react instantly;\n"
+        "; 1.0 means triggers are ignored. Higher values help worn triggers\n"
+        "; stop firing, aiming, accelerating, or braking by accident.\n"
+        "trigger_deadzone = " << d.trigger_deadzone << "\n\n"
+
+        "; trigger_sensitivity is 0.1 to 3.0. 1.0 is normal. Lower values\n"
+        "; require a deeper pull after the deadzone; higher values reach full\n"
+        "; trigger strength sooner. Bike throttle/brake duty-cycle uses this.\n"
+        "trigger_sensitivity = " << d.trigger_sensitivity << "\n\n"
+
+        "[LookSnapBack]\n"
+        "; look_snap_back_enabled is 0 or 1. 0 disables it. 1 taps a C-button\n"
+        "; after the right stick returns to center. This is experimental and\n"
+        "; defaults off because the original game did not have a modern stick.\n"
+        "look_snap_back_enabled = 0\n\n"
+
+        "; look_snap_back_delay_seconds is 0.0 to 5.0. It is how long the\n"
+        "; right stick must stay centered before the snap-back tap starts.\n"
+        "; Lower values recenter sooner; higher values wait longer.\n"
+        "look_snap_back_delay_seconds = "
+            << d.look_snap_back_delay_seconds << "\n\n"
+
+        "; look_snap_back_duration_seconds is 0.0 to 1.0. It is how long the\n"
+        "; snap-back C-button is held. Too short may do nothing; too long can\n"
+        "; feel like an extra camera command after aiming.\n"
+        "look_snap_back_duration_seconds = "
+            << d.look_snap_back_duration_seconds << "\n\n"
+
+        "; look_snap_back_button accepts C_UP, C_DOWN, C_LEFT, or C_RIGHT.\n"
+        "; C_UP is the default candidate for looking forward/recentering.\n"
+        "look_snap_back_button = " << c_button_name(d.look_snap_back_button_bit)
+            << "\n\n"
+
+        "[SpeederBike]\n"
+        "; bike_fire_button accepts A, B, Z, L, or R. It is only used if the\n"
+        "; bike sequence ever needs a separate Modern fire mapping. The current\n"
+        "; Modern bike path leaves Fire/Kick unbound because the game did not\n"
+        "; use them in the bike stage.\n"
+        "bike_fire_button = " << fire_button_name(d.bike.fire_button_bit)
+            << "\n\n"
+
+        "; bike_steering_curve_exponent is 0.25 to 4.0. 1.0 is linear.\n"
+        "; Higher values soften small steering corrections near center while\n"
+        "; keeping full lock at the edge. Lower values make steering twitchier.\n"
+        "bike_steering_curve_exponent = "
+            << d.bike.steering_curve_exponent << "\n\n"
+
+        "; bike_high_speed_sensitivity_falloff is 0.0 to 1.0. 0.0 keeps bike\n"
+        "; steering equally strong at all speeds. Higher values reduce steering\n"
+        "; as RT throttle increases, making full-speed steering calmer.\n"
+        "bike_high_speed_sensitivity_falloff = "
+            << d.bike.high_speed_sensitivity_falloff << "\n\n"
+
+        "; bike_high_speed_min_scale is 0.0 to 1.0. It is the floor for the\n"
+        "; high-speed steering reduction above. Lower values allow weaker\n"
+        "; steering at full throttle; higher values preserve more authority.\n"
+        "bike_high_speed_min_scale = " << d.bike.high_speed_min_scale << "\n\n"
+
+        "; bike_steering_stabilization is 0.0 to 0.99. 0.0 applies steering\n"
+        "; instantly. Higher values smooth steering changes over more polls,\n"
+        "; reducing jitter at the cost of extra steering latency.\n"
+        "bike_steering_stabilization = "
+            << d.bike.steering_stabilization << "\n\n"
+
+        "; bike_camera_smoothing is 0.0 to 0.99. 0.0 applies the trigger-based\n"
+        "; throttle/brake stick axis instantly. Higher values smooth those\n"
+        "; changes so the bike camera/throttle axis is less abrupt.\n"
+        "bike_camera_smoothing = " << d.bike.camera_smoothing << "\n";
 }
 
 void reload_tuning_if_changed_locked() {
@@ -135,15 +317,25 @@ void reload_tuning_if_changed_locked() {
     state.tuning_mtime_valid = true;
     load_tuning_ini_locked();
     std::printf(
-        "[sote][controls-menu] reloaded bike_tuning.ini "
-        "(curve=%.2f falloff=%.2f min_scale=%.2f "
-        "stabilization=%.2f camera_smoothing=%.2f fire_bit=%04X)\n",
-        state.tuning.steering_curve_exponent,
-        state.tuning.high_speed_sensitivity_falloff,
-        state.tuning.high_speed_min_scale,
-        state.tuning.steering_stabilization,
-        state.tuning.camera_smoothing,
-        state.tuning.fire_button_bit);
+        "[sote][controls-menu] reloaded CONTROLS_MODERN.INI "
+        "(move_deadzone=%.2f move_sens=%.2f aim_deadzone=%.2f "
+        "aim_sens=%.2f trigger_deadzone=%.2f trigger_sens=%.2f "
+        "snap=%d bike_curve=%.2f bike_falloff=%.2f "
+        "bike_min_scale=%.2f bike_stabilization=%.2f "
+        "bike_camera_smoothing=%.2f bike_fire_bit=%04X)\n",
+        state.tuning.movement_deadzone,
+        state.tuning.movement_sensitivity,
+        state.tuning.aim_deadzone,
+        state.tuning.aim_sensitivity,
+        state.tuning.trigger_deadzone,
+        state.tuning.trigger_sensitivity,
+        state.tuning.look_snap_back_enabled ? 1 : 0,
+        state.tuning.bike.steering_curve_exponent,
+        state.tuning.bike.high_speed_sensitivity_falloff,
+        state.tuning.bike.high_speed_min_scale,
+        state.tuning.bike.steering_stabilization,
+        state.tuning.bike.camera_smoothing,
+        state.tuning.bike.fire_button_bit);
     std::fflush(stdout);
 }
 
@@ -223,7 +415,8 @@ void initialize(const std::filesystem::path& data_directory) {
     // graphics_menu uses for sote_options.json. Deriving this from the
     // process working directory instead would put the file somewhere else
     // whenever the game is launched from another folder.
-    state.tuning_ini_path = data_directory / "bike_tuning.ini";
+    state.tuning_ini_path = data_directory / "CONTROLS_MODERN.INI";
+    state.legacy_bike_tuning_ini_path = data_directory / "bike_tuning.ini";
     // The cached timestamp describes whatever file the previous path
     // pointed at. Drop it so the file named above is always read, rather
     // than being skipped because the two happen to share a timestamp.
@@ -251,6 +444,12 @@ void initialize(const std::filesystem::path& data_directory) {
     }
 
     if (!std::filesystem::exists(state.tuning_ini_path)) {
+        state.tuning = {};
+        if (std::filesystem::exists(state.legacy_bike_tuning_ini_path)) {
+            load_tuning_file_into_locked(
+                state.legacy_bike_tuning_ini_path,
+                state.tuning);
+        }
         write_default_tuning_ini_locked();
     }
     reload_tuning_if_changed_locked();
@@ -363,10 +562,14 @@ void persist() {
            << "\"\n}\n";
 }
 
-BikeTuning bike_tuning() {
+ModernControlsTuning modern_controls_tuning() {
     std::lock_guard lock{state.mutex};
     reload_tuning_if_changed_locked();
     return state.tuning;
+}
+
+BikeTuning bike_tuning() {
+    return modern_controls_tuning().bike;
 }
 
 bool bike_modern_scheme_active() {

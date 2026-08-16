@@ -3,6 +3,14 @@
 These ideas are non-priority enhancements. Current work remains focused on
 making the original game fully playable and validating a complete playthrough.
 
+- Verify HD VO timing in-game once testing is available. The current candidate
+  is the visible droid text draw hook (`func_80008778` at `0x80008C28`),
+  confirmed in smoke traces for Escape from Echo Base, Gall Spaceport, and
+  Skyhook Battle. Keep playback keyed from this draw path, not the earlier
+  message lookup (`func_80017A78`), because the lookup can fire at level start
+  before the overlay appears. Gall currently maps hash `0x9D73E485` to
+  `ILB11.WAV`; Escape and Skyhook hashes (`0xBB29B6D3`, `0xDD11B90A`) are
+  parked until the PC WAV names are verified.
 - Modern control scheme with dual-analog aiming and configurable controller
   mappings
   - Add a pre-tuned `Classic` / `Modern` control choice for the speeder-bike
