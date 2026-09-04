@@ -30,8 +30,13 @@ $repoRoot = [System.IO.Path]::GetFullPath(
     (Split-Path -Parent $MyInvocation.MyCommand.Path))
 $romAbsolute = [System.IO.Path]::GetFullPath(
     (Join-Path $repoRoot $RomPath))
-$expectedSha256 =
+# Canonical No-Intro 'Star Wars - Shadows of the Empire (USA) (Rev 2)',
+# plus a widely mirrored pack copy that differs only at ROM offset
+# 0x3B7B6E, outside every recompiled section, so it builds identically.
+$acceptedSha256 = @(
+    'E7085E013123537F34E0EDEC8801318016DA4DBAC424172D6DC5F3B67D98642C'
     '2802BF4135842F7C8D254349ED7AC2641F6D7FF45E9D2D01304E1455706DD103'
+)
 $savedPythonPath = $env:PYTHONPATH
 $localPythonPackages = Join-Path $repoRoot '.tools\python'
 
@@ -107,7 +112,7 @@ try {
     }
     $actualSha256 = (
         Get-FileHash -LiteralPath $romAbsolute -Algorithm SHA256).Hash
-    if ($actualSha256 -ne $expectedSha256) {
+    if ($acceptedSha256 -notcontains $actualSha256) {
         throw "Unsupported ROM SHA-256 $actualSha256"
     }
 
@@ -126,6 +131,9 @@ try {
     Ensure-Patch `
         -Submodule 'third_party/N64ModernRuntime' `
         -Patch 'patches/0001-n64modernruntime-sote-audio-fifo.patch'
+    Ensure-Patch `
+        -Submodule 'third_party/N64ModernRuntime' `
+        -Patch 'patches/0004-n64modernruntime-alternate-rom-hashes.patch'
     Ensure-Patch `
         -Submodule 'third_party/rt64' `
         -Patch 'patches/0002-rt64-sote-f3dbeta.patch'

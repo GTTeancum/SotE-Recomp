@@ -59,12 +59,14 @@ This package contains no ROM, extracted executable image, saves, Sdata,
 texture dumps, texture packs, or other extracted game data.
 
 To play, place a legally obtained USA v1.2 big-endian ROM next to
-Shadows of the Empire.exe using either filename:
+Shadows of the Empire.exe using any of these filenames:
 
   sote.us.v1.2.z64
   Star Wars - Shadows of the Empire (U) (V1.2) [!].z64
+  Star Wars - Shadows of the Empire (USA) (Rev 2).z64
 
-Expected ROM SHA-256:
+Accepted ROM SHA-256 - either of these works:
+  e7085e013123537f34e0edec8801318016da4dbac424172d6dc5f3b67d98642c
   2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103
 
 Modern controller tuning lives in CONTROLS_MODERN.INI. The file is heavily
@@ -80,6 +82,7 @@ $forbiddenNames = @(
     "main.bin",
     "sote.us.v1.2.z64",
     "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64",
+    "Star Wars - Shadows of the Empire (USA) (Rev 2).z64",
     "Sdata",
     "saves",
     "textures",

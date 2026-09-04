@@ -32,8 +32,13 @@ else {
         (Join-Path $repoRoot $OutputDirectory))
 }
 $releaseDirectory = Join-Path $repoRoot 'build\runtime\Release'
-$expectedSha256 =
+# Canonical No-Intro 'Star Wars - Shadows of the Empire (USA) (Rev 2)',
+# plus a widely mirrored pack copy that differs only at ROM offset
+# 0x3B7B6E, outside every recompiled section, so it runs identically.
+$acceptedSha256 = @(
+    'E7085E013123537F34E0EDEC8801318016DA4DBAC424172D6DC5F3B67D98642C'
     '2802BF4135842F7C8D254349ED7AC2641F6D7FF45E9D2D01304E1455706DD103'
+)
 
 $sources = @{
     'Shadows of the Empire.exe' =
@@ -53,7 +58,7 @@ foreach ($source in $sources.Values) {
 
 $actualSha256 = (
     Get-FileHash -LiteralPath $romAbsolute -Algorithm SHA256).Hash
-if ($actualSha256 -ne $expectedSha256) {
+if ($acceptedSha256 -notcontains $actualSha256) {
     throw "Unsupported ROM SHA-256 $actualSha256"
 }
 

@@ -3236,17 +3236,24 @@ int main(int argc, char** argv) {
     const std::filesystem::path named_rom =
         runtime_directory /
         "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64";
+    // What a No-Intro set names the same cartridge dump.
+    const std::filesystem::path nointro_rom =
+        runtime_directory /
+        "Star Wars - Shadows of the Empire (USA) (Rev 2).z64";
     portable_layout =
         std::filesystem::is_regular_file(runtime_directory / "main.bin") ||
         std::filesystem::is_regular_file(runtime_directory / "rt64.json") ||
         std::filesystem::is_regular_file(runtime_directory / "CONTROLS_MODERN.INI") ||
         std::filesystem::is_regular_file(packaged_rom) ||
-        std::filesystem::is_regular_file(named_rom);
+        std::filesystem::is_regular_file(named_rom) ||
+        std::filesystem::is_regular_file(nointro_rom);
     std::filesystem::path rom_path;
     if (std::filesystem::is_regular_file(packaged_rom)) {
         rom_path = packaged_rom;
     } else if (std::filesystem::is_regular_file(named_rom)) {
         rom_path = named_rom;
+    } else if (std::filesystem::is_regular_file(nointro_rom)) {
+        rom_path = nointro_rom;
     } else {
         rom_path = std::filesystem::current_path() /
             "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64";
@@ -3331,7 +3338,20 @@ int main(int argc, char** argv) {
     }
 
     recomp::GameEntry game{};
-    game.rom_hash = 0x8F6A90EF92C8B1E2ULL;
+    // Canonical No-Intro dump: Star Wars - Shadows of the Empire (USA)
+    // (Rev 2), 12,582,912 bytes, CRC32 E8727549,
+    // SHA-256 e7085e01...42c. This is what a correct cartridge dump is.
+    game.rom_hash = 0x6956D19EF40EAF58ULL;
+    // A copy circulated in a widely mirrored ROM pack differs from the
+    // canonical dump by exactly one byte, at ROM offset 0x3B7B6E (0x00
+    // there, 0x01 in the real dump). That byte lies outside both
+    // recompiled code sections (.boot 0x1000-0x1F30 and .main
+    // 0xC00000-0xCEC880), outside the global texture pool and banks, and
+    // outside all 32 packed data segments; extracting every texture and
+    // decompressing every segment from both dumps yields byte-identical
+    // output. It runs identically, so accept it rather than sending
+    // people hunting for a dump that was never released.
+    game.alternate_rom_hashes = { 0x8F6A90EF92C8B1E2ULL };
     game.internal_name = "Shadow of the Empire";
     game.game_id = u8"sote.us.v1.2";
     game.save_type = recomp::SaveType::Eep4k;

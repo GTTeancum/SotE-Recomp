@@ -12,9 +12,16 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 
+# Canonical No-Intro "Star Wars - Shadows of the Empire (USA) (Rev 2)".
 EXPECTED_ROM_SHA256 = (
-    "2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103"
+    "e7085e013123537f34e0edec8801318016da4dbac424172d6dc5f3b67d98642c"
 )
+# A widely mirrored pack copy differs only at ROM offset 0x3B7B6E, which
+# lies outside every recompiled section, so it produces identical output.
+ACCEPTED_ROM_SHA256 = frozenset({
+    EXPECTED_ROM_SHA256,
+    "2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103",
+})
 BOOT_ROM = 0x1000
 BOOT_VRAM = 0x80000400
 BOOT_SIZE = 0xF30
@@ -262,9 +269,10 @@ def main() -> int:
 
     rom = args.rom.read_bytes()
     digest = hashlib.sha256(rom).hexdigest()
-    if digest != EXPECTED_ROM_SHA256:
+    if digest not in ACCEPTED_ROM_SHA256:
         raise SystemExit(
-            f"unsupported ROM SHA-256 {digest}; expected {EXPECTED_ROM_SHA256}"
+            f"unsupported ROM SHA-256 {digest}; expected one of "
+            f"{', '.join(sorted(ACCEPTED_ROM_SHA256))}"
         )
 
     main_image = args.main_image.read_bytes()

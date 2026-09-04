@@ -17,9 +17,17 @@ Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 
 - Region: USA
 - Retail revision: 1.2
-- ROM byte order: big-endian (`.z64`)
+- ROM byte order: big-endian (`.z64`); byteswapped `.v64`/`.n64` dumps
+  are converted automatically
 - Internal ROM name: `Shadow of the Empire`
-- SHA-256: `2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103`
+- Accepted ROM SHA-256, either of:
+  - `e7085e013123537f34e0edec8801318016da4dbac424172d6dc5f3b67d98642c`
+    (No-Intro `Star Wars - Shadows of the Empire (USA) (Rev 2)`, CRC32
+    `E8727549` - the normal cartridge dump)
+  - `2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103`
+    (a widely mirrored pack copy; differs from the dump above only at ROM
+    offset `0x3B7B6E`, which falls outside every recompiled code section,
+    the texture pool and all 32 packed segments, so it runs identically)
 
 No game ROMs or extracted copyrighted assets belong in version control. A
 legally obtained matching ROM is required locally to build and run the port.
