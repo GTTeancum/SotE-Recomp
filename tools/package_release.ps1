@@ -7,7 +7,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$resolvedOutput = [IO.Path]::GetFullPath((Join-Path (Get-Location) $OutputDirectory))
+$resolvedOutput = if ([IO.Path]::IsPathRooted($OutputDirectory)) { [IO.Path]::GetFullPath($OutputDirectory) } else { [IO.Path]::GetFullPath((Join-Path (Get-Location) $OutputDirectory)) }
 $staging = Join-Path $resolvedOutput "SotE-Recomp-$Version"
 $zipPath = "$staging.zip"
 if ((Test-Path -LiteralPath $staging) -or (Test-Path -LiteralPath $zipPath)) { throw 'Release output already exists; choose a new output directory.' }
@@ -45,6 +45,21 @@ foreach ($name in @('extract_rom_textures.py','extract_rom_segments.py','rt64_tm
     Copy-Item -LiteralPath "$repoRoot\tools\$name" -Destination $toolsDir
 }
 $licenses = New-Item -ItemType Directory -Path "$staging\licenses"
+Copy-Item -LiteralPath "$repoRoot\docs\licenses\DXC-LICENSE.txt" -Destination $licenses
+Copy-Item -LiteralPath "$repoRoot\docs\licenses\JSON-LICENSE.txt" -Destination $licenses
+Copy-Item -LiteralPath "$repoRoot\third_party\rt64\src\contrib\imgui\LICENSE.txt" -Destination "$licenses\imgui-LICENSE.txt"
+foreach ($dependency in @('miniz','o1heap')) {
+    Copy-Item -LiteralPath "$repoRoot\third_party\N64ModernRuntime\thirdparty\$dependency\LICENSE" -Destination "$licenses\$dependency-LICENSE.txt"
+}
+foreach ($dependency in @('fmt','rabbitizer','sljit','tomlplusplus')) {
+    Copy-Item -LiteralPath "$repoRoot\third_party\N64ModernRuntime\N64Recomp\lib\$dependency\LICENSE" -Destination "$licenses\$dependency-LICENSE.txt"
+}
+foreach ($dependency in @('D3D12MemoryAllocator','VulkanMemoryAllocator')) {
+    Copy-Item -LiteralPath "$repoRoot\third_party\rt64\src\contrib\plume\contrib\$dependency\LICENSE.txt" -Destination "$licenses\$dependency-LICENSE.txt"
+}
+foreach ($dependency in @('plume','stb','xxHash','zstd','spirv-cross','re-spirv','hlslpp','ddspp','im3d','implot','nativefiledialog-extended')) {
+    Copy-Item -LiteralPath "$repoRoot\third_party\rt64\src\contrib\$dependency\LICENSE" -Destination "$licenses\$dependency-LICENSE.txt"
+}
 Copy-Item -LiteralPath "$repoRoot\third_party\rt64\LICENSE" -Destination "$licenses\RT64-LICENSE.txt"
 Copy-Item -LiteralPath "$repoRoot\third_party\N64ModernRuntime\COPYING" -Destination "$licenses\N64ModernRuntime-COPYING.txt"
 Copy-Item -LiteralPath "$repoRoot\third_party\N64Recomp\LICENSE" -Destination "$licenses\N64Recomp-LICENSE.txt"

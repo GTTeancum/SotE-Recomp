@@ -13,7 +13,26 @@ folder; ordinary RT64 content-hash packs also support the existing archive path.
 
 ## Make replacements
 
-Run these commands from the game folder with Python 3.10 or newer installed:
+The 0.9.2 release includes editable stock PNGs in `texture_upgrade/rom`
+(2,941 images), `texture_upgrade/runtime_static` (1,124), and
+`texture_upgrade/runtime_changing` (179). Keep these source folders outside
+`textures`. Edit selected PNGs, keeping filenames, alpha and JSON metadata.
+Higher resolutions are supported. From the release folder, build your pack:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Build-HD-Pack.ps1 -Source .\texture_upgrade\rom -Output .\textures\MyHDPack
+```
+
+No Python installation is required for this workflow. Only edited PNGs become
+replacements; an untouched source creates no replacements. Use a new output
+folder for each build. Repeat with either runtime source folder and a different
+pack name as needed. A changed runtime texture replaces that slot's animation
+with a single image; leave it untouched to keep native animation.
+
+## Advanced extraction
+
+To extract another stock source yourself, run these commands from the game
+folder with Python 3.10 or newer installed:
 
 ```powershell
 python -m pip install -r texture_tools/requirements.txt

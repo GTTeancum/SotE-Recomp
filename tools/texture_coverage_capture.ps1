@@ -47,7 +47,10 @@ $resolvedOutput = [System.IO.Path]::GetFullPath(
     (Join-Path (Get-Location) $OutputDirectory))
 New-Item -ItemType Directory -Path $resolvedOutput -Force | Out-Null
 
-$sourceSave = Join-Path $repoRoot "SotE_Recompiled\saves\sote.us.v1.2.bin"
+$sourceSave = Join-Path (Split-Path -Parent $resolvedExe) "saves\sote.us.v1.2.bin"
+if (-not (Test-Path -LiteralPath $sourceSave -PathType Leaf)) {
+    $sourceSave = Join-Path $repoRoot "SotE_Recompiled\saves\sote.us.v1.2.bin"
+}
 if (-not (Test-Path -LiteralPath $sourceSave -PathType Leaf)) {
     $sourceSave = Join-Path $repoRoot "saves\sote.us.v1.2.bin"
 }

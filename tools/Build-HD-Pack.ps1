@@ -5,7 +5,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $sourceRoot = (Resolve-Path -LiteralPath $Source).Path.TrimEnd('\')
-$outputRoot = [IO.Path]::GetFullPath((Join-Path (Get-Location) $Output))
+$outputRoot = if ([IO.Path]::IsPathRooted($Output)) { [IO.Path]::GetFullPath($Output) } else { [IO.Path]::GetFullPath((Join-Path (Get-Location) $Output)) }
 if (Test-Path -LiteralPath $outputRoot) { throw 'Output already exists. Choose a new pack folder to protect existing artwork.' }
 function Source-Path([string]$relative) {
     $full = [IO.Path]::GetFullPath((Join-Path $sourceRoot $relative))
@@ -16,10 +16,13 @@ $baseline = Get-Content -LiteralPath "$sourceRoot\source_baseline.json" -Raw | C
 if ($baseline.version -ne 1) { throw 'Unsupported source baseline.' }
 $edited = @{}
 foreach ($item in $baseline.images.PSObject.Properties) {
+    if ([IO.Path]::GetExtension($item.Name) -ine '.png') { throw 'Stock baseline must reference PNG files.' }
     $path = Source-Path $item.Name
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { continue }
-    if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ieq $item.Value) { continue }
     $bytes = [IO.File]::ReadAllBytes($path)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { $digest = [BitConverter]::ToString($hasher.ComputeHash($bytes)).Replace('-','') } finally { $hasher.Dispose() }
+    if ($digest -ieq $item.Value) { continue }
     if ($bytes.Length -lt 33 -or [BitConverter]::ToString($bytes,0,8) -ne '89-50-4E-47-0D-0A-1A-0A' -or
         [Text.Encoding]::ASCII.GetString($bytes,12,4) -ne 'IHDR') { throw "Invalid PNG: $($item.Name)" }
     foreach ($offset in @(16,20)) {
@@ -43,6 +46,9 @@ if (Test-Path -LiteralPath "$sourceRoot\slot_catalog.json") {
         $bindings[$entry.hash] = @{hashes=@{rt64=$entry.hash};path=$entry.path}
     }
 }
+$bound = @{}
+foreach ($entry in $bindings.Values) { $bound[$entry.path] = $true }
+foreach ($key in $edited.Keys) { if (-not $bound.ContainsKey($key)) { throw "Edited PNG has no replacement binding: $key" } }
 $database.textures = @($bindings.Values)
 New-Item -ItemType Directory -Path $outputRoot | Out-Null
 foreach ($key in $edited.Keys) {

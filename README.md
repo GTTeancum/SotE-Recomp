@@ -1,5 +1,9 @@
 # Shadows of the Empire: Recompiled
 
+**[Report bugs / request features](https://github.com/GTTeancum/SotE-Recomp/issues)**
+
+**[Download 0.9.2 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.2)** · [Release notes](docs/RELEASE_0.9.2.md)
+
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 
@@ -35,26 +39,38 @@ legally obtained matching ROM is required locally to build and run the port.
 Modern blaster convergence and optional INI magnetism are documented in
 [Modern aiming](docs/MODERN_AIM.md).
 
+## Leebo's PC voices
+
+0.9.2 maps 32 distinct Leebo communicator messages to PC recordings and starts
+them when their text appears. Copy `ILB*.WAV` from the `Sdata` folder in your
+own PC installation into `Sdata` beside `Shadows of the Empire.exe`, then
+restart. The path should be `Sdata/ILB01.WAV`; original PCM WAV files need no
+conversion. These optional recordings are not bundled. See the
+[installation guide](docs/LEEBO_VOICES_USER.md).
+
 ## Texture packs
 
 Stock textures are the default. Optional replacement packs support higher-resolution
 PNG artwork, transparency and runtime source-slot matching. The portable folder
-includes `texture_tools` and `TEXTURE_PACKS.md`; see the
+includes 4,244 editable stock PNG references under `texture_upgrade`,
+`Build-HD-Pack.ps1`, `texture_tools` and `TEXTURE_PACKS.md`. Edit the bundled
+sources to create your own HD pack; the basic workflow needs no Python. See the
 [authoring and installation guide](docs/TEXTURE_PACKS_USER.md) or
 [developer workflow and validation](docs/TEXTURE_PACKS.md).
 
 ## Status
 
-The 0.9 beta is playable on Windows. Graphics, music and sound effects,
+The 0.9.2 open beta is playable on Windows. Graphics, music and sound effects,
 keyboard and controller input, rumble, EEPROM saves, widescreen rendering,
 MSAA, and the in-game graphics/options hooks are connected. Automated crash
 testing navigates the in-game Change Level menu and has exercised all ten
 levels. Longer input-driven runs cover on-foot, speeder bike, spacecraft,
 turret, and jetpack gameplay paths.
 
-Public release packages contain the executable, required runtime DLLs, and
-configuration files only. They do not include a ROM, `main.bin`, saves, the
-`Sdata` folder, texture dumps, texture packs, or other extracted game data.
+The 0.9.2 release contains the executable, required runtime DLLs, configuration,
+documentation, texture tools and editable stock texture sources. Sources stay
+outside the active `textures` folder so native rendering remains the default.
+It does not include a ROM, `main.bin`, saves or PC audio.
 At runtime, the executable validates the user's local USA v1.2 big-endian ROM
 and reconstructs the retail executable image in memory.
 
@@ -91,7 +107,7 @@ For building from source:
 - Python 3
 - A legally obtained ROM matching the SHA-256 above
 
-Install the one Python dependency into the repository:
+Install the Python dependencies into the repository:
 
 ```powershell
 python -m pip install --target .tools/python -r tools/requirements.txt
@@ -284,7 +300,8 @@ look-forward snap back, and speeder-bike steering curve, high-speed falloff,
 minimum steering scale, stabilization, camera smoothing, and fire binding.
 
 The `[OnFoot]` settings are independent of the older General/Bike tuning:
-`on_foot_movement_deadzone` and `on_foot_aim_deadzone` default to 0.12,
+`on_foot_movement_deadzone` and `on_foot_aim_deadzone` ship at 0.18 in the 0.9.2
+INI (the fallback when keys are absent is 0.12),
 `on_foot_aim_curve` to 1.7, `on_foot_yaw_speed` to 180 degrees/second, and
 `on_foot_pitch_speed` to 90 degrees/second. `on_foot_invert_y` reverses vertical
 look. Larger aim exponents give finer center control; 1.0 is linear. Both
