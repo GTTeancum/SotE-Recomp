@@ -58,6 +58,8 @@ std::unordered_set<uint32_t> played_one_shot_voice_hashes;
 std::unordered_map<uint32_t, std::chrono::steady_clock::time_point>
     voice_cooldowns;
 std::vector<Voice> active_voices;
+std::unordered_map<uint32_t, uint64_t> visible_voice_last_seen;
+int visible_voice_event = -1;
 
 float read_gain_env(const char* name, float fallback) {
     const char* value = std::getenv(name);
@@ -396,6 +398,56 @@ void add_builtin_voice_locked(
         Mapping{std::move(filename), gain, one_shot};
 }
 
+// Leebo's droid-communicator lines, recovered by transcribing the PC release's
+// ILB*.WAV speech and matching it against the ROM's own message strings. Keyed
+// by normalized message hash. tools/leebo_voice_cases.tsv checks the exact
+// ROM strings against these hashes. Sdata/hd_voice_map.tsv overrides them.
+struct BuiltinVoice {
+    uint32_t hash;
+    const char* filename;
+};
+
+constexpr BuiltinVoice builtin_droid_voices[] = {
+    { 0xBB29B6D3U, "ILB01.WAV" },  // The Empire has destroyed the main generator! The shield door to Ba
+    { 0x4035475DU, "ILB06.WAV" },  // I'll try to avoid asteroids while you're busy in the gun turret.
+    { 0xE9E9E655U, "ILB08.WAV" },  // Jump to the next hover train!
+    { 0x60A05C90U, "ILB09.WAV" },  // You missed the hover train...
+    { 0x9D73E485U, "ILB11.WAV" },  // I'll watch the ship. Get out there and find Boba Fett!
+    { 0x6A7FC2E8U, "ILB14.WAV" },  // We'll never get paid if you stay here all day.
+    { 0x6EA49119U, "ILB15.WAV" },  // The ship is safe with me, Sir.
+    { 0x250DA917U, "ILB16.WAV" },  // Go away, Sir.
+    { 0x42F92FD8U, "ILB17.WAV" },  // The spaceport computer is in the observation tower. Activate it, a
+    { 0x662E8A37U, "ILB24.WAV" },  // Stop the swoop gang before they reach Luke!
+    { 0xCA7217F6U, "ILB26.WAV" },  // Hurry! The swoop gang is almost upon Luke!
+    { 0xF5F95B66U, "ILB27.WAV" },  // I'm not getting a signal from Luke, Sir... I think they got him.
+    { 0xFCB92109U, "ILB29.WAV" },  // That does it for the swoop gang. Head for Kenobi's place.
+    { 0xDF2D2FFBU, "ILB33.WAV" },  // Make your way through the ship, and find the Imperial super comput
+    { 0x2809313AU, "ILB34.WAV" },  // My scanners show that it is near the main cargo hangar.
+    { 0xC22B0430U, "ILB35.WAV" },  // You found the super computer!
+    { 0x626E01CFU, "ILB36.WAV" },  // Now take the lift back to the control room, and switch off the han
+    { 0x4FDC18CFU, "ILB37.WAV" },  // Find your way through the sewers to get to the entrance of Xizor's
+    { 0xACBC4CC8U, "ILB39.WAV" },  // You found the security key that will access the main sewage gate.
+    { 0xE9E5E8B4U, "ILB40.WAV" },  // You need to find a force field deactivator.
+    { 0x2E000141U, "ILB42.WAV" },  // Sir, there are several service panels to the space elevator that c
+    { 0xEB5B276BU, "ILB43.WAV" },  // If you place pulse bombs on each of these three service panels, th
+    { 0x211F8144U, "ILB44.WAV" },  // The pulse bombs are set and Luke has found Princess Leia. Just fin
+    { 0xA6918E63U, "ILB46.WAV" },  // Sir, you'd better take over the ship... We've reached the skyhook!
+    { 0xD757FDA6U, "ILB03.WAV" },  // you must activate the emergency generators on the lower level to open the door. hurry!
+    { 0xC01B4784U, "ILB04.WAV" },  // the power has been restored. hurry up and get to the ship!
+    { 0x5116133FU, "ILB10.WAV" },  // okay, sir! i've taken care of the auto-brake. prepare for impact!
+    { 0xE512B6D8U, "ILB18.WAV" },  // boba fett is across the canyon in the second tower. you'll need a jetpack to reach him.
+    { 0x11F1FBA4U, "ILB21.WAV" },  // good job, boss! boba fett is grounded. i'll notify luke.
+    { 0x87D983ABU, "ILB31.WAV" },  // jetpack malfunction
+    { 0x13161B09U, "ILB38.WAV" },  // you need a security key of some sort.
+    { 0x4B28A91BU, "ILB41.WAV" },  // it's a force field deactivator!
+};
+
+void add_builtin_droid_voices_locked() {
+    for (const BuiltinVoice& voice : builtin_droid_voices) {
+        voice_map[voice.hash] = Mapping{voice.filename, default_gain, false};
+    }
+}
+
 void load_voice_map_locked(const std::filesystem::path& path) {
     std::ifstream file{path};
     if (!file) {
@@ -471,13 +523,11 @@ void initialize(const std::filesystem::path& runtime_directory) {
     played_one_shot_voice_hashes.clear();
     voice_cooldowns.clear();
     active_voices.clear();
+    visible_voice_last_seen.clear();
+    visible_voice_event = -1;
     trace_audio = std::getenv("SOTE_TRACE_HD_AUDIO") != nullptr;
     global_gain = read_gain_env("SOTE_HD_AUDIO_GAIN", default_gain);
-    add_builtin_voice_locked(
-        "~h~oI'll watch the ship. Get out there and find Boba Fett!",
-        "ILB11.WAV",
-        default_gain,
-        true);
+    add_builtin_droid_voices_locked();
     add_builtin_voice_locked("Dfob", "ILB11.WAV", default_gain, true);
 
     const std::vector<std::filesystem::path> candidates = {
@@ -643,6 +693,39 @@ bool play_voice_for_text(std::string_view text) {
             normalized.c_str());
         std::fflush(stdout);
     }
+    return queued;
+}
+
+bool has_voice_for_text(std::string_view text) {
+    std::lock_guard lock{audio_mutex};
+    return voice_map.contains(hash_normalized_message(text));
+}
+
+bool play_visible_voice(std::string_view text, uint64_t vi, int event) {
+    const uint32_t hash = hash_normalized_message(text);
+    std::lock_guard lock{audio_mutex};
+    if (!enabled) return false;
+    const auto mapping = voice_map.find(hash);
+    if (mapping == voice_map.end()) return false;
+    // The ROM reuses this generic key prompt. The PC line specifically
+    // mentions the sewage gate, so it only belongs in the sewers.
+    if (hash == 0x13161B09U && mapping->second.filename == "ILB38.WAV" &&
+        event != 24 && event != 25) return false;
+    if (event != visible_voice_event) {
+        visible_voice_event = event;
+        visible_voice_last_seen.clear();
+    }
+    const auto previous = visible_voice_last_seen.find(hash);
+    const bool first_draw = previous == visible_voice_last_seen.end() ||
+        vi < previous->second || vi - previous->second > 60;
+    visible_voice_last_seen[hash] = vi;
+    if (!first_draw) return false;
+    // Visibility owns repetition here. A lookup alias's one-shot setting
+    // must not permanently mute the same conversation after a level retry.
+    const bool queued = enqueue_file_locked(mapping->second);
+    std::printf("[sote][hd-audio] visible voice %s hash=0x%08X -> %s VI=%llu event=%d\n",
+        queued ? "queued" : "unavailable", hash, mapping->second.filename.c_str(),
+        static_cast<unsigned long long>(vi), event);
     return queued;
 }
 

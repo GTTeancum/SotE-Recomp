@@ -63,9 +63,12 @@ endif()
 
 set(SOTE_RUNTIME_SOURCES
     src/controls_menu.cpp
+    src/modern_controls.cpp
+    src/modern_aim.cpp
     src/frontend.cpp
     src/graphics_menu.cpp
     src/hd_audio.cpp
+    src/pc_voices.cpp
     src/hd_music.cpp
     src/libultra_stubs.c
     src/main.cpp
@@ -131,6 +134,31 @@ if(MSVC)
 endif()
 enable_testing()
 add_test(NAME controls_harness COMMAND controls_harness)
+
+add_executable(modern_controls_harness tools/modern_controls_harness.cpp
+    src/modern_controls.cpp src/controls_menu.cpp)
+target_include_directories(modern_controls_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+add_test(NAME modern_controls_harness COMMAND modern_controls_harness)
+
+add_executable(modern_aim_harness tools/modern_aim_harness.cpp
+    src/modern_aim.cpp src/modern_controls.cpp src/controls_menu.cpp)
+target_include_directories(modern_aim_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${N64_MODERN_RUNTIME}/N64Recomp/include")
+add_test(NAME modern_aim_harness COMMAND modern_aim_harness "${CMAKE_BINARY_DIR}/aim-test-settings")
+
+add_executable(pc_voices_harness tools/pc_voices_harness.cpp src/pc_voices.cpp)
+target_include_directories(pc_voices_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+add_test(NAME pc_voices_harness COMMAND pc_voices_harness)
+
+add_executable(leebo_voices_harness tools/leebo_voices_harness.cpp src/hd_audio.cpp)
+target_include_directories(leebo_voices_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+add_test(NAME leebo_voices_harness COMMAND leebo_voices_harness
+    "${CMAKE_CURRENT_SOURCE_DIR}/SotE_Recompiled"
+    "${CMAKE_CURRENT_SOURCE_DIR}/tools/leebo_voice_cases.tsv")
+
+add_executable(texture_slots_harness tools/texture_slots_harness.cpp)
+target_include_directories(texture_slots_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${RT64_DIR}/src/contrib")
+add_test(NAME texture_slots_harness COMMAND texture_slots_harness "${CMAKE_BINARY_DIR}/texture_slots_test")
 
 if(MSVC)
     target_compile_options(sote_recomp PRIVATE /W4 /Zi)

@@ -11,6 +11,24 @@ stubs = []
 ignored = []
 renamed = []
 hook = [
+    # Adjust player blaster velocity at spawn; camera/body and native collision stay independent.
+    { func = "func_80031FE0", before_vram = 0x800321FC, text = "sote_modern_projectile(rdram, ctx);" },
+    # Latch analog input once per player update. Replace decoded movement
+    # before native input suppression and yaw rate before native integration.
+    { func = "func_80074FA4", before_vram = 0x80074FA4, text = "sote_modern_begin(rdram, (uint32_t)ctx->r4); if (sote_modern_take_camera_request()) { recomp_context camera_ctx = *ctx; camera_ctx.r29 = SUB32(ctx->r29, 0x400); camera_ctx.r5 = 5; camera_ctx.r6 = 0; func_8006A214(rdram, &camera_ctx); }" },
+    { func = "func_80074FA4", before_vram = 0x800758A8, text = "sote_modern_decode(rdram, (uint32_t)ctx->r16, (uint32_t)ctx->r29);" },
+    { func = "func_80074FA4", before_vram = 0x800778D0, text = "sote_modern_yaw(rdram, (uint32_t)ctx->r16);" },
+    { func = "func_80074FA4", before_vram = 0x800785A8, text = "sote_modern_yaw(rdram, (uint32_t)ctx->r16);" },
+    # Supply continuous pitch to weapon and view, bypass target selection,
+    # then replace the old per-frame smoothing before native transforms.
+    { func = "func_8006E6B8", before_vram = 0x8006EF28, text = "if (sote_modern_aim(rdram, (uint32_t)ctx->r29)) { ctx->f12.fl = 0.0f; ctx->f8.u32l = MEM_W(ctx->r29, 0x108); ctx->r4 = 1; }" },
+    { func = "func_8006E6B8", before_vram = 0x8006EF40, text = "if (sote_modern_aim(rdram, (uint32_t)ctx->r29)) ctx->r11 = 1;" },
+    { func = "func_8006E6B8", before_vram = 0x8006F6FC, text = "if (sote_modern_aim(rdram, (uint32_t)ctx->r29)) ctx->f6.fl = 0.0f;" },
+    { func = "func_8006E6B8", before_vram = 0x8006FAF4, text = "if (sote_modern_aim(rdram, (uint32_t)ctx->r29)) ctx->f6.fl = 0.0f;" },
+    # Adapt the native overhead camera to a shoulder view. Its collision
+    # sweep runs after our offset and its look-at follows the weapon direction.
+    { func = "func_80069404", before_vram = 0x80069404, text = "if (sote_modern_camera_active()) { ctx->r5 = 0x3F99999A; ctx->r6 = 0x41000000; }" },
+    { func = "func_80069404", before_vram = 0x80069454, text = "sote_modern_camera_offset(rdram, (uint32_t)ctx->r16, (uint32_t)ctx->r29);" },
     # Extend the game's own 80-entry UI table immediately before its native
     # text renderer walks it. This keeps Graphics inside the original Options
     # screen and uses the retail font, colors, panel, and draw path.
@@ -21,7 +39,7 @@ hook = [
     # The original timer can occasionally publish its absolute host-clock
     # value instead of a per-frame delta. Repair the shared value immediately
     # after the timer update, before camera, player, or vehicle simulation.
-    { func = "func_80017CC8", before_vram = 0x80017EA8, text = "sote_sanitize_global_frame_delta(rdram);" },
+    { func = "func_80017CC8", before_vram = 0x80017EA8, text = "sote_sanitize_global_frame_delta(rdram); sote_pc_voice_frame(rdram);" },
     # Scripted-object dispatch temporarily installs an absolute timeline value
     # in the global simulation-delta slot. Sanitize it before any dispatched
     # player, vehicle, or camera controller can consume it. The controller
@@ -40,7 +58,11 @@ hook = [
     { func = "func_8002A13C", before_vram = 0x8002A678, text = "if (!sote_allow_life_loss(rdram, 0x8002A678U, (uint32_t)MEM_W(ctx->r29, 0xD0), 0U)) ctx->r24 = ADD32(ctx->r24, 1); sote_note_bike_life_loss(rdram, 2);" },
     { func = "func_8000686C", before_vram = 0x8000686C, text = "if (sote_play_hd_sound_request(rdram, (int32_t)ctx->r4)) { ctx->r2 = (uint32_t)-1; return; }" },
     { func = "func_80017A78", before_vram = 0x80017AAC, text = "sote_note_message_lookup(rdram, (uint32_t)ctx->r5, (uint32_t)MEM_W(ctx->r24, 0x38), (uint32_t)ctx->r31);" },
-    { func = "func_80008778", before_vram = 0x80008C28, text = "sote_note_droid_text_buffer_draw(rdram, 0x80008C28U, (uint32_t)(ctx->r18 >> 2), (uint32_t)MEM_W(ctx->r13, 0x0), (uint32_t)ctx->r17, (uint32_t)ctx->r2);" },
+    { func = "func_80008778", before_vram = 0x80008C28, text = "sote_pc_voice_text(rdram, (uint32_t)MEM_W(ctx->r13, 0x0)); sote_note_droid_text_buffer_draw(rdram, 0x80008C28U, (uint32_t)(ctx->r18 >> 2), (uint32_t)MEM_W(ctx->r13, 0x0), (uint32_t)ctx->r17, (uint32_t)ctx->r2);" },
+    # PC Luke responses at verified native harpoon outcomes. Keep all native SFX.
+    { func = "func_80086F64", before_vram = 0x80086FCC, text = "sote_pc_voice_harpoon(rdram, 0x80086FCCU);" },
+    { func = "func_80086F64", before_vram = 0x800870C8, text = "sote_pc_voice_harpoon(rdram, 0x800870C8U);" },
+    { func = "func_80086660", before_vram = 0x80086660, text = "sote_pc_voice_harpoon(rdram, (uint32_t)ctx->r31);" },
     { func = "func_800700F0", before_vram = 0x8007148C, text = "if (!sote_allow_life_loss(rdram, 0x8007148CU, (uint32_t)ctx->r17, 0U)) ctx->r12 = ADD32(ctx->r12, 1);" },
     { func = "func_8008BF00", before_vram = 0x8008C638, text = "if (!sote_allow_life_loss(rdram, 0x8008C638U, (uint32_t)ctx->r17, (uint32_t)MEM_W(ctx->r29, 0xB4))) ctx->r9 = ADD32(ctx->r9, 1);" },
     { func = "func_80096E14", before_vram = 0x8009724C, text = "if (!sote_allow_life_loss(rdram, 0x8009724CU, (uint32_t)ctx->r16, (uint32_t)MEM_W(ctx->r16, 0x230))) ctx->r11 = ADD32(ctx->r11, 1);" },

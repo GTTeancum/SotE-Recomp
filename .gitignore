@@ -19,3 +19,5 @@ CMakeUserPresets.json
 *.user
 *.suo
 *.log
+__pycache__/
+*.pyc

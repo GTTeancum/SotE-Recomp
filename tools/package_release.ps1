@@ -1,108 +1,60 @@
 [CmdletBinding()]
 param(
-    [string]$Version = "0.9beta",
-    [string]$OutputDirectory = ".\build\release"
+    [string]$Version = "0.9.2",
+    [string]$OutputDirectory = ".\build\release",
+    [string]$TextureSourceRoot = ".\build\diagnostics\texture_goal",
+    [string]$CrtDirectory = ""
 )
-
-$ErrorActionPreference = "Stop"
-
-$repoRoot = [System.IO.Path]::GetFullPath(
-    (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)))
-$resolvedOutput = [System.IO.Path]::GetFullPath(
-    (Join-Path (Get-Location) $OutputDirectory))
-$staging = Join-Path $resolvedOutput ("SotE-Recomp-{0}" -f $Version)
-$zipPath = Join-Path $resolvedOutput ("SotE-Recomp-{0}.zip" -f $Version)
-
-function Assert-UnderPath {
-    param(
-        [string]$Child,
-        [string]$Parent
-    )
-    $childFull = [System.IO.Path]::GetFullPath($Child)
-    $parentFull = [System.IO.Path]::GetFullPath($Parent).TrimEnd('\') + '\'
-    if (-not $childFull.StartsWith($parentFull, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Refusing to operate outside expected directory: $childFull"
-    }
+$ErrorActionPreference = 'Stop'
+$repoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$resolvedOutput = [IO.Path]::GetFullPath((Join-Path (Get-Location) $OutputDirectory))
+$staging = Join-Path $resolvedOutput "SotE-Recomp-$Version"
+$zipPath = "$staging.zip"
+if ((Test-Path -LiteralPath $staging) -or (Test-Path -LiteralPath $zipPath)) { throw 'Release output already exists; choose a new output directory.' }
+$buildDir = Join-Path $repoRoot 'build\runtime\Release'
+if (-not $CrtDirectory) {
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+    $crt = Get-ChildItem -LiteralPath "$vs\VC\Redist\MSVC" -Directory | Where-Object { $_.Name -match '^14\.' } | Sort-Object Name -Descending | Select-Object -First 1
+    $CrtDirectory = Join-Path $crt.FullName 'x64\Microsoft.VC143.CRT'
 }
-
-New-Item -ItemType Directory -Path $resolvedOutput -Force | Out-Null
-Assert-UnderPath -Child $staging -Parent $resolvedOutput
-Assert-UnderPath -Child $zipPath -Parent $resolvedOutput
-
-if (Test-Path -LiteralPath $staging) {
-    Remove-Item -LiteralPath $staging -Recurse -Force
+foreach ($name in @('sote_recomp.exe','SDL2.dll','dxcompiler.dll','dxil.dll')) {
+    if (-not (Test-Path -LiteralPath "$buildDir\$name")) { throw "Missing runtime: $name" }
+}
+foreach ($source in @('rom_source_v2','captured_source','dynamic_source_v1')) {
+    if (-not (Test-Path -LiteralPath "$TextureSourceRoot\$source\source_baseline.json")) { throw "Missing texture source: $source" }
 }
 New-Item -ItemType Directory -Path $staging -Force | Out-Null
-
-$buildDir = Join-Path $repoRoot "build\runtime\Release"
-$requiredFiles = @(
-    @{ Source = Join-Path $buildDir "sote_recomp.exe"; Target = "Shadows of the Empire.exe" },
-    @{ Source = Join-Path $buildDir "SDL2.dll"; Target = "SDL2.dll" },
-    @{ Source = Join-Path $buildDir "dxcompiler.dll"; Target = "dxcompiler.dll" },
-    @{ Source = Join-Path $buildDir "dxil.dll"; Target = "dxil.dll" },
-    @{ Source = Join-Path $buildDir "rt64.json"; Target = "rt64.json" },
-    @{ Source = Join-Path $buildDir "sote_options.json"; Target = "sote_options.json" },
-    @{ Source = Join-Path $repoRoot "config\CONTROLS_MODERN.INI"; Target = "CONTROLS_MODERN.INI" }
-)
-
-foreach ($file in $requiredFiles) {
-    if (-not (Test-Path -LiteralPath $file.Source -PathType Leaf)) {
-        throw "Missing release input: $($file.Source)"
-    }
-    Copy-Item -LiteralPath $file.Source -Destination (Join-Path $staging $file.Target) -Force
+Copy-Item -LiteralPath "$buildDir\sote_recomp.exe" -Destination "$staging\Shadows of the Empire.exe"
+foreach ($name in @('SDL2.dll','dxcompiler.dll','dxil.dll')) { Copy-Item -LiteralPath "$buildDir\$name" -Destination $staging }
+foreach ($name in @('msvcp140.dll','msvcp140_1.dll','msvcp140_2.dll','msvcp140_atomic_wait.dll','msvcp140_codecvt_ids.dll','vcruntime140.dll','vcruntime140_1.dll','concrt140.dll','vcruntime140_threads.dll')) {
+    Copy-Item -LiteralPath "$CrtDirectory\$name" -Destination $staging
 }
-
-$releaseReadme = @"
-Shadows of the Empire: Recompiled $Version
-
-This package contains no ROM, extracted executable image, saves, Sdata,
-texture dumps, texture packs, or other extracted game data.
-
-To play, place a legally obtained USA v1.2 big-endian ROM next to
-Shadows of the Empire.exe using any of these filenames:
-
-  sote.us.v1.2.z64
-  Star Wars - Shadows of the Empire (U) (V1.2) [!].z64
-  Star Wars - Shadows of the Empire (USA) (Rev 2).z64
-
-Accepted ROM SHA-256 - either of these works:
-  e7085e013123537f34e0edec8801318016da4dbac424172d6dc5f3b67d98642c
-  2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103
-
-Modern controller tuning lives in CONTROLS_MODERN.INI. The file is heavily
-commented with valid ranges and notes for each setting. Beta testers are
-encouraged to tune it for their controllers and share the best setups.
-"@
-[System.IO.File]::WriteAllText(
-    (Join-Path $staging "README.txt"),
-    $releaseReadme,
-    [System.Text.UTF8Encoding]::new($false))
-
-$forbiddenNames = @(
-    "main.bin",
-    "sote.us.v1.2.z64",
-    "Star Wars - Shadows of the Empire (U) (V1.2) [!].z64",
-    "Star Wars - Shadows of the Empire (USA) (Rev 2).z64",
-    "Sdata",
-    "saves",
-    "textures",
-    "logs",
-    "rt64.log",
-    "sote-active.log"
-)
-$stagedItems = Get-ChildItem -LiteralPath $staging -Recurse -Force
-foreach ($item in $stagedItems) {
-    if ($forbiddenNames -contains $item.Name) {
-        throw "Forbidden release content staged: $($item.FullName)"
-    }
-    if ($item.Extension -in @(".z64", ".n64", ".v64", ".dds", ".wav", ".ogg")) {
-        throw "Forbidden release extension staged: $($item.FullName)"
-    }
+Copy-Item -LiteralPath "$repoRoot\config\CONTROLS_MODERN.INI" -Destination $staging
+# Settings are intentionally generated by the game instead of shipping a developer's settings.
+$textureRoot = New-Item -ItemType Directory -Path "$staging\texture_upgrade"
+foreach ($pair in @(@('rom_source_v2','rom'),@('captured_source','runtime_static'),@('dynamic_source_v1','runtime_changing'))) {
+    Copy-Item -LiteralPath "$TextureSourceRoot\$($pair[0])" -Destination "$textureRoot\$($pair[1])" -Recurse
 }
-
-if (Test-Path -LiteralPath $zipPath) {
-    Remove-Item -LiteralPath $zipPath -Force
+Copy-Item -LiteralPath "$repoRoot\tools\Build-HD-Pack.ps1" -Destination $staging
+foreach ($pair in @(@('RELEASE_0.9.2.md','README.md'),@('TEXTURE_PACKS_USER.md','TEXTURE_PACKS.md'),@('MODERN_AIM.md','MODERN_AIM.md'),@('LEEBO_VOICES_USER.md','LEEBO_VOICES.md'))) {
+    Copy-Item -LiteralPath "$repoRoot\docs\$($pair[0])" -Destination "$staging\$($pair[1])"
 }
-Compress-Archive -Path (Join-Path $staging "*") -DestinationPath $zipPath -CompressionLevel Optimal
-
+$toolsDir = New-Item -ItemType Directory -Path "$staging\texture_tools"
+foreach ($name in @('extract_rom_textures.py','extract_rom_segments.py','rt64_tmem_hash.py','sote_texture_pack.py','convert_rt64_texture_dumps.py','build_dynamic_texture_pack.py','build_user_texture_pack.py','verify_tmem_hash.py','texture_coverage_capture.ps1','requirements.txt')) {
+    Copy-Item -LiteralPath "$repoRoot\tools\$name" -Destination $toolsDir
+}
+$licenses = New-Item -ItemType Directory -Path "$staging\licenses"
+Copy-Item -LiteralPath "$repoRoot\third_party\rt64\LICENSE" -Destination "$licenses\RT64-LICENSE.txt"
+Copy-Item -LiteralPath "$repoRoot\third_party\N64ModernRuntime\COPYING" -Destination "$licenses\N64ModernRuntime-COPYING.txt"
+Copy-Item -LiteralPath "$repoRoot\third_party\N64Recomp\LICENSE" -Destination "$licenses\N64Recomp-LICENSE.txt"
+Copy-Item -LiteralPath "$repoRoot\third_party\rt64\src\contrib\mupen64plus-win32-deps\SDL2-2.26.3\COPYING.txt" -Destination "$licenses\SDL2-COPYING.txt"
+foreach ($item in Get-ChildItem -LiteralPath $staging -Recurse -File) {
+    if ($item.Name -eq 'main.bin' -or $item.Extension -in @('.z64','.n64','.v64','.wav','.ogg','.tmem','.log')) { throw "Unexpected release file: $($item.FullName)" }
+}
+if (Test-Path -LiteralPath "$staging\textures") { throw 'Source textures must not be installed as active replacements.' }
+Compress-Archive -Path "$staging\*" -DestinationPath $zipPath -CompressionLevel Optimal
+$hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+[IO.File]::WriteAllText("$zipPath.sha256", "$hash  $([IO.Path]::GetFileName($zipPath))`n")
 Write-Host "Release package: $zipPath"
+Write-Host "SHA-256: $hash"

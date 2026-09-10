@@ -394,6 +394,7 @@ void poll_input() {
         physical_input_enabled.load(std::memory_order_relaxed);
     const bool focused = process_owns_foreground_window();
     if (!input_enabled || !focused) {
+        sote::modern_controls::publish({});
         input_snapshot.store(0, std::memory_order_relaxed);
         static bool reported_ignored_input = false;
         if (std::getenv("SOTE_TRACE_INPUT") != nullptr &&
@@ -422,6 +423,7 @@ void poll_input() {
     Sint16 raw_ly = 0;
     Sint16 raw_rx = 0;
     Sint16 raw_ry = 0;
+    if (controller == nullptr) sote::modern_controls::publish({});
 
     if (controller != nullptr) {
         auto pressed = [](SDL_GameControllerButton button) {
@@ -476,6 +478,35 @@ void poll_input() {
         x = normalize_axis(raw_lx, controls);
         y = -normalize_axis(raw_ly, controls);
 
+        sote::modern_controls::publish({
+            {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)},
+            {raw_axis_to_unit(raw_rx), raw_axis_to_unit(raw_ry)}, true});
+        const bool on_foot_modern = sote::modern_controls::on_foot_active() &&
+            sote::controls_menu::current_scheme(
+                sote::controls_menu::SchemeSlot::OnFoot) ==
+                sote::controls_menu::ControlScheme::Modern;
+        if (on_foot_modern) {
+            // The right stick travels separately to the guest's analog hooks.
+            // Never turn look input into jetpack/crouch/weapon C-button events.
+            buttons &= static_cast<uint16_t>(~(n64_a | n64_b | n64_z |
+                n64_l | n64_r | n64_cu | n64_cd | n64_cl | n64_cr));
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_a;
+            if (pressed(SDL_CONTROLLER_BUTTON_B)) buttons |= n64_cd;
+            if (pressed(SDL_CONTROLLER_BUTTON_X)) buttons |= n64_r;
+            if (pressed(SDL_CONTROLLER_BUTTON_Y)) buttons |= n64_cl;
+            if (pressed(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) ||
+                pressed(SDL_CONTROLLER_BUTTON_LEFTSHOULDER)) buttons |= n64_cu;
+            if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP)) buttons |= n64_l;
+            if (SDL_GameControllerGetAxis(controller,
+                SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 3276) buttons |= n64_b;
+            buttons = sote::modern_controls::map_buttons(buttons);
+            const auto movement = sote::modern_controls::shape_stick(
+                {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)},
+                controls.on_foot.movement_deadzone, 1.0f);
+            x = movement.x * n64_stick_scale;
+            y = movement.y * n64_stick_scale;
+        }
+
         const bool bike_modern_active =
             sote::controls_menu::bike_modern_scheme_active();
         if (bike_modern_active) {
@@ -500,7 +531,7 @@ void poll_input() {
                 look_snap_back_active = false;
             } else if (right_stick_was_active) {
                 right_stick_was_active = false;
-                look_snap_back_queued = controls.look_snap_back_enabled;
+                look_snap_back_queued = !on_foot_modern && controls.look_snap_back_enabled;
                 right_stick_release_time = now;
             }
 
@@ -518,6 +549,10 @@ void poll_input() {
                             controls.look_snap_back_duration_seconds));
             }
 
+            if (on_foot_modern) {
+                look_snap_back_active = false;
+                look_snap_back_queued = false;
+            }
             if (look_snap_back_active) {
                 if (now < look_snap_back_end_time) {
                     buttons |= controls.look_snap_back_button_bit;
@@ -550,6 +585,13 @@ void poll_input() {
     if (key_down('D')) keyboard_x += n64_stick_scale;
     if (key_down('W')) keyboard_y += n64_stick_scale;
     if (key_down('S')) keyboard_y -= n64_stick_scale;
+    if (controller != nullptr && (keyboard_x != 0 || keyboard_y != 0)) {
+        // Keep WASD usable when an idle gamepad is connected. The guest's
+        // Modern decoder consumes this snapshot instead of the N64 stick.
+        sote::modern_controls::publish({
+            {keyboard_x / n64_stick_scale, keyboard_y / n64_stick_scale},
+            {raw_axis_to_unit(raw_rx), raw_axis_to_unit(raw_ry)}, true});
+    }
     if (x == 0.0f) x = keyboard_x;
     if (y == 0.0f) y = keyboard_y;
 
@@ -584,6 +626,7 @@ void poll_input() {
 void set_physical_input_enabled(bool enabled) {
     physical_input_enabled.store(enabled, std::memory_order_relaxed);
     if (!enabled) {
+        sote::modern_controls::publish({});
         input_snapshot.store(0, std::memory_order_relaxed);
     }
 }

@@ -22,8 +22,8 @@ $levelNames = @(
     "gall_spaceport",
     "mos_eisley_beggars_canyon",
     "imperial_freighter",
-    "xizors_palace",
     "sewers_of_imperial_city",
+    "xizors_palace",
     "skyhook_battle"
 )
 

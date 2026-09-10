@@ -2,9 +2,12 @@
 
 #include <stdint.h>
 
+// Opaque here so generated C keeps its own recomp_context declaration.
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+void sote_modern_projectile(uint8_t* rdram, void* context);
 
 uint32_t sote_enter_bike_controller(uint8_t* rdram, uint32_t object);
 void sote_enter_player_controller(
@@ -23,6 +26,9 @@ uint32_t sote_allow_life_loss(
 void sote_note_bike_life_loss(uint8_t* rdram, uint32_t source);
 void sote_note_audio_negative_exponent(int32_t exponent);
 uint32_t sote_play_hd_sound_request(uint8_t* rdram, int32_t sound_id);
+void sote_pc_voice_frame(uint8_t* rdram);
+void sote_pc_voice_text(uint8_t* rdram, uint32_t pointer);
+void sote_pc_voice_harpoon(uint8_t* rdram, uint32_t source);
 void sote_note_message_lookup(
     uint8_t* rdram,
     uint32_t message_key,
@@ -82,6 +88,13 @@ uint32_t sote_normalize_zero_velocity_motion(
 void sote_note_motion_loop_guard(uint8_t* rdram, uint32_t object);
 void sote_update_graphics_menu(uint8_t* rdram);
 uint32_t sote_is_bike_stage_active(void);
+void sote_modern_begin(uint8_t* rdram, uint32_t object);
+void sote_modern_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
+void sote_modern_yaw(uint8_t* rdram, uint32_t object);
+uint32_t sote_modern_aim(uint8_t* rdram, uint32_t stack);
+uint32_t sote_modern_take_camera_request(void);
+uint32_t sote_modern_camera_active(void);
+void sote_modern_camera_offset(uint8_t* rdram, uint32_t object, uint32_t stack);
 
 #ifdef __cplusplus
 }

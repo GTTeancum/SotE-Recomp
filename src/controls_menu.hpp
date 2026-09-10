@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include "modern_controls.hpp"
 
 namespace sote::controls_menu {
 
@@ -44,6 +45,7 @@ struct BikeTuning {
 };
 
 struct ModernControlsTuning {
+    sote::modern_controls::Tuning on_foot{};
     // Left stick deadzone before any movement/steering is emitted.
     float movement_deadzone = 8000.0f / 32768.0f;
     // Left stick scalar after deadzone normalization.

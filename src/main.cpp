@@ -88,9 +88,7 @@ std::atomic<int> hd_music_last_level{-10000};
 std::atomic<int> hd_music_stable_vis{0};
 std::atomic<uint32_t> gall_dfob_text_pointer{0};
 std::mutex droid_candidate_mutex;
-std::mutex droid_voice_mutex;
 std::array<uint32_t, 64> droid_visual_candidate_objects{};
-std::unordered_set<std::string> attempted_droid_voice_texts;
 int last_life_loss_vi = -10000;
 int16_t last_life_loss_event = -1;
 int last_committed_life_loss_vi = -10000;
@@ -440,8 +438,8 @@ const char* level_name_for_index(int level_index) {
         "gall_spaceport",
         "mos_eisley_beggars_canyon",
         "imperial_freighter",
-        "xizors_palace",
         "sewers_of_imperial_city",
+        "xizors_palace",
         "skyhook_battle",
     };
     if (level_index < 0 ||
@@ -2520,67 +2518,6 @@ bool text_matches_droid_voice_candidate(std::string_view text) {
         lower_text.find("gun turret") != std::string::npos;
 }
 
-std::string droid_voice_key(std::string_view text) {
-    std::string normalized;
-    normalized.reserve(text.size());
-    bool in_control = false;
-    bool last_space = true;
-    for (const char c : text) {
-        const unsigned char byte = static_cast<unsigned char>(c);
-        if (c == '~') {
-            in_control = true;
-            continue;
-        }
-        if (in_control) {
-            if ((c == 'n' || c == 'N' || c == 'r' || c == 'R' ||
-                    c == 't' || c == 'T') &&
-                !last_space) {
-                normalized.push_back(' ');
-                last_space = true;
-            }
-            in_control = false;
-            continue;
-        }
-        if (std::isspace(byte)) {
-            if (!last_space) {
-                normalized.push_back(' ');
-                last_space = true;
-            }
-            continue;
-        }
-        if (byte >= 0x20 && byte < 0x7F) {
-            normalized.push_back(
-                static_cast<char>(std::tolower(byte)));
-            last_space = false;
-        }
-    }
-    if (!normalized.empty() && normalized.back() == ' ') {
-        normalized.pop_back();
-    }
-    return normalized;
-}
-
-bool text_is_confirmed_droid_overlay(std::string_view text) {
-    const std::string key = droid_voice_key(text);
-    return key.find("the empire has destroyed the main generator") !=
-            std::string::npos ||
-        key.find("watch the ship") != std::string::npos ||
-        key.find("fly us to the skyhook") != std::string::npos;
-}
-
-const char* fallback_droid_voice_file(std::string_view text) {
-    return text_matches_gall_droid_prompt(text) ? "ILB11.WAV" : nullptr;
-}
-
-bool claim_droid_voice_attempt(std::string key) {
-    if (key.empty()) {
-        return false;
-    }
-
-    std::lock_guard lock{droid_voice_mutex};
-    return attempted_droid_voice_texts.insert(std::move(key)).second;
-}
-
 std::string read_probable_message_text(
     uint8_t* rdram,
     uint32_t message_object) {
@@ -2912,13 +2849,9 @@ extern "C" void sote_note_droid_text_buffer_draw(
     uint32_t text_pointer,
     uint32_t position_pointer,
     uint32_t color_pointer) {
-    if (slot != 31U) {
-        return;
-    }
-
     const std::string text =
         read_guest_ascii_string(rdram, text_pointer, 512);
-    if (!text_is_confirmed_droid_overlay(text)) {
+    if (!sote::hd_audio::has_voice_for_text(text)) {
         return;
     }
 
@@ -2960,33 +2893,8 @@ extern "C" void sote_note_droid_text_buffer_draw(
         std::fflush(stdout);
     }
 
-    std::string key = droid_voice_key(text);
-    if (!claim_droid_voice_attempt(std::move(key))) {
-        return;
-    }
-
-    const bool mapped_voice = sote::hd_audio::play_voice_for_text(text);
-    const char* fallback_file = fallback_droid_voice_file(text);
-    const bool fallback_voice =
-        !mapped_voice && fallback_file != nullptr &&
-        sote::hd_audio::play_file(fallback_file);
-    const bool queued = mapped_voice || fallback_voice;
-    std::printf(
-        "[sote][hd-audio] droid text draw %s%s%s "
-        "source=%08X slot=%u text_pointer=%08X VI=%d event=%d "
-        "text=\"%.96s\"\n",
-        queued
-            ? "queued "
-            : "failed ",
-        mapped_voice ? "mapped voice" : "",
-        fallback_voice ? fallback_file : "",
-        source,
-        slot,
-        text_pointer,
-        vi_count.load(std::memory_order_relaxed),
-        static_cast<int>(event),
-        text.c_str());
-    std::fflush(stdout);
+    sote::hd_audio::play_visible_voice(text,
+        static_cast<uint64_t>(vi_count.load(std::memory_order_relaxed)), event);
 }
 
 extern "C" uint32_t sote_play_hd_sound_request(

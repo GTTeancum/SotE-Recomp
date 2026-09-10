@@ -138,6 +138,9 @@ try {
         -Submodule 'third_party/rt64' `
         -Patch 'patches/0002-rt64-sote-f3dbeta.patch'
     Ensure-Patch `
+        -Submodule 'third_party/rt64' `
+        -Patch 'patches/0006-rt64-texture-slots-native-capture.patch'
+    Ensure-Patch `
         -Submodule 'third_party/rt64/src/contrib/plume' `
         -Patch 'patches/0003-plume-d3d12-copy-sample-positions.patch'
 

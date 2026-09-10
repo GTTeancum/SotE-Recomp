@@ -69,6 +69,21 @@ foreach ($entry in $sources.GetEnumerator()) {
 }
 
 $packagedSaveDirectory = Join-Path $outputAbsolute 'saves'
+$textureToolsDirectory = Join-Path $outputAbsolute 'texture_tools'
+New-Item -ItemType Directory -Path $textureToolsDirectory -Force | Out-Null
+foreach ($name in @(
+    'extract_rom_textures.py', 'extract_rom_segments.py', 'rt64_tmem_hash.py',
+    'sote_texture_pack.py', 'convert_rt64_texture_dumps.py',
+    'build_dynamic_texture_pack.py', 'build_user_texture_pack.py',
+    'verify_tmem_hash.py', 'texture_coverage_capture.ps1', 'requirements.txt'
+)) {
+    Copy-Item -LiteralPath (Join-Path $repoRoot "tools\$name") -Destination $textureToolsDirectory -Force
+}
+Copy-Item -LiteralPath (Join-Path $repoRoot 'docs\TEXTURE_PACKS_USER.md') `
+    -Destination (Join-Path $outputAbsolute 'TEXTURE_PACKS.md') -Force
+Copy-Item -LiteralPath (Join-Path $repoRoot 'docs\MODERN_AIM.md') `
+    -Destination (Join-Path $outputAbsolute 'MODERN_AIM.md') -Force
+# No source export or proof/enhancement pack is installed automatically.
 New-Item -ItemType Directory -Path $packagedSaveDirectory -Force | Out-Null
 $packagedSave = Join-Path $packagedSaveDirectory 'sote.us.v1.2.bin'
 $developmentSave =

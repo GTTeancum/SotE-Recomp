@@ -2,11 +2,13 @@
 
 #include "rt64_renderer.hpp"
 #include "graphics_menu.hpp"
+#include "texture_slots.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -252,6 +254,12 @@ public:
             return;
         }
 
+        // The host supplies context; RT64 itself remains game-independent.
+        app->state->textureManager.replacementContext = [rdram]() -> uint32_t {
+            uint16_t event;
+            std::memcpy(&event, rdram + (0x13CE0EU ^ 2U), sizeof(event));
+            return event;
+        };
         const char* texture_pack_path = std::getenv("SOTE_TEXTURE_PACK_PATH");
         std::vector<RT64::ReplacementDirectory> replacement_directories;
         if (texture_pack_path != nullptr && texture_pack_path[0] != '\0') {
@@ -279,6 +287,28 @@ public:
                     directory.dirOrZipPath.string().c_str());
             }
             std::fflush(stdout);
+            auto slots = std::make_shared<sote::texture_slots::Map>();
+            for (const auto& directory : replacement_directories) {
+                try {
+                    if (std::filesystem::is_directory(directory.dirOrZipPath))
+                        sote::texture_slots::load(directory.dirOrZipPath / "sote_slots.json", *slots);
+                } catch (const std::exception& error) {
+                    std::fprintf(stderr, "[sote][textures] ignored slot manifest: %s\n", error.what());
+                }
+            }
+            if (!slots->empty()) {
+                app->state->textureManager.sourceReplacement = [slots](uint32_t context,
+                    const RT64::LoadOperation& op, const RT64::LoadTile& tile,
+                    uint16_t width, uint16_t height, uint32_t tlut, uint32_t paletteAddress) -> uint64_t {
+                    const sote::texture_slots::Key key{context, op.texture.address, width, height,
+                        tile.fmt, tile.siz, tile.line, tile.tmem, tile.palette, tlut,
+                        op.texture.width, op.tile.uls, op.tile.ult, op.texture.fmt, op.texture.siz,
+                        static_cast<uint32_t>(op.type), paletteAddress};
+                    const auto found = slots->find(key);
+                    return found == slots->end() ? 0 : found->second;
+                };
+                std::printf("[sote][textures] loaded %zu source slot replacements\n", slots->size());
+            }
         }
 
         // Match Zelda64Recomp's conservative defaults for F3DEX-family games.

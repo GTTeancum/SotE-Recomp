@@ -102,7 +102,29 @@ void apply_tuning_value(
     const std::string& key,
     const std::string& value) {
     const ModernControlsTuning defaults{};
-    if (key == "movement_deadzone") {
+    if (key == "on_foot_movement_deadzone") {
+        tuning.on_foot.movement_deadzone = parse_float_clamped(value, 0.12f, 0.0f, 0.95f);
+    } else if (key == "on_foot_aim_deadzone") {
+        tuning.on_foot.aim_deadzone = parse_float_clamped(value, 0.12f, 0.0f, 0.95f);
+    } else if (key == "on_foot_aim_curve") {
+        tuning.on_foot.aim_curve = parse_float_clamped(value, 1.7f, 0.25f, 4.0f);
+    } else if (key == "on_foot_yaw_speed") {
+        tuning.on_foot.yaw_speed = parse_float_clamped(value, 180.0f, 30.0f, 540.0f);
+    } else if (key == "on_foot_pitch_speed") {
+        tuning.on_foot.pitch_speed = parse_float_clamped(value, 90.0f, 15.0f, 270.0f);
+    } else if (key == "on_foot_invert_y") {
+        tuning.on_foot.invert_y = parse_bool(value);
+    } else if (key == "on_foot_convergence") {
+        tuning.on_foot.convergence = parse_bool(value);
+    } else if (key == "on_foot_convergence_range") {
+        tuning.on_foot.convergence_range = parse_float_clamped(value, 1500.0f, 50.0f, 5000.0f);
+    } else if (key == "on_foot_magnetism_strength") {
+        tuning.on_foot.magnetism_strength = parse_float_clamped(value, 0.0f, 0.0f, 1.0f);
+    } else if (key == "on_foot_magnetism_cone_degrees") {
+        tuning.on_foot.magnetism_cone_degrees = parse_float_clamped(value, 2.0f, 0.1f, 8.0f);
+    } else if (key == "on_foot_magnetism_range") {
+        tuning.on_foot.magnetism_range = parse_float_clamped(value, 150.0f, 1.0f, 500.0f);
+    } else if (key == "movement_deadzone") {
         tuning.movement_deadzone = parse_float_clamped(
             value, defaults.movement_deadzone, 0.0f, 1.0f);
     } else if (key == "movement_sensitivity") {
@@ -209,6 +231,23 @@ void write_default_tuning_ini_locked() {
         "; menu still chooses Classic or Modern per control category.\n"
         "; Lines beginning with ';' or '#' are comments.\n\n"
 
+        "[OnFoot]\n"
+        "; Modern: circular deadzones, response exponent, degrees/second.\n"
+        "; Continuous right-stick aiming; no LT or automatic recentering.\n"
+        "on_foot_movement_deadzone = 0.12\n"
+        "on_foot_aim_deadzone = 0.12\n"
+        "on_foot_aim_curve = 1.7\n"
+        "on_foot_yaw_speed = 180\n"
+        "on_foot_pitch_speed = 90\n"
+        "on_foot_invert_y = 0\n"
+        "; Blaster convergence onto the camera center ray. Range is in game units.\n"
+        "on_foot_convergence = 1\n"
+        "on_foot_convergence_range = 1500\n"
+        "; Optional shot-only assist: 0 disables, 1 fully converges to a visible target.\n"
+        "; Cone is a half-angle in degrees; no camera movement or target leading.\n"
+        "on_foot_magnetism_strength = 0\n"
+        "on_foot_magnetism_cone_degrees = 2\n"
+        "on_foot_magnetism_range = 150\n\n"
         "[General]\n"
         "; movement_deadzone is 0.0 to 1.0. 0.0 means no left-stick deadzone;\n"
         "; 1.0 means the left stick is fully ignored. Higher values prevent\n"
@@ -498,7 +537,7 @@ int scheme_legend(
         {"Fire", "RT", "X"},
         {"Camera", "D-Up", "Q"},
         {"Doors", "X", "E"},
-        {"Strafe", "X", "E"},
+        {"Strafe", "LS", "E"},
         {"Aim", "RS", "C"},
         {"Jetpack", "Y", "J"},
         {"Weapons", "LB/RB", "I"},

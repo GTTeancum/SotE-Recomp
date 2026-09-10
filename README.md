@@ -32,6 +32,17 @@ Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 No game ROMs or extracted copyrighted assets belong in version control. A
 legally obtained matching ROM is required locally to build and run the port.
 
+Modern blaster convergence and optional INI magnetism are documented in
+[Modern aiming](docs/MODERN_AIM.md).
+
+## Texture packs
+
+Stock textures are the default. Optional replacement packs support higher-resolution
+PNG artwork, transparency and runtime source-slot matching. The portable folder
+includes `texture_tools` and `TEXTURE_PACKS.md`; see the
+[authoring and installation guide](docs/TEXTURE_PACKS_USER.md) or
+[developer workflow and validation](docs/TEXTURE_PACKS.md).
+
 ## Status
 
 The 0.9 beta is playable on Windows. Graphics, music and sound effects,
@@ -251,6 +262,11 @@ and Right. The `Controls` submenu offers a single player-facing choice:
 
 - `Classic` - the original N64 mapping described above.
 - `Modern` - controller-focused aiming, movement, and vehicle tuning.
+  On foot, LS moves and strafes while RS continuously turns and aims. There
+  is no LT aim mode. A jumps, RT fires, X opens doors, Y toggles the jetpack,
+  B crouches, and LB/RB cycles weapons. Modern uses a right-shoulder camera
+  looking along the weapon direction, with native camera collision checks.
+  Stick release stops turning and holds vertical aim.
   Speeder-bike stages use right trigger for throttle, left trigger for brake,
   left stick steering, and right shoulder fire. Bike steering uses a
   progressive curve, can lose sensitivity as throttle rises, and is lightly
@@ -267,6 +283,15 @@ aim deadzone and sensitivity, trigger deadzone and sensitivity, optional
 look-forward snap back, and speeder-bike steering curve, high-speed falloff,
 minimum steering scale, stabilization, camera smoothing, and fire binding.
 
+The `[OnFoot]` settings are independent of the older General/Bike tuning:
+`on_foot_movement_deadzone` and `on_foot_aim_deadzone` default to 0.12,
+`on_foot_aim_curve` to 1.7, `on_foot_yaw_speed` to 180 degrees/second, and
+`on_foot_pitch_speed` to 90 degrees/second. `on_foot_invert_y` reverses vertical
+look. Larger aim exponents give finer center control; 1.0 is linear. Both
+sticks use circular deadzones, preserving shallow diagonals. Existing INIs
+without these keys use the defaults; add the `[OnFoot]` block from
+`config/CONTROLS_MODERN.INI` to expose them. Classic retains its original path.
+
 Beta testers are encouraged to tune `CONTROLS_MODERN.INI` for real controllers
 and submit the best-feeling setups with controller model details.
 
@@ -278,10 +303,15 @@ harness that needs neither a ROM nor a graphics device:
 
 ```powershell
 .\build\runtime\Release\controls_harness.exe
+.\build\runtime\Release\modern_controls_harness.exe
 ```
 
-The crash smoke above feeds scripted inputs and never reaches the SDL
-controller path, so it does not exercise this code.
+The second harness checks radial response, pitch timing, guest movement/aim
+hooks, native action bindings, and Classic/death/disconnect isolation. For
+process-local gameplay diagnostics, `SOTE_TEST_MODERN_INPUT=1` exercises a
+repeating sequence of fine/full turns, pitch, and diagonal movement;
+`SOTE_TRACE_MODERN_CONTROLS=1` logs the requested and native output angles.
+These checks do not substitute for a hands-on controller feel pass.
 
 ## Repository notes
 
