@@ -1,0 +1,327 @@
+[
+  {
+    "group": "Dash",
+    "path": "shared/002c76f8_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002c8260_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002c8dc8_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002c9928_64x32_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002ca130_16x16_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002ca3c0_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002caf28_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cba90_16x16_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cbdf0_32x64_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cc888_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cd3e8_32x64_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cde78_32x64_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002ce908_32x64_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cf3a0_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Dash",
+    "path": "shared/002cff08_32x32_rgba16",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cc2a0_64x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cc750_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cd000_64x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cd4b0_64x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001ce1b8_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cea68_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cf318_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001cfa28_64x32_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d0028_64x32_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d0478_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d0d28_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d13b8_64x32_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d15d8_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d1e88_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Outrider",
+    "path": "shared/001d2738_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002c0888_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002c1138_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002c5f50_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002c6800_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002c8210_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002c9c20_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002cce20_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002d4a48_64x64_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "gall_spaceport/002d5ba8_64x64_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/001cd960_64x64_i4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/00265bb8_64x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/00266068_64x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/00266518_16x64_i4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a0058_32x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a0308_32x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a05b8_32x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a5a78_64x64_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a6328_32x16_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a6788_32x32_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a6a38_64x64_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a72e8_32x64_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a7798_32x16_i4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a78f0_64x64_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002a8350_32x32_ci4",
+    "padding": "wrap"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002bf728_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002c1090_32x32_i4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002c22a0_64x64_i4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002c3350_16x32_ci8",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002c3730_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002c37e0_64x32_i4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002c70b0_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002db1d8_64x64_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002ddb40_32x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002dddf0_32x32_ci4",
+    "padding": "reflect"
+  },
+  {
+    "group": "Gall",
+    "path": "shared/002de0a0_32x32_ci4",
+    "padding": "reflect"
+  }
+]

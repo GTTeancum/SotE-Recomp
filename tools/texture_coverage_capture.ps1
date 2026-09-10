@@ -21,8 +21,8 @@ $levelNames = @(
     "gall_spaceport",
     "mos_eisley_beggars_canyon",
     "imperial_freighter",
-    "xizors_palace",
     "sewers_of_imperial_city",
+    "xizors_palace",
     "skyhook_battle"
 )
 
@@ -48,6 +48,9 @@ $resolvedOutput = [System.IO.Path]::GetFullPath(
 New-Item -ItemType Directory -Path $resolvedOutput -Force | Out-Null
 
 $sourceSave = Join-Path $repoRoot "SotE_Recompiled\saves\sote.us.v1.2.bin"
+if (-not (Test-Path -LiteralPath $sourceSave -PathType Leaf)) {
+    $sourceSave = Join-Path $repoRoot "saves\sote.us.v1.2.bin"
+}
 if (-not (Test-Path -LiteralPath $sourceSave -PathType Leaf)) {
     throw "Known-good Change Level save is missing: $sourceSave"
 }
@@ -111,7 +114,7 @@ function Invoke-CoverageRun {
 
     $diag = Join-Path $resolvedOutput $Name
     if (Test-Path -LiteralPath $diag) {
-        Remove-Item -LiteralPath $diag -Recurse -Force
+        throw "Capture directory already exists; choose a new OutputDirectory: $diag"
     }
     New-Item -ItemType Directory -Path $diag -Force | Out-Null
 
@@ -159,17 +162,41 @@ function Invoke-CoverageRun {
             $env:SOTE_TEXTURE_PACK_PATH = $null
         }
 
-        $captureArgs = @(
-            "./tools/capture_offscreen.py",
-            "--exe", $resolvedExe,
-            "--capture-vi", ([string]($SmokeVi - 1)),
-            "--smoke-vi", ([string]$SmokeVi),
-            "--input-script", $InputScript,
-            "--output", (Join-Path $diag "window_capture.png"),
-            "--stdout", (Join-Path $diag "$Name.stdout.log"),
-            "--stderr", (Join-Path $diag "$Name.stderr.log")
-        )
-        python @captureArgs
+        # Native RT64 readback only. Input scripting stays inside the game;
+        # this launcher never inspects or drives a desktop window.
+        $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+        $startInfo.FileName = $resolvedExe
+        $startInfo.Arguments = "--frontend-smoke --muted"
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.RedirectStandardOutput = $true
+        $startInfo.RedirectStandardError = $true
+        $startInfo.Environment["SOTE_DIAGNOSTIC_OFFSCREEN"] = "1"
+        $startInfo.Environment["SOTE_DIAGNOSTIC_CONFIG_PATH"] = $configPath
+        $startInfo.Environment["SOTE_SMOKE_VIS"] = [string]$SmokeVi
+        $startInfo.Environment["SOTE_INPUT_SCRIPT"] = $InputScript
+        if ($ExpectedLevelIndex -eq "") {
+            $startInfo.Environment.Remove("SOTE_EXPECT_LEVEL_INDEX") | Out-Null
+            $startInfo.Environment.Remove("SOTE_EXPECT_LEVEL_NAME") | Out-Null
+            $startInfo.Environment.Remove("SOTE_SMOKE_OBSERVATION_START_VI") | Out-Null
+        }
+        $process = [System.Diagnostics.Process]::new()
+        $process.StartInfo = $startInfo
+        if (-not $process.Start()) { throw "Failed to start $resolvedExe" }
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $exitCode = $process.ExitCode
+        $stdout = $stdoutTask.GetAwaiter().GetResult()
+        [System.IO.File]::WriteAllText((Join-Path $diag "$Name.stdout.log"), $stdout)
+        [System.IO.File]::WriteAllText((Join-Path $diag "$Name.stderr.log"), $stderrTask.GetAwaiter().GetResult())
+        $process.Dispose()
+        if ($exitCode -ne 0 -or $stdout -notmatch "smoke complete: VI=$SmokeVi ") {
+            throw "Native capture failed for $Name (exit $exitCode)"
+        }
+        if (-not (Get-ChildItem -LiteralPath $env:SOTE_VISIBLE_CAPTURE_PATH -File -ErrorAction SilentlyContinue)) {
+            throw "No native frames captured for $Name"
+        }
     } finally {
         $env:SOTE_TEXTURE_HASH_LOG = $previousHashLog
         $env:SOTE_VISIBLE_CAPTURE_PATH = $previousVisiblePath
@@ -225,7 +252,9 @@ if (-not $UiOnly) {
         $durationVis = [int][Math]::Ceiling($DurationMinutes * 60 * 60)
         $smokeVi = $observationStartVi + $durationVis
         $captureVis = @()
-        for ($vi = $observationStartVi; $vi -lt $smokeVi; $vi += 300) {
+        # Renderer present IDs can lag VI during loading. Cover the whole
+        # run at regular presents instead of assuming the two counters match.
+        for ($vi = 240; $vi -lt $smokeVi; $vi += 300) {
             $captureVis += $vi
         }
         $captureVis += ($smokeVi - 1)
