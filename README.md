@@ -58,6 +58,27 @@ sources to create your own HD pack; the basic workflow needs no Python. See the
 [authoring and installation guide](docs/TEXTURE_PACKS_USER.md) or
 [developer workflow and validation](docs/TEXTURE_PACKS.md).
 
+### Before / after texture comparison
+
+Hoth with stock textures and the experimental 4× RealisticRescaler texture pack.
+These renderer captures use the same scripted route, capture point and graphics
+settings; separate runs can have small differences in scene timing. Click either
+image to inspect the full-resolution capture.
+
+| Before: stock textures | After: experimental 4× texture pack |
+| --- | --- |
+| [![Hoth with stock textures](docs/screenshots/textures_hoth_stock.png)](docs/screenshots/textures_hoth_stock.png) | [![Hoth with the experimental 4× texture pack](docs/screenshots/textures_hoth_4x.png)](docs/screenshots/textures_hoth_4x.png) |
+
+Snowspeeder detail, with both crops enlarged 2× using nearest-neighbor scaling
+and no sharpening:
+
+![Stock and 4× texture pack snowspeeder detail](docs/screenshots/textures_hoth_detail.png)
+
+The enhanced pack shown here is a [proof of concept](docs/CPU_TEXTURE_UPSCALE_POC.md).
+The 0.9.2 download includes stock source textures and authoring tools; this
+experimental enhanced artwork is not bundled. You can use the included sources
+to build your own HD pack.
+
 ## Status
 
 The 0.9.2 open beta is playable on Windows. Graphics, music and sound effects,

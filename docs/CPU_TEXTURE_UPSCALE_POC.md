@@ -15,7 +15,7 @@ This preserves the September 2026 experiment for later reruns or higher-resoluti
 
 ## Required local inputs
 
-Game ROMs, saves, model weights, extracted artwork, executable builds and generated screenshots are not committed. The current local artifacts remain under `build/diagnostics/`. Preserve these for an exact rerun; runtime capture inventories can vary with timing.
+Game ROMs, saves, model weights, extracted artwork and executable builds are not committed. Selected Hoth comparison screenshots are published under `docs/screenshots/` for the README; the complete local artifacts remain under `build/diagnostics/`. Preserve these for an exact rerun; runtime capture inventories can vary with timing.
 
 The experiment uses Python 3.12 on Windows. From the repository root:
 
