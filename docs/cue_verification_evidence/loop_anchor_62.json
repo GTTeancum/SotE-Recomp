@@ -1,0 +1,79 @@
+[
+  {
+    "reference_offset": 7.182040816326531,
+    "best": {
+      "reference_offset": 7.182040816326531,
+      "duration": 2.5,
+      "speed": 1.0039999999999978,
+      "candidate_offset": 7.25375,
+      "channel": "L",
+      "correlation": 0.5000248675716283
+    },
+    "top": [
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.0039999999999978,
+        "candidate_offset": 7.25375,
+        "channel": "L",
+        "correlation": 0.5000248675716283
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.004099999999998,
+        "candidate_offset": 7.254,
+        "channel": "L",
+        "correlation": 0.4979247845832265
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.0037999999999978,
+        "candidate_offset": 7.2535,
+        "channel": "L",
+        "correlation": 0.4939902210529162
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.003699999999998,
+        "candidate_offset": 7.25325,
+        "channel": "L",
+        "correlation": 0.49064000843037014
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.003899999999998,
+        "candidate_offset": 7.2535,
+        "channel": "L",
+        "correlation": 0.49049334015357066
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.0043999999999977,
+        "candidate_offset": 7.2545,
+        "channel": "L",
+        "correlation": 0.4903447228560331
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.004299999999998,
+        "candidate_offset": 7.25425,
+        "channel": "L",
+        "correlation": 0.489377373658358
+      },
+      {
+        "reference_offset": 7.182040816326531,
+        "duration": 2.5,
+        "speed": 1.0041999999999978,
+        "candidate_offset": 7.25425,
+        "channel": "L",
+        "correlation": 0.48516638375853377
+      }
+    ]
+  }
+]

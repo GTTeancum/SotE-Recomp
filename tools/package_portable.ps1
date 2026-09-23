@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Copies the built executable, runtime DLLs, retail image, matching ROM, and
-    existing save into one portable directory. Existing packaged saves are
+    existing save and optional external music into one portable directory. Packaged saves are
     preserved.
 #>
 [CmdletBinding()]
@@ -67,6 +67,49 @@ foreach ($entry in $sources.GetEnumerator()) {
     Copy-Item -LiteralPath $entry.Value `
         -Destination (Join-Path $outputAbsolute $entry.Key) -Force
 }
+
+# Optional external soundtrack. Merge source assets/maps into the actual play
+# folder, including the corrected map. Never clear existing user-owned music.
+$sourceMusic = Join-Path $repoRoot 'Sdata\MUSIC'
+$packagedMusic = Join-Path $outputAbsolute 'Sdata\MUSIC'
+if ((Test-Path -LiteralPath $sourceMusic -PathType Container) -and
+    -not [string]::Equals($sourceMusic, $packagedMusic,
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+    New-Item -ItemType Directory -Path $packagedMusic -Force | Out-Null
+    foreach ($musicFile in (Get-ChildItem -LiteralPath $sourceMusic -File -Recurse)) {
+        if ($musicFile.Extension.ToLowerInvariant() -notin @('.ogg', '.tsv')) {
+            continue
+        }
+        $relativeMusic = $musicFile.FullName.Substring($sourceMusic.Length + 1)
+        $destinationMusic = Join-Path $packagedMusic $relativeMusic
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destinationMusic) `
+            -Force | Out-Null
+        Copy-Item -LiteralPath $musicFile.FullName -Destination $destinationMusic -Force
+    }
+}
+Copy-Item -LiteralPath (Join-Path $repoRoot 'docs\EXTERNAL_MUSIC.md') `
+    -Destination (Join-Path $outputAbsolute 'EXTERNAL_MUSIC.md') -Force
+
+# Merge menu configuration and user-supplied fonts; never delete unrelated UI assets.
+$sourceUi = Join-Path $repoRoot 'Sdata\UI'
+$packagedUi = Join-Path $outputAbsolute 'Sdata\UI'
+if ((Test-Path -LiteralPath $sourceUi -PathType Container) -and
+    -not [string]::Equals($sourceUi, $packagedUi,
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+    foreach ($uiFile in (Get-ChildItem -LiteralPath $sourceUi -File -Recurse)) {
+        $relativeUi = $uiFile.FullName.Substring($sourceUi.Length + 1)
+        $destinationUi = Join-Path $packagedUi $relativeUi
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destinationUi) -Force | Out-Null
+        Copy-Item -LiteralPath $uiFile.FullName -Destination $destinationUi -Force
+    }
+}
+Copy-Item -LiteralPath (Join-Path $repoRoot 'docs\MENU_REVAMP.md') `
+    -Destination (Join-Path $outputAbsolute 'MENU_REVAMP.md') -Force
+
+# Binding settings live under the runnable Sdata directory. Never deploy a
+# source default over controls_bindings.ini; only copy the user documentation.
+Copy-Item -LiteralPath (Join-Path $repoRoot 'docs\CONTROL_REBINDING.md') `
+    -Destination (Join-Path $outputAbsolute 'CONTROL_REBINDING.md') -Force
 
 $packagedSaveDirectory = Join-Path $outputAbsolute 'saves'
 $textureToolsDirectory = Join-Path $outputAbsolute 'texture_tools'

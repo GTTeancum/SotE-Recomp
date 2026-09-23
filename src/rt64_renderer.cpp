@@ -2,6 +2,7 @@
 
 #include "rt64_renderer.hpp"
 #include "graphics_menu.hpp"
+#include "menu_renderer.hpp"
 #include "texture_slots.hpp"
 
 #include <algorithm>
@@ -242,7 +243,7 @@ public:
                 RT64::UserConfiguration::Antialiasing::None;
         }
 
-        setup_result = map_setup_result(app->setup(window_handle.thread_id));
+        setup_result = map_setup_result((sote::menu_renderer::install(), app->setup(window_handle.thread_id)));
         chosen_api = map_graphics_api(app->chosenGraphicsAPI);
         if (setup_result != ultramodern::renderer::SetupResult::Success) {
             std::fprintf(

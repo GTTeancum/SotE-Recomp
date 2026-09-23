@@ -1,0 +1,13 @@
+--- a/librecomp/src/ultra_translation.cpp
++++ b/librecomp/src/ultra_translation.cpp
+@@ -70,7 +70,9 @@
+ }
+
+ extern "C" void osGetCount_recomp(uint8_t * rdram, recomp_context * ctx) {
+-    ctx->r2 = osGetCount();
++    // MFC0 returns a sign-extended 32-bit word in the guest 64-bit GPR.
++    // Zero extension breaks SOTE's comparison with its LW-loaded previous count.
++    ctx->r2 = static_cast<int32_t>(osGetCount());
+ }
+
+ extern "C" void osSetCount_recomp(uint8_t * rdram, recomp_context * ctx) {

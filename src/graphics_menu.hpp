@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <filesystem>
 
+namespace sote::menu_skin { struct Snapshot; }
+
 namespace sote::graphics_menu {
 
 enum class ResolutionPreset : int {
@@ -36,6 +38,9 @@ void sync_window_mode(bool borderless);
 bool take_renderer_request(Settings& settings);
 bool take_window_request(Settings& settings);
 void filter_input(uint16_t* buttons, float* x, float* y);
+// Direct-drawn native options (func_8001FC90), separate from cached UI rows.
+void observe_native_options(int selection);
+void decorate_native_snapshot(sote::menu_skin::Snapshot& snapshot);
 
 } // namespace sote::graphics_menu
 

@@ -1,0 +1,40 @@
+ORIGINAL clock return
+raw=00000000 actual=0000000000000000 expected=0000000000000000 PASS
+raw=7FFFFFFE actual=000000007FFFFFFE expected=000000007FFFFFFE PASS
+raw=7FFFFFFF actual=000000007FFFFFFF expected=000000007FFFFFFF PASS
+raw=80000000 actual=0000000080000000 expected=0000000080000000 PASS
+raw=80000001 actual=0000000180000001 expected=0000000080000001 FAIL
+raw=80000002 actual=0000000280000002 expected=0000000080000002 FAIL
+raw=FFFFFFFE actual=00000003FFFFFFFE expected=00000000FFFFFFFE FAIL
+raw=FFFFFFFF actual=00000004FFFFFFFF expected=00000000FFFFFFFF FAIL
+raw=00000000 actual=0000000500000000 expected=0000000100000000 FAIL
+raw=00000001 actual=0000000500000001 expected=0000000100000001 FAIL
+mismatches=6
+
+FIXED clock return
+raw=00000000 actual=0000000000000000 expected=0000000000000000 PASS
+raw=7FFFFFFE actual=000000007FFFFFFE expected=000000007FFFFFFE PASS
+raw=7FFFFFFF actual=000000007FFFFFFF expected=000000007FFFFFFF PASS
+raw=80000000 actual=0000000080000000 expected=0000000080000000 PASS
+raw=80000001 actual=0000000080000001 expected=0000000080000001 PASS
+raw=80000002 actual=0000000080000002 expected=0000000080000002 PASS
+raw=FFFFFFFE actual=00000000FFFFFFFE expected=00000000FFFFFFFE PASS
+raw=FFFFFFFF actual=00000000FFFFFFFF expected=00000000FFFFFFFF PASS
+raw=00000000 actual=0000000100000000 expected=0000000100000000 PASS
+raw=00000001 actual=0000000100000001 expected=0000000100000001 PASS
+mismatches=0
+
+source=22050 device=48000 bytes=19200 original=4800 fixed=2205 expected=2205 PASS
+source=22050 device=44100 bytes=17640 original=4410 fixed=2205 expected=2205 PASS
+source=32000 device=48000 bytes=19200 original=4800 fixed=3200 expected=3200 PASS
+source=44100 device=48000 bytes=19200 original=4800 fixed=4410 expected=4410 PASS
+source=48000 device=44100 bytes=17640 original=4410 fixed=4800 expected=4800 PASS
+source=22050 device=22050 bytes=8820 original=2205 fixed=2205 expected=2205 PASS
+source=22050 device=48000 bytes=0 original=0 fixed=0 expected=0 PASS
+source=22050 device=48000 bytes=4 original=1 fixed=0 expected=0 PASS
+source=22050 device=48000 bytes=4294967292 original=1073741823 fixed=493250149 expected=493250149 PASS
+source=22050 device=0 bytes=19200 original=4800 fixed=0 expected=0 PASS
+source=0 device=48000 bytes=19200 original=4800 fixed=0 expected=0 PASS
+source=22050 device=-1 bytes=19200 original=4800 fixed=0 expected=0 PASS
+14 frame-accounting cases: original mismatches=10 fixed mismatches=0
+ALL REGRESSION CHECKS PASSED

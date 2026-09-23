@@ -11,11 +11,27 @@ stubs = []
 ignored = []
 renamed = []
 hook = [
+    # Live input-decoder context for per-context physical rebinding.
+    { func = "func_8008CFF4", before_vram = 0x8008CFF4, text = "sote_bindings_context(rdram, 1);" },
+    { func = "func_8008F6E4", before_vram = 0x8008F6E4, text = "sote_bindings_context(rdram, 1);" },
+    { func = "func_80059294", before_vram = 0x80059294, text = "sote_bindings_context(rdram, 2);" },
+    { func = "func_8002B34C", before_vram = 0x8002B34C, text = "sote_bindings_context(rdram, 3);" },
+    { func = "func_80097A40", before_vram = 0x80097A40, text = "sote_bindings_context(rdram, 4);" },
+    { func = "func_8009A30C", before_vram = 0x8009A30C, text = "sote_bindings_context(rdram, 4);" },
+    { func = "func_8009B0D0", before_vram = 0x8009B0D0, text = "sote_bindings_context(rdram, 4);" },
+    # Native background/stinger requests: replace before sound allocation.
+    { func = "func_80006CB0", before_vram = 0x80006CB0, text = "sote_music_command(rdram, (uint32_t)ctx->r4);" },
+    { func = "func_80007088", before_vram = 0x80007088, text = "sote_music_frame_begin(rdram);" },
+    { func = "func_80007088", before_vram = 0x8000711C, text = "sote_music_frame_end(rdram);" },
+    { func = "func_800073B4", before_vram = 0x800073FC, text = "if (sote_music_native_request(rdram, (int32_t)ctx->r4, (int32_t)ctx->r7, (int32_t)MEM_W(ctx->r29, 0x30))) goto sote_music_request_done;" },
+    { func = "func_800073B4", before_vram = 0x8000741C, text = "sote_music_request_done:;" },
+    { func = "func_80006668", before_vram = 0x80006668, text = "sote_music_reset(rdram);" },
+    { func = "func_80006698", before_vram = 0x80006698, text = "sote_music_reset(rdram);" },
     # Adjust player blaster velocity at spawn; camera/body and native collision stay independent.
     { func = "func_80031FE0", before_vram = 0x800321FC, text = "sote_modern_projectile(rdram, ctx);" },
     # Latch analog input once per player update. Replace decoded movement
     # before native input suppression and yaw rate before native integration.
-    { func = "func_80074FA4", before_vram = 0x80074FA4, text = "sote_modern_begin(rdram, (uint32_t)ctx->r4); if (sote_modern_take_camera_request()) { recomp_context camera_ctx = *ctx; camera_ctx.r29 = SUB32(ctx->r29, 0x400); camera_ctx.r5 = 5; camera_ctx.r6 = 0; func_8006A214(rdram, &camera_ctx); }" },
+    { func = "func_80074FA4", before_vram = 0x80074FA4, text = "sote_bindings_context(rdram, 0); sote_modern_begin(rdram, (uint32_t)ctx->r4); if (sote_modern_take_camera_request()) { recomp_context camera_ctx = *ctx; camera_ctx.r29 = SUB32(ctx->r29, 0x400); camera_ctx.r5 = 5; camera_ctx.r6 = 0; func_8006A214(rdram, &camera_ctx); }" },
     { func = "func_80074FA4", before_vram = 0x800758A8, text = "sote_modern_decode(rdram, (uint32_t)ctx->r16, (uint32_t)ctx->r29);" },
     { func = "func_80074FA4", before_vram = 0x800778D0, text = "sote_modern_yaw(rdram, (uint32_t)ctx->r16);" },
     { func = "func_80074FA4", before_vram = 0x800785A8, text = "sote_modern_yaw(rdram, (uint32_t)ctx->r16);" },
@@ -32,7 +48,8 @@ hook = [
     # Extend the game's own 80-entry UI table immediately before its native
     # text renderer walks it. This keeps Graphics inside the original Options
     # screen and uses the retail font, colors, panel, and draw path.
-    { func = "func_80008778", before_vram = 0x80008778, text = "sote_update_graphics_menu(rdram);" },
+    { func = "func_8001FC90", before_vram = 0x800216D4, text = "sote_capture_native_options(rdram);" },
+    { func = "func_80008778", before_vram = 0x80008778, text = "sote_update_graphics_menu(rdram); sote_capture_menu(rdram);" },
     # The recomp loop otherwise runs as fast as the host can submit display
     # lists. Limit it to one gameplay iteration per 60 Hz VI.
     { func = "func_80017CC8", before_vram = 0x80017EE4, text = "sote_wait_for_game_frame();" },
@@ -47,11 +64,11 @@ hook = [
     { func = "func_80027E9C", before_vram = 0x80028090, text = "ctx->f18.d = sote_sanitize_frame_delta(ctx->f18.d);" },
     # Mark execution of the bike controller and distinguish the controller's
     # two life-loss paths in persistent diagnostics.
-    { func = "func_8002A13C", before_vram = 0x8002A13C, text = "if (sote_enter_bike_controller(rdram, (uint32_t)ctx->r4)) return;" },
-    { func = "func_800700F0", before_vram = 0x800700F0, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x800700F0U, (uint32_t)ctx->r5);" },
+    { func = "func_8002A13C", before_vram = 0x8002A13C, text = "sote_bindings_context(rdram, 3); if (sote_enter_bike_controller(rdram, (uint32_t)ctx->r4)) return;" },
+    { func = "func_800700F0", before_vram = 0x800700F0, text = "sote_bindings_context(rdram, 0); sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x800700F0U, (uint32_t)ctx->r5);" },
     { func = "func_8008BF00", before_vram = 0x8008BF00, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x8008BF00U, (uint32_t)ctx->r5);" },
     { func = "func_80096E14", before_vram = 0x80096E14, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x80096E14U, (uint32_t)ctx->r5);" },
-    { func = "func_800A7D70", before_vram = 0x800A7D70, text = "sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x800A7D70U, (uint32_t)ctx->r5);" },
+    { func = "func_800A7D70", before_vram = 0x800A7D70, text = "sote_bindings_context(rdram, 0); sote_enter_player_controller(rdram, (uint32_t)ctx->r4, 0x800A7D70U, (uint32_t)ctx->r5);" },
     { func = "func_800B8D60", before_vram = 0x800B8D60, text = "ctx->f12.d = sote_sanitize_frame_delta(ctx->f12.d);" },
     { func = "func_800B8CE8", before_vram = 0x800B8D44, text = "ctx->f0.d = sote_sanitize_frame_delta(ctx->f0.d); SD(ctx->f0.u64, 0x6B10, S32(0x800E << 16));" },
     { func = "func_80028E18", before_vram = 0x80029058, text = "if (!sote_allow_life_loss(rdram, 0x80029058U, (uint32_t)ctx->r17, 0U)) ctx->r9 = ADD32(ctx->r9, 1); sote_note_bike_life_loss(rdram, 1);" },

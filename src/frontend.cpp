@@ -4,6 +4,8 @@
 #include "controls_menu.hpp"
 #include "recomp_hooks.h"
 #include "graphics_menu.hpp"
+#include "menu_skin.hpp"
+#include "control_bindings.hpp"
 #include "hd_audio.hpp"
 #include "hd_music.hpp"
 
@@ -65,8 +67,17 @@ ULONGLONG first_audio_host_tick = 0;
 FILE* audio_dump_file = nullptr;
 bool audio_dump_checked = false;
 
+// Only poll_input writes this sampled state. Rebinding transforms a copy,
+// so original and replacement sources can never feed back into one another.
+control_bindings::PhysicalInput mapped_input;
 bool key_down(int virtual_key) {
-    return (GetAsyncKeyState(virtual_key) & 0x8000) != 0;
+    return virtual_key > 0 && virtual_key < 256 && mapped_input.keys[virtual_key] != 0;
+}
+Sint16 mapped_axis(SDL_GameController*, SDL_GameControllerAxis axis) {
+    return mapped_input.axes[static_cast<size_t>(axis)];
+}
+Uint8 mapped_button(SDL_GameController*, SDL_GameControllerButton button) {
+    return mapped_input.buttons[static_cast<size_t>(button)];
 }
 
 void update_muted_audio_clock_locked() {
@@ -166,10 +177,10 @@ void apply_modern_bike_scheme(
     const sote::controls_menu::BikeTuning& tuning = controls.bike;
 
     float throttle_raw = normalize_trigger(
-        SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_TRIGGERRIGHT),
+        mapped_axis(pad, SDL_CONTROLLER_AXIS_TRIGGERRIGHT),
         controls);
     float brake_raw = normalize_trigger(
-        SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_TRIGGERLEFT),
+        mapped_axis(pad, SDL_CONTROLLER_AXIS_TRIGGERLEFT),
         controls);
 
     // Triggers are unreachable from the scripted-input diagnostics, so allow
@@ -184,7 +195,7 @@ void apply_modern_bike_scheme(
     }
 
     const Sint16 raw_steer_x =
-        SDL_GameControllerGetAxis(pad, SDL_CONTROLLER_AXIS_LEFTX);
+        mapped_axis(pad, SDL_CONTROLLER_AXIS_LEFTX);
     const float steering = apply_deadzone_and_sensitivity(
         raw_axis_to_unit(raw_steer_x),
         controls.movement_deadzone,
@@ -208,10 +219,10 @@ void apply_modern_bike_scheme(
         sote::controls_menu::compute_modern_bike_buttons(
             throttle_raw, brake_raw, modern_bike_filter);
     if (bike_buttons.accelerate) {
-        buttons |= n64_a;
+        buttons |= control_bindings::bike_button(true);
     }
     if (bike_buttons.brake) {
-        buttons |= n64_b;
+        buttons |= control_bindings::bike_button(false);
     }
 
     // No fire binding: the bike's Fire and Kick actions were never used by
@@ -394,6 +405,7 @@ void poll_input() {
         physical_input_enabled.load(std::memory_order_relaxed);
     const bool focused = process_owns_foreground_window();
     if (!input_enabled || !focused) {
+        control_bindings::focus_lost();
         sote::modern_controls::publish({});
         input_snapshot.store(0, std::memory_order_relaxed);
         static bool reported_ignored_input = false;
@@ -414,6 +426,28 @@ void poll_input() {
         find_controller();
     }
 
+    control_bindings::PhysicalInput raw_input;
+    for (int vk = 1; vk < 256; ++vk)
+        raw_input.keys[vk] = (GetAsyncKeyState(vk) & 0x8000) != 0;
+    raw_input.connected = controller != nullptr;
+    if (controller != nullptr) {
+        raw_input.instance = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
+        for (int b = 0; b < SDL_CONTROLLER_BUTTON_MAX; ++b)
+            raw_input.buttons[b] = SDL_GameControllerGetButton(controller, static_cast<SDL_GameControllerButton>(b));
+        for (int a = 0; a < SDL_CONTROLLER_AXIS_MAX; ++a)
+            raw_input.axes[a] = SDL_GameControllerGetAxis(controller, static_cast<SDL_GameControllerAxis>(a));
+    }
+    const auto menu = sote::menu_skin::latest();
+    const bool binding_screen = menu && menu->screen == sote::menu_skin::Screen::Controls && menu->rebinding;
+    const auto now_ms = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count());
+    const int menu_action = control_bindings::handle_menu(raw_input, binding_screen, now_ms, bool(menu));
+    if (menu_action != 0) {
+        sote::modern_controls::publish({});
+        input_snapshot.store(menu_action == 2 ? n64_b : menu_action == 3 ? n64_start : 0, std::memory_order_relaxed);
+        return;
+    }
+    mapped_input = control_bindings::remap(raw_input, bool(menu));
     const sote::controls_menu::ModernControlsTuning controls =
         sote::controls_menu::modern_controls_tuning();
     uint16_t buttons = 0;
@@ -427,7 +461,7 @@ void poll_input() {
 
     if (controller != nullptr) {
         auto pressed = [](SDL_GameControllerButton button) {
-            return SDL_GameControllerGetButton(controller, button) != 0;
+            return mapped_button(controller, button) != 0;
         };
         if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_a;
         if (pressed(SDL_CONTROLLER_BUTTON_X) ||
@@ -443,17 +477,17 @@ void poll_input() {
         if (pressed(SDL_CONTROLLER_BUTTON_DPAD_LEFT)) buttons |= n64_dl;
         if (pressed(SDL_CONTROLLER_BUTTON_DPAD_RIGHT)) buttons |= n64_dr;
         if (normalize_trigger(
-                SDL_GameControllerGetAxis(
+                mapped_axis(
                     controller,
                     SDL_CONTROLLER_AXIS_TRIGGERLEFT),
                 controls) > 0.0f) {
             buttons |= n64_z;
         }
 
-        raw_rx = SDL_GameControllerGetAxis(
+        raw_rx = mapped_axis(
             controller,
             SDL_CONTROLLER_AXIS_RIGHTX);
-        raw_ry = SDL_GameControllerGetAxis(
+        raw_ry = mapped_axis(
             controller,
             SDL_CONTROLLER_AXIS_RIGHTY);
         const bool aim_right = aim_direction_pressed(
@@ -469,10 +503,10 @@ void poll_input() {
         if (aim_down) buttons |= n64_cd;
         if (aim_up) buttons |= n64_cu;
 
-        raw_lx = SDL_GameControllerGetAxis(
+        raw_lx = mapped_axis(
             controller,
             SDL_CONTROLLER_AXIS_LEFTX);
-        raw_ly = SDL_GameControllerGetAxis(
+        raw_ly = mapped_axis(
             controller,
             SDL_CONTROLLER_AXIS_LEFTY);
         x = normalize_axis(raw_lx, controls);
@@ -481,7 +515,7 @@ void poll_input() {
         sote::modern_controls::publish({
             {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)},
             {raw_axis_to_unit(raw_rx), raw_axis_to_unit(raw_ry)}, true});
-        const bool on_foot_modern = sote::modern_controls::on_foot_active() &&
+        const bool on_foot_modern = !menu && sote::modern_controls::on_foot_active() &&
             sote::controls_menu::current_scheme(
                 sote::controls_menu::SchemeSlot::OnFoot) ==
                 sote::controls_menu::ControlScheme::Modern;
@@ -497,7 +531,7 @@ void poll_input() {
             if (pressed(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) ||
                 pressed(SDL_CONTROLLER_BUTTON_LEFTSHOULDER)) buttons |= n64_cu;
             if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP)) buttons |= n64_l;
-            if (SDL_GameControllerGetAxis(controller,
+            if (mapped_axis(controller,
                 SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 3276) buttons |= n64_b;
             buttons = sote::modern_controls::map_buttons(buttons);
             const auto movement = sote::modern_controls::shape_stick(
@@ -508,7 +542,7 @@ void poll_input() {
         }
 
         const bool bike_modern_active =
-            sote::controls_menu::bike_modern_scheme_active();
+            !menu && sote::controls_menu::bike_modern_scheme_active();
         if (bike_modern_active) {
             // Modern redefines A and B as Accelerate/Brakes driven by the
             // triggers, and LT no longer means Z, so drop those Classic
@@ -878,8 +912,16 @@ size_t get_frames_remaining() {
         }
         return 0;
     }
-    return SDL_GetQueuedAudioSize(audio_device) /
-        (sizeof(int16_t) * 2);
+    // SDL counts device-rate bytes; ultramodern expects source-rate frames.
+    // The rates can differ when SDL_NewAudioStream is performing resampling.
+    if (obtained_audio.freq <= 0 || source_frequency == 0) {
+        return 0;
+    }
+    const uint64_t device_frames =
+        SDL_GetQueuedAudioSize(audio_device) / (sizeof(int16_t) * 2);
+    return static_cast<size_t>(
+        device_frames * source_frequency /
+        static_cast<uint32_t>(obtained_audio.freq));
 }
 
 void set_frequency(uint32_t frequency) {

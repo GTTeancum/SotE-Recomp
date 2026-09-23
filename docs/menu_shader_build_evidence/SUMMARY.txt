@@ -1,0 +1,9 @@
+Original shader-header failure: REPRODUCED
+Fixed actual renderer compile/link (Ninja): PASS
+Fixed actual renderer compile/link (Ninja Multi-Config, _WIN32 DXIL branch): PASS
+Incremental builds: PASS (no work to do)
+Shader/link/hook checks: 12 per configuration, zero failures
+Controls checks: 4903, zero failures; 11 persistent context hooks PASS
+Menu checks: 150, zero failures; 2 persistent menu hooks PASS
+Mask equivalence: 65536 values, zero mismatches
+Windows/MSVC full build and GPU display: NOT RUN

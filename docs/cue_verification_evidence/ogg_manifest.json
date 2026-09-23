@@ -1,0 +1,41 @@
+[
+  {
+    "source": "02_Main_Menu_Cutscene.mp3",
+    "output": "main_menu.ogg",
+    "frames": 1576634,
+    "sample_rate": 44100,
+    "duration": 35.751337868480725,
+    "channels": 2,
+    "tags": {
+      "LOOPSTART": "319890",
+      "LOOPEND": "1576634"
+    },
+    "sha256": "3ee891790894b20b749b54d25582464df0b9753511d7afaf27299e2120be6ead",
+    "pcm_correlation": 0.999175397784362,
+    "roundtrip_error_to_signal_db": -27.82445564257648
+  },
+  {
+    "source": "04_Level_Start_Respawn.mp3",
+    "output": "Track16.ogg",
+    "frames": 232336,
+    "sample_rate": 44100,
+    "duration": 5.268390022675737,
+    "channels": 2,
+    "tags": {},
+    "sha256": "94a8d986d39d336d923b61f78c68d9a7f7aee58d63513b5dc2404c01188010a5",
+    "pcm_correlation": 0.999117754559168,
+    "roundtrip_error_to_signal_db": -27.529464789342168
+  },
+  {
+    "source": "16_Death_Game_Over.mp3",
+    "output": "Track15.ogg",
+    "frames": 300952,
+    "sample_rate": 44100,
+    "duration": 6.824308390022676,
+    "channels": 2,
+    "tags": {},
+    "sha256": "589745881051ceb5624cfd5395eda0941f9f5edb332b3a69ecb749083d0e5a3a",
+    "pcm_correlation": 0.9995789169204586,
+    "roundtrip_error_to_signal_db": -30.675163438355995
+  }
+]

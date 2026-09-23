@@ -1,0 +1,310 @@
+[
+  {
+    "reference_offset": 0.4,
+    "best": {
+      "reference_offset": 0.4,
+      "duration": 2.5,
+      "speed": 0.9994999999999984,
+      "candidate_offset": 0.4,
+      "channel": "L",
+      "correlation": 0.6379445944905834
+    },
+    "top": [
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9994999999999984,
+        "candidate_offset": 0.4,
+        "channel": "L",
+        "correlation": 0.6379445944905834
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9993999999999984,
+        "candidate_offset": 0.39975,
+        "channel": "L",
+        "correlation": 0.6373233095683386
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9992999999999984,
+        "candidate_offset": 0.39975,
+        "channel": "L",
+        "correlation": 0.6272818546886425
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9995999999999984,
+        "candidate_offset": 0.4,
+        "channel": "L",
+        "correlation": 0.6237607934688105
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9996999999999984,
+        "candidate_offset": 0.40025,
+        "channel": "L",
+        "correlation": 0.6156300829042453
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9991999999999984,
+        "candidate_offset": 0.39975,
+        "channel": "L",
+        "correlation": 0.6056413250167183
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9997999999999984,
+        "candidate_offset": 0.4005,
+        "channel": "L",
+        "correlation": 0.5975460782999887
+      },
+      {
+        "reference_offset": 0.4,
+        "duration": 2.5,
+        "speed": 0.9990999999999984,
+        "candidate_offset": 0.39975,
+        "channel": "L",
+        "correlation": 0.5918665962575281
+      }
+    ]
+  },
+  {
+    "reference_offset": 1.0,
+    "best": {
+      "reference_offset": 1.0,
+      "duration": 2.5,
+      "speed": 0.9994999999999984,
+      "candidate_offset": 1.00025,
+      "channel": "L",
+      "correlation": 0.7111069902007621
+    },
+    "top": [
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9994999999999984,
+        "candidate_offset": 1.00025,
+        "channel": "L",
+        "correlation": 0.7111069902007621
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9992999999999984,
+        "candidate_offset": 1.0,
+        "channel": "L",
+        "correlation": 0.7028409967199235
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9993999999999984,
+        "candidate_offset": 1.00025,
+        "channel": "L",
+        "correlation": 0.694309972299313
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9995999999999984,
+        "candidate_offset": 1.0005,
+        "channel": "L",
+        "correlation": 0.6908852291669696
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9991999999999984,
+        "candidate_offset": 1.0,
+        "channel": "L",
+        "correlation": 0.6826582873430559
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9996999999999984,
+        "candidate_offset": 1.0005,
+        "channel": "L",
+        "correlation": 0.6716486678703645
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9990999999999984,
+        "candidate_offset": 0.99975,
+        "channel": "L",
+        "correlation": 0.6660764349586195
+      },
+      {
+        "reference_offset": 1.0,
+        "duration": 2.5,
+        "speed": 0.9989999999999984,
+        "candidate_offset": 0.99975,
+        "channel": "L",
+        "correlation": 0.6539602367361642
+      }
+    ]
+  },
+  {
+    "reference_offset": 2.0,
+    "best": {
+      "reference_offset": 2.0,
+      "duration": 2.5,
+      "speed": 0.9993999999999984,
+      "candidate_offset": 2.00075,
+      "channel": "L",
+      "correlation": 0.7013794930757862
+    },
+    "top": [
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9993999999999984,
+        "candidate_offset": 2.00075,
+        "channel": "L",
+        "correlation": 0.7013794930757862
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9992999999999984,
+        "candidate_offset": 2.00075,
+        "channel": "L",
+        "correlation": 0.6857990437139047
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9994999999999984,
+        "candidate_offset": 2.00075,
+        "channel": "L",
+        "correlation": 0.6752206473423955
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9991999999999984,
+        "candidate_offset": 2.0005,
+        "channel": "L",
+        "correlation": 0.6730448134266623
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9995999999999984,
+        "candidate_offset": 2.001,
+        "channel": "L",
+        "correlation": 0.6654081643578332
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9990999999999984,
+        "candidate_offset": 2.0005,
+        "channel": "L",
+        "correlation": 0.6592733022628801
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9989999999999984,
+        "candidate_offset": 2.0005,
+        "channel": "L",
+        "correlation": 0.6497511214143857
+      },
+      {
+        "reference_offset": 2.0,
+        "duration": 2.5,
+        "speed": 0.9988999999999985,
+        "candidate_offset": 2.0005,
+        "channel": "L",
+        "correlation": 0.6475581568353347
+      }
+    ]
+  },
+  {
+    "reference_offset": 3.0,
+    "best": {
+      "reference_offset": 3.0,
+      "duration": 2.5,
+      "speed": 0.9992999999999984,
+      "candidate_offset": 3.00125,
+      "channel": "L",
+      "correlation": 0.6443318183467989
+    },
+    "top": [
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9992999999999984,
+        "candidate_offset": 3.00125,
+        "channel": "L",
+        "correlation": 0.6443318183467989
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9991999999999984,
+        "candidate_offset": 3.00125,
+        "channel": "L",
+        "correlation": 0.6416572799133619
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9993999999999984,
+        "candidate_offset": 3.0155,
+        "channel": "S",
+        "correlation": -0.6409094336377733
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9994999999999984,
+        "candidate_offset": 3.0155,
+        "channel": "S",
+        "correlation": -0.6345055158637413
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9990999999999984,
+        "candidate_offset": 2.99825,
+        "channel": "S",
+        "correlation": -0.63003526666078
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9989999999999984,
+        "candidate_offset": 2.99825,
+        "channel": "S",
+        "correlation": -0.6224685519051966
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9995999999999984,
+        "candidate_offset": 3.0155,
+        "channel": "S",
+        "correlation": -0.6216196663409435
+      },
+      {
+        "reference_offset": 3.0,
+        "duration": 2.5,
+        "speed": 0.9988999999999985,
+        "candidate_offset": 3.01525,
+        "channel": "S",
+        "correlation": -0.6156155516309333
+      }
+    ]
+  }
+]

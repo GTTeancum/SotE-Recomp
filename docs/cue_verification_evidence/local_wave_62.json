@@ -1,0 +1,541 @@
+[
+  {
+    "reference_offset": 0.5,
+    "best": {
+      "reference_offset": 0.5,
+      "duration": 2.5,
+      "speed": 1.0039999999999978,
+      "candidate_offset": 0.59775,
+      "channel": "L",
+      "correlation": 0.5567818324752618
+    },
+    "top": [
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.0039999999999978,
+        "candidate_offset": 0.59775,
+        "channel": "L",
+        "correlation": 0.5567818324752618
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.004299999999998,
+        "candidate_offset": 0.59825,
+        "channel": "L",
+        "correlation": 0.5564650871615421
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.0043999999999977,
+        "candidate_offset": 0.5985,
+        "channel": "L",
+        "correlation": 0.5541333811080988
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.004099999999998,
+        "candidate_offset": 0.598,
+        "channel": "L",
+        "correlation": 0.553968300915454
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.0041999999999978,
+        "candidate_offset": 0.598,
+        "channel": "L",
+        "correlation": 0.5482490987484334
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.004499999999998,
+        "candidate_offset": 0.59875,
+        "channel": "L",
+        "correlation": 0.5465701731553296
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.003899999999998,
+        "candidate_offset": 0.5975,
+        "channel": "L",
+        "correlation": 0.5463210872812463
+      },
+      {
+        "reference_offset": 0.5,
+        "duration": 2.5,
+        "speed": 1.0045999999999977,
+        "candidate_offset": 0.599,
+        "channel": "L",
+        "correlation": 0.5376004907948412
+      }
+    ]
+  },
+  {
+    "reference_offset": 5.0,
+    "best": {
+      "reference_offset": 5.0,
+      "duration": 2.5,
+      "speed": 1.004099999999998,
+      "candidate_offset": 5.07975,
+      "channel": "L",
+      "correlation": 0.6680930756605477
+    },
+    "top": [
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.004099999999998,
+        "candidate_offset": 5.07975,
+        "channel": "L",
+        "correlation": 0.6680930756605477
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.003899999999998,
+        "candidate_offset": 5.0795,
+        "channel": "L",
+        "correlation": 0.6451124297790709
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.004299999999998,
+        "candidate_offset": 5.08,
+        "channel": "L",
+        "correlation": 0.6309799563475866
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.0041999999999978,
+        "candidate_offset": 5.07975,
+        "channel": "L",
+        "correlation": 0.6148464842169322
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.0039999999999978,
+        "candidate_offset": 5.0795,
+        "channel": "L",
+        "correlation": 0.6087142523023678
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.0037999999999978,
+        "candidate_offset": 5.0795,
+        "channel": "L",
+        "correlation": 0.5737934009125351
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.003699999999998,
+        "candidate_offset": 5.07925,
+        "channel": "L",
+        "correlation": 0.5709353287425943
+      },
+      {
+        "reference_offset": 5.0,
+        "duration": 2.5,
+        "speed": 1.0043999999999977,
+        "candidate_offset": 5.08,
+        "channel": "L",
+        "correlation": 0.5543670080759362
+      }
+    ]
+  },
+  {
+    "reference_offset": 10.0,
+    "best": {
+      "reference_offset": 10.0,
+      "duration": 2.5,
+      "speed": 1.002399999999998,
+      "candidate_offset": 10.06125,
+      "channel": "L",
+      "correlation": 0.6776431701060511
+    },
+    "top": [
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.002399999999998,
+        "candidate_offset": 10.06125,
+        "channel": "L",
+        "correlation": 0.6776431701060511
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.002599999999998,
+        "candidate_offset": 10.0615,
+        "channel": "L",
+        "correlation": 0.6657030241978982
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.0024999999999982,
+        "candidate_offset": 10.06125,
+        "channel": "M",
+        "correlation": 0.6586327464473254
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.0022999999999982,
+        "candidate_offset": 10.061,
+        "channel": "M",
+        "correlation": 0.6457869036302377
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.002199999999998,
+        "candidate_offset": 10.061,
+        "channel": "L",
+        "correlation": 0.6322675329283096
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.0026999999999981,
+        "candidate_offset": 10.0615,
+        "channel": "L",
+        "correlation": 0.6026880520273343
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.002799999999998,
+        "candidate_offset": 10.06175,
+        "channel": "L",
+        "correlation": 0.5978141098304165
+      },
+      {
+        "reference_offset": 10.0,
+        "duration": 2.5,
+        "speed": 1.0020999999999982,
+        "candidate_offset": 10.061,
+        "channel": "L",
+        "correlation": 0.5878016353441196
+      }
+    ]
+  },
+  {
+    "reference_offset": 15.0,
+    "best": {
+      "reference_offset": 15.0,
+      "duration": 2.5,
+      "speed": 1.0026999999999981,
+      "candidate_offset": 15.04875,
+      "channel": "L",
+      "correlation": 0.7079117241996217
+    },
+    "top": [
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.0026999999999981,
+        "candidate_offset": 15.04875,
+        "channel": "L",
+        "correlation": 0.7079117241996217
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.0024999999999982,
+        "candidate_offset": 15.0485,
+        "channel": "L",
+        "correlation": 0.6876418138102622
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.002599999999998,
+        "candidate_offset": 15.04875,
+        "channel": "L",
+        "correlation": 0.6827324868509222
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.002799999999998,
+        "candidate_offset": 15.04875,
+        "channel": "L",
+        "correlation": 0.6781310552335559
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.002399999999998,
+        "candidate_offset": 15.0485,
+        "channel": "L",
+        "correlation": 0.6661175143041296
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.0028999999999981,
+        "candidate_offset": 15.049,
+        "channel": "L",
+        "correlation": 0.654882095512105
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.002999999999998,
+        "candidate_offset": 15.049,
+        "channel": "L",
+        "correlation": 0.6182787917080484
+      },
+      {
+        "reference_offset": 15.0,
+        "duration": 2.5,
+        "speed": 1.0022999999999982,
+        "candidate_offset": 15.0485,
+        "channel": "L",
+        "correlation": 0.6166206905363466
+      }
+    ]
+  },
+  {
+    "reference_offset": 20.0,
+    "best": {
+      "reference_offset": 20.0,
+      "duration": 2.5,
+      "speed": 1.002399999999998,
+      "candidate_offset": 20.0355,
+      "channel": "L",
+      "correlation": 0.4005084847946029
+    },
+    "top": [
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.002399999999998,
+        "candidate_offset": 20.0355,
+        "channel": "L",
+        "correlation": 0.4005084847946029
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.0022999999999982,
+        "candidate_offset": 20.0355,
+        "channel": "L",
+        "correlation": 0.38206753257733966
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.001999999999998,
+        "candidate_offset": 20.03525,
+        "channel": "L",
+        "correlation": 0.3780900211492051
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.0024999999999982,
+        "candidate_offset": 20.0355,
+        "channel": "L",
+        "correlation": 0.3772793361354359
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.0018999999999982,
+        "candidate_offset": 20.03525,
+        "channel": "L",
+        "correlation": 0.3667575411649277
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.0020999999999982,
+        "candidate_offset": 20.03525,
+        "channel": "L",
+        "correlation": 0.36403490380147635
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.002199999999998,
+        "candidate_offset": 20.0355,
+        "channel": "L",
+        "correlation": 0.3629278182761939
+      },
+      {
+        "reference_offset": 20.0,
+        "duration": 2.5,
+        "speed": 1.002599999999998,
+        "candidate_offset": 20.03575,
+        "channel": "L",
+        "correlation": 0.36280181233910896
+      }
+    ]
+  },
+  {
+    "reference_offset": 25.0,
+    "best": {
+      "reference_offset": 25.0,
+      "duration": 2.5,
+      "speed": 1.0033999999999978,
+      "candidate_offset": 25.023,
+      "channel": "L",
+      "correlation": 0.6329128849881184
+    },
+    "top": [
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.0033999999999978,
+        "candidate_offset": 25.023,
+        "channel": "L",
+        "correlation": 0.6329128849881184
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.0031999999999979,
+        "candidate_offset": 25.02275,
+        "channel": "L",
+        "correlation": 0.6022674206715779
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.003499999999998,
+        "candidate_offset": 25.023,
+        "channel": "L",
+        "correlation": 0.5890541622277176
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.003299999999998,
+        "candidate_offset": 25.02275,
+        "channel": "L",
+        "correlation": 0.5865610894201778
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.0035999999999978,
+        "candidate_offset": 25.02325,
+        "channel": "L",
+        "correlation": 0.5695449055818027
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.003099999999998,
+        "candidate_offset": 25.02275,
+        "channel": "L",
+        "correlation": 0.5665386155356856
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.002999999999998,
+        "candidate_offset": 25.02275,
+        "channel": "L",
+        "correlation": 0.5022423117553452
+      },
+      {
+        "reference_offset": 25.0,
+        "duration": 2.5,
+        "speed": 1.003699999999998,
+        "candidate_offset": 25.0235,
+        "channel": "L",
+        "correlation": 0.501846704713827
+      }
+    ]
+  },
+  {
+    "reference_offset": 30.0,
+    "best": {
+      "reference_offset": 30.0,
+      "duration": 2.5,
+      "speed": 1.0043999999999977,
+      "candidate_offset": 30.00475,
+      "channel": "L",
+      "correlation": 0.484593857702283
+    },
+    "top": [
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.0043999999999977,
+        "candidate_offset": 30.00475,
+        "channel": "L",
+        "correlation": 0.484593857702283
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.004299999999998,
+        "candidate_offset": 30.00475,
+        "channel": "L",
+        "correlation": 0.46710067338689076
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.004499999999998,
+        "candidate_offset": 30.005,
+        "channel": "L",
+        "correlation": 0.4660891900468006
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.0041999999999978,
+        "candidate_offset": 30.0045,
+        "channel": "L",
+        "correlation": 0.42271369156889194
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.0045999999999977,
+        "candidate_offset": 30.00525,
+        "channel": "L",
+        "correlation": 0.41736117837517217
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.004699999999998,
+        "candidate_offset": 30.0055,
+        "channel": "L",
+        "correlation": 0.3926436018100666
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.0035999999999978,
+        "candidate_offset": 30.0025,
+        "channel": "S",
+        "correlation": -0.3850574864683188
+      },
+      {
+        "reference_offset": 30.0,
+        "duration": 2.5,
+        "speed": 1.003699999999998,
+        "candidate_offset": 30.0025,
+        "channel": "S",
+        "correlation": -0.382488463523561
+      }
+    ]
+  }
+]

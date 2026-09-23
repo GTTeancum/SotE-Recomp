@@ -1,0 +1,14 @@
+{
+  "HERO": {
+    "native_id": "61",
+    "samples": 58084,
+    "sr": 11025,
+    "correlation": 0.9963980201828162
+  },
+  "DEATH2": {
+    "native_id": "21",
+    "samples": 75238,
+    "sr": 11025,
+    "correlation": 0.9997889617196213
+  }
+}

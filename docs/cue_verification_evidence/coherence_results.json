@@ -1,0 +1,173 @@
+{
+  "62": [
+    {
+      "reference_offset": 0.5,
+      "duration": 2.5,
+      "speed": 1.0039999999999978,
+      "candidate_offset": 0.59775,
+      "channel": "L",
+      "correlation": 0.5567818324752618,
+      "energy_weighted_coherence": 0.7353993681663608,
+      "held_out_fir_correlation": 0.7064196937010121,
+      "reversed_control_correlation": -0.00034190314640043676
+    },
+    {
+      "reference_offset": 5.0,
+      "duration": 2.5,
+      "speed": 1.004099999999998,
+      "candidate_offset": 5.07975,
+      "channel": "L",
+      "correlation": 0.6680930756605477,
+      "energy_weighted_coherence": 0.5592569034360015,
+      "held_out_fir_correlation": 0.6764428506783668,
+      "reversed_control_correlation": 0.21834012011984572
+    },
+    {
+      "reference_offset": 10.0,
+      "duration": 2.5,
+      "speed": 1.002399999999998,
+      "candidate_offset": 10.06125,
+      "channel": "L",
+      "correlation": 0.6776431701060511,
+      "energy_weighted_coherence": 0.6641200951892057,
+      "held_out_fir_correlation": 0.7773361644145482,
+      "reversed_control_correlation": 0.05105774455126737
+    },
+    {
+      "reference_offset": 15.0,
+      "duration": 2.5,
+      "speed": 1.0026999999999981,
+      "candidate_offset": 15.04875,
+      "channel": "L",
+      "correlation": 0.7079117241996217,
+      "energy_weighted_coherence": 0.6609746657981023,
+      "held_out_fir_correlation": 0.7885698667785479,
+      "reversed_control_correlation": 0.1747246783836884
+    },
+    {
+      "reference_offset": 20.0,
+      "duration": 2.5,
+      "speed": 1.002399999999998,
+      "candidate_offset": 20.0355,
+      "channel": "L",
+      "correlation": 0.4005084847946029,
+      "energy_weighted_coherence": 0.48885244013937923,
+      "held_out_fir_correlation": 0.6010263523676148,
+      "reversed_control_correlation": 0.01336181920146639
+    },
+    {
+      "reference_offset": 25.0,
+      "duration": 2.5,
+      "speed": 1.0033999999999978,
+      "candidate_offset": 25.023,
+      "channel": "L",
+      "correlation": 0.6329128849881184,
+      "energy_weighted_coherence": 0.6358083577121743,
+      "held_out_fir_correlation": 0.7600820038629242,
+      "reversed_control_correlation": 0.25966198642873084
+    },
+    {
+      "reference_offset": 30.0,
+      "duration": 2.5,
+      "speed": 1.0043999999999977,
+      "candidate_offset": 30.00475,
+      "channel": "L",
+      "correlation": 0.484593857702283,
+      "energy_weighted_coherence": 0.47993746514485597,
+      "held_out_fir_correlation": 0.5518656441870797,
+      "reversed_control_correlation": 0.017181100048887253
+    }
+  ],
+  "61": [
+    {
+      "reference_offset": 0.4,
+      "duration": 2.5,
+      "speed": 1.0049999999999977,
+      "candidate_offset": 0.36475,
+      "channel": "M",
+      "correlation": -0.5213100937222905,
+      "energy_weighted_coherence": 0.528939800957515,
+      "held_out_fir_correlation": 0.6293152230156656,
+      "reversed_control_correlation": 0.1055157650118483
+    },
+    {
+      "reference_offset": 1.0,
+      "duration": 2.5,
+      "speed": 1.0049999999999977,
+      "candidate_offset": 0.96175,
+      "channel": "M",
+      "correlation": -0.4777462220954958,
+      "energy_weighted_coherence": 0.4669297033237009,
+      "held_out_fir_correlation": 0.48302059291203286,
+      "reversed_control_correlation": 0.09610005419384444
+    },
+    {
+      "reference_offset": 2.0,
+      "duration": 2.5,
+      "speed": 1.0049999999999977,
+      "candidate_offset": 1.95675,
+      "channel": "M",
+      "correlation": -0.45629723186843696,
+      "energy_weighted_coherence": 0.48506044272396925,
+      "held_out_fir_correlation": 0.4825996852655346,
+      "reversed_control_correlation": 0.07838536533588075
+    },
+    {
+      "reference_offset": 3.0,
+      "duration": 2.2195,
+      "speed": 1.0054999999999978,
+      "candidate_offset": 2.951,
+      "channel": "M",
+      "correlation": -0.6950013381046403,
+      "energy_weighted_coherence": 0.810963438531453,
+      "held_out_fir_correlation": 0.8540686491267883,
+      "reversed_control_correlation": 0.09907950860139542
+    }
+  ],
+  "21": [
+    {
+      "reference_offset": 0.4,
+      "duration": 2.5,
+      "speed": 0.9994999999999984,
+      "candidate_offset": 0.4,
+      "channel": "L",
+      "correlation": 0.6379445944905834,
+      "energy_weighted_coherence": 0.6754763760335154,
+      "held_out_fir_correlation": 0.8340121528666511,
+      "reversed_control_correlation": 0.09837194806103569
+    },
+    {
+      "reference_offset": 1.0,
+      "duration": 2.5,
+      "speed": 0.9994999999999984,
+      "candidate_offset": 1.00025,
+      "channel": "L",
+      "correlation": 0.7111069902007621,
+      "energy_weighted_coherence": 0.7240982922754801,
+      "held_out_fir_correlation": 0.867976827044773,
+      "reversed_control_correlation": 0.3423390439761504
+    },
+    {
+      "reference_offset": 2.0,
+      "duration": 2.5,
+      "speed": 0.9993999999999984,
+      "candidate_offset": 2.00075,
+      "channel": "L",
+      "correlation": 0.7013794930757862,
+      "energy_weighted_coherence": 0.7272036559745878,
+      "held_out_fir_correlation": 0.8864767247670793,
+      "reversed_control_correlation": 0.28726768694822186
+    },
+    {
+      "reference_offset": 3.0,
+      "duration": 2.5,
+      "speed": 0.9992999999999984,
+      "candidate_offset": 3.00125,
+      "channel": "L",
+      "correlation": 0.6443318183467989,
+      "energy_weighted_coherence": 0.7435203338726977,
+      "held_out_fir_correlation": 0.9235409229828005,
+      "reversed_control_correlation": 0.22790863056509764
+    }
+  ]
+}

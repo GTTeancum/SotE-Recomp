@@ -1,0 +1,27 @@
+{
+  "SotE_Cue_Candidates_ky5q3kzx.zip": {
+    "sha256": "5ff3f90b2f980c2bb5c3ef0e19b1a7c0e1c92ee79cdcba34ab200cf197aa6a57",
+    "bytes": 2238467
+  },
+  "HERO.WAV": {
+    "sha256": "6843d47f1799705f79e0753863df4d7c10a9d63e9f4ca73362c34a7e7d08dc33",
+    "bytes": 116212
+  },
+  "DEATH2.WAV": {
+    "sha256": "7bae8360a3b8f8a96ab4ec8598c4ef2ed736e266eae92192780c76d7a16435c5",
+    "bytes": 150520
+  },
+  "02_Main_Menu_Cutscene.mp3": {
+    "sha256": "5ea665565c3140784f65af2b46b1ab15c3c3cea2c1479a5eaf423ec61d2490ff",
+    "bytes": 1880171
+  },
+  "04_Level_Start_Respawn.mp3": {
+    "sha256": "6eaa7b91c4aaef437d00e2126cf79ee8aca793e27c6805b9397347f1c8a3ad02",
+    "bytes": 178769
+  },
+  "16_Death_Game_Over.mp3": {
+    "sha256": "fc7e27de55dd9d4ac1d4d6c9b4ee20d8f87b495e33f2730127885c88ec2aa712",
+    "bytes": 222021
+  },
+  "native_reference_ROM_SHA256": "2802bf4135842f7c8d254349ed7ac2641f6d7ff45e9d2d01304e1455706dd103"
+}

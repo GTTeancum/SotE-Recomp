@@ -1,0 +1,30 @@
+# Native-command music replacements. Format: slot filename [loop|once]
+# OGG paths are relative to Sdata/MUSIC. There is no level timer or native-mix ducking.
+# These numbered defaults match the N64 recordings; see docs/EXTERNAL_MUSIC.md.
+# Track02 is the theme/crawl, NOT the menu. main_menu.ogg is a verified cue reconstruction.
+# Its Vorbis LOOPSTART/LOOPEND comments retain an intro followed by a continuous loop.
+# A missing/unreadable menu file still falls back to original native 0x62.
+main_menu                     main_menu.ogg loop
+title_theme                   Track02.ogg once
+battle_of_hoth                Track03.ogg loop
+escape_from_echo_base         Track04.ogg loop
+asteroid_field                Track06.ogg loop
+ord_mantell_junkyard          Track07.ogg loop
+ord_mantell_boss              Track12.ogg loop
+gall_spaceport                Track13.ogg loop
+mos_eisley_beggars_canyon      Track08.ogg loop
+imperial_freighter            Track04.ogg loop
+sewers_of_imperial_city       Track10.ogg loop
+xizors_palace                 Track11.ogg loop
+skyhook_station_chase         Track06.ogg loop
+skyhook_battle                Track14.ogg loop
+boss_battle                   Track12.ogg loop
+# Short-cue slots, continuing after Track14. Both play once.
+# Stereo reconstructions verified against the supplied native/PC references:
+# 0x21 = Game Over / DEATH2 -> Track15.ogg.
+# 0x61 = Level Start / HERO -> Track16.ogg.
+# MP3-sourced fan edits, not certified lossless masters; see the verification report.
+# Missing/corrupt files retain the native cue rather than silently dropping it.
+game_over                     Track15.ogg once
+sound_61                      Track16.ogg once
+# Track05 and Track09 are intentionally unassigned: no verified native match.

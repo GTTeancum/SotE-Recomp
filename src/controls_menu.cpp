@@ -521,14 +521,14 @@ int scheme_legend(
     static const LegendEntry on_foot_classic[] = {
         {"Move", "LS", "WASD"},
         {"Jump", "A", "Z"},
-        {"Fire", "RT", "X"},
-        {"Camera", "D-Up", "Q"},
-        {"Doors", "X", "E"},
-        {"Strafe", "LB", "E"},
+        {"Fire", "X/B", "X"},
+        {"Camera", "LB/RS-R", "Q/L"},
+        {"Doors", "RB", "E"},
+        {"Strafe", "RB", "E"},
         {"Aim", "LT", "C"},
         {"Jetpack", "Y", "J"},
-        {"Weapons", "RB", "I"},
-        {"Crouch", "B", "K"},
+        {"Weapons", "RS-Up", "I"},
+        {"Crouch", "RS-Down", "K"},
         {"Pause", "Start", "Enter"},
     };
     static const LegendEntry on_foot_modern[] = {
@@ -551,14 +551,14 @@ int scheme_legend(
         {"Steer", "LS", "WASD"},
         {"Accel", "A", "Z"},
         {"Brakes", "X", "X"},
-        {"Camera", "RS", "L"},
+        {"Camera", "RS-Right", "L"},
         {"Pause", "Start", "Enter"},
     };
     static const LegendEntry bike_modern[] = {
         {"Accel", "RT", "Z"},
         {"Brakes", "LT", "X"},
         {"Steer", "LS", "WASD"},
-        {"Camera", "RS", "L"},
+        {"Camera", "RS-Right", "L"},
         {"Pause", "Start", "Enter"},
     };
     const LegendEntry* source = nullptr;

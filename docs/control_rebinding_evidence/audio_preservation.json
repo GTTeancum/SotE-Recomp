@@ -1,0 +1,32 @@
+{
+  "src/hd_music.cpp": {
+    "unchanged": true,
+    "sha256": "0ac44381cd14ae40560b576f65984b49e1de1074acbd2d69de82ce100f36bac3"
+  },
+  "src/music_replacement.cpp": {
+    "unchanged": true,
+    "sha256": "e75ca6973c91a46ebbd13ec54992ee8df27ab56edb750546a54c529f53717397"
+  },
+  "Sdata/MUSIC/n64_music_map.tsv": {
+    "unchanged": true,
+    "sha256": "001ea47a27c1e9198366961225d52df241b1256c427988b196ea34e5fd282a2b"
+  },
+  "build.ps1": {
+    "unchanged": true,
+    "sha256": "693e2e029ded7027a4512bf1d6a1372689714efd6988f39884ca082959a7a396"
+  },
+  "patches/0007-n64modernruntime-count-sign-extension.patch": {
+    "unchanged": true,
+    "sha256": "a622469d4736a351dbcbb171c4c065d32db7b58e594f70d0842bc000a199a6c9"
+  },
+  "third_party/N64ModernRuntime/librecomp/src/ultra_translation.cpp": {
+    "unchanged": true,
+    "sha256": "6fffaf7ea39ba68442d047e76559476f06c4b4e8c84a56803b5bc303b9c2f3be"
+  },
+  "Sdata/UI/fonts.ini": {
+    "unchanged": true,
+    "sha256": "d9634b57059f4793c0068c9f1a9f3b5ff6cb74f34dd32812551999d8e7a1d3fd"
+  },
+  "frontend_audio_tail_unchanged": true,
+  "Track02_through_Track16_unchanged": true
+}

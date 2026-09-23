@@ -1,0 +1,202 @@
+{
+  "38": [
+    {
+      "file": "Track13.ogg",
+      "score": 0.9469090078392813,
+      "native_offset": 5.0,
+      "pc_offset": 135.0
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.9332387447405401,
+      "native_offset": 0.0,
+      "pc_offset": 129.9
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.9224346902498697,
+      "native_offset": 15.0,
+      "pc_offset": 152.1
+    },
+    {
+      "file": "Track08.ogg",
+      "score": 0.7515524212611581,
+      "native_offset": 15.0,
+      "pc_offset": 47.2
+    },
+    {
+      "file": "Track06.ogg",
+      "score": 0.7459266437543964,
+      "native_offset": 15.0,
+      "pc_offset": 32.2
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.7391834999570392,
+      "native_offset": 15.0,
+      "pc_offset": 166.0
+    },
+    {
+      "file": "Track02.ogg",
+      "score": 0.7381733540003114,
+      "native_offset": 15.0,
+      "pc_offset": 0.1
+    },
+    {
+      "file": "Track14.ogg",
+      "score": 0.7324450844452209,
+      "native_offset": 15.0,
+      "pc_offset": 82.2
+    }
+  ],
+  "62": [
+    {
+      "file": "Track11.ogg",
+      "score": 0.693204159208734,
+      "native_offset": 15.0,
+      "pc_offset": 76.5
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.6738603911948924,
+      "native_offset": 0.0,
+      "pc_offset": 56.3
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.6702868231401692,
+      "native_offset": 5.0,
+      "pc_offset": 55.2
+    },
+    {
+      "file": "Track05.ogg",
+      "score": 0.6692395006179908,
+      "native_offset": 15.0,
+      "pc_offset": 34.6
+    },
+    {
+      "file": "Track08.ogg",
+      "score": 0.6681791278538778,
+      "native_offset": 5.0,
+      "pc_offset": 29.9
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.6654581943954387,
+      "native_offset": 5.0,
+      "pc_offset": 152.6
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.66519462525606,
+      "native_offset": 15.0,
+      "pc_offset": 29.8
+    },
+    {
+      "file": "Track06.ogg",
+      "score": 0.6648815796687001,
+      "native_offset": 15.0,
+      "pc_offset": 123.3
+    }
+  ],
+  "21": [
+    {
+      "file": "Track13.ogg",
+      "score": 0.7721128120929565,
+      "native_offset": 5.0,
+      "pc_offset": 35.1
+    },
+    {
+      "file": "Track02.ogg",
+      "score": 0.6178611687982132,
+      "native_offset": 0.0,
+      "pc_offset": 30.6
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.607125458044911,
+      "native_offset": 0.0,
+      "pc_offset": 4.7
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.606227602562662,
+      "native_offset": 5.0,
+      "pc_offset": 9.7
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.6001632722103145,
+      "native_offset": 0.0,
+      "pc_offset": 30.1
+    },
+    {
+      "file": "Track02.ogg",
+      "score": 0.5845422642660777,
+      "native_offset": 5.0,
+      "pc_offset": 0.1
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.5735227613353885,
+      "native_offset": 0.0,
+      "pc_offset": 95.5
+    },
+    {
+      "file": "Track04.ogg",
+      "score": 0.5581509291511392,
+      "native_offset": 0.0,
+      "pc_offset": 50.1
+    }
+  ],
+  "61": [
+    {
+      "file": "Track04.ogg",
+      "score": 0.8111992069172744,
+      "native_offset": 0.0,
+      "pc_offset": 0.0
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.7757208223661456,
+      "native_offset": 0.0,
+      "pc_offset": 74.7
+    },
+    {
+      "file": "Track12.ogg",
+      "score": 0.7567705740274846,
+      "native_offset": 0.0,
+      "pc_offset": 74.4
+    },
+    {
+      "file": "Track02.ogg",
+      "score": 0.7504295985230832,
+      "native_offset": 0.0,
+      "pc_offset": 24.1
+    },
+    {
+      "file": "Track08.ogg",
+      "score": 0.7473476482518927,
+      "native_offset": 0.0,
+      "pc_offset": 114.7
+    },
+    {
+      "file": "Track14.ogg",
+      "score": 0.7414957119768788,
+      "native_offset": 0.0,
+      "pc_offset": 21.5
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.727482496992799,
+      "native_offset": 0.0,
+      "pc_offset": 68.0
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.7223584665937813,
+      "native_offset": 0.0,
+      "pc_offset": 87.9
+    }
+  ]
+}

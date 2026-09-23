@@ -1,0 +1,33 @@
+{
+  "created_utc": "2026-09-21T22:52:17.522637+00:00",
+  "album": "https://downloads.khinsider.com/game-soundtracks/album/star-wars-shadows-of-the-empire-remastered-1996",
+  "status": "UNVERIFIED candidates for audio comparison; not game replacements",
+  "downloaded_content_executed": false,
+  "files": [
+    {
+      "filename": "02_Main_Menu_Cutscene.mp3",
+      "url": "https://lambda.vgmtreasurechest.com/soundtracks/star-wars-shadows-of-the-empire-remastered-1996/kbcfwszt/02.%20Main%20Menu%20-%20Cutscene.mp3",
+      "intended_comparison": "Main menu / native 0x62",
+      "status": "downloaded",
+      "bytes": 1880171,
+      "sha256": "5ea665565c3140784f65af2b46b1ab15c3c3cea2c1479a5eaf423ec61d2490ff"
+    },
+    {
+      "filename": "04_Level_Start_Respawn.mp3",
+      "url": "https://lambda.vgmtreasurechest.com/soundtracks/star-wars-shadows-of-the-empire-remastered-1996/lokhjwei/04.%20Level%20Start%20-%20Respawn.mp3",
+      "intended_comparison": "HERO / native 0x61",
+      "status": "downloaded",
+      "bytes": 178769,
+      "sha256": "6eaa7b91c4aaef437d00e2126cf79ee8aca793e27c6805b9397347f1c8a3ad02"
+    },
+    {
+      "filename": "16_Death_Game_Over.mp3",
+      "url": "https://lambda.vgmtreasurechest.com/soundtracks/star-wars-shadows-of-the-empire-remastered-1996/uunfnzjv/16.%20Death%20-%20Game%20Over.mp3",
+      "intended_comparison": "DEATH2 / native 0x21",
+      "status": "downloaded",
+      "bytes": 222021,
+      "sha256": "fc7e27de55dd9d4ac1d4d6c9b4ee20d8f87b495e33f2730127885c88ec2aa712"
+    }
+  ],
+  "downloaded_count": 3
+}

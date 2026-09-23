@@ -1,0 +1,55 @@
+{
+  "hoth_native_probe": {
+    "completed": true,
+    "vi": 4800,
+    "native_allocations_total": 106,
+    "native_background_allocations": {},
+    "native_other_allocations": {
+      "0F": 4,
+      "63": 1,
+      "65": 1,
+      "39": 1,
+      "04": 12,
+      "0A": 37,
+      "01": 1,
+      "02": 18,
+      "03": 12,
+      "08": 2,
+      "54": 8,
+      "4B": 1,
+      "09": 8
+    },
+    "replacements": [
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop"
+    ],
+    "last_mixer_telemetry": [
+      "[MUSIC_PCM] buffers=1560 native_peak=4322 mixed_peak=5676 external=1 changed=2175 cue=battle_of_hoth file=Track03.ogg position=2417760 gain=0.85452 intercepted=4318 fallbacks=0"
+    ],
+    "stderr": ""
+  },
+  "gall_native_probe": {
+    "completed": true,
+    "vi": 4800,
+    "native_allocations_total": 12,
+    "native_background_allocations": {},
+    "native_other_allocations": {
+      "0F": 4,
+      "63": 1,
+      "65": 1,
+      "14": 4,
+      "39": 1,
+      "61": 1
+    },
+    "replacements": [
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=38 cue=gall_spaceport file=Track13.ogg mode=loop"
+    ],
+    "last_mixer_telemetry": [
+      "[MUSIC_PCM] buffers=1560 native_peak=0 mixed_peak=13908 external=1 changed=2176 cue=gall_spaceport file=Track13.ogg position=1362400 gain=0.76296 intercepted=4314 fallbacks=0"
+    ],
+    "stderr": "[sote][hd-music] native fallback: /mnt/data/sote_music_work/Sdata/MUSIC/sound_61.ogg (file not found/unreadable)\n"
+  }
+}

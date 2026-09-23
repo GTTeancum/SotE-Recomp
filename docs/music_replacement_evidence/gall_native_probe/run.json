@@ -1,0 +1,20 @@
+{
+  "pid": 2403,
+  "env": {
+    "SOTE_TEST_FIX_COUNT": "1",
+    "SOTE_TRACE_HD_MUSIC": "1",
+    "SOTE_SMOKE_VIS": "4800",
+    "SOTE_INPUT_SCRIPT": "120:5:start,300:5:start,660:5:start,840:5:stick_down,900:5:a,1200:8:stick_down,1260:8:stick_down,1320:8:stick_down,1380:8:stick_down,1530:8:a,1780:8:a,2030:8:a,2280:8:a,2530:8:a,2780:8:a,3030:8:a,3280:8:a,3530:8:a,3780:8:a,4030:8:a,4280:8:a,4530:8:a,2980:240:z+stick_up,3025:10:a,3070:16:b,3115:16:r,3160:16:cu,3195:16:l,3280:240:z+stick_right,3325:10:a,3370:16:b,3415:16:r,3460:16:cr,3495:16:l,3580:240:z+stick_down,3625:10:a,3670:16:b,3715:16:r,3760:16:cd,3795:16:l,3880:240:z+stick_left,3925:10:a,3970:16:b,4015:16:r,4060:16:cl,4095:16:l,4180:240:z+stick_up,4225:10:a,4270:16:b,4315:16:r,4360:16:cu,4395:16:l,4480:240:z+stick_right,4525:10:a,4570:16:b,4615:16:r,4660:16:cr,4695:16:l",
+    "SOTE_DIAGNOSTIC_CONFIG_PATH": "/mnt/data/sote_music_analysis/runs/gall_native_probe",
+    "SOTE_SMOKE_OBSERVATION_START_VI": "2980",
+    "SOTE_DIAGNOSTIC_UNLOCK_LEVELS": "1",
+    "SOTE_SMOKE_REFILL_LIVES": "1",
+    "SOTE_TRACE_STALLS": "1"
+  },
+  "cmd": [
+    "/mnt/data/sote_music_analysis/build/sote_headless",
+    "--headless-smoke",
+    "--muted",
+    "/mnt/data/sote_music_work/Star Wars - Shadows of the Empire (U) (V1.2) [!].z64"
+  ]
+}

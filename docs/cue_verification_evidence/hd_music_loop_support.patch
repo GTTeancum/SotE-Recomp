@@ -1,0 +1,109 @@
+--- a/src/hd_music.cpp
++++ b/src/hd_music.cpp
+@@ -3,6 +3,7 @@
+ #include <algorithm>
+ #include <array>
+ #include <cctype>
++#include <charconv>
+ #include <cmath>
+ #include <cstdio>
+ #include <cstdlib>
+@@ -12,6 +13,7 @@
+ #include <mutex>
+ #include <sstream>
+ #include <string>
++#include <system_error>
+ #include <unordered_map>
+ #include <vector>
+
+@@ -37,8 +39,8 @@
+ // Numbered defaults replace the actual N64 recordings, not a guessed CD order.
+ // Waveform/spectral matching against the supplied ROM and OGGs is documented
+ // in docs/EXTERNAL_MUSIC.md. Track02 is the theme/crawl, NOT the menu.
+-// No supplied PC recording matches native 0x62: retain native menu music unless
+-// the user supplies a dedicated main_menu.ogg or an explicit map override.
++// A dedicated main_menu.ogg replaces native 0x62; missing files retain the
++// original menu cue. Track02 must never be used as the default menu recording.
+ constexpr Cue cues[] = {
+     {"Main", "main_menu",                  0x62,  0, true},
+     {"Them", "title_theme",                0x0C,  2, false},
+@@ -70,6 +72,9 @@
+     std::vector<int16_t> pcm;
+     uint32_t frequency = 0;
+     int channels = 0;
++    // Source-frame [begin, end) loop interval; the intro plays only once.
++    size_t loop_begin = 0;
++    size_t loop_end = 0;
+     size_t frames() const { return pcm.size() / static_cast<size_t>(channels); }
+ };
+ struct Voice {
+@@ -210,6 +215,40 @@
+         audio->channels = channels;
+         const size_t samples = static_cast<size_t>(frames) * static_cast<size_t>(channels);
+         audio->pcm.assign(raw, raw + samples);
++        audio->loop_end = static_cast<size_t>(frames);
++        // Optional Vorbis comments, in SOURCE frames (not output-device frames).
++        // Untagged recordings retain whole-file looping. One-shots always play
++        // through EOF even if the file also contains valid loop comments.
++        int metadata_error = 0;
++        std::unique_ptr<stb_vorbis, decltype(&stb_vorbis_close)> metadata(
++            stb_vorbis_open_memory(encoded.data(), static_cast<int>(encoded.size()),
++                &metadata_error, nullptr), &stb_vorbis_close);
++        if (!metadata) return fail("could not read Vorbis loop metadata");
++        const auto comments = stb_vorbis_get_comment(metadata.get());
++        bool seen_begin = false, seen_end = false;
++        for (int i = 0; i < comments.comment_list_length; ++i) {
++            const std::string_view comment{comments.comment_list[i]};
++            const size_t split = comment.find('=');
++            if (split == std::string_view::npos) continue;
++            const std::string tag = lower(trim(comment.substr(0, split)));
++            if (tag != "loopstart" && tag != "loopend") continue;
++            bool& seen = tag == "loopstart" ? seen_begin : seen_end;
++            if (seen) return fail("duplicate Vorbis loop tag");
++            seen = true;
++            const std::string value = trim(comment.substr(split + 1));
++            size_t parsed = 0;
++            const auto result = std::from_chars(value.data(), value.data() + value.size(), parsed);
++            if (value.empty() || result.ec != std::errc{} || result.ptr != value.data() + value.size())
++                return fail("invalid Vorbis loop frame");
++            if (tag == "loopstart") audio->loop_begin = parsed;
++            else audio->loop_end = parsed;
++        }
++        if (audio->loop_begin >= audio->loop_end || audio->loop_end > audio->frames())
++            return fail("Vorbis loop interval outside decoded audio");
++        if (seen_begin || seen_end) {
++            std::printf("[sote][hd-music] source loop [%zu, %zu): %s\n",
++                audio->loop_begin, audio->loop_end, key.c_str());
++        }
+         decoded[key] = audio;
+         std::printf("[sote][hd-music] decoded %s: %.2fs %dHz %dch\n",
+             key.c_str(), static_cast<double>(frames) / frequency, frequency, channels);
+@@ -233,8 +272,9 @@
+ float sample(const Voice& voice, int channel) {
+     const Audio& audio = *voice.audio;
+     const size_t count = audio.frames();
+-    const size_t a = std::min(static_cast<size_t>(voice.position), count - 1);
+-    const size_t b = a + 1 < count ? a + 1 : (voice.loop ? 0 : a);
++    const size_t end = voice.loop ? audio.loop_end : count;
++    const size_t a = std::min(static_cast<size_t>(voice.position), end - 1);
++    const size_t b = a + 1 < end ? a + 1 : (voice.loop ? audio.loop_begin : a);
+     const size_t ch = audio.channels == 1 ? 0 : static_cast<size_t>(channel);
+     const float x = audio.pcm[a * audio.channels + ch];
+     const float y = audio.pcm[b * audio.channels + ch];
+@@ -242,10 +282,13 @@
+ }
+ void advance(Voice& voice, uint32_t output_frequency) {
+     voice.position += static_cast<double>(voice.audio->frequency) / output_frequency;
+-    const double end = static_cast<double>(voice.audio->frames());
++    const double end = static_cast<double>(voice.loop ? voice.audio->loop_end : voice.audio->frames());
+     if (voice.position >= end) {
+-        if (voice.loop) voice.position = std::fmod(voice.position, end);
+-        else { voice.position = end; voice.finished = true; }
++        if (voice.loop) {
++            const double begin = static_cast<double>(voice.audio->loop_begin);
++            // Preserve fractional phase, including steps spanning several loops.
++            voice.position = begin + std::fmod(voice.position - begin, end - begin);
++        } else { voice.position = end; voice.finished = true; }
+     }
+ }
+ int16_t saturate(float value) {

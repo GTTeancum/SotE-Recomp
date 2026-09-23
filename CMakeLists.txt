@@ -63,13 +63,19 @@ endif()
 
 set(SOTE_RUNTIME_SOURCES
     src/controls_menu.cpp
+    src/control_bindings.cpp
     src/modern_controls.cpp
     src/modern_aim.cpp
     src/frontend.cpp
     src/graphics_menu.cpp
+    src/menu_model.cpp
+    src/menu_canvas.cpp
+    src/menu_skin.cpp
+    src/menu_renderer.cpp
     src/hd_audio.cpp
     src/pc_voices.cpp
     src/hd_music.cpp
+    src/music_replacement.cpp
     src/libultra_stubs.c
     src/main.cpp
     src/register_overlays.cpp
@@ -93,8 +99,15 @@ else()
 endif()
 
 add_executable(sote_recomp ${SOTE_RUNTIME_SOURCES})
+# Menu presentation reuses RT64's generated fullscreen/texture-copy shaders.
+# RT64's build_shader() writes to CMAKE_BINARY_DIR/src/shaders, NOT to the
+# rt64 subdirectory's binary tree. Its include path is PRIVATE to rt64, so the
+# executable must also name that directory. Keep the dependency to ensure the
+# generated headers exist before menu_renderer.cpp compiles on a clean build.
+add_dependencies(sote_recomp rt64)
 target_include_directories(sote_recomp PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/generated/RecompiledFuncs"
+    "${CMAKE_BINARY_DIR}/src"
     "${N64_MODERN_RUNTIME}/ultramodern/include"
     "${N64_MODERN_RUNTIME}/librecomp/include"
     "${N64_MODERN_RUNTIME}/N64Recomp/include"

@@ -9,6 +9,15 @@ extern "C" {
 #endif
 void sote_modern_projectile(uint8_t* rdram, void* context);
 
+// Native-command music replacement. Keep effects on the original sound path.
+void sote_music_command(uint8_t* rdram, uint32_t name_address);
+void sote_music_frame_begin(uint8_t* rdram);
+void sote_music_frame_end(uint8_t* rdram);
+void sote_music_reset(uint8_t* rdram);
+uint32_t sote_music_native_request(uint8_t* rdram, int32_t sound,
+    int32_t volume, int32_t continuous);
+
+
 uint32_t sote_enter_bike_controller(uint8_t* rdram, uint32_t object);
 void sote_enter_player_controller(
     uint8_t* rdram,
@@ -96,6 +105,10 @@ uint32_t sote_modern_take_camera_request(void);
 uint32_t sote_modern_camera_active(void);
 void sote_modern_camera_offset(uint8_t* rdram, uint32_t object, uint32_t stack);
 
+// Live menu capture: host copies only; never retains guest pointers.
+void sote_capture_menu(uint8_t* rdram);
+void sote_bindings_context(uint8_t* rdram, int context);
+void sote_capture_native_options(uint8_t* rdram);
 #ifdef __cplusplus
 }
 #endif

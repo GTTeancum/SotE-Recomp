@@ -1,0 +1,366 @@
+{
+  "native_0C": [
+    {
+      "file": "Track02.ogg",
+      "score": 0.96391,
+      "native_offset": 15,
+      "pc_offset": 15.062
+    },
+    {
+      "file": "Track02.ogg",
+      "score": 0.95405,
+      "native_offset": 5,
+      "pc_offset": 5.062
+    },
+    {
+      "file": "Track02.ogg",
+      "score": 0.95148,
+      "native_offset": 0,
+      "pc_offset": 0.062
+    },
+    {
+      "file": "Track09.ogg",
+      "score": 0.07942,
+      "native_offset": 0,
+      "pc_offset": 156.656
+    }
+  ],
+  "native_0D": [
+    {
+      "file": "Track03.ogg",
+      "score": 0.9573,
+      "native_offset": 0,
+      "pc_offset": 27.97
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.9415,
+      "native_offset": 5,
+      "pc_offset": 32.97
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.92387,
+      "native_offset": 15,
+      "pc_offset": 42.97
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.08998,
+      "native_offset": 15,
+      "pc_offset": 150.066
+    }
+  ],
+  "native_21": [
+    {
+      "file": "Track13.ogg",
+      "score": 0.17199,
+      "native_offset": 0,
+      "pc_offset": 144.255
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.16556,
+      "native_offset": 0,
+      "pc_offset": 98.59
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.13766,
+      "native_offset": 0,
+      "pc_offset": 135.55
+    },
+    {
+      "file": "Track09.ogg",
+      "score": 0.13685,
+      "native_offset": 0,
+      "pc_offset": 115.17
+    }
+  ],
+  "native_33": [
+    {
+      "file": "Track06.ogg",
+      "score": 0.99444,
+      "native_offset": 15,
+      "pc_offset": 15.074
+    },
+    {
+      "file": "Track06.ogg",
+      "score": 0.99304,
+      "native_offset": 5,
+      "pc_offset": 5.074
+    },
+    {
+      "file": "Track06.ogg",
+      "score": 0.94117,
+      "native_offset": 0,
+      "pc_offset": 0.074
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.08228,
+      "native_offset": 15,
+      "pc_offset": 21.177
+    }
+  ],
+  "native_34": [
+    {
+      "file": "Track10.ogg",
+      "score": 0.99184,
+      "native_offset": 0,
+      "pc_offset": 41.046
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.98572,
+      "native_offset": 5,
+      "pc_offset": 46.046
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.94829,
+      "native_offset": 15,
+      "pc_offset": 56.045
+    },
+    {
+      "file": "Track09.ogg",
+      "score": 0.13586,
+      "native_offset": 5,
+      "pc_offset": 70.85
+    }
+  ],
+  "native_35": [
+    {
+      "file": "Track04.ogg",
+      "score": 0.96185,
+      "native_offset": 0,
+      "pc_offset": 5.067
+    },
+    {
+      "file": "Track04.ogg",
+      "score": 0.9314,
+      "native_offset": 5,
+      "pc_offset": 10.067
+    },
+    {
+      "file": "Track04.ogg",
+      "score": 0.92726,
+      "native_offset": 15,
+      "pc_offset": 20.067
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.11798,
+      "native_offset": 0,
+      "pc_offset": 7.354
+    }
+  ],
+  "native_36": [
+    {
+      "file": "Track07.ogg",
+      "score": 0.986,
+      "native_offset": 15,
+      "pc_offset": 15.045
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.94873,
+      "native_offset": 5,
+      "pc_offset": 5.045
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.92354,
+      "native_offset": 0,
+      "pc_offset": 0.045
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.12514,
+      "native_offset": 0,
+      "pc_offset": 103.904
+    }
+  ],
+  "native_37": [
+    {
+      "file": "Track12.ogg",
+      "score": 0.98446,
+      "native_offset": 5,
+      "pc_offset": 6.042
+    },
+    {
+      "file": "Track12.ogg",
+      "score": 0.96682,
+      "native_offset": 15,
+      "pc_offset": 16.042
+    },
+    {
+      "file": "Track12.ogg",
+      "score": 0.92041,
+      "native_offset": 0,
+      "pc_offset": 1.042
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.12396,
+      "native_offset": 15,
+      "pc_offset": 18.01
+    }
+  ],
+  "native_38": [
+    {
+      "file": "Track13.ogg",
+      "score": 0.16727,
+      "native_offset": 5,
+      "pc_offset": 134.946
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.14147,
+      "native_offset": 15,
+      "pc_offset": 152.024
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.13709,
+      "native_offset": 0,
+      "pc_offset": 132.752
+    },
+    {
+      "file": "Track06.ogg",
+      "score": 0.11146,
+      "native_offset": 5,
+      "pc_offset": 107.241
+    }
+  ],
+  "native_61": [
+    {
+      "file": "Track04.ogg",
+      "score": 0.11844,
+      "native_offset": 0,
+      "pc_offset": 1.958
+    },
+    {
+      "file": "Track03.ogg",
+      "score": 0.08553,
+      "native_offset": 0,
+      "pc_offset": 39.042
+    },
+    {
+      "file": "Track07.ogg",
+      "score": 0.08392,
+      "native_offset": 0,
+      "pc_offset": 98.746
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.07491,
+      "native_offset": 0,
+      "pc_offset": 88.49
+    }
+  ],
+  "native_62": [
+    {
+      "file": "Track07.ogg",
+      "score": 0.13045,
+      "native_offset": 15,
+      "pc_offset": 90.5
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.09707,
+      "native_offset": 0,
+      "pc_offset": 121.69
+    },
+    {
+      "file": "Track13.ogg",
+      "score": 0.08758,
+      "native_offset": 15,
+      "pc_offset": 29.965
+    },
+    {
+      "file": "Track08.ogg",
+      "score": 0.08741,
+      "native_offset": 15,
+      "pc_offset": 66.925
+    }
+  ],
+  "native_7C": [
+    {
+      "file": "Track08.ogg",
+      "score": 0.98857,
+      "native_offset": 15,
+      "pc_offset": 38.238
+    },
+    {
+      "file": "Track08.ogg",
+      "score": 0.78551,
+      "native_offset": 5,
+      "pc_offset": 28.238
+    },
+    {
+      "file": "Track08.ogg",
+      "score": 0.72578,
+      "native_offset": 0,
+      "pc_offset": 23.239
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.08885,
+      "native_offset": 15,
+      "pc_offset": 41.134
+    }
+  ],
+  "native_7D": [
+    {
+      "file": "Track11.ogg",
+      "score": 0.96672,
+      "native_offset": 0,
+      "pc_offset": 27.402
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.96277,
+      "native_offset": 5,
+      "pc_offset": 32.402
+    },
+    {
+      "file": "Track11.ogg",
+      "score": 0.88508,
+      "native_offset": 15,
+      "pc_offset": 42.401
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.13424,
+      "native_offset": 0,
+      "pc_offset": 35.773
+    }
+  ],
+  "native_7E": [
+    {
+      "file": "Track14.ogg",
+      "score": 0.99076,
+      "native_offset": 5,
+      "pc_offset": 66.184
+    },
+    {
+      "file": "Track14.ogg",
+      "score": 0.98424,
+      "native_offset": 0,
+      "pc_offset": 61.184
+    },
+    {
+      "file": "Track14.ogg",
+      "score": 0.82163,
+      "native_offset": 15,
+      "pc_offset": 76.184
+    },
+    {
+      "file": "Track10.ogg",
+      "score": 0.10122,
+      "native_offset": 5,
+      "pc_offset": 61.842
+    }
+  ]
+}

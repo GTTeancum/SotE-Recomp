@@ -1,0 +1,3728 @@
+{
+  "62": [
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.1,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.8637161254882812
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.11,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.8467875050974416
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.08,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.844047106997505
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.11,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.8368440797815773
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.08,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.8284446800148094
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.06,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.8084258234313645
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.52,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7898091888427734
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.13,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.7866405866533049
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.12,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.7861953567672562
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.13,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7854026794433594
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.07,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7852628326416016
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 25.02,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7850601959228516
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.74,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7801156616210938
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.07,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.7602397433960635
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 25.28,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7597609710693359
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 58.49,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7545743560791016
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.52,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.753442153930664
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 15.040000000000001,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.748777847290039
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 53.51,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.7484013366699219
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.02,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.7483658277456529
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.19,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.7410733032226563
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 58.49,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.7388661956787109
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.31,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.7385895538330078
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.74,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.7339154052734375
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 58.800000000000004,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7317658233642578
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 24.76,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.7317034912109375
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.95,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.7265071868896484
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 15.21,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.7259857940673828
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 58.81,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.7219632720947265
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 43.54,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7204391479492187
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 53.78,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.7173292541503906
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.01,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.711067123413086
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 58.18,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.7059626007080078
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 19.8,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.7013859558105469
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 53.24,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.7002381134033203
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.07,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.6996727752685546
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 67.05,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.6966938781738281
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 43.38,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.6935184478759766
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.14,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.6932389831542969
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 67.05,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.6880336761474609
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 15.200000000000001,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.6841354370117188
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 43.37,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.6837833404541016
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 58.17,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.6818977355957031
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 67.16,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.67601318359375
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 67.17,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.6714523315429688
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 25.54,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6610649108886719
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 15.370000000000001,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.659340591430664
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.96,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.6566083526611328
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 4.99,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.6432323455810547
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.09,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.641242446899414
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 59.13,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.6400045013427734
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 43.22,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.6386010360717773
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 5.21,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.6380749893188477
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 59.11,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6371033477783203
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 4.94,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.6302371978759765
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 24.5,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.6286133575439453
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 66.94,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.62844970703125
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 54.06,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.6236734390258789
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 15.36,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6181984710693359
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 67.27,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6171702575683594
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 57.88,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.6164329147338867
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 66.93,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.61563720703125
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 20,
+      "candidate_offset": 48.06,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.609530372619629
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 67.28,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.5987103652954101
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 25,
+      "candidate_offset": 24.47,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.596419792175293
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 15,
+      "candidate_offset": 71.7,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.5783792495727539
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 30,
+      "candidate_offset": 57.85,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.5744501495361328
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 5,
+      "candidate_offset": 4.9,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.5588663482666015
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 66.83,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.5271083068847656
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 10,
+      "candidate_offset": 66.81,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.5069598770141601
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.22,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.41180797199626545
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.22,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.40477836525047217
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.22,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.4027904049380795
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.22,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.3905890747741029
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.22,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.37568125013488435
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.81,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.2607111358642578
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.49,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.24429843902587892
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.5500000000000003,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.22926080703735352
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.6,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.2164954948425293
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.21205251693725585
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.65,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.2090913200378418
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.0200000000000005,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.20144002225386534
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 3.99,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.20011442494017914
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.0200000000000005,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.19665784985607207
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.23,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.1957823371887207
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 2.38,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.19076654434204102
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.17,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.1904510777658193
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.16,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.1830896292458682
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.1794757652282715
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.56,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.16823402404785157
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 0.06,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.16262060165405273
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.6900000000000001,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.1508471202850342
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 2.21,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.1501451301574707
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.7000000000000001,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.14576197624206544
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 3.65,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.14099748611450194
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 2.84,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.14073609352111816
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.44,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.1398712730407715
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 0.92,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.13304731369018555
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.81,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.13035557746887208
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.24,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.12957746505737305
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 2.12,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.12786645889282228
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 3.08,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.12762046813964845
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.8900000000000001,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.12421921730041503
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.49,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.12214921951293946
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.61,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.12118028640747071
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 2.32,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.12058710098266602
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.41,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.1196219253540039
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 1.75,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.11762276649475098
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 2.64,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.1171665382385254
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 2.38,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.116832275390625
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 0.07,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.11583320617675781
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 2.98,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.11526270866394044
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.5500000000000003,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.11463042259216309
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 1.75,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.11236309051513672
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.82,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.11233087539672852
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 1.8900000000000001,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.11031150817871094
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.11,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.11019789695739746
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 2.0300000000000002,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.10952799797058105
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.6,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.10824774742126465
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.37,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.10747596160007587
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 1.79,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.1055989170074463
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 1.73,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.10543131828308105
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 5,
+      "candidate_offset": 2.65,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.10454564094543457
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 0.87,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.10436946868896485
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 1.41,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.1043114948272705
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 1.57,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.10409225463867187
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.39,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.10104290228239529
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 1.6500000000000001,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.09946182250976562
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.67,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.09562656402587891
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 15,
+      "candidate_offset": 1.25,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.09547503471374512
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 2.15,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.09464087486267089
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.75,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.09461191177368164
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 1.5,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.09420039176940918
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.9,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.0924052906036377
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.8800000000000001,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.09151645660400391
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 0.62,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.090335693359375
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.41000000000000003,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.0896636803112729
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.11,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.08864620468379315
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.6500000000000001,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.0872005558013916
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 10,
+      "candidate_offset": 1.29,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.08647134780883789
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.08,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.08640953383520636
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 0.27,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.08552324295043945
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 0.27,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.08155805587768555
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.08080207824707031
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.19,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.07754006385803222
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 0.47000000000000003,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.07315680980682374
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.0714463996887207
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 2.84,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.07036804676055908
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.89,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.06917576313018799
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 0.93,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.06683974742889404
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 2.34,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.0661411190032959
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.36,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.06569302082061768
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.26,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.0644591760635376
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 3.91,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.06430892467498779
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.06374268531799317
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 0.8200000000000001,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.06321188449859619
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 0.71,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.05978895664215088
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 4.44,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.05974586009979248
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.41,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.05823330879211426
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 4.04,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.058184089660644533
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 1.16,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.057708454132080075
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 2.87,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.054342212677001955
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.33,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.05375005722045898
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 3.86,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.05212252140045166
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.6400000000000001,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.051225686073303224
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.41000000000000003,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.049755911827087405
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.6500000000000001,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.04947497844696045
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 4.01,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.04936409473419189
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 2.02,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.04930655002593994
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 3.73,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.0485856819152832
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 1.53,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.04609302043914795
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 0.91,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.04601868629455566
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.16,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.04494549751281738
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 20,
+      "candidate_offset": 1.82,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.04475220680236816
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.23,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.0434454345703125
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.91,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.04321516513824463
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 3.63,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.04278775215148926
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 0.88,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.04247124671936035
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 1.6300000000000001,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.042209348678588866
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.25,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.04163245677947998
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 2.5100000000000002,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.035899782180786134
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 2.33,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.03588134765625
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.6500000000000001,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.035443003177642825
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 1.8,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.03140530347824097
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.031272506713867186
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 30,
+      "candidate_offset": 1.97,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.030970134735107423
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 3.25,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.030037484169006347
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.02,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.029976284503936766
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 3.9,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.027141597389516253
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 5,
+      "candidate_offset": 0.18,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.026726779937744142
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.02637367458133907
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 3.91,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.02590678550384857
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 3.79,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.02474626064300537
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 3.99,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.022951437876774713
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 3.99,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.021608335631234304
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 0.41000000000000003,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.021205103397369383
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.02083456754684448
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 15,
+      "candidate_offset": 3.63,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.019331883192062378
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 20,
+      "candidate_offset": 2.06,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.01771533489227295
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.35,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.015470103025436402
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.013493009805679322
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 2.7600000000000002,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.013243240118026734
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 2.87,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.01154524803161621
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 10,
+      "candidate_offset": 2.81,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.0058457815647125246
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.01,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.003142150640487671
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 0.98,
+      "score": -0.0031442037224769593
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 25,
+      "candidate_offset": 1.62,
+      "duration": 4,
+      "speed": 1.02,
+      "score": -0.005139279961585998
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 25,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.01,
+      "score": -0.015670636892318724
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 1.01,
+      "score": -0.020137739181518555
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 30,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.02,
+      "score": -0.05209347248077392
+    }
+  ],
+  "61": [
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.98,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.8619269561767579
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.95,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.8472368621826172
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.48,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.8206697082519532
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.45,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.8131505584716797
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 2.0100000000000002,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.8111531066894532
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.7973342895507812
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.98,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7841347503662109
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.47000000000000003,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7831821441650391
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.46,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7721857452392578
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.9500000000000001,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7662826538085937
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.766256103515625
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7619559478759765
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.93,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.7537399291992187
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.49,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.7526454162597657
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.7394956970214843
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.43,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.733099594116211
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.7233820343017578
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.98,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.7158254241943359
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7157108306884765
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.9500000000000001,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.7133506774902344
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 2.63,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7043626403808594
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 2.64,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.7036968994140625
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 1.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6992837524414063
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 2.65,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6971950531005859
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.49,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.6919902038574218
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.9000000000000001,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.69121826171875
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 2.59,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.68097412109375
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.44,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.6724703979492187
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 2.56,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.6674816131591796
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 1.0,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.6612576293945313
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.41000000000000003,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.6568570709228516
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.93,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.6557642364501953
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.93,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.6466448211669922
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.6391051483154296
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.6211154556274414
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.9,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.5890193176269531
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 0.43,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.5628155136108398
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.5601731491088867
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.91,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.5514546966552735
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.5146224212646484
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 3.18,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.4421635055541992
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 3.2,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.4302740478515625
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 3.22,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.4237089157104492
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 3.11,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.4204829025268555
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 3.24,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.4188446044921875
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 23.87,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.23658409118652343
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 23.86,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.22820728302001952
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 55.910000000000004,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.21645374298095704
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 2.2800000000000002,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.21607765197753906
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 23.88,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.20917125701904296
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 53.620000000000005,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.20353878021240235
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 1.46,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.20157983779907226
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 0.02,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.20090763092041017
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 0.07,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.19685420989990235
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 0.12,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.19559709548950197
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 53.620000000000005,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.19548246383666992
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 0.13,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.19107795715332032
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.1896616744995117
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 23.900000000000002,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.18815238952636718
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 2.2800000000000002,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.18409618377685547
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.1825554847717285
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 2.29,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.18107397079467774
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 1.28,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.1802935028076172
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 0.12,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.17818376541137695
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 1.47,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.17781656265258788
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 1.26,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.17689565658569337
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 53.61,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.1764476203918457
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.1739628791809082
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 53.620000000000005,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.17043237686157225
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 1.28,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.16571456909179688
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 1.07,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.1612747573852539
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 26.76,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.15934869766235352
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 26.72,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.1588417625427246
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.15794322967529298
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 0.58,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.1572404098510742
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 32.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.1540666961669922
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 71.21000000000001,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.14312032699584962
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 42.69,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.14123321533203126
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 25.48,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.13922718048095703
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 2.2800000000000002,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.13648306846618652
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.13329835891723632
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 26.76,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.13238261222839356
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 28.66,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.13212492942810058
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 25.44,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.12907597541809082
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 27.26,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.12811991691589356
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 69.67,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.12764109611511232
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 25.51,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.12217307090759277
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 26.8,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.11994354248046875
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.6500000000000001,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.11949338912963867
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.77,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.11670304298400878
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 25.53,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.11503000259399414
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.96,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.11459510803222656
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 2.27,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.11121774673461914
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 27.28,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.10567663192749023
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 71.5,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.10463948249816894
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.75,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.09547118186950683
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.75,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.09325471878051758
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.31,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.09173989295959473
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.6600000000000001,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.08886221885681152
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.48,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.07450864791870117
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.76,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.07411008834838867
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.72,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.06937387466430664
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 2.08,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.06892824649810791
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.6500000000000001,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.06369050025939942
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 2.45,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.06185965061187744
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 2.13,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.04452168941497803
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 2.48,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.044517621994018555
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.6400000000000001,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.04428112506866455
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 2.05,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.04251002311706543
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 2.0,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.04087413787841797
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 5.7,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.039740500450134275
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.55,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.03904461622238159
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.6600000000000001,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.0359375
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 1.1500000000000001,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.03335036039352417
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 2.02,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.028915741443634034
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 1.69,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.026578657627105713
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 1.58,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.02438138723373413
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 1.6,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.015754786729812623
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 1.2,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.00672233521938324
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 4.8,
+      "duration": 4,
+      "speed": 1.0,
+      "score": -0.00010869532823562622
+    }
+  ],
+  "21": [
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.7129932403564453
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.676483154296875
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.5,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.6528871917724609
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.6484563446044922
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.01,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.6447032165527343
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.6308198547363282
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.48,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.614119873046875
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.5,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.606495475769043
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 2.0,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.6041580963134766
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.03,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.5969032287597656
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.52,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.5931782150268554
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.5912220764160157
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.02,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.5855204391479493
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.0,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.584814567565918
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 2.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.5839195251464844
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 2.04,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.576397705078125
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 0.98,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.5710232162475586
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.5646039581298828
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 2.0300000000000002,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.5620221710205078
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.03,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.5609758377075196
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.53,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.5539546585083008
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.47000000000000003,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.547742691040039
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 1.96,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.5412713623046875
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 3.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.5388093948364258
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.03,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.5381470489501953
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.47000000000000003,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.5241358947753906
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 0.97,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.5225199127197265
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.54,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.515442008972168
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 1.97,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.5134462738037109
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.05,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.509677734375
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.04,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.5090828704833984
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 3.04,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.5086881637573242
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 2.08,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.5038569259643555
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 2.06,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.48693256378173827
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 2.96,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.4847364807128906
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 0.96,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.4620451354980469
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.56,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.46001487731933594
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 1.07,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.4489713668823242
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0,
+      "candidate_offset": 0.0,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.44885643005371095
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 0.5,
+      "candidate_offset": 0.44,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.4324766159057617
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 3.08,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.42894325256347654
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 1.93,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.41907745361328125
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 1,
+      "candidate_offset": 0.9400000000000001,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.4051229476928711
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 2,
+      "candidate_offset": 1.94,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.38551929473876956
+    },
+    {
+      "candidate": "16_Death_Game_Over",
+      "native_offset": 3,
+      "candidate_offset": 2.92,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.37308589935302733
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.5300000000000002,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.2703250503540039
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.54,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.2619258689880371
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 3.0300000000000002,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.24758861541748048
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.57,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.24734664916992188
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 3.04,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.24662372589111328
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 0.16,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.24528228759765625
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 0.21,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.24261449813842773
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.56,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.23669506072998048
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 0.2,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.23327449798583985
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 3.02,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.22736448287963867
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.57,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.2135709762573242
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 3.23,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.20758115768432617
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 0.24,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.20641799926757812
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 3.08,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.2056984519958496
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 3,
+      "candidate_offset": 0.14,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.2043484115600586
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 2.92,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.19451452255249024
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 2.89,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.19181987762451172
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 13.21,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.18961345672607421
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 2.89,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.1863536262512207
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 3.0700000000000003,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.18188007354736327
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 0.34,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.17774200439453125
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 0.37,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.1702280044555664
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 17.95,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.16025144577026368
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 29.580000000000002,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.1560743808746338
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 58.06,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.15498035430908202
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 18.45,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.15472122192382812
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 0.35000000000000003,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.15458203315734864
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 0.12,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.1542404079437256
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 4.48,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.15195570945739745
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 3.43,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.14389297485351563
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 3.45,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.14356386184692382
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.5300000000000002,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.13516253471374512
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 0.31,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.1342259407043457
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 4.5,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.13324166297912599
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.54,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.13096293449401855
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 46.87,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.13020764350891112
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 3.47,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.12718299865722657
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 75.33,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.12384219169616699
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.57,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.1236733341217041
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 10.0,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.12296326637268067
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 47.67,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.12218031883239747
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.12154094696044922
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 24.51,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.12131706237792969
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 18.03,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.12038475036621094
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.56,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.1183475399017334
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.11820966720581055
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 75.29,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.11702999114990234
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 75.38,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.11372742652893067
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 37.67,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.11130166053771973
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 17.52,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.10867332458496094
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 46.09,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.10755900382995605
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.1075306510925293
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 75.35000000000001,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.10751477241516114
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 66.2,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.1068046474456787
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0,
+      "candidate_offset": 2.57,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.10678547859191895
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 3.48,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.10503940582275391
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 18.02,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.10327245712280274
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 17.98,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.10145342826843262
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0,
+      "candidate_offset": 17.61,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.10054475784301758
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 74.87,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.10021999359130859
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.29,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.09861939430236816
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 75.35000000000001,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.09834739685058594
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 0.8,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.09627018928527832
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 2,
+      "candidate_offset": 75.25,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.09417393684387207
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 75.27,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.09400260925292969
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.09367416381835937
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 45.800000000000004,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.0922348976135254
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.27,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.09219857215881348
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.37,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.09219501495361328
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.34,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.08857954978942871
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 74.84,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.0863572597503662
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 3.56,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.08451281547546387
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 0.5,
+      "candidate_offset": 2.88,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.07748763084411621
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 0.5,
+      "candidate_offset": 45.87,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.0736902904510498
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 1.69,
+      "duration": 2,
+      "speed": 0.98,
+      "score": 0.07253753662109375
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.29,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.0713202953338623
+    },
+    {
+      "candidate": "02_Main_Menu_Cutscene",
+      "native_offset": 1,
+      "candidate_offset": 74.9,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.06908589839935303
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 1.83,
+      "duration": 2,
+      "speed": 0.99,
+      "score": 0.06581318855285645
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 1.84,
+      "duration": 2,
+      "speed": 1.02,
+      "score": 0.06055191993713379
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 1.87,
+      "duration": 2,
+      "speed": 1.0,
+      "score": 0.05819075584411621
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.26,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.05749684810638428
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.23,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.05478398323059082
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.41000000000000003,
+      "duration": 4,
+      "speed": 1.02,
+      "score": 0.05441612243652344
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.1500000000000001,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.0508120059967041
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 2,
+      "candidate_offset": 1.19,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.04972238540649414
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 3,
+      "candidate_offset": 1.9100000000000001,
+      "duration": 2,
+      "speed": 1.01,
+      "score": 0.04277546405792236
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.44,
+      "duration": 4,
+      "speed": 0.99,
+      "score": 0.04015110969543457
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.4,
+      "duration": 4,
+      "speed": 1.01,
+      "score": 0.039307739734649655
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.37,
+      "duration": 4,
+      "speed": 1.0,
+      "score": 0.03847737789154053
+    },
+    {
+      "candidate": "04_Level_Start_Respawn",
+      "native_offset": 1,
+      "candidate_offset": 0.33,
+      "duration": 4,
+      "speed": 0.98,
+      "score": 0.02356431007385254
+    }
+  ]
+}

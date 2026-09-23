@@ -25,8 +25,10 @@
 #include "librecomp/overlays.hpp"
 #include "librecomp/rsp.hpp"
 #include "controls_menu.hpp"
+#include "control_bindings.hpp"
 #include "frontend.hpp"
 #include "graphics_menu.hpp"
+#include "menu_skin.hpp"
 #include "hd_audio.hpp"
 #include "hd_music.hpp"
 #include "rt64_renderer.hpp"
@@ -84,8 +86,6 @@ std::atomic<uint32_t> committed_life_loss_count{0};
 std::atomic<uint16_t> current_scripted_buttons{0};
 std::atomic<int8_t> current_scripted_stick_x{0};
 std::atomic<int8_t> current_scripted_stick_y{0};
-std::atomic<int> hd_music_last_level{-10000};
-std::atomic<int> hd_music_stable_vis{0};
 std::atomic<uint32_t> gall_dfob_text_pointer{0};
 std::mutex droid_candidate_mutex;
 std::array<uint32_t, 64> droid_visual_candidate_objects{};
@@ -447,51 +447,6 @@ const char* level_name_for_index(int level_index) {
         return "unknown";
     }
     return names[level_index];
-}
-
-void update_hd_music_from_game_state(uint8_t* rdram) {
-    if (rdram == nullptr || !sote::hd_music::is_enabled() ||
-        std::getenv("SOTE_DISABLE_HD_MUSIC") != nullptr) {
-        return;
-    }
-
-    const int vi = vi_count.load(std::memory_order_relaxed);
-    const int16_t event =
-        static_cast<int16_t>(read_guest_half(rdram, 0x8013CE0EU));
-    const int32_t result =
-        static_cast<int32_t>(read_guest_word(rdram, 0x800DD2B0U));
-    const int32_t lives =
-        static_cast<int32_t>(read_guest_word(rdram, 0x800E0EB0U));
-    if (result == 4 || lives < 0) {
-        sote::hd_music::set_slot("game_over");
-        return;
-    }
-
-    const int level_index = level_index_for_event(event);
-    if (result != 2 || level_index < 0) {
-        hd_music_last_level.store(-10000, std::memory_order_relaxed);
-        hd_music_stable_vis.store(0, std::memory_order_relaxed);
-        sote::hd_music::stop();
-        return;
-    }
-
-    const int previous_level =
-        hd_music_last_level.exchange(level_index, std::memory_order_relaxed);
-    if (previous_level != level_index) {
-        hd_music_stable_vis.store(vi, std::memory_order_relaxed);
-        sote::hd_music::stop();
-        return;
-    }
-
-    constexpr int stable_gameplay_vis_before_music = 90;
-    const int stable_since =
-        hd_music_stable_vis.load(std::memory_order_relaxed);
-    if (stable_since <= 0 ||
-        vi - stable_since < stable_gameplay_vis_before_music) {
-        return;
-    }
-
-    sote::hd_music::set_slot(level_name_for_index(level_index));
 }
 
 void note_life_loss_cadence(
@@ -1498,13 +1453,24 @@ LRESULT CALLBACK window_proc(
             // paint the class brush between swap-chain presents causes visible
             // black flashes, especially on the game's static intro screens.
             return 1;
+        case WM_MOUSEWHEEL:
+            if (sote::menu_skin::controls_visible()) {
+                const int delta = static_cast<short>(HIWORD(wparam));
+                sote::menu_skin::scroll_controls(-delta / WHEEL_DELTA * 3);
+                return 0;
+            }
+            break;
         case WM_KEYDOWN:
+            // Key navigation is sampled once by the binding editor, not also
+            // handled here. In particular PgUp/Down must not move twice.
+            if (sote::control_bindings::capturing() && wparam == VK_F11) return 0;
             if (wparam == VK_F11) {
                 toggle_graphics_fullscreen(window);
                 return 0;
             }
             break;
         case WM_SYSKEYDOWN:
+            if (sote::control_bindings::capturing()) return 0;
             if (wparam == VK_RETURN &&
                 (lparam & (1LL << 29)) != 0) {
                 toggle_graphics_fullscreen(window);
@@ -1684,7 +1650,6 @@ void on_vi() {
     const int count = ++vi_count;
     game_frame_cv.notify_all();
     log_bike_telemetry(count);
-    update_hd_music_from_game_state(game_rdram);
     // Within one run: snapshot every float at viA, compare at viB, and
     // report those that moved. Held input starts between the two, so a
     // speed-like value shows up as a large sustained change without the
@@ -3137,6 +3102,8 @@ int main(int argc, char** argv) {
     runtime_directory = get_executable_directory();
     sote::graphics_menu::initialize(runtime_directory);
     sote::controls_menu::initialize(runtime_directory);
+    sote::control_bindings::initialize(runtime_directory);
+    sote::menu_skin::initialize(runtime_directory);
     sote::hd_music::initialize(runtime_directory);
     sote::hd_audio::initialize(runtime_directory);
     const std::filesystem::path packaged_rom =

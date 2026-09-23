@@ -1,0 +1,201 @@
+PASS all seven persistent hooks match generated instruction addresses
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track02.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop
+PASS selector Main Menu               native=62 file=Track02.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track02.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0C cue=title_theme file=Track02.ogg mode=once
+PASS selector Theme                   native=0C file=Track02.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track03.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+PASS selector 1. Battle of Hoth       native=0D file=Track03.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track04.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=escape_from_echo_base file=Track04.ogg mode=loop
+PASS selector 2a. Hoth Base           native=35 file=Track04.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track04.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=escape_from_echo_base file=Track04.ogg mode=loop
+PASS selector 2b. Hoth Base           native=35 file=Track04.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track06.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=33 cue=asteroid_field file=Track06.ogg mode=loop
+PASS selector 3. Asteroid             native=33 file=Track06.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track07.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=36 cue=ord_mantell_junkyard file=Track07.ogg mode=loop
+PASS selector 4a. Ord Mantell         native=36 file=Track07.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track12.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=37 cue=ord_mantell_boss file=Track12.ogg mode=loop
+PASS selector 4b. Boss                native=37 file=Track12.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track13.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=38 cue=gall_spaceport file=Track13.ogg mode=loop
+PASS selector 6a. Gall                native=38 file=Track13.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track13.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=38 cue=gall_spaceport file=Track13.ogg mode=loop
+PASS selector 6b. Gall                native=38 file=Track13.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track08.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=7C cue=mos_eisley_beggars_canyon file=Track08.ogg mode=loop
+PASS selector 7. Speeder              native=7C file=Track08.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track04.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=imperial_freighter file=Track04.ogg mode=loop
+PASS selector 9a. Freighter           native=35 file=Track04.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track04.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=imperial_freighter file=Track04.ogg mode=loop
+PASS selector 9b. Freighter           native=35 file=Track04.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track04.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=imperial_freighter file=Track04.ogg mode=loop
+PASS selector 9c. Freighter           native=35 file=Track04.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track10.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=34 cue=sewers_of_imperial_city file=Track10.ogg mode=loop
+PASS selector 10. Sewers              native=34 file=Track10.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track11.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=7D cue=xizors_palace file=Track11.ogg mode=loop
+PASS selector 11a. Palace             native=7D file=Track11.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track11.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=7D cue=xizors_palace file=Track11.ogg mode=loop
+PASS selector 11b. Palace             native=7D file=Track11.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track06.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=33 cue=skyhook_station_chase file=Track06.ogg mode=loop
+PASS selector 12. Skyhook Chase       native=33 file=Track06.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track14.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=7E cue=skyhook_battle file=Track14.ogg mode=loop
+PASS selector 13. Skyhook             native=7E file=Track14.ogg
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track12.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=37 cue=boss_battle file=Track12.ogg mode=loop
+PASS selector Boss                    native=37 file=Track12.ogg
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track04.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=escape_from_echo_base file=Track04.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/game_over.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track03.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/sound_61.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track03.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track03.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track02.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0C cue=title_theme file=Track02.ogg mode=once
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track02.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track03.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track03.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] map: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/n64_music_map.tsv
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] native fallback: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/missing.ogg (file not found/unreadable)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/Track06.ogg: 0.06s 22050Hz 2ch
+[sote][hd-music] REPLACE native=33 cue=asteroid_field file=Track06.ogg mode=loop
+[sote][hd-music] map: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/n64_music_map.tsv
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] native fallback: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/broken.ogg (not a valid mono/stereo Vorbis stream)
+[sote][hd-music] disabled; native soundtrack retained
+[sote][hd-music] map: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/n64_music_map.tsv
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_analysis/unit/fixtures/Sdata/MUSIC/mono fixture.ogg: 0.04s 48000Hz 1ch
+[sote][hd-music] REPLACE native=62 cue=main_menu file=mono fixture.ogg mode=once
+[sote][hd-music] map: /mnt/data/sote_music_work/Sdata/MUSIC/n64_music_map.tsv
+[sote][hd-music] native-command replacements enabled: /mnt/data/sote_music_work/Sdata/MUSIC (gain=1.00; effects unchanged)
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track02.ogg: 52.09s 44100Hz 2ch
+[sote][hd-music] REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track02.ogg: 52.09s 44100Hz 2ch
+[sote][hd-music] REPLACE native=0C cue=title_theme file=Track02.ogg mode=once
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track03.ogg: 185.83s 44100Hz 2ch
+[sote][hd-music] REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track04.ogg: 74.23s 44100Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=escape_from_echo_base file=Track04.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track04.ogg: 74.23s 44100Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=escape_from_echo_base file=Track04.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track06.ogg: 135.79s 44100Hz 2ch
+[sote][hd-music] REPLACE native=33 cue=asteroid_field file=Track06.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track07.ogg: 144.81s 44100Hz 2ch
+[sote][hd-music] REPLACE native=36 cue=ord_mantell_junkyard file=Track07.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track12.ogg: 121.08s 44100Hz 2ch
+[sote][hd-music] REPLACE native=37 cue=ord_mantell_boss file=Track12.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track13.ogg: 182.40s 44100Hz 2ch
+[sote][hd-music] REPLACE native=38 cue=gall_spaceport file=Track13.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track13.ogg: 182.40s 44100Hz 2ch
+[sote][hd-music] REPLACE native=38 cue=gall_spaceport file=Track13.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track08.ogg: 142.21s 44100Hz 2ch
+[sote][hd-music] REPLACE native=7C cue=mos_eisley_beggars_canyon file=Track08.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track04.ogg: 74.23s 44100Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=imperial_freighter file=Track04.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track04.ogg: 74.23s 44100Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=imperial_freighter file=Track04.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track04.ogg: 74.23s 44100Hz 2ch
+[sote][hd-music] REPLACE native=35 cue=imperial_freighter file=Track04.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track10.ogg: 107.63s 44100Hz 2ch
+[sote][hd-music] REPLACE native=34 cue=sewers_of_imperial_city file=Track10.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track11.ogg: 110.52s 44100Hz 2ch
+[sote][hd-music] REPLACE native=7D cue=xizors_palace file=Track11.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track11.ogg: 110.52s 44100Hz 2ch
+[sote][hd-music] REPLACE native=7D cue=xizors_palace file=Track11.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track06.ogg: 135.79s 44100Hz 2ch
+[sote][hd-music] REPLACE native=33 cue=skyhook_station_chase file=Track06.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track14.ogg: 118.59s 44100Hz 2ch
+[sote][hd-music] REPLACE native=7E cue=skyhook_battle file=Track14.ogg mode=loop
+[sote][hd-music] decoded /mnt/data/sote_music_work/Sdata/MUSIC/Track12.ogg: 121.08s 44100Hz 2ch
+[sote][hd-music] REPLACE native=37 cue=boss_battle file=Track12.ogg mode=loop
+PASS all 1502 assertions; 20 selectors, original guest code, fallback/volume/loop/SFX checks, and real OGG decode
+
+
+HEADLESS ALLOCATION RESULTS
+{
+  "hoth_native_probe": {
+    "completed": true,
+    "vi": 4800,
+    "native_allocations_total": 106,
+    "native_background_allocations": {},
+    "native_other_allocations": {
+      "0F": 4,
+      "63": 1,
+      "65": 1,
+      "39": 1,
+      "04": 12,
+      "0A": 37,
+      "01": 1,
+      "02": 18,
+      "03": 12,
+      "08": 2,
+      "54": 8,
+      "4B": 1,
+      "09": 8
+    },
+    "replacements": [
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=0D cue=battle_of_hoth file=Track03.ogg mode=loop"
+    ],
+    "last_mixer_telemetry": [
+      "[MUSIC_PCM] buffers=1560 native_peak=4322 mixed_peak=5676 external=1 changed=2175 cue=battle_of_hoth file=Track03.ogg position=2417760 gain=0.85452 intercepted=4318 fallbacks=0"
+    ],
+    "stderr": ""
+  },
+  "gall_native_probe": {
+    "completed": true,
+    "vi": 4800,
+    "native_allocations_total": 12,
+    "native_background_allocations": {},
+    "native_other_allocations": {
+      "0F": 4,
+      "63": 1,
+      "65": 1,
+      "14": 4,
+      "39": 1,
+      "61": 1
+    },
+    "replacements": [
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=62 cue=main_menu file=Track02.ogg mode=loop",
+      "REPLACE native=38 cue=gall_spaceport file=Track13.ogg mode=loop"
+    ],
+    "last_mixer_telemetry": [
+      "[MUSIC_PCM] buffers=1560 native_peak=0 mixed_peak=13908 external=1 changed=2176 cue=gall_spaceport file=Track13.ogg position=1362400 gain=0.76296 intercepted=4314 fallbacks=0"
+    ],
+    "stderr": "[sote][hd-music] native fallback: /mnt/data/sote_music_work/Sdata/MUSIC/sound_61.ogg (file not found/unreadable)\n"
+  }
+}

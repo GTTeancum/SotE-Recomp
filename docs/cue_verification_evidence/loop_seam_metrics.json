@@ -1,0 +1,13 @@
+{
+  "source_loop_start": 319890,
+  "source_loop_end": 1576634,
+  "ogg_loop_boundary_step": [
+    0.006674090400338173,
+    -0.0014775097370147705
+  ],
+  "source_uncut_step": [
+    0.0015087444335222244,
+    -0.001117367297410965
+  ],
+  "first_250ms_return_to_loop_vs_uncut_source_correlation": 0.9977771231819577
+}

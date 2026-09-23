@@ -1,0 +1,919 @@
+{
+  "metrics": {
+    "04_Level_Start_Respawn": {
+      "sample_rate": 44100,
+      "frames": 308257,
+      "duration": 6.989954648526077,
+      "channels": 2,
+      "peak": 0.8193892240524292,
+      "rms": 0.12486572235204217,
+      "lr_corr": 0.4641635912286314,
+      "side_to_mid_db": -4.193257170301044,
+      "power_fraction_above_5500": 0.006109361178771252,
+      "power_fraction_above_6000": 0.003426007858381843,
+      "power_fraction_above_10000": 0.00034466167154819765,
+      "power_fraction_above_16000": 8.166179044942633e-09
+    },
+    "02_Main_Menu_Cutscene": {
+      "sample_rate": 44100,
+      "frames": 3632414,
+      "duration": 82.36766439909297,
+      "channels": 2,
+      "peak": 0.41729944944381714,
+      "rms": 0.053752433947105625,
+      "lr_corr": 0.6193091560604082,
+      "side_to_mid_db": -6.287345997067959,
+      "power_fraction_above_5500": 0.0030823920613220024,
+      "power_fraction_above_6000": 0.0021029198917405898,
+      "power_fraction_above_10000": 0.00024193814591001755,
+      "power_fraction_above_16000": 2.1306004953599314e-08
+    },
+    "16_Death_Game_Over": {
+      "sample_rate": 44100,
+      "frames": 396950,
+      "duration": 9.001133786848072,
+      "channels": 2,
+      "peak": 0.9861789345741272,
+      "rms": 0.05785836129374346,
+      "lr_corr": 0.25889097891744645,
+      "side_to_mid_db": -2.2949632588158897,
+      "power_fraction_above_5500": 0.0003629112692888274,
+      "power_fraction_above_6000": 0.00025342672852766453,
+      "power_fraction_above_10000": 3.9303294725374646e-05,
+      "power_fraction_above_16000": 1.1130712000785211e-08
+    },
+    "native_62": {
+      "sample_rate": 11025,
+      "frames": 394384,
+      "duration": 35.771791383219956,
+      "channels": 1,
+      "peak": 1.0,
+      "rms": 0.20308403713743237,
+      "power_fraction_above_5500": 3.8082609803031827e-06,
+      "power_fraction_above_6000": 0.0,
+      "power_fraction_above_10000": 0.0,
+      "power_fraction_above_16000": 0.0
+    },
+    "native_61": {
+      "sample_rate": 11025,
+      "frames": 58096,
+      "duration": 5.269478458049886,
+      "channels": 1,
+      "peak": 1.0,
+      "rms": 0.23137834023641998,
+      "power_fraction_above_5500": 1.2219908699535907e-05,
+      "power_fraction_above_6000": 0.0,
+      "power_fraction_above_10000": 0.0,
+      "power_fraction_above_16000": 0.0
+    },
+    "native_21": {
+      "sample_rate": 11025,
+      "frames": 75248,
+      "duration": 6.825215419501133,
+      "channels": 1,
+      "peak": 0.999969482421875,
+      "rms": 0.10858792923561057,
+      "power_fraction_above_5500": 8.569784353873425e-07,
+      "power_fraction_above_6000": 0.0,
+      "power_fraction_above_10000": 0.0,
+      "power_fraction_above_16000": 0.0
+    },
+    "HERO": {
+      "sample_rate": 11025,
+      "frames": 58084,
+      "duration": 5.268390022675737,
+      "channels": 1,
+      "peak": 0.9998779296875,
+      "rms": 0.23105770709544482,
+      "power_fraction_above_5500": 9.662749897593447e-10,
+      "power_fraction_above_6000": 0.0,
+      "power_fraction_above_10000": 0.0,
+      "power_fraction_above_16000": 0.0
+    },
+    "DEATH2": {
+      "sample_rate": 11025,
+      "frames": 75238,
+      "duration": 6.824308390022676,
+      "channels": 1,
+      "peak": 0.9998779296875,
+      "rms": 0.1086214759195189,
+      "power_fraction_above_5500": 7.006948712517736e-11,
+      "power_fraction_above_6000": 0.0,
+      "power_fraction_above_10000": 0.0,
+      "power_fraction_above_16000": 0.0
+    }
+  },
+  "correlations": {
+    "native_62": [
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.23750991617609862,
+        "candidate_offset": 0.0705
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 15,
+        "duration": 2,
+        "correlation": 0.22822600611259036,
+        "candidate_offset": 71.23225
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.20784803983828362,
+        "candidate_offset": 47.0695
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 25,
+        "duration": 2,
+        "correlation": 0.20462108119291084,
+        "candidate_offset": 53.488
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 5,
+        "duration": 2,
+        "correlation": 0.18189133910496064,
+        "candidate_offset": 5.079
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 30,
+        "duration": 2,
+        "correlation": -0.15243320758329137,
+        "candidate_offset": 0.08475
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 25,
+        "duration": 4,
+        "correlation": -0.1521984887328693,
+        "candidate_offset": 53.50475
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 30,
+        "duration": 2,
+        "correlation": 0.1514370360487893,
+        "candidate_offset": 58.5015
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 5,
+        "duration": 4,
+        "correlation": 0.14429771550964374,
+        "candidate_offset": 5.058
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 15,
+        "duration": 4,
+        "correlation": 0.14131395923957826,
+        "candidate_offset": 71.23225
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 30,
+        "duration": 2,
+        "correlation": -0.13439451671978994,
+        "candidate_offset": 0.243
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 30,
+        "duration": 4,
+        "correlation": -0.11624041211038046,
+        "candidate_offset": 0.08475
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 30,
+        "duration": 2,
+        "correlation": -0.10801219367311664,
+        "candidate_offset": 4.48675
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 30,
+        "duration": 4,
+        "correlation": 0.10017152848522211,
+        "candidate_offset": 58.5015
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 5,
+        "duration": 2,
+        "correlation": -0.09381109898610429,
+        "candidate_offset": 6.44825
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 30,
+        "duration": 4,
+        "correlation": -0.09241975105578516,
+        "candidate_offset": 0.243
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 25,
+        "duration": 2,
+        "correlation": 0.08268596473658486,
+        "candidate_offset": 4.599
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 15,
+        "duration": 2,
+        "correlation": -0.08221175767065418,
+        "candidate_offset": 0.04925
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 15,
+        "duration": 2,
+        "correlation": 0.08082571977765513,
+        "candidate_offset": 0.014
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 5,
+        "duration": 2,
+        "correlation": -0.08009282722364498,
+        "candidate_offset": 4.45
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 5,
+        "duration": 2,
+        "correlation": 0.07531438902953261,
+        "candidate_offset": 0.1145
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 15,
+        "duration": 2,
+        "correlation": 0.07216922393682243,
+        "candidate_offset": 4.63525
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 15,
+        "duration": 4,
+        "correlation": -0.06430869393029721,
+        "candidate_offset": 0.04925
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 25,
+        "duration": 2,
+        "correlation": -0.061362973057652904,
+        "candidate_offset": 0.01775
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 5,
+        "duration": 4,
+        "correlation": 0.0579161017114888,
+        "candidate_offset": 4.54625
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 15,
+        "duration": 4,
+        "correlation": -0.05754460713318606,
+        "candidate_offset": 0.0185
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 15,
+        "duration": 2,
+        "correlation": -0.05658530877488063,
+        "candidate_offset": 2.84725
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.05516828473715547,
+        "candidate_offset": 4.801
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 5,
+        "duration": 2,
+        "correlation": 0.05297777209326295,
+        "candidate_offset": 2.9075
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 5,
+        "duration": 4,
+        "correlation": 0.052856740364820555,
+        "candidate_offset": 0.1145
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 25,
+        "duration": 2,
+        "correlation": -0.0509680757019756,
+        "candidate_offset": 0.1485
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 25,
+        "duration": 4,
+        "correlation": -0.044787576490108005,
+        "candidate_offset": 0.01775
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 15,
+        "duration": 4,
+        "correlation": 0.039849219113774294,
+        "candidate_offset": 2.93125
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.03579426362191703,
+        "candidate_offset": 2.23325
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 25,
+        "duration": 2,
+        "correlation": 0.03560342355501117,
+        "candidate_offset": 3.047
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 30,
+        "duration": 2,
+        "correlation": -0.03509954659713643,
+        "candidate_offset": 3.0675
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 25,
+        "duration": 4,
+        "correlation": -0.03454678939719848,
+        "candidate_offset": 0.16875
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 30,
+        "duration": 4,
+        "correlation": -0.03175157965125082,
+        "candidate_offset": 2.9475
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 15,
+        "duration": 4,
+        "correlation": -0.02864818580981684,
+        "candidate_offset": 0.63975
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.02742944587093352,
+        "candidate_offset": 0.4125
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 25,
+        "duration": 4,
+        "correlation": 0.02678765849421153,
+        "candidate_offset": 0.1965
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 25,
+        "duration": 4,
+        "correlation": 0.026654405544238334,
+        "candidate_offset": 2.747
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 5,
+        "duration": 4,
+        "correlation": -0.025683453970353237,
+        "candidate_offset": 2.8195
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.025666398534531072,
+        "candidate_offset": 0.207
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.02550664432215873,
+        "candidate_offset": 1.711
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 30,
+        "duration": 4,
+        "correlation": -0.02517452511780962,
+        "candidate_offset": 1.252
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 5,
+        "duration": 4,
+        "correlation": 0.022823504597071345,
+        "candidate_offset": 0.574
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.015442798998731877,
+        "candidate_offset": 0.03275
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.013719317022021052,
+        "candidate_offset": 0.63875
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.01232074399851988,
+        "candidate_offset": 0.0005
+      }
+    ],
+    "native_61": [
+      {
+        "candidate": "HERO",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.9998336632256247,
+        "candidate_offset": 3.0
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": 0.9983140468486372,
+        "candidate_offset": 2.0
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.9982738748997733,
+        "candidate_offset": 1.0
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.9982607807614808,
+        "candidate_offset": 0.0
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.9982258032589512,
+        "candidate_offset": 0.0
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.9982162736094745,
+        "candidate_offset": 1.0
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.31851530650652127,
+        "candidate_offset": 2.9525
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.14136061202205,
+        "candidate_offset": 4.69475
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": -0.13987470744565492,
+        "candidate_offset": 2.20325
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.11359961449712427,
+        "candidate_offset": 4.71125
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.10631937922887369,
+        "candidate_offset": 79.365
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.09883673783841845,
+        "candidate_offset": 0.0835
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.0980461016033732,
+        "candidate_offset": 6.42025
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": -0.0957462616055053,
+        "candidate_offset": 78.114
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": -0.08679109809023786,
+        "candidate_offset": 1.413
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.06962448493802399,
+        "candidate_offset": 0.10775
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": 0.05839696403190607,
+        "candidate_offset": 0.0115
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": -0.05691746314945322,
+        "candidate_offset": 48.6505
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": -0.056597981850334385,
+        "candidate_offset": 5.5115
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.05366932378080287,
+        "candidate_offset": 14.0645
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.04970819804086186,
+        "candidate_offset": 77.42775
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": -0.040959426185964765,
+        "candidate_offset": 0.149
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.040120853143889836,
+        "candidate_offset": 1.137
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.03843963490030448,
+        "candidate_offset": 70.2695
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.036770308648460294,
+        "candidate_offset": 4.9575
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": -0.036056911847898956,
+        "candidate_offset": 0.149
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.03272433746183206,
+        "candidate_offset": 1.6855
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.026255451638898596,
+        "candidate_offset": 1.16225
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.02557855234826032,
+        "candidate_offset": 1.6855
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.023801234549974615,
+        "candidate_offset": 0.8215
+      }
+    ],
+    "native_21": [
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.9999416348602399,
+        "candidate_offset": 1.0
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.999938716234431,
+        "candidate_offset": 1.0
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.9999300072438554,
+        "candidate_offset": 3.0
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.9999198091106731,
+        "candidate_offset": 0.0
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": 0.9999180846556436,
+        "candidate_offset": 0.0
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 2,
+        "duration": 4,
+        "correlation": 0.999912047906803,
+        "candidate_offset": 2.0
+      },
+      {
+        "candidate": "DEATH2",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": 0.9999105307577647,
+        "candidate_offset": 2.0
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": 0.5435504179045519,
+        "candidate_offset": 2.001
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.5207977772987777,
+        "candidate_offset": 1.00025
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 2,
+        "duration": 4,
+        "correlation": 0.48328748021439993,
+        "candidate_offset": 2.001
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.43123751959022916,
+        "candidate_offset": 1.001
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.39859668258517506,
+        "candidate_offset": 3.00125
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.2631196219521836,
+        "candidate_offset": 0.0465
+      },
+      {
+        "candidate": "16_Death_Game_Over",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": -0.2629837681397704,
+        "candidate_offset": 0.04625
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.17711396567767443,
+        "candidate_offset": 79.1
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.17588036628975717,
+        "candidate_offset": 78.8755
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.16326501638136573,
+        "candidate_offset": 3.509
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": 0.1587735209741991,
+        "candidate_offset": 79.08875
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": 0.15639374345846346,
+        "candidate_offset": 78.4545
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": -0.10913502436557489,
+        "candidate_offset": 4.27325
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 2,
+        "duration": 4,
+        "correlation": -0.10793259260834617,
+        "candidate_offset": 78.3155
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": 0.10558383806555041,
+        "candidate_offset": 4.23
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": -0.10043807558038055,
+        "candidate_offset": 4.22225
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.09845373543210922,
+        "candidate_offset": 2.9635
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 0,
+        "duration": 2,
+        "correlation": 0.09492901150144181,
+        "candidate_offset": 2.90425
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.09289761730945366,
+        "candidate_offset": 78.22325
+      },
+      {
+        "candidate": "02_Main_Menu_Cutscene",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.07849736214420276,
+        "candidate_offset": 57.63975
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 3,
+        "duration": 2,
+        "correlation": -0.06711148456693972,
+        "candidate_offset": 2.8515
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 2,
+        "duration": 2,
+        "correlation": 0.048298204239625143,
+        "candidate_offset": 2.7545
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 1,
+        "duration": 2,
+        "correlation": -0.04376296966718423,
+        "candidate_offset": 2.9725
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 2,
+        "duration": 4,
+        "correlation": -0.04246111807820275,
+        "candidate_offset": 2.92075
+      },
+      {
+        "candidate": "04_Level_Start_Respawn",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.04240710243467339,
+        "candidate_offset": 2.855
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 0,
+        "duration": 4,
+        "correlation": -0.0362960792893437,
+        "candidate_offset": 0.54575
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 1,
+        "duration": 4,
+        "correlation": 0.031766410558235654,
+        "candidate_offset": 0.854
+      },
+      {
+        "candidate": "HERO",
+        "reference_offset": 2,
+        "duration": 4,
+        "correlation": -0.029665376281521494,
+        "candidate_offset": 1.07075
+      }
+    ]
+  }
+}

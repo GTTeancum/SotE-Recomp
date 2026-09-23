@@ -135,6 +135,9 @@ try {
         -Submodule 'third_party/N64ModernRuntime' `
         -Patch 'patches/0004-n64modernruntime-alternate-rom-hashes.patch'
     Ensure-Patch `
+        -Submodule 'third_party/N64ModernRuntime' `
+        -Patch 'patches/0007-n64modernruntime-count-sign-extension.patch'
+    Ensure-Patch `
         -Submodule 'third_party/rt64' `
         -Patch 'patches/0002-rt64-sote-f3dbeta.patch'
     Ensure-Patch `

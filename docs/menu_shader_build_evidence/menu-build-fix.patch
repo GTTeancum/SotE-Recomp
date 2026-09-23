@@ -1,0 +1,31 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -100,10 +100,14 @@
+
+ add_executable(sote_recomp ${SOTE_RUNTIME_SOURCES})
+ # Menu presentation reuses RT64's generated fullscreen/texture-copy shaders.
++# RT64's build_shader() writes to CMAKE_BINARY_DIR/src/shaders, NOT to the
++# rt64 subdirectory's binary tree. Its include path is PRIVATE to rt64, so the
++# executable must also name that directory. Keep the dependency to ensure the
++# generated headers exist before menu_renderer.cpp compiles on a clean build.
+ add_dependencies(sote_recomp rt64)
+ target_include_directories(sote_recomp PRIVATE
+     "${CMAKE_CURRENT_SOURCE_DIR}/generated/RecompiledFuncs"
+-    "${CMAKE_BINARY_DIR}/rt64/src"
++    "${CMAKE_BINARY_DIR}/src"
+     "${N64_MODERN_RUNTIME}/ultramodern/include"
+     "${N64_MODERN_RUNTIME}/librecomp/include"
+     "${N64_MODERN_RUNTIME}/N64Recomp/include"
+--- a/src/control_bindings.cpp
++++ b/src/control_bindings.cpp
+@@ -197,7 +197,9 @@
+                 {button(11),uint16_t(0x0800|t.masks[23])},{button(12),0x0400},
+                 {button(13),0x0200},{button(14),0x0100},{button(6),0x1000}};
+         } else if (mb) {
+-            for (auto& r : routes[1]) r.mask &= uint16_t(~0xE000U);
++            // Clear the three trigger/button bits without narrowing a
++            // complemented 32-bit constant (MSVC C4310).
++            for (auto& r : routes[1]) r.mask &= uint16_t{0x1FFF};
+             // Prefer trigger targets for an equivalent native action. A
+             // button alias has the same digital effect but would throw away
+             // analog depth before the bike's duty-cycle accelerator/brake.

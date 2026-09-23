@@ -1,6 +1,7 @@
 #include "graphics_menu.hpp"
 
 #include "controls_menu.hpp"
+#include "menu_skin.hpp"
 
 #include <algorithm>
 #include <array>
@@ -39,7 +40,7 @@ constexpr uint32_t normal_color = 0x408040FFU;
 constexpr uint32_t selected_color = 0xC8FFC8FFU;
 constexpr uint32_t selected_value_color = 0xD060E8FFU;
 
-// The single row-63/64 entry appended below the native menu now cycles
+// The single row-65/66 entry appended below the native menu now cycles
 // between two categories via Left/Right instead of us reserving separate,
 // unverified rows for a second entry. Both categories share the same
 // proven-safe row range (52-66) for their submenu content, since only one
@@ -192,7 +193,7 @@ bool row_is_selected(uint8_t* rdram, int row) {
 }
 
 int detect_original_selection(uint8_t* rdram) {
-    for (const int row : {53, 55, 57, 59, 61}) {
+    for (const int row : {53, 55, 57, 59, 61, 63}) {
         if (row_is_selected(rdram, row)) {
             return row;
         }
@@ -410,8 +411,8 @@ void adjust_selected_setting_locked(int direction) {
 void draw_parent_entry(uint8_t* rdram) {
     const bool focused = state.graphics_focus;
     if (focused) {
-        set_row_color(rdram, 61, normal_color);
-        set_row_color(rdram, 62, normal_color);
+        set_row_color(rdram, 63, normal_color);
+        set_row_color(rdram, 64, normal_color);
     }
     // There is only one injected row, so nothing otherwise tells the player
     // that Left/Right swaps which category it opens. Show the markers only
@@ -422,17 +423,17 @@ void draw_parent_entry(uint8_t* rdram) {
         : (controls ? "~sControls" : "~sGraphics");
     set_row(
         rdram,
-        63,
+        65,
         label,
         90,
-        150,
+        168,
         focused ? selected_color : normal_color);
     set_row(
         rdram,
-        64,
+        66,
         "~sOptions",
         200,
-        150,
+        168,
         focused ? selected_value_color : normal_color);
 }
 
@@ -817,11 +818,14 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if (state.graphics_focus) {
         if ((pressed & n64_du) != 0) {
             state.graphics_focus = false;
-            consume_menu_input();
+            // From the first row, native Up wraps to Controls. From Controls,
+            // stay there. Do not accidentally move an extra native row.
+            if (state.original_selection != 52) consume_menu_input();
             return;
         }
         if ((pressed & n64_dd) != 0) {
             state.graphics_focus = false;
+            if (state.original_selection == 52) consume_menu_input();
             return;
         }
         if ((pressed & (n64_dl | n64_dr)) != 0) {
@@ -846,7 +850,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         return;
     }
 
-    if (state.original_selection == 61 &&
+    if (state.original_selection == 63 &&
         (pressed & n64_dd) != 0) {
         state.graphics_focus = true;
         consume_menu_input();
@@ -854,6 +858,56 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                (pressed & n64_du) != 0) {
         state.graphics_focus = true;
         consume_menu_input();
+    }
+}
+
+
+void observe_native_options(int selection) {
+    std::lock_guard lock{state.mutex};
+    state.options_visible = true;
+    state.last_options_seen = std::chrono::steady_clock::now();
+    state.original_selection = selection == 0 ? 52 : 51 + selection * 2;
+}
+
+void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
+    using namespace sote::menu_skin;
+    std::lock_guard lock{state.mutex};
+    auto put = [&](int row, std::string text, int x, int y, int selection = -1) {
+        const bool focus = selection >= 0 && selection == state.submenu_selection;
+        view.rows[row] = {x, y, focus ? selected_color : normal_color, plain_text(text)};
+    };
+    if (!state.submenu_active) {
+        if (state.graphics_focus) {
+            view.screen = Screen::Options;
+            for (int row = 52; row <= 64; ++row) view.rows[row].color = normal_color;
+        }
+        if (view.screen == Screen::Options) {
+            const bool controls = state.category == TopCategory::Controls;
+            view.rows[65] = {90, 168, state.graphics_focus ? selected_color : normal_color,
+                state.graphics_focus ? (controls ? "< Controls >" : "< Graphics >") : (controls ? "Controls" : "Graphics")};
+            view.rows[66] = {200, 168, state.graphics_focus ? selected_color : normal_color, "Options"};
+        }
+        return;
+    }
+    view.rows = {};
+    if (state.category == TopCategory::Controls) {
+        view.screen = Screen::Schemes;
+        put(52, "Controls Options", 160, 50);
+        put(53, "On Foot", 72, 84, 1);
+        put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 184, 84, 1);
+        put(55, "Speeder Bike", 72, 110, 2);
+        put(56, controls_menu::current_scheme(controls_menu::SchemeSlot::Bike) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 184, 110, 2);
+        put(57, "Apply", 116, 140, 3); put(58, "Return", 208, 140, 0);
+    } else {
+        view.screen = Screen::Graphics;
+        put(52, "Graphics Options", 160, 50);
+        put(53, "Resolution", 72, 70, 1); put(54, output_resolution_name(state.editing), 160, 70, 1);
+        put(55, "Render Scale", 72, 86, 2); put(56, resolution_name(state.editing.resolution), 160, 86, 2);
+        put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);
+        put(59, "Antialiasing", 72, 118, 4); put(60, antialiasing_name(state.editing.antialiasing), 160, 118, 4);
+        put(61, "Display Mode", 72, 134, 5); put(62, state.editing.borderless ? "Borderless" : "Windowed", 160, 134, 5);
+        put(63, "Apply", 110, 151, 6); put(66, "Reset", 210, 151, 7);
+        put(64, "Return to Game Options", 160, 170, 0);
     }
 }
 

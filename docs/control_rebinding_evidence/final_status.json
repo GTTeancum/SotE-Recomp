@@ -1,0 +1,70 @@
+{
+  "rebinding": {
+    "state": "passed",
+    "command": [
+      "python",
+      "tests/control_rebinding/run_tests.py",
+      ".",
+      "--work",
+      "/mnt/data/rebinding_evidence/final_smoke",
+      "--rom",
+      "generated/recomp.z64"
+    ],
+    "exit_code": 0,
+    "seconds": 20.99
+  },
+  "menu": {
+    "state": "passed",
+    "command": [
+      "python",
+      "tests/menu_revamp/run_tests.py",
+      ".",
+      "--work",
+      "/mnt/data/rebinding_evidence/final_menu",
+      "--font",
+      "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+    ],
+    "exit_code": 0,
+    "seconds": 16.43
+  },
+  "music": {
+    "state": "passed",
+    "command": [
+      "python",
+      "tests/music_replacement/run_tests.py",
+      ".",
+      "--work",
+      "/mnt/data/rebinding_evidence/final_music"
+    ],
+    "exit_code": 0,
+    "seconds": 10.55
+  },
+  "sanitizers": {
+    "state": "failed",
+    "command": [
+      "python",
+      "tests/control_rebinding/run_tests.py",
+      ".",
+      "--work",
+      "/mnt/data/rebinding_evidence/final_sanitized",
+      "--rom",
+      "generated/recomp.z64",
+      "--sanitize"
+    ],
+    "exit_code": 1,
+    "seconds": 41.45
+  },
+  "asan_ubsan_without_leak_detection": {
+    "state": "passed",
+    "exit_code": 0,
+    "options": {
+      "ASAN_OPTIONS": "detect_leaks=0",
+      "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+    },
+    "command": [
+      "/mnt/data/rebinding_evidence/final_sanitized/verify_rebinding",
+      "/mnt/data/rebinding_evidence/asan_ubsan_only",
+      "/mnt/data/sote_rebinding_work/generated/recomp.z64"
+    ]
+  }
+}

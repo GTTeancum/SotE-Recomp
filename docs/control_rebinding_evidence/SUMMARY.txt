@@ -1,0 +1,37 @@
+CONTROL REBINDING VALIDATION — 2026-09-21
+
+PASS 4,904 binding checks: production control_bindings/frontend/menu/Modern code.
+Real SDL 2.32.4 virtual gamecontroller; simulated Win32 keyboard/window boundary.
+GCC/G++ 14.2, C++20. All eight presets read from the supplied recomp ROM.
+No-ROM mode uses compact synthetic fixture tables and glyphs instead.
+
+PASS 150 menu checks (includes user/local replacement-font testing).
+PASS 1,502 music checks (actual native generated music functions and OGG decode).
+PASS all eleven context hooks match sote.toml and generated instruction sites.
+PASS C17 syntax/declarations for all eight generated C units in this ZIP.
+PASS prior timer/audio fixes, maps, Track02–Track16 and font config preserved.
+
+Test coverage includes saved/reloaded assignments; keyboard/controller clear;
+release-before-capture; no input leaks into the guest; alias suppression;
+conflict cancel/confirm; context/preset/scheme isolation; section defaults;
+save-failure rollback; focus/controller-unplug cancellation; Modern aiming;
+bike analog routes; fixed recovery Escape even with both Pause bindings clear;
+reference-mode preset access and editor navigation.
+
+ASan/UBSan with leak detection explicitly disabled: functional checks passed,
+no reported address/undefined-behavior faults. Unsuppressed LSan completed the
+same functional checks but reported 2,064 bytes in system libdbus at exit.
+This is recorded in sanitizers_final.log, not labelled a clean leak-test pass.
+The SDL DBus cleanup hint was test-only and did not eliminate the report.
+
+Expected diagnostic: the suite intentionally replaces scratch Sdata with a file
+to simulate a save failure, then verifies unchanged live/disk assignments.
+The resulting 'Cannot save bindings / Not a directory' log is expected.
+No real user settings or project Sdata were used for that failure case.
+
+The PNGs are the production CPU canvas with test state and the original ROM
+font. No font file or ROM is included. They are not Windows GPU screenshots.
+
+NOT TESTED: Windows EXE build, physical input drivers, GPU/RT64 presentation,
+whole-game boot with these new hooks, or an all-level playthrough.
+This is a Windows local-test candidate, not a validated release binary.

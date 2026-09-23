@@ -1,0 +1,16 @@
+{
+  "based_on": "SotE_Control_Rebinding_And_Menus.zip",
+  "changes": [
+    {
+      "path": "CMakeLists.txt",
+      "before_sha256": "26bb3faf75bfe5efe59163c7ba90147a4c901bda33fa65a7751c1d0e8f92a9c7",
+      "after_sha256": "ba9c86383335f4ffd93f3d5866656b35fa91e11c7e1ef94dc1768c4da123d1c6"
+    },
+    {
+      "path": "src/control_bindings.cpp",
+      "before_sha256": "e129a9622f24376013e8c320bb7b801d2a937189f8b46353cbf6dbf6b6e4780c",
+      "after_sha256": "343c5a48d75c2b032083bc8662698c5cd8c8619e1e28e22e81fc40d3267a3f7b"
+    }
+  ],
+  "unchanged_menu_renderer_sha256": "771753c8ccd5527b398527c081e3f3ca3ba50d68039b28248fd743adbc94e39c"
+}
