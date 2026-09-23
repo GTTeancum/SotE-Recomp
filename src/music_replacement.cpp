@@ -1,5 +1,6 @@
 #include "hd_music.hpp"
 #include "recomp_hooks.h"
+#include "san_movies.hpp"
 
 #include <array>
 #include <cstdint>
@@ -56,6 +57,7 @@ extern "C" void sote_music_command(uint8_t* rdram, uint32_t name_address) {
         if (!ch) break;
         name += ch;
     }
+    sote::san_movies::note_music_command(name);
     sote::hd_music::command(name);
 }
 extern "C" void sote_music_frame_begin(uint8_t*) {

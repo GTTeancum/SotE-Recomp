@@ -24,12 +24,16 @@ namespace {
 constexpr uint16_t n64_a = 0x8000;
 constexpr uint16_t n64_b = 0x4000;
 constexpr uint16_t n64_start = 0x1000;
+constexpr uint16_t n64_z = 0x2000;
 constexpr uint16_t n64_du = 0x0800;
 constexpr uint16_t n64_dd = 0x0400;
 constexpr uint16_t n64_dl = 0x0200;
 constexpr uint16_t n64_dr = 0x0100;
+constexpr uint16_t n64_l = 0x0020;
+constexpr uint16_t n64_r = 0x0010;
 constexpr uint16_t menu_buttons =
-    n64_a | n64_b | n64_start | n64_du | n64_dd | n64_dl | n64_dr;
+    n64_a | n64_b | n64_start | n64_z | n64_du | n64_dd | n64_dl |
+    n64_dr | n64_l | n64_r;
 
 constexpr uint32_t ui_string_table_pointer = 0x8013CE30U;
 constexpr uint32_t ui_positions = 0x80111110U;
@@ -40,23 +44,16 @@ constexpr uint32_t normal_color = 0x408040FFU;
 constexpr uint32_t selected_color = 0xC8FFC8FFU;
 constexpr uint32_t selected_value_color = 0xD060E8FFU;
 
-// The single row-65/66 entry appended below the native menu now cycles
-// between two categories via Left/Right instead of us reserving separate,
-// unverified rows for a second entry. Both categories share the same
-// proven-safe row range (52-66) for their submenu content, since only one
-// submenu is ever drawn at a time.
 enum class TopCategory : int {
     Graphics,
     Controls,
 };
 
 constexpr int graphics_submenu_item_count = 8;
-// 0 = Return, 1 = On Foot, 2 = Speeder Bike, 3 = Apply.
-constexpr int controls_submenu_item_count = 4;
 
 int submenu_item_count(TopCategory category) {
     return category == TopCategory::Controls
-        ? controls_submenu_item_count
+        ? 4 + sote::controls_menu::tuning_menu_row_count()
         : graphics_submenu_item_count;
 }
 
@@ -376,6 +373,14 @@ void adjust_selected_setting_locked(int direction) {
         } else if (state.submenu_selection == 2) {
             sote::controls_menu::cycle_scheme(
                 sote::controls_menu::SchemeSlot::Bike, direction);
+        } else {
+            const int tuning_index = state.submenu_selection - 3;
+            if (tuning_index >= 0 &&
+                tuning_index < sote::controls_menu::tuning_menu_row_count()) {
+                sote::controls_menu::adjust_tuning_menu_row(
+                    tuning_index,
+                    direction);
+            }
         }
         return;
     }
@@ -408,39 +413,8 @@ void adjust_selected_setting_locked(int direction) {
     }
 }
 
-void draw_parent_entry(uint8_t* rdram) {
-    const bool focused = state.graphics_focus;
-    if (focused) {
-        set_row_color(rdram, 63, normal_color);
-        set_row_color(rdram, 64, normal_color);
-    }
-    // There is only one injected row, so nothing otherwise tells the player
-    // that Left/Right swaps which category it opens. Show the markers only
-    // while focused, to avoid cluttering the row at rest.
-    const bool controls = state.category == TopCategory::Controls;
-    const char* label = focused
-        ? (controls ? "~s< Controls >" : "~s< Graphics >")
-        : (controls ? "~sControls" : "~sGraphics");
-    set_row(
-        rdram,
-        65,
-        label,
-        90,
-        168,
-        focused ? selected_color : normal_color);
-    set_row(
-        rdram,
-        66,
-        "~sOptions",
-        200,
-        168,
-        focused ? selected_value_color : normal_color);
-}
-
 void draw_controls_submenu(uint8_t* rdram) {
-    // Rows 50 and 51 are claimed too: the legend needs a separate row per
-    // field to align its columns, and 52-79 alone is one row short.
-    for (int row = 50; row < 80; ++row) {
+    for (int row = 52; row < 80; ++row) {
         hide_row(rdram, row);
     }
 
@@ -458,14 +432,10 @@ void draw_controls_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         52,
-        "~s~cControls Options",
+        "~s~cOptions   Graphics   < Controls >",
         160,
         50,
         normal_color);
-    // These labels are wider than any Graphics label, so their values need a
-    // column further right than the 160 those rows use or the two run
-    // together.
-    constexpr int scheme_value_x = 184;
     auto scheme_name = [](sote::controls_menu::SchemeSlot slot) {
         return sote::controls_menu::current_scheme(slot) ==
                 sote::controls_menu::ControlScheme::Modern
@@ -473,74 +443,77 @@ void draw_controls_submenu(uint8_t* rdram) {
             : "~sClassic";
     };
 
-    set_row(rdram, 53, "~sOn Foot", 72, 84, label_color(1));
+    constexpr int label_x = 52;
+    constexpr int value_x = 166;
+    constexpr int first_y = 66;
+    constexpr int row_step = 12;
+
+    set_row(rdram, 53, "~sOn Foot", label_x, first_y, label_color(1));
     set_row(
         rdram,
         54,
         scheme_name(sote::controls_menu::SchemeSlot::OnFoot),
-        scheme_value_x,
-        84,
+        value_x,
+        first_y,
         value_color(1));
-    set_row(rdram, 55, "~sSpeeder Bike", 72, 110, label_color(2));
+    set_row(
+        rdram,
+        55,
+        "~sSpeeder Bike",
+        label_x,
+        first_y + row_step,
+        label_color(2));
     set_row(
         rdram,
         56,
         scheme_name(sote::controls_menu::SchemeSlot::Bike),
-        scheme_value_x,
-        110,
+        value_x,
+        first_y + row_step,
         value_color(2));
 
-    // Both actions share one line so neither falls outside the panel.
-    set_row(rdram, 57, "~s~cApply", 116, 140, label_color(3));
-    set_row(rdram, 58, "~s~cReturn", 208, 140, label_color(0));
-
-    // The legend goes in the open screen below the panel, where there is
-    // room for a readable two-column list instead of a cramped one.
-    const sote::controls_menu::SchemeSlot highlighted =
-        state.submenu_selection == 2
-            ? sote::controls_menu::SchemeSlot::Bike
-            : sote::controls_menu::SchemeSlot::OnFoot;
-    // One composed line per action keeps a ten-entry list inside both the
-    // 80-row string table and the 240-unit framebuffer. Two columns of five,
-    // each "Action  Pad / Key".
-    constexpr int legend_capacity = 12;
-    constexpr int legend_rows = 6;
-    const sote::controls_menu::LegendEntry* legend[legend_capacity] = {};
-    const int legend_count = sote::controls_menu::scheme_legend(
-        highlighted, legend, legend_capacity);
-    // The guest font is proportional, so padding the action with spaces
-    // cannot line the bindings up. Each field gets its own row at a fixed x
-    // instead, which needs two rows per entry.
-    static constexpr int row_pool[] = {
-        50, 51, 59, 60, 61, 62, 63, 64, 65, 66, 67,
-        68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-    };
-    constexpr int row_pool_size =
-        static_cast<int>(sizeof(row_pool) / sizeof(row_pool[0]));
-    int pool_index = 0;
-    for (int entry = 0; entry < legend_count; ++entry) {
-        if (pool_index + 2 > row_pool_size) {
-            break;
+    const int tuning_count = sote::controls_menu::tuning_menu_row_count();
+    for (int index = 0; index < tuning_count; ++index) {
+        sote::controls_menu::TuningMenuRow row{};
+        if (!sote::controls_menu::tuning_menu_row(index, row)) {
+            continue;
         }
-        const int column = entry / legend_rows;
-        const int row = entry % legend_rows;
-        const int action_x = column == 0 ? 6 : 152;
-        const int binding_x = column == 0 ? 64 : 208;
-        const int y = 166 + row * 11;
-        char binding[32];
+        const int selection = index + 3;
+        const int text_row = 57 + index * 2;
+        const int y = first_y + (index + 2) * row_step;
+        char label[48];
+        char value[64];
+        std::snprintf(label, sizeof(label), "~s%s", row.label);
         std::snprintf(
-            binding,
-            sizeof(binding),
-            "~s%s / %s",
-            legend[entry]->pad,
-            legend[entry]->key);
-        char action[24];
-        std::snprintf(action, sizeof(action), "~s%s", legend[entry]->action);
-        set_row(rdram, row_pool[pool_index++], action, action_x, y,
-                normal_color);
-        set_row(rdram, row_pool[pool_index++], binding, binding_x, y,
-                normal_color);
+            value,
+            sizeof(value),
+            "~s%s %s",
+            row.slider,
+            row.value);
+        set_row(rdram, text_row, label, label_x, y, label_color(selection));
+        set_row(
+            rdram,
+            text_row + 1,
+            value,
+            value_x,
+            y,
+            value_color(selection));
     }
+
+    const int apply_selection = 3 + tuning_count;
+    set_row(
+        rdram,
+        75,
+        "~s~cReturn to Game Options",
+        105,
+        220,
+        label_color(0));
+    set_row(
+        rdram,
+        76,
+        "~s~cApply",
+        220,
+        220,
+        label_color(apply_selection));
 }
 
 void draw_graphics_submenu(uint8_t* rdram) {
@@ -562,7 +535,7 @@ void draw_graphics_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         52,
-        "~s~cGraphics Options",
+        "~s~cOptions   < Graphics >   Controls",
         160,
         50,
         normal_color);
@@ -661,6 +634,39 @@ void draw_graphics_submenu(uint8_t* rdram) {
         160,
         170,
         label_color(0));
+}
+
+void switch_page_locked(int direction) {
+    if (direction == 0) {
+        return;
+    }
+    if (!state.submenu_active) {
+        state.submenu_active = true;
+        state.graphics_focus = false;
+        state.submenu_selection = 0;
+        state.editing = state.applied;
+        state.category = direction > 0
+            ? TopCategory::Graphics
+            : TopCategory::Controls;
+        return;
+    }
+    if (state.category == TopCategory::Graphics) {
+        if (direction > 0) {
+            state.category = TopCategory::Controls;
+            state.submenu_selection = 0;
+        } else {
+            state.submenu_active = false;
+            state.editing = state.applied;
+        }
+        return;
+    }
+    if (direction > 0) {
+        state.submenu_active = false;
+        state.editing = state.applied;
+    } else {
+        state.category = TopCategory::Graphics;
+        state.submenu_selection = 0;
+    }
 }
 
 } // namespace
@@ -770,9 +776,24 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
 
     if (state.submenu_active) {
         consume_menu_input();
+        int page_direction = 0;
+        if ((pressed & n64_r) != 0) {
+            page_direction = 1;
+        } else if ((pressed & (n64_l | n64_z)) != 0) {
+            page_direction = -1;
+        } else if (state.submenu_selection == 0 &&
+                   (pressed & n64_dr) != 0) {
+            page_direction = 1;
+        } else if (state.submenu_selection == 0 &&
+                   (pressed & n64_dl) != 0) {
+            page_direction = -1;
+        }
+        if (page_direction != 0) {
+            switch_page_locked(page_direction);
+            return;
+        }
         if ((pressed & n64_b) != 0) {
             state.submenu_active = false;
-            state.graphics_focus = true;
             state.editing = state.applied;
             return;
         }
@@ -792,7 +813,6 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         if ((pressed & (n64_a | n64_start)) != 0) {
             if (state.submenu_selection == 0) {
                 state.submenu_active = false;
-                state.graphics_focus = true;
                 state.editing = state.applied;
             } else if (state.category == TopCategory::Controls) {
                 if (state.submenu_selection == 1) {
@@ -801,8 +821,12 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 } else if (state.submenu_selection == 2) {
                     sote::controls_menu::cycle_scheme(
                         sote::controls_menu::SchemeSlot::Bike, 1);
-                } else {
+                } else if (state.submenu_selection ==
+                           3 + sote::controls_menu::tuning_menu_row_count()) {
                     sote::controls_menu::persist();
+                    sote::controls_menu::persist_tuning();
+                } else {
+                    adjust_selected_setting_locked(1);
                 }
             } else if (state.submenu_selection <= 5) {
                 adjust_selected_setting_locked(1);
@@ -815,49 +839,16 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         return;
     }
 
-    if (state.graphics_focus) {
-        if ((pressed & n64_du) != 0) {
-            state.graphics_focus = false;
-            // From the first row, native Up wraps to Controls. From Controls,
-            // stay there. Do not accidentally move an extra native row.
-            if (state.original_selection != 52) consume_menu_input();
-            return;
-        }
-        if ((pressed & n64_dd) != 0) {
-            state.graphics_focus = false;
-            if (state.original_selection == 52) consume_menu_input();
-            return;
-        }
-        if ((pressed & (n64_dl | n64_dr)) != 0) {
-            state.category = state.category == TopCategory::Graphics
-                ? TopCategory::Controls
-                : TopCategory::Graphics;
-            consume_menu_input();
-            return;
-        }
-        if ((pressed & (n64_a | n64_start)) != 0) {
-            state.submenu_active = true;
-            state.submenu_selection = 0;
-            state.editing = state.applied;
-            consume_menu_input();
-            return;
-        }
-        if ((pressed & n64_b) != 0) {
-            state.graphics_focus = false;
-            return;
-        }
+    int page_direction = 0;
+    if ((pressed & (n64_dr | n64_r)) != 0) {
+        page_direction = 1;
+    } else if ((pressed & (n64_dl | n64_l | n64_z)) != 0) {
+        page_direction = -1;
+    }
+    if (page_direction != 0) {
+        switch_page_locked(page_direction);
         consume_menu_input();
         return;
-    }
-
-    if (state.original_selection == 63 &&
-        (pressed & n64_dd) != 0) {
-        state.graphics_focus = true;
-        consume_menu_input();
-    } else if (state.original_selection == 52 &&
-               (pressed & n64_du) != 0) {
-        state.graphics_focus = true;
-        consume_menu_input();
     }
 }
 
@@ -877,30 +868,31 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         view.rows[row] = {x, y, focus ? selected_color : normal_color, plain_text(text)};
     };
     if (!state.submenu_active) {
-        if (state.graphics_focus) {
-            view.screen = Screen::Options;
-            for (int row = 52; row <= 64; ++row) view.rows[row].color = normal_color;
-        }
-        if (view.screen == Screen::Options) {
-            const bool controls = state.category == TopCategory::Controls;
-            view.rows[65] = {90, 168, state.graphics_focus ? selected_color : normal_color,
-                state.graphics_focus ? (controls ? "< Controls >" : "< Graphics >") : (controls ? "Controls" : "Graphics")};
-            view.rows[66] = {200, 168, state.graphics_focus ? selected_color : normal_color, "Options"};
-        }
         return;
     }
     view.rows = {};
     if (state.category == TopCategory::Controls) {
         view.screen = Screen::Schemes;
-        put(52, "Controls Options", 160, 50);
-        put(53, "On Foot", 72, 84, 1);
-        put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 184, 84, 1);
-        put(55, "Speeder Bike", 72, 110, 2);
-        put(56, controls_menu::current_scheme(controls_menu::SchemeSlot::Bike) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 184, 110, 2);
-        put(57, "Apply", 116, 140, 3); put(58, "Return", 208, 140, 0);
+        put(52, "Options   Graphics   < Controls >", 160, 50);
+        put(53, "On Foot", 52, 66, 1);
+        put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 166, 66, 1);
+        put(55, "Speeder Bike", 52, 78, 2);
+        put(56, controls_menu::current_scheme(controls_menu::SchemeSlot::Bike) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 166, 78, 2);
+        const int tuning_count = controls_menu::tuning_menu_row_count();
+        for (int index = 0; index < tuning_count; ++index) {
+            controls_menu::TuningMenuRow row{};
+            if (!controls_menu::tuning_menu_row(index, row)) continue;
+            const int selection = index + 3;
+            const int text_row = 57 + index * 2;
+            const int y = 66 + (index + 2) * 12;
+            put(text_row, row.label, 52, y, selection);
+            put(text_row + 1, std::string{row.slider} + " " + row.value, 166, y, selection);
+        }
+        put(75, "Return to Game Options", 105, 220, 0);
+        put(76, "Apply", 220, 220, 3 + tuning_count);
     } else {
         view.screen = Screen::Graphics;
-        put(52, "Graphics Options", 160, 50);
+        put(52, "Options   < Graphics >   Controls", 160, 50);
         put(53, "Resolution", 72, 70, 1); put(54, output_resolution_name(state.editing), 160, 70, 1);
         put(55, "Render Scale", 72, 86, 2); put(56, resolution_name(state.editing.resolution), 160, 86, 2);
         put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);
@@ -979,8 +971,6 @@ void update_guest_menu(uint8_t* rdram) {
         } else {
             draw_graphics_submenu(rdram);
         }
-    } else {
-        draw_parent_entry(rdram);
     }
 }
 

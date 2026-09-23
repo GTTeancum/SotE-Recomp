@@ -31,6 +31,7 @@
 #include "menu_skin.hpp"
 #include "hd_audio.hpp"
 #include "hd_music.hpp"
+#include "san_movies.hpp"
 #include "rt64_renderer.hpp"
 #include "ultramodern/error_handling.hpp"
 #include "ultramodern/events.hpp"
@@ -382,6 +383,10 @@ struct GeneralFailureTelemetry {
 };
 
 GeneralFailureTelemetry previous_general_telemetry;
+bool san_logo_started = false;
+int san_last_event_level = -1;
+int16_t san_last_movie_event = INT16_MIN;
+bool san_game_over_started = false;
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -447,6 +452,82 @@ const char* level_name_for_index(int level_index) {
         return "unknown";
     }
     return names[level_index];
+}
+
+const char* san_intro_for_level_index(int level_index) {
+    static constexpr const char* movies[] = {
+        "L01INTRO.SAN",
+        "L02INTRO.SAN",
+        "L03INTRO.SAN",
+        "L04INTRO.SAN",
+        "L05INTRO.SAN",
+        "L06INTRO.SAN",
+        "L07INTRO.SAN",
+        "L08INTRO.SAN",
+        nullptr,
+        "L10INTRO.SAN",
+    };
+    if (level_index < 0 ||
+        level_index >= static_cast<int>(std::size(movies))) {
+        return nullptr;
+    }
+    return movies[level_index];
+}
+
+const char* san_movie_for_event(int16_t event) {
+    switch (event) {
+        case 10:
+            return "L04BOSS.SAN";
+        case 14:
+            return "L05BOSS.SAN";
+        case 27:
+            return "L09BOSS.SAN";
+        default:
+            return nullptr;
+    }
+}
+
+void update_san_movie_triggers(uint8_t* rdram) {
+    if (rdram == nullptr) {
+        return;
+    }
+    if (std::getenv("SOTE_SAN_PREVIEW") != nullptr) {
+        return;
+    }
+    if (!san_logo_started) {
+        san_logo_started = true;
+        sote::san_movies::play_startup_sequence();
+    }
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    const int32_t result = static_cast<int32_t>(
+        read_guest_word(rdram, 0x800DD2B0U));
+    if (result != 2) {
+        return;
+    }
+    if (sote::san_movies::menu_music_active()) {
+        return;
+    }
+    const int event_level = level_index_for_event(event);
+    if (event != san_last_movie_event) {
+        san_last_movie_event = event;
+        if (const char* movie = san_movie_for_event(event)) {
+            sote::san_movies::play_cached_preview(movie);
+            san_last_event_level = event_level;
+            return;
+        }
+    }
+    if (event_level != san_last_event_level) {
+        if (event_level >= 0) {
+            if (const char* movie = san_intro_for_level_index(event_level)) {
+                sote::san_movies::play_cached_preview(movie);
+            }
+        }
+        san_last_event_level = event_level;
+    }
+    if (event_level >= 0) {
+        san_game_over_started = false;
+    }
 }
 
 void note_life_loss_cadence(
@@ -752,6 +833,10 @@ void log_general_failure_telemetry(int vi) {
                 current.stage,
                 current.failure_condition,
                 current.event);
+            if (!san_game_over_started) {
+                san_game_over_started = true;
+                sote::san_movies::play_cached_preview("GAMEOVER.SAN");
+            }
             if (smoke_refill_lives) {
                 constexpr int32_t diagnostic_lives = 3;
                 write_guest_word(
@@ -1837,6 +1922,7 @@ void on_vi() {
         std::fflush(stdout);
     }
     log_general_failure_telemetry(count);
+    update_san_movie_triggers(game_rdram);
     const int current_display_lists =
         display_list_count.load(std::memory_order_relaxed);
     if (current_display_lists != last_observed_display_lists) {
@@ -3106,6 +3192,7 @@ int main(int argc, char** argv) {
     sote::menu_skin::initialize(runtime_directory);
     sote::hd_music::initialize(runtime_directory);
     sote::hd_audio::initialize(runtime_directory);
+    sote::san_movies::initialize(runtime_directory);
     const std::filesystem::path packaged_rom =
         runtime_directory / "sote.us.v1.2.z64";
     const std::filesystem::path named_rom =

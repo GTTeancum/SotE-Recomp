@@ -88,11 +88,12 @@ int main(int argc,char**argv){
  }
  sote_capture_native_options(options.b.data());check(controls_visible(),"controls runtime visibility");scroll_controls(1000);sote_capture_native_options(options.b.data());auto end=latest();check(end&&end->controls_scroll>0,"guide scroll down");scroll_controls(-1000);sote_capture_native_options(options.b.data());check(latest()&&latest()->controls_scroll==0,"guide scroll bounds");
  options.byte(0x8018bbf8+0x1d,0);options.word(0x800d0954,0);options.half(0x800dd5e0,0);
- sote_capture_native_options(options.b.data());press(0x0800);sote_capture_native_options(options.b.data());check(latest()&&latest()->rows[65].text=="< Graphics >","appended graphics entry focus");check(latest()&&latest()->rows[63].text=="Controls","native Controls row preserved");
- press(0x8000);sote_capture_native_options(options.b.data());check(latest()&&latest()->screen==Screen::Graphics,"open graphics extension");check(render(*latest()).valid(),"graphics raster");
- press(0x4000);sote_capture_native_options(options.b.data());press(0x0100);sote_capture_native_options(options.b.data());press(0x8000);sote_capture_native_options(options.b.data());check(latest()&&latest()->screen==Screen::Schemes,"open scheme extension");check(render(*latest()).valid(),"scheme raster");
+ sote_capture_native_options(options.b.data());press(0x0100);sote_capture_native_options(options.b.data());check(latest()&&latest()->screen==Screen::Graphics,"right opens graphics page from options");check(latest()&&latest()->rows[52].text.find("Graphics")!=std::string::npos,"graphics page tab title");check(render(*latest()).valid(),"graphics raster");
+ press(0x0010);sote_capture_native_options(options.b.data());check(latest()&&latest()->screen==Screen::Schemes,"right shoulder opens controls page");check(latest()&&latest()->rows[52].text.find("Controls")!=std::string::npos,"controls page tab title");check(render(*latest()).valid(),"scheme raster");
  press(0x0400);press(0x0100);sote_capture_native_options(options.b.data());check(latest()&&latest()->rows[54].text=="Modern","scheme value changes through real input handler");
- press(0x4000);sote_capture_native_options(options.b.data());press(0x0400);
+ press(0x0400);press(0x0400);auto before_slider=latest()?latest()->rows[58].text:"";press(0x0100);sote_capture_native_options(options.b.data());check(latest()&&latest()->rows[58].text!=before_slider,"slider row changes through real input handler");
+ press(0x0020);sote_capture_native_options(options.b.data());check(latest()&&latest()->screen==Screen::Graphics,"left shoulder returns to graphics page");
+ press(0x0020);sote_capture_native_options(options.b.data());check(latest()&&latest()->screen==Screen::Options,"left shoulder returns to native options page");
  // Missing fonts, malformed files and path traversal all fall back to original.
  auto root=scratch/"Sdata/UI";
  for(const std::string file:{"missing.ttf","../escape.ttf","broken.ttf"}){

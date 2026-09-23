@@ -75,6 +75,7 @@ set(SOTE_RUNTIME_SOURCES
     src/hd_audio.cpp
     src/pc_voices.cpp
     src/hd_music.cpp
+    src/san_movies.cpp
     src/music_replacement.cpp
     src/libultra_stubs.c
     src/main.cpp
@@ -172,6 +173,31 @@ add_test(NAME leebo_voices_harness COMMAND leebo_voices_harness
 add_executable(texture_slots_harness tools/texture_slots_harness.cpp)
 target_include_directories(texture_slots_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${RT64_DIR}/src/contrib")
 add_test(NAME texture_slots_harness COMMAND texture_slots_harness "${CMAKE_BINARY_DIR}/texture_slots_test")
+
+add_executable(san_movies_harness tools/san_movies_harness.cpp src/san_movies.cpp)
+target_include_directories(san_movies_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+add_test(NAME san_movies_harness COMMAND san_movies_harness
+    "${CMAKE_BINARY_DIR}/san_movies_test"
+    "${CMAKE_CURRENT_SOURCE_DIR}/SotE_Recompiled/Sdata")
+
+add_executable(menu_revamp_harness
+    tools/menu_revamp_harness.cpp
+    src/control_bindings.cpp
+    src/menu_model.cpp
+    src/menu_canvas.cpp
+    src/menu_skin.cpp
+    src/graphics_menu.cpp
+    src/controls_menu.cpp
+)
+target_include_directories(menu_revamp_harness PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${N64_MODERN_RUNTIME}/N64Recomp/include"
+    "${N64_MODERN_RUNTIME}/librecomp/include"
+    "${N64_MODERN_RUNTIME}/ultramodern/include"
+    "${RT64_DIR}/src/contrib"
+)
+add_test(NAME menu_revamp_harness COMMAND menu_revamp_harness
+    "${CMAKE_BINARY_DIR}/menu_revamp_test")
 
 if(MSVC)
     target_compile_options(sote_recomp PRIVATE /W4 /Zi)

@@ -3,6 +3,15 @@
 *.n64
 *.v64
 
+# User-supplied PC movie/audio assets and generated movie caches.
+Sdata/*.SAN
+Sdata/*.san
+Sdata/*.WAV
+Sdata/*.wav
+Sdata/SAN_CACHE/
+Sdata/MOVIES/
+Sdata/movies/
+
 # Generated extraction and recompilation artifacts.
 build/
 out/

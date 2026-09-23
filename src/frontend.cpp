@@ -481,7 +481,14 @@ void poll_input() {
                     controller,
                     SDL_CONTROLLER_AXIS_TRIGGERLEFT),
                 controls) > 0.0f) {
-            buttons |= n64_z;
+            buttons |= menu ? n64_l : n64_z;
+        }
+        if (menu && normalize_trigger(
+                mapped_axis(
+                    controller,
+                    SDL_CONTROLLER_AXIS_TRIGGERRIGHT),
+                controls) > 0.0f) {
+            buttons |= n64_r;
         }
 
         raw_rx = mapped_axis(

@@ -1,9 +1,11 @@
 #include "menu_renderer.hpp"
 #include "menu_skin.hpp"
+#include "san_movies.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <stdexcept>
@@ -45,6 +47,56 @@ std::unique_ptr<Resources> resources;
 RT64::RenderHookInit* previous_init = nullptr;
 RT64::RenderHookDraw* previous_draw = nullptr;
 RT64::RenderHookDeinit* previous_deinit = nullptr;
+
+menu_skin::Image letterbox_movie(
+    const san_movies::CachedFrame& frame,
+    unsigned width,
+    unsigned height) {
+    menu_skin::Image image;
+    image.width = width;
+    image.height = height;
+    image.rgba.assign(static_cast<size_t>(width) * height * 4, 255);
+    for (size_t index = 0; index < image.rgba.size(); index += 4) {
+        image.rgba[index + 0] = 0;
+        image.rgba[index + 1] = 0;
+        image.rgba[index + 2] = 0;
+        image.rgba[index + 3] = 255;
+    }
+    if (!frame.valid()) {
+        return image;
+    }
+    const double scale = std::min(
+        static_cast<double>(width) / frame.width,
+        static_cast<double>(height) / frame.height);
+    const unsigned draw_width = std::max(
+        1U,
+        static_cast<unsigned>(std::lround(frame.width * scale)));
+    const unsigned draw_height = std::max(
+        1U,
+        static_cast<unsigned>(std::lround(frame.height * scale)));
+    const unsigned left = (width - draw_width) / 2;
+    const unsigned top = (height - draw_height) / 2;
+    for (unsigned y = 0; y < draw_height; ++y) {
+        const unsigned sy = std::min(
+            frame.height - 1,
+            static_cast<unsigned>(
+                static_cast<uint64_t>(y) * frame.height / draw_height));
+        for (unsigned x = 0; x < draw_width; ++x) {
+            const unsigned sx = std::min(
+                frame.width - 1,
+                static_cast<unsigned>(
+                    static_cast<uint64_t>(x) * frame.width / draw_width));
+            const size_t src = (static_cast<size_t>(sy) * frame.width + sx) * 4;
+            const size_t dst =
+                (static_cast<size_t>(top + y) * width + (left + x)) * 4;
+            image.rgba[dst + 0] = frame.rgba[src + 0];
+            image.rgba[dst + 1] = frame.rgba[src + 1];
+            image.rgba[dst + 2] = frame.rgba[src + 2];
+            image.rgba[dst + 3] = 255;
+        }
+    }
+    return image;
+}
 
 void disable(const char* reason) {
     menu_skin::set_renderer_available(false);
@@ -94,8 +146,9 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
     if (previous_draw) previous_draw(list, framebuffer);
     if (!resources || !resources->ready || !framebuffer) return;
     try {
+        const auto movie_frame = san_movies::latest_cached_frame();
         const auto snapshot = menu_skin::latest();
-        if (!snapshot) return;
+        if (!movie_frame.valid() && !snapshot) return;
         auto& r = *resources;
         const unsigned fw = framebuffer->getWidth(), fh = framebuffer->getHeight();
         if (!fw || !fh) return;
@@ -104,9 +157,14 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
         const unsigned w = std::max(1U, unsigned(std::lround(fw * scale)));
         const unsigned h = std::max(1U, unsigned(std::lround(fh * scale)));
         if (w < 320 || h < 180) return;
+        const uint64_t serial = movie_frame.valid()
+            ? (UINT64_C(1) << 63) | movie_frame.serial
+            : snapshot->serial;
         const bool resized = r.width != w || r.height != h;
-        if (resized || r.serial != snapshot->serial || !r.texture) {
-            auto image = menu_skin::render(*snapshot, w, h);
+        if (resized || r.serial != serial || !r.texture) {
+            auto image = movie_frame.valid()
+                ? letterbox_movie(movie_frame, w, h)
+                : menu_skin::render(*snapshot, w, h);
             if (!image.valid()) return;
             if (resized || !r.texture) {
                 // RT64's present queue waits for the previous present worker
@@ -127,7 +185,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
             list->copyTextureRegion(RenderTextureCopyLocation::Subresource(r.texture.get()),
                 RenderTextureCopyLocation::PlacedFootprint(r.upload.get(), RenderFormat::R8G8B8A8_UNORM, w, h, 1, r.pitch / 4));
             list->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(r.texture.get(), RenderTextureLayout::SHADER_READ));
-            r.serial = snapshot->serial;
+            r.serial = serial;
         }
         list->setFramebuffer(framebuffer);
         list->setGraphicsPipelineLayout(r.layout.get());

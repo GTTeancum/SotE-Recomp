@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include "modern_controls.hpp"
@@ -121,6 +122,17 @@ void initialize(const std::filesystem::path& data_directory);
 ControlScheme current_scheme(SchemeSlot slot);
 void cycle_scheme(SchemeSlot slot, int direction);
 void persist();
+
+struct TuningMenuRow {
+    char label[32]{};
+    char value[32]{};
+    char slider[24]{};
+};
+
+int tuning_menu_row_count();
+bool tuning_menu_row(int index, TuningMenuRow& row);
+void adjust_tuning_menu_row(int index, int direction);
+void persist_tuning();
 
 // One row of the control legend: physical input on the left, what it does on
 // the right. Strings are already prefixed for the guest text renderer.

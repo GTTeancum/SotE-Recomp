@@ -90,6 +90,26 @@ if ((Test-Path -LiteralPath $sourceMusic -PathType Container) -and
 Copy-Item -LiteralPath (Join-Path $repoRoot 'docs\EXTERNAL_MUSIC.md') `
     -Destination (Join-Path $outputAbsolute 'EXTERNAL_MUSIC.md') -Force
 
+# Optional PC cutscene/movie assets and sound data from the user's local
+# install. Merge only root-level files from Sdata; never copy Sdata\MOVIES or
+# any nested movie dump directory into the portable folder.
+$sourceSdata = Join-Path $repoRoot 'Sdata'
+$packagedSdata = Join-Path $outputAbsolute 'Sdata'
+if ((Test-Path -LiteralPath $sourceSdata -PathType Container) -and
+    -not [string]::Equals($sourceSdata, $packagedSdata,
+        [System.StringComparison]::OrdinalIgnoreCase)) {
+    New-Item -ItemType Directory -Path $packagedSdata -Force | Out-Null
+    foreach ($sdataFile in (Get-ChildItem -LiteralPath $sourceSdata -File)) {
+        if ($sdataFile.Extension.ToLowerInvariant() -notin @(
+            '.san', '.wav', '.tsv'
+        )) {
+            continue
+        }
+        Copy-Item -LiteralPath $sdataFile.FullName `
+            -Destination (Join-Path $packagedSdata $sdataFile.Name) -Force
+    }
+}
+
 # Merge menu configuration and user-supplied fonts; never delete unrelated UI assets.
 $sourceUi = Join-Path $repoRoot 'Sdata\UI'
 $packagedUi = Join-Path $outputAbsolute 'Sdata\UI'

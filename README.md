@@ -48,6 +48,42 @@ restart. The path should be `Sdata/ILB01.WAV`; original PCM WAV files need no
 conversion. These optional recordings are not bundled. See the
 [installation guide](docs/LEEBO_VOICES_USER.md).
 
+## PC SAN cutscenes
+
+Loose PC `.SAN` movie files can sit at the root of the runnable `Sdata`
+folder, for example `SotE_Recompiled/Sdata/L01INTRO.SAN`. They are local
+user-provided assets and are not included in git or release archives. The
+portable packager also merges root-level `Sdata/*.SAN` from a local source
+tree into the play folder while intentionally ignoring `Sdata/MOVIES`.
+These files use LucasArts SMUSH: ScummVM's GRiME decoder identifies this
+SotE set as the `ANIM`/`AHDR` path, with `FOBJ` video chunks using codec 47
+or 48 and `IACT` audio chunks. The runtime currently plays from a generated
+RGBA cache instead of embedding ScummVM's GPL decoder source.
+
+To verify the local files with FFmpeg and save first-frame previews, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\verify_san_movies.ps1
+```
+
+For runtime playback, decode the files into the local RGBA cache:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\prepare_san_cache.ps1
+```
+
+To rebuild only one movie for a targeted smoke check:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\prepare_san_cache.ps1 -MovieName GAMEOVER.SAN
+```
+
+This writes `Sdata/SAN_CACHE`, which is generated from local user assets and
+should not be committed. When the cache is present, the runtime can play the
+startup logo/long-time/intro sequence, level-intro, boss, and game-over
+movies from the runnable `Sdata` folder. `SOTE_SAN_PREVIEW=<movie>.SAN` can
+be set before launch to force a single cached movie for smoke testing.
+
 ## Texture packs
 
 Stock textures are the default. Optional replacement packs support higher-resolution

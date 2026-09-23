@@ -97,6 +97,121 @@ float parse_float_clamped(
     return std::clamp(parsed, minimum, maximum);
 }
 
+enum class TuningField : int {
+    MovementDeadzone,
+    MovementSensitivity,
+    AimDeadzone,
+    AimSensitivity,
+    TriggerDeadzone,
+    TriggerSensitivity,
+    OnFootYawSpeed,
+    OnFootPitchSpeed,
+    BikeSteeringCurve,
+};
+
+struct TuningRowSpec {
+    const char* label;
+    TuningField field;
+    float minimum;
+    float maximum;
+    float step;
+};
+
+constexpr TuningRowSpec tuning_rows[] = {
+    {"Move Deadzone", TuningField::MovementDeadzone, 0.0f, 0.95f, 0.02f},
+    {"Move Sens", TuningField::MovementSensitivity, 0.1f, 3.0f, 0.05f},
+    {"Aim Deadzone", TuningField::AimDeadzone, 0.0f, 0.95f, 0.02f},
+    {"Aim Sens", TuningField::AimSensitivity, 0.1f, 3.0f, 0.05f},
+    {"Trigger Deadzone", TuningField::TriggerDeadzone, 0.0f, 0.95f, 0.02f},
+    {"Trigger Sens", TuningField::TriggerSensitivity, 0.1f, 3.0f, 0.05f},
+    {"Yaw Speed", TuningField::OnFootYawSpeed, 30.0f, 540.0f, 10.0f},
+    {"Pitch Speed", TuningField::OnFootPitchSpeed, 15.0f, 270.0f, 5.0f},
+    {"Bike Steering", TuningField::BikeSteeringCurve, 0.25f, 4.0f, 0.05f},
+};
+
+float get_tuning_field(const ModernControlsTuning& tuning, TuningField field) {
+    switch (field) {
+        case TuningField::MovementDeadzone:
+            return tuning.movement_deadzone;
+        case TuningField::MovementSensitivity:
+            return tuning.movement_sensitivity;
+        case TuningField::AimDeadzone:
+            return tuning.aim_deadzone;
+        case TuningField::AimSensitivity:
+            return tuning.aim_sensitivity;
+        case TuningField::TriggerDeadzone:
+            return tuning.trigger_deadzone;
+        case TuningField::TriggerSensitivity:
+            return tuning.trigger_sensitivity;
+        case TuningField::OnFootYawSpeed:
+            return tuning.on_foot.yaw_speed;
+        case TuningField::OnFootPitchSpeed:
+            return tuning.on_foot.pitch_speed;
+        case TuningField::BikeSteeringCurve:
+            return tuning.bike.steering_curve_exponent;
+    }
+    return 0.0f;
+}
+
+void set_tuning_field(
+    ModernControlsTuning& tuning,
+    TuningField field,
+    float value) {
+    switch (field) {
+        case TuningField::MovementDeadzone:
+            tuning.movement_deadzone = value;
+            break;
+        case TuningField::MovementSensitivity:
+            tuning.movement_sensitivity = value;
+            break;
+        case TuningField::AimDeadzone:
+            tuning.aim_deadzone = value;
+            break;
+        case TuningField::AimSensitivity:
+            tuning.aim_sensitivity = value;
+            break;
+        case TuningField::TriggerDeadzone:
+            tuning.trigger_deadzone = value;
+            break;
+        case TuningField::TriggerSensitivity:
+            tuning.trigger_sensitivity = value;
+            break;
+        case TuningField::OnFootYawSpeed:
+            tuning.on_foot.yaw_speed = value;
+            break;
+        case TuningField::OnFootPitchSpeed:
+            tuning.on_foot.pitch_speed = value;
+            break;
+        case TuningField::BikeSteeringCurve:
+            tuning.bike.steering_curve_exponent = value;
+            break;
+    }
+}
+
+void format_slider(
+    char* output,
+    size_t output_size,
+    float value,
+    float minimum,
+    float maximum) {
+    constexpr int ticks = 10;
+    const float normalized = maximum > minimum
+        ? (value - minimum) / (maximum - minimum)
+        : 0.0f;
+    const int marker = std::clamp(
+        static_cast<int>(std::lround(normalized * ticks)),
+        0,
+        ticks);
+    char slider[ticks + 4]{};
+    slider[0] = '[';
+    for (int index = 0; index <= ticks; ++index) {
+        slider[index + 1] = index == marker ? '|' : '-';
+    }
+    slider[ticks + 2] = ']';
+    slider[ticks + 3] = 0;
+    std::snprintf(output, output_size, "%s", slider);
+}
+
 void apply_tuning_value(
     ModernControlsTuning& tuning,
     const std::string& key,
@@ -234,20 +349,20 @@ void write_default_tuning_ini_locked() {
         "[OnFoot]\n"
         "; Modern: circular deadzones, response exponent, degrees/second.\n"
         "; Continuous right-stick aiming; no LT or automatic recentering.\n"
-        "on_foot_movement_deadzone = 0.12\n"
-        "on_foot_aim_deadzone = 0.12\n"
-        "on_foot_aim_curve = 1.7\n"
-        "on_foot_yaw_speed = 180\n"
-        "on_foot_pitch_speed = 90\n"
-        "on_foot_invert_y = 0\n"
+        "on_foot_movement_deadzone = " << d.on_foot.movement_deadzone << "\n"
+        "on_foot_aim_deadzone = " << d.on_foot.aim_deadzone << "\n"
+        "on_foot_aim_curve = " << d.on_foot.aim_curve << "\n"
+        "on_foot_yaw_speed = " << d.on_foot.yaw_speed << "\n"
+        "on_foot_pitch_speed = " << d.on_foot.pitch_speed << "\n"
+        "on_foot_invert_y = " << (d.on_foot.invert_y ? 1 : 0) << "\n"
         "; Blaster convergence onto the camera center ray. Range is in game units.\n"
-        "on_foot_convergence = 1\n"
-        "on_foot_convergence_range = 1500\n"
+        "on_foot_convergence = " << (d.on_foot.convergence ? 1 : 0) << "\n"
+        "on_foot_convergence_range = " << d.on_foot.convergence_range << "\n"
         "; Optional shot-only assist: 0 disables, 1 fully converges to a visible target.\n"
         "; Cone is a half-angle in degrees; no camera movement or target leading.\n"
-        "on_foot_magnetism_strength = 0\n"
-        "on_foot_magnetism_cone_degrees = 2\n"
-        "on_foot_magnetism_range = 150\n\n"
+        "on_foot_magnetism_strength = " << d.on_foot.magnetism_strength << "\n"
+        "on_foot_magnetism_cone_degrees = " << d.on_foot.magnetism_cone_degrees << "\n"
+        "on_foot_magnetism_range = " << d.on_foot.magnetism_range << "\n\n"
         "[General]\n"
         "; movement_deadzone is 0.0 to 1.0. 0.0 means no left-stick deadzone;\n"
         "; 1.0 means the left stick is fully ignored. Higher values prevent\n"
@@ -283,7 +398,8 @@ void write_default_tuning_ini_locked() {
         "; look_snap_back_enabled is 0 or 1. 0 disables it. 1 taps a C-button\n"
         "; after the right stick returns to center. This is experimental and\n"
         "; defaults off because the original game did not have a modern stick.\n"
-        "look_snap_back_enabled = 0\n\n"
+        "look_snap_back_enabled = " << (d.look_snap_back_enabled ? 1 : 0)
+            << "\n\n"
 
         "; look_snap_back_delay_seconds is 0.0 to 5.0. It is how long the\n"
         "; right stick must stay centered before the snap-back tap starts.\n"
@@ -337,6 +453,20 @@ void write_default_tuning_ini_locked() {
         "; throttle/brake stick axis instantly. Higher values smooth those\n"
         "; changes so the bike camera/throttle axis is less abrupt.\n"
         "bike_camera_smoothing = " << d.bike.camera_smoothing << "\n";
+}
+
+void refresh_tuning_mtime_locked() {
+    if (state.tuning_ini_path.empty()) {
+        return;
+    }
+    std::error_code error;
+    const auto mtime =
+        std::filesystem::last_write_time(state.tuning_ini_path, error);
+    if (error) {
+        return;
+    }
+    state.tuning_mtime = mtime;
+    state.tuning_mtime_valid = true;
 }
 
 void reload_tuning_if_changed_locked() {
@@ -490,6 +620,7 @@ void initialize(const std::filesystem::path& data_directory) {
                 state.tuning);
         }
         write_default_tuning_ini_locked();
+        refresh_tuning_mtime_locked();
     }
     reload_tuning_if_changed_locked();
 }
@@ -504,6 +635,57 @@ void cycle_scheme(SchemeSlot slot, int direction) {
     ControlScheme& scheme = state.schemes[static_cast<int>(slot)];
     const int next = (static_cast<int>(scheme) + direction + 2) % 2;
     scheme = static_cast<ControlScheme>(next);
+}
+
+int tuning_menu_row_count() {
+    return static_cast<int>(sizeof(tuning_rows) / sizeof(tuning_rows[0]));
+}
+
+bool tuning_menu_row(int index, TuningMenuRow& row) {
+    std::lock_guard lock{state.mutex};
+    reload_tuning_if_changed_locked();
+    if (index < 0 || index >= tuning_menu_row_count()) {
+        return false;
+    }
+    const TuningRowSpec& spec = tuning_rows[index];
+    const float value = get_tuning_field(state.tuning, spec.field);
+    std::snprintf(row.label, sizeof(row.label), "%s", spec.label);
+    if (spec.maximum >= 10.0f) {
+        std::snprintf(row.value, sizeof(row.value), "%.0f", value);
+    } else {
+        std::snprintf(row.value, sizeof(row.value), "%.2f", value);
+    }
+    format_slider(
+        row.slider,
+        sizeof(row.slider),
+        value,
+        spec.minimum,
+        spec.maximum);
+    return true;
+}
+
+void adjust_tuning_menu_row(int index, int direction) {
+    std::lock_guard lock{state.mutex};
+    reload_tuning_if_changed_locked();
+    if (index < 0 || index >= tuning_menu_row_count() || direction == 0) {
+        return;
+    }
+    const TuningRowSpec& spec = tuning_rows[index];
+    const float current = get_tuning_field(state.tuning, spec.field);
+    const float adjusted = std::clamp(
+        current + spec.step * static_cast<float>(direction),
+        spec.minimum,
+        spec.maximum);
+    set_tuning_field(state.tuning, spec.field, adjusted);
+}
+
+void persist_tuning() {
+    std::lock_guard lock{state.mutex};
+    if (state.tuning_ini_path.empty()) {
+        return;
+    }
+    write_default_tuning_ini_locked();
+    refresh_tuning_mtime_locked();
 }
 
 int scheme_legend(

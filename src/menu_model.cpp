@@ -108,7 +108,8 @@ std::string plain_text(const std::string& raw) {
 }
 
 Screen classify(const std::array<Row, 80>& r) {
-    if (is(r[52], "Controls Options") && is(r[53], "On Foot") && is(r[55], "Speeder Bike"))
+    if (r[52].text.find("Controls") != std::string::npos &&
+        is(r[53], "On Foot") && is(r[55], "Speeder Bike"))
         return Screen::Schemes;
     if (has(r[52], "Graphics") && is(r[53], "Resolution")) return Screen::Graphics;
     if (has(r[52], "Player:") && has(r[55], "Difficulty Setting:") &&

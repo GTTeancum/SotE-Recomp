@@ -393,19 +393,38 @@ void controls(Canvas& c, const Snapshot& s) {
 }
 void schemes(Canvas& c, const Snapshot& s) {
     c.stars(); c.heading("Controls", "schemes.heading");
-    c.text("On Foot", "schemes.foot.heading", 96, 110, 25, selected(s.rows[53]) ? cyan : 0x8F9ADEFF, 230);
-    c.text(s.rows[54].text, "schemes.foot.scheme", 438, 113, 23, selected(s.rows[53]) ? cyan : teal, 150, 2);
-    c.rect(96, 145, 350, 1, purple);
-    c.text("Speeder Bike", "schemes.bike.heading", 516, 110, 25, selected(s.rows[55]) ? cyan : 0x8F9ADEFF, 224);
-    c.text(s.rows[56].text, "schemes.bike.scheme", 858, 113, 23, selected(s.rows[55]) ? cyan : teal, 135, 2);
-    c.rect(516, 145, 350, 1, purple);
-    binding_column(c, s.on_foot, 96, 165, 350, 25, "schemes.foot", 19);
-    binding_column(c, s.bike, 516, 165, 350, 33, "schemes.bike", 22);
-    c.text("Keyboard / Controller", "schemes.legend", 688, 373, 18, 0x697388FF, 345, 1);
-    c.text("Left / Right: change scheme", "schemes.hint", 688, 408, 17, 0x697388FF, 345, 1);
+    c.text(s.rows[52].text, "schemes.tabs", 480, 84, 18, 0x697388FF, 820, 1);
+    c.rect(92, 104, 776, 1, purple);
+    for (int index = 0; index < 11; ++index) {
+        const int label_row = 53 + index * 2;
+        const int value_row = label_row + 1;
+        if (s.rows[label_row].text.empty()) break;
+        const int y = 128 + index * 30;
+        const bool row_selected = selected(s.rows[label_row]) ||
+            selected(s.rows[value_row]);
+        c.text(
+            s.rows[label_row].text,
+            "schemes.row.label",
+            106,
+            y,
+            19,
+            row_selected ? cyan : 0x8F9ADEFF,
+            300);
+        c.text(
+            s.rows[value_row].text,
+            "schemes.row.value",
+            810,
+            y,
+            18,
+            row_selected ? cyan : teal,
+            520,
+            2);
+    }
     c.rect(92, 474, 776, 2, purple);
-    c.text("Apply", "schemes.apply", 335, 495, 26, selected(s.rows[57]) ? cyan : teal, 220, 1);
-    c.text("Return", "schemes.return", 626, 495, 26, selected(s.rows[58]) ? cyan : teal, 220, 1);
+    c.text(s.rows[75].text, "schemes.return", 312, 495, 23,
+        selected(s.rows[75]) ? cyan : teal, 380, 1);
+    c.text(s.rows[76].text, "schemes.apply", 652, 495, 23,
+        selected(s.rows[76]) ? cyan : teal, 220, 1);
 }
 } // namespace
 
