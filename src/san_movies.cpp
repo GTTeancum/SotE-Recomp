@@ -49,6 +49,7 @@ std::mutex cache_mutex;
 std::filesystem::path cache_root;
 CachedFrame current_frame;
 uint64_t frame_serial = 1;
+uint64_t movie_serial = 1;
 bool current_music_is_main_menu = false;
 std::vector<std::string> queued_movies;
 
@@ -62,9 +63,13 @@ struct CacheMetadata {
 
 struct CachePlayback {
     std::filesystem::path frames_path;
+    std::filesystem::path audio_path;
     CacheMetadata metadata;
     std::chrono::steady_clock::time_point started{};
     uint32_t frame_index = UINT32_MAX;
+    uint64_t audio_frames = 0;
+    uint64_t audio_cursor = 0;
+    uint64_t token = 0;
 };
 
 CachePlayback active_playback;
@@ -366,9 +371,16 @@ bool start_cached_preview_locked(std::string_view name) {
         metadata.frames = metadata.decoded_frames;
     }
     active_playback.frames_path = frames_path;
+    active_playback.audio_path = movie_cache / "audio.pcm";
     active_playback.metadata = metadata;
     active_playback.started = std::chrono::steady_clock::now();
     active_playback.frame_index = UINT32_MAX;
+    active_playback.audio_cursor = 0;
+    active_playback.token = movie_serial++;
+    std::error_code audio_error;
+    const uint64_t audio_bytes = std::filesystem::file_size(
+        active_playback.audio_path, audio_error);
+    active_playback.audio_frames = audio_error ? 0 : audio_bytes / 4;
     if (!read_cache_frame_locked(0)) {
         std::printf(
             "[sote][san] cache unavailable for %s (truncated first frame)\n",
@@ -378,12 +390,13 @@ bool start_cached_preview_locked(std::string_view name) {
         return false;
     }
     std::printf(
-        "[sote][san] cached preview active: %s %ux%u frames=%u fps=%.3f\n",
+        "[sote][san] cached playback active: %s %ux%u frames=%u fps=%.3f audio_frames=%llu\n",
         base.c_str(),
         metadata.width,
         metadata.height,
         metadata.frames,
-        metadata.fps);
+        metadata.fps,
+        static_cast<unsigned long long>(active_playback.audio_frames));
     std::fflush(stdout);
     return true;
 }
@@ -557,6 +570,41 @@ bool cached_playback_active() {
     return current_frame.valid();
 }
 
+uint64_t playback_token() {
+    std::lock_guard lock{cache_mutex};
+    return current_frame.valid() ? active_playback.token : 0;
+}
+
+std::vector<int16_t> next_cached_audio() {
+    std::lock_guard lock{cache_mutex};
+    if (!current_frame.valid() || active_playback.audio_frames == 0) {
+        return {};
+    }
+    constexpr uint64_t rate = 22050;
+    const double elapsed = std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - active_playback.started).count();
+    const uint64_t target = std::min<uint64_t>(
+        active_playback.audio_frames,
+        static_cast<uint64_t>(elapsed * rate) + rate / 10);
+    if (target <= active_playback.audio_cursor) {
+        return {};
+    }
+    const uint64_t frames = std::min<uint64_t>(
+        target - active_playback.audio_cursor, 4096);
+    std::ifstream audio{active_playback.audio_path, std::ios::binary};
+    if (!audio) {
+        return {};
+    }
+    audio.seekg(static_cast<std::streamoff>(active_playback.audio_cursor * 4));
+    std::vector<int16_t> samples(static_cast<size_t>(frames * 2));
+    audio.read(reinterpret_cast<char*>(samples.data()),
+        static_cast<std::streamsize>(frames * 4));
+    const auto read_frames = static_cast<size_t>(audio.gcount() / 4);
+    samples.resize(read_frames * 2);
+    active_playback.audio_cursor += read_frames;
+    return samples;
+}
+
 void note_music_command(std::string_view name) {
     std::string lower_name{name};
     std::transform(
@@ -680,11 +728,6 @@ void initialize(const std::filesystem::path& runtime_directory) {
                     info.wave_chunks);
             }
             std::fflush(stdout);
-            if (const char* preview = std::getenv("SOTE_SAN_PREVIEW")) {
-                if (preview[0] != '\0') {
-                    play_cached_preview(preview);
-                }
-            }
             return;
         }
     }

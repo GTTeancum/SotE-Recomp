@@ -60,6 +60,8 @@ bool play_cached_preview(std::string_view name);
 bool play_startup_sequence();
 bool stop_cached_playback();
 bool cached_playback_active();
+uint64_t playback_token();
+std::vector<int16_t> next_cached_audio();
 void note_music_command(std::string_view name);
 bool menu_music_active();
 CachedFrame latest_cached_frame();

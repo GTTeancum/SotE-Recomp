@@ -180,6 +180,17 @@ add_test(NAME san_movies_harness COMMAND san_movies_harness
     "${CMAKE_BINARY_DIR}/san_movies_test"
     "${CMAKE_CURRENT_SOURCE_DIR}/SotE_Recompiled/Sdata")
 
+add_executable(sandec_audio_cache
+    tools/sandec_audio_cache.c
+    third_party/sandec/sandec.c)
+target_include_directories(sandec_audio_cache PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sandec")
+if(MSVC)
+    target_compile_definitions(sandec_audio_cache PRIVATE
+        __BYTE_ORDER__=1234 __ORDER_LITTLE_ENDIAN__=1234)
+    target_compile_options(sandec_audio_cache PRIVATE /wd4996)
+endif()
+
 add_executable(menu_revamp_harness
     tools/menu_revamp_harness.cpp
     src/control_bindings.cpp

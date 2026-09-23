@@ -7,7 +7,7 @@
     cache format under the runnable Sdata folder:
 
       Sdata/SAN_CACHE/<movie>/frames.rgba
-      Sdata/SAN_CACHE/<movie>/audio.wav
+      Sdata/SAN_CACHE/<movie>/audio.pcm
       Sdata/SAN_CACHE/<movie>/metadata.tsv
 
     The cache is generated from user-provided movie files and should not be
@@ -19,10 +19,14 @@ param(
     [string]$InputDirectory = 'SotE_Recompiled\Sdata',
     [string]$CacheDirectory = '',
     [string[]]$MovieName = @(),
-    [switch]$FirstFrameOnly
+    [switch]$FirstFrameOnly,
+    [switch]$AudioOnly
 )
 
 $ErrorActionPreference = 'Stop'
+if ($AudioOnly -and $FirstFrameOnly) {
+    throw '-AudioOnly and -FirstFrameOnly cannot be used together.'
+}
 $repoRoot = [System.IO.Path]::GetFullPath(
     (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)))
 $inputAbsolute = if ([System.IO.Path]::IsPathRooted($InputDirectory)) {
@@ -48,6 +52,10 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
 }
 if (-not (Get-Command ffprobe -ErrorAction SilentlyContinue)) {
     throw 'ffprobe is not available on PATH.'
+}
+$audioDecoder = Join-Path $repoRoot 'build\runtime\Release\sandec_audio_cache.exe'
+if (-not $FirstFrameOnly -and -not (Test-Path -LiteralPath $audioDecoder -PathType Leaf)) {
+    throw "Missing SAN audio decoder: $audioDecoder. Build the sandec_audio_cache target first."
 }
 if (-not (Test-Path -LiteralPath $inputAbsolute -PathType Container)) {
     throw "Missing SAN input directory: $inputAbsolute"
@@ -99,34 +107,37 @@ foreach ($movie in $movies) {
     $duration = [string]$stream.duration
 
     $framesPath = Join-Path $movieCache 'frames.rgba'
-    $wavPath = Join-Path $movieCache 'audio.wav'
+    $audioPath = Join-Path $movieCache 'audio.pcm'
     $metadataPath = Join-Path $movieCache 'metadata.tsv'
-    $audioProbe = & ffprobe -v error -select_streams a:0 `
-        -show_entries stream=index -of csv=p=0 $movie.FullName
-    $hasAudioStream = $LASTEXITCODE -eq 0 -and
-        -not [string]::IsNullOrWhiteSpace(($audioProbe -join ''))
     $frameArgs = @('-hide_banner', '-loglevel', 'error', '-y', '-i',
         $movie.FullName)
     if ($FirstFrameOnly) {
         $frameArgs += @('-frames:v', '1')
     }
     $frameArgs += @('-pix_fmt', 'rgba', '-f', 'rawvideo', $framesPath)
-    & ffmpeg @frameArgs
-    if ($LASTEXITCODE -ne 0) {
-        throw "frame decode failed for $($movie.Name)"
+    if (-not $AudioOnly) {
+        & ffmpeg @frameArgs
+        if ($LASTEXITCODE -ne 0) {
+            throw "frame decode failed for $($movie.Name)"
+        }
+    }
+    elseif (-not (Test-Path -LiteralPath $framesPath -PathType Leaf)) {
+        throw "missing existing video cache for $($movie.Name): $framesPath"
     }
 
-    # SOTE's ANIM/AHDR files contain IACT chunks structurally, but current
-    # FFmpeg exposes these samples as video-only. Keep the cache useful by
-    # treating missing external audio decode as optional.
     $audioStatus = 'audio_none'
-    if ($hasAudioStream) {
-        & ffmpeg -hide_banner -loglevel error -y -i $movie.FullName `
-            -vn -ac 2 -ar 22050 $wavPath
+    if (-not $FirstFrameOnly) {
+        if (Test-Path -LiteralPath $audioPath) {
+            Remove-Item -LiteralPath $audioPath -Force
+        }
+        & $audioDecoder $movie.FullName $audioPath
         if ($LASTEXITCODE -ne 0) {
             throw "audio decode failed for $($movie.Name)"
         }
-        $audioStatus = 'audio_ok'
+        if ((Test-Path -LiteralPath $audioPath -PathType Leaf) -and
+            (Get-Item -LiteralPath $audioPath).Length -gt 0) {
+            $audioStatus = 'audio_ok'
+        }
     }
 
     @(
@@ -138,7 +149,8 @@ foreach ($movie in $movies) {
         "frames`t$frames",
         "duration`t$duration",
         "frames_rgba`t$framesPath",
-        "audio_wav`t$wavPath",
+        "audio_pcm`t$audioPath",
+        "audio_rate`t22050",
         "audio_status`t$audioStatus"
     ) | Set-Content -LiteralPath $metadataPath -Encoding UTF8
 

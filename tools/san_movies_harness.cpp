@@ -184,6 +184,8 @@ int main(int argc, char** argv) {
             212, 222, 232, 255,
             213, 223, 233, 255,
         });
+    write_file(cache_dir / "audio.pcm",
+        {1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0});
     sote::san_movies::initialize(scratch);
     check(sote::san_movies::play_cached_preview("GAMEOVER.SAN"),
         "cached preview can be loaded from generated cache");
@@ -195,6 +197,13 @@ int main(int argc, char** argv) {
         "cached preview preserves RGBA pixel data");
     check(sote::san_movies::cached_playback_active(),
         "cached preview reports active playback");
+    const uint64_t first_token = sote::san_movies::playback_token();
+    check(first_token != 0, "playing movie has a playback token");
+    const auto audio = sote::san_movies::next_cached_audio();
+    check(audio.size() == 8 && audio[0] == 1 && audio[7] == 8,
+        "cached movie exposes decoded stereo PCM");
+    check(sote::san_movies::next_cached_audio().empty(),
+        "cached PCM is queued once");
     std::this_thread::sleep_for(std::chrono::milliseconds(75));
     const auto advanced_frame = sote::san_movies::latest_cached_frame();
     check(advanced_frame.valid() && advanced_frame.serial > frame.serial &&
@@ -204,6 +213,8 @@ int main(int argc, char** argv) {
     check(!sote::san_movies::latest_cached_frame().valid() &&
         !sote::san_movies::cached_playback_active(),
         "cached preview stops after the final frame");
+    check(sote::san_movies::playback_token() == 0,
+        "playback token clears when movie finishes");
 
     const fs::path short_cache_dir = scratch / "Sdata" / "SAN_CACHE" / "L00LOGO";
     write_text_file(
@@ -262,6 +273,7 @@ int main(int argc, char** argv) {
         });
     check(sote::san_movies::play_startup_sequence(),
         "startup sequence starts with cached logo");
+    const uint64_t logo_token = sote::san_movies::playback_token();
     auto startup_frame = sote::san_movies::latest_cached_frame();
     check(startup_frame.valid() && startup_frame.rgba[0] == 21,
         "startup sequence first frame is logo");
@@ -269,6 +281,8 @@ int main(int argc, char** argv) {
     startup_frame = sote::san_movies::latest_cached_frame();
     check(startup_frame.valid() && startup_frame.rgba[1] == 22,
         "startup sequence advances to LONGTIME");
+    check(sote::san_movies::playback_token() != logo_token,
+        "queued movie has a new audio playback token");
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     startup_frame = sote::san_movies::latest_cached_frame();
     check(startup_frame.valid() && startup_frame.rgba[2] == 23,
@@ -276,6 +290,11 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     check(!sote::san_movies::latest_cached_frame().valid(),
         "startup sequence stops after queued movies");
+    check(sote::san_movies::play_startup_sequence(),
+        "startup sequence can restart");
+    check(sote::san_movies::stop_cached_playback() &&
+        !sote::san_movies::cached_playback_active(),
+        "skip stops the movie and clears its queue");
 
     if (argc > 2 && fs::is_directory(argv[2])) {
         int real_count = 0;

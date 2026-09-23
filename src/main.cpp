@@ -488,15 +488,23 @@ const char* san_movie_for_event(int16_t event) {
 }
 
 void update_san_movie_triggers(uint8_t* rdram) {
-    if (rdram == nullptr) {
+    if (rdram == nullptr ||
+        display_list_count.load(std::memory_order_relaxed) == 0) {
         return;
     }
-    if (std::getenv("SOTE_SAN_PREVIEW") != nullptr) {
+    if (const char* preview = std::getenv("SOTE_SAN_PREVIEW")) {
+        if (!san_logo_started && preview[0] != '\0') {
+            san_logo_started = true;
+            sote::san_movies::play_cached_preview(preview);
+        }
         return;
     }
     if (!san_logo_started) {
         san_logo_started = true;
         sote::san_movies::play_startup_sequence();
+    }
+    if (sote::san_movies::cached_playback_active()) {
+        return;
     }
     const int16_t event = static_cast<int16_t>(
         read_guest_half(rdram, 0x8013CE0EU));
@@ -1923,6 +1931,20 @@ void on_vi() {
     }
     log_general_failure_telemetry(count);
     update_san_movie_triggers(game_rdram);
+    (void)sote::san_movies::latest_cached_frame();
+    uint64_t movie_token = sote::san_movies::playback_token();
+    if (movie_token != 0 &&
+        sote::frontend::movie_skip_pressed(movie_token, count)) {
+        std::printf("[sote][san] cutscene skipped\n");
+        std::fflush(stdout);
+        sote::san_movies::stop_cached_playback();
+        movie_token = 0;
+    }
+    sote::frontend::set_movie_playback(movie_token);
+    if (movie_token != 0) {
+        const auto audio = sote::san_movies::next_cached_audio();
+        sote::frontend::queue_movie_audio(audio.data(), audio.size());
+    }
     const int current_display_lists =
         display_list_count.load(std::memory_order_relaxed);
     if (current_display_lists != last_observed_display_lists) {
@@ -2049,6 +2071,9 @@ extern "C" void sote_wait_for_game_frame() {
     // each iteration for two VIs reduced player and jetpack physics to 30 Hz
     // and felt visibly slow. Allow exactly one gameplay iteration per VI.
     std::unique_lock lock(game_frame_mutex);
+    while (sote::san_movies::cached_playback_active()) {
+        game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
+    }
     int current_vi = vi_count.load(std::memory_order_relaxed);
     if (last_game_frame_vi >= 0) {
         game_frame_cv.wait(lock, [&] {

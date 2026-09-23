@@ -58,7 +58,8 @@ tree into the play folder while intentionally ignoring `Sdata/MOVIES`.
 These files use LucasArts SMUSH: ScummVM's GRiME decoder identifies this
 SotE set as the `ANIM`/`AHDR` path, with `FOBJ` video chunks using codec 47
 or 48 and `IACT` audio chunks. The runtime currently plays from a generated
-RGBA cache instead of embedding ScummVM's GPL decoder source.
+RGBA/PCM cache. The video cache uses FFmpeg; IACT sound is decoded by the
+included LGPL-2.1 `sandec` converter.
 
 To verify the local files with FFmpeg and save first-frame previews, run:
 
@@ -81,8 +82,11 @@ powershell -ExecutionPolicy Bypass -File .\tools\prepare_san_cache.ps1 -MovieNam
 This writes `Sdata/SAN_CACHE`, which is generated from local user assets and
 should not be committed. When the cache is present, the runtime can play the
 startup logo/long-time/intro sequence, level-intro, boss, and game-over
-movies from the runnable `Sdata` folder. `SOTE_SAN_PREVIEW=<movie>.SAN` can
-be set before launch to force a single cached movie for smoke testing.
+movies from the runnable `Sdata` folder. Cutscenes pause gameplay and can be
+skipped with Start, A, B, Escape, Enter, or Space. After updating the executable,
+`prepare_san_cache.ps1 -AudioOnly` adds sound to an existing video cache.
+`SOTE_SAN_PREVIEW=<movie>.SAN` can be set before launch to force a single cached
+movie for smoke testing.
 
 ## Texture packs
 

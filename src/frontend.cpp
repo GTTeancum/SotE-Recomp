@@ -46,6 +46,8 @@ std::atomic<uint32_t> input_snapshot{0};
 std::atomic<uint32_t> scripted_input_snapshot{0};
 std::atomic<bool> physical_input_enabled{true};
 std::atomic<bool> audio_output_enabled{true};
+std::atomic<uint64_t> movie_playback_token{0};
+std::atomic<bool> swallow_movie_skip{false};
 SDL_GameController* controller = nullptr;
 bool initialized = false;
 
@@ -400,7 +402,117 @@ void set_audio_enabled(bool enabled) {
     }
 }
 
+void set_movie_playback(uint64_t token) {
+    if (movie_playback_token.load(std::memory_order_relaxed) == token) {
+        return;
+    }
+    std::lock_guard lock{audio_mutex};
+    if (movie_playback_token.load(std::memory_order_relaxed) == token) {
+        return;
+    }
+    input_snapshot.store(0, std::memory_order_relaxed);
+    sote::modern_controls::publish({});
+    movie_playback_token.store(token, std::memory_order_relaxed);
+    (void)open_audio_locked(token != 0 ? 22050 : source_frequency);
+    std::printf("[sote][san] audio handoff: %s\n",
+        token != 0 ? "movie" : "game");
+    std::fflush(stdout);
+}
+
+void queue_movie_audio(const int16_t* samples, size_t sample_count) {
+    if (samples == nullptr || sample_count == 0) {
+        return;
+    }
+    std::lock_guard lock{audio_mutex};
+    if (audio_device == 0 ||
+        movie_playback_token.load(std::memory_order_relaxed) == 0) {
+        return;
+    }
+    static uint64_t logged_audio_token = 0;
+    const uint64_t token = movie_playback_token.load(std::memory_order_relaxed);
+    if (logged_audio_token != token &&
+        std::any_of(samples, samples + sample_count,
+            [](int16_t sample) { return sample != 0; })) {
+        logged_audio_token = token;
+        std::printf("[sote][san] queued non-silent movie PCM (%zu samples)\n",
+            sample_count);
+        std::fflush(stdout);
+    }
+    const int bytes = static_cast<int>(sample_count * sizeof(int16_t));
+    if (audio_stream == nullptr) {
+        SDL_QueueAudio(audio_device, samples, bytes);
+    } else if (SDL_AudioStreamPut(audio_stream, samples, bytes) == 0) {
+        const int available = SDL_AudioStreamAvailable(audio_stream);
+        if (available > 0) {
+            std::vector<uint8_t> converted(static_cast<size_t>(available));
+            const int received = SDL_AudioStreamGet(audio_stream,
+                converted.data(), available);
+            if (received > 0) {
+                SDL_QueueAudio(audio_device, converted.data(), received);
+            }
+        }
+    }
+}
+
+bool skip_controls_down() {
+    bool pressed = (GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0 ||
+        (GetAsyncKeyState(VK_RETURN) & 0x8000) != 0 ||
+        (GetAsyncKeyState(VK_SPACE) & 0x8000) != 0;
+    if (initialized) {
+        SDL_GameControllerUpdate();
+        find_controller();
+        if (controller != nullptr) {
+            pressed = pressed ||
+                SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START) ||
+                SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_B) ||
+                SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_A);
+        }
+    }
+    return pressed;
+}
+
+bool movie_skip_pressed(uint64_t token, int vi) {
+    static uint64_t observed_token = 0;
+    static bool armed = false;
+    if (observed_token != token) {
+        observed_token = token;
+        armed = false;
+    }
+    if (token == 0) {
+        return false;
+    }
+    const char* test_skip_vi = std::getenv("SOTE_SAN_TEST_SKIP_VI");
+    if (!process_owns_foreground_window() && test_skip_vi == nullptr) {
+        armed = false;
+        return false;
+    }
+    bool pressed = skip_controls_down();
+    if (test_skip_vi != nullptr && vi == std::atoi(test_skip_vi)) {
+        pressed = true;
+    }
+    if (!pressed) {
+        armed = true;
+    }
+    if (armed && pressed) {
+        swallow_movie_skip.store(true, std::memory_order_relaxed);
+        return true;
+    }
+    return false;
+}
+
 void poll_input() {
+    if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
+        input_snapshot.store(0, std::memory_order_relaxed);
+        sote::modern_controls::publish({});
+        return;
+    }
+    if (swallow_movie_skip.exchange(false, std::memory_order_relaxed) &&
+        skip_controls_down()) {
+        swallow_movie_skip.store(true, std::memory_order_relaxed);
+        input_snapshot.store(0, std::memory_order_relaxed);
+        sote::modern_controls::publish({});
+        return;
+    }
     const bool input_enabled =
         physical_input_enabled.load(std::memory_order_relaxed);
     const bool focused = process_owns_foreground_window();
@@ -673,6 +785,12 @@ void set_physical_input_enabled(bool enabled) {
 }
 
 bool get_input(int port, uint16_t* buttons, float* x, float* y) {
+    if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
+        *buttons = 0;
+        *x = 0.0f;
+        *y = 0.0f;
+        return true;
+    }
     if (port != 0) {
         return false;
     }
@@ -764,7 +882,8 @@ void set_rumble(int port, bool enabled) {
 
 void queue_samples(int16_t* samples, size_t sample_count) {
     if (samples == nullptr || sample_count == 0 ||
-        sample_count > (256 * 1024) / sizeof(int16_t)) {
+        sample_count > (256 * 1024) / sizeof(int16_t) ||
+        movie_playback_token.load(std::memory_order_relaxed) != 0) {
         return;
     }
 
@@ -784,6 +903,9 @@ void queue_samples(int16_t* samples, size_t sample_count) {
     }
 
     std::lock_guard lock{audio_mutex};
+    if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
+        return;
+    }
     // Guest RDRAM is word-swizzled: each pair of 16-bit stereo samples is
     // reversed in the host view.
     swapped_samples.resize(sample_count);
@@ -912,6 +1034,9 @@ void queue_samples(int16_t* samples, size_t sample_count) {
 
 size_t get_frames_remaining() {
     std::lock_guard lock{audio_mutex};
+    if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
+        return 0;
+    }
     if (audio_device == 0) {
         update_muted_audio_clock_locked();
         if (!audio_output_enabled.load(std::memory_order_relaxed)) {
@@ -939,6 +1064,9 @@ void set_frequency(uint32_t frequency) {
         return;
     }
     source_frequency = frequency;
+    if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
+        return;
+    }
     muted_queued_frames = 0.0;
     muted_audio_clock = std::chrono::steady_clock::now();
     muted_audio_clock_initialized = true;

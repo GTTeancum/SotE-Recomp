@@ -3,6 +3,7 @@
 #include "rt64_renderer.hpp"
 #include "graphics_menu.hpp"
 #include "menu_renderer.hpp"
+#include "san_movies.hpp"
 #include "texture_slots.hpp"
 
 #include <algorithm>
@@ -533,6 +534,17 @@ public:
             std::fflush(stdout);
         }
         app->updateScreen();
+        if (sote::san_movies::cached_playback_active() &&
+            app->state->presentId != 0) {
+            app->workloadQueue->waitForWorkloadId(app->state->workloadId);
+            app->presentQueue->waitForPresentId(app->state->presentId);
+            app->workloadQueue->waitForIdle();
+            app->presentQueue->waitForIdle();
+            auto& last = app->presentQueue->presents[
+                app->presentQueue->previousWriteCursor()];
+            app->state->advancePresent(last, true);
+            app->presentQueue->repeatLastPresent();
+        }
         if (screen_number == 1) {
             std::printf(
                 "[sote] graphics output: client=%ux%u "

@@ -10,6 +10,9 @@ namespace sote::frontend {
 bool initialize();
 void shutdown();
 void set_audio_enabled(bool enabled);
+void set_movie_playback(uint64_t token);
+void queue_movie_audio(const int16_t* samples, size_t sample_count);
+bool movie_skip_pressed(uint64_t token, int vi);
 
 void poll_input();
 bool get_input(int controller, uint16_t* buttons, float* x, float* y);
