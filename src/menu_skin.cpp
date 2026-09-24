@@ -113,7 +113,24 @@ void capture(const uint8_t* rdram) {
         // Options/control diagrams are direct-drawn later by func_8001FC90;
         // unrelated cached HUD rows must not clear that frame's host snapshot.
         if (native_options_active(rdram, 0x800000)) return;
-        publish_snapshot(read_guest(rdram, 0x800000));
+        auto snapshot = read_guest(rdram, 0x800000);
+        if (snapshot.screen == Screen::Profiles && renderer_available.load()) {
+            const auto& options = snapshot.rows[76];
+            graphics_menu::observe_main_menu(
+                ((options.color >> 24) & 255) >= 0xA0 &&
+                ((options.color >> 16) & 255) >= 0xD0 &&
+                ((options.color >> 8) & 255) >= 0xA0);
+        } else if ((snapshot.screen == Screen::Options ||
+                    snapshot.screen == Screen::Graphics ||
+                    snapshot.screen == Screen::Schemes) &&
+                   renderer_available.load()) {
+            graphics_menu::observe_native_options(snapshot.focused_setting);
+            graphics_menu::decorate_native_snapshot(snapshot);
+        } else if (snapshot.screen == Screen::Summary &&
+                   renderer_available.load()) {
+            graphics_menu::observe_other_screen();
+        }
+        publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }
 }
 void capture_native_options(const uint8_t* rdram) {

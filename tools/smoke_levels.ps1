@@ -8,6 +8,8 @@ param(
     [switch]$Passive,
     [switch]$NoRefillLives,
     [switch]$ExpectNaturalGameOver,
+    [switch]$RendererCapture,
+    [switch]$KeepDiagnosticSave,
     [ValidateSet("combined", "stick", "z", "jetpack")]
     [string]$InputMode = "combined"
 )
@@ -217,7 +219,14 @@ try {
         # can continue to the next level.
         $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
         $startInfo.FileName = $resolvedExe
-        $startInfo.Arguments = "--headless-smoke --muted"
+        $startInfo.Arguments = if ($RendererCapture) {
+            "--frontend-smoke --muted"
+        } else {
+            "--headless-smoke --muted"
+        }
+        if ($RendererCapture) {
+            $startInfo.Environment["SOTE_DIAGNOSTIC_OFFSCREEN"] = "1"
+        }
         $startInfo.UseShellExecute = $false
         $startInfo.CreateNoWindow = $true
         $startInfo.RedirectStandardOutput = $true
@@ -274,6 +283,25 @@ try {
         $gameplayCadence =
             $gameFrameMatch.Success -and
             [int64]$gameFrameMatch.Groups[1].Value -ge $minimumGameFrames
+        if ($ExpectNaturalGameOver) {
+            $cadenceSamples = @([regex]::Matches(
+                $stdout,
+                '(?m)^\[sote\] VI=([0-9]+) threads=[0-9]+ ' +
+                'display_lists=[0-9]+ game_frames=([0-9]+)') |
+                Where-Object {
+                    [int]$_.Groups[1].Value -ge $observationStartVi
+                })
+            if ($cadenceSamples.Count -ge 2) {
+                $firstSample = $cadenceSamples[0]
+                $lastSample = $cadenceSamples[-1]
+                $viDelta = [int]$lastSample.Groups[1].Value -
+                    [int]$firstSample.Groups[1].Value
+                $frameDelta = [int]$lastSample.Groups[2].Value -
+                    [int]$firstSample.Groups[2].Value
+                $gameplayCadence =
+                    $viDelta -ge 600 -and $frameDelta -ge 0.9 * $viDelta
+            }
+        }
         $runtimeAnomaly = $stdout -match "\[sote\]\[anomaly\]"
         $naturalGameOverCompleted = $stdout -match (((
             "\[sote\]\[smoke\] NATURAL GAME OVER COMPLETE " +
@@ -290,12 +318,17 @@ try {
                 "\[sote\]\[lives\] committed life loss " +
                 "source=[0-9A-F]+ VI=[0-9]+ event=[0-9-]+ " +
                 "lives=(-?[0-9]+) object=[0-9A-F]+") ))
-        $lifeLossSequence = (
-            $lifeLossMatches | ForEach-Object {
-                $_.Groups[1].Value
-            }) -join ","
+        $lifeLossValues = @($lifeLossMatches | ForEach-Object {
+            [int]$_.Groups[1].Value
+        })
         $naturalLifeSequence =
-            $lifeLossSequence -eq "3,2,1,0"
+            $lifeLossValues.Count -ge 4 -and $lifeLossValues[-1] -eq 0
+        for ($i = 1; $i -lt $lifeLossValues.Count; ++$i) {
+            if ($lifeLossValues[$i] -ne $lifeLossValues[$i - 1] - 1) {
+                $naturalLifeSequence = $false
+                break
+            }
+        }
         $completionValid = if ($ExpectNaturalGameOver) {
             $naturalGameOverCompleted -and $naturalLifeSequence
         } else {
@@ -371,8 +404,7 @@ try {
     $env:SOTE_TRACE_PLAYER_STATE = $previousTracePlayerState
 
     # select_rom stores a validated ROM copy under the registered config path.
-    # Diagnostic saves and that ROM copy are disposable; retain only the
-    # stdout/stderr evidence for each level.
+    # Retain the diagnostic profile only when a follow-up run needs it.
     $diagnosticConfigRoot = [System.IO.Path]::GetFullPath(
         (Join-Path $resolvedOutput "config"))
     if (-not $diagnosticConfigRoot.StartsWith(
@@ -380,7 +412,8 @@ try {
             [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing to clean outside diagnostic output: $diagnosticConfigRoot"
     }
-    if (Test-Path -LiteralPath $diagnosticConfigRoot -PathType Container) {
+    if (-not $KeepDiagnosticSave -and
+        (Test-Path -LiteralPath $diagnosticConfigRoot -PathType Container)) {
         Remove-Item -LiteralPath $diagnosticConfigRoot -Recurse -Force
     }
 }

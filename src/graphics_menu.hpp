@@ -40,6 +40,8 @@ bool take_window_request(Settings& settings);
 void filter_input(uint16_t* buttons, float* x, float* y);
 // Direct-drawn native options (func_8001FC90), separate from cached UI rows.
 void observe_native_options(int selection);
+void observe_main_menu(bool options_focused);
+void observe_other_screen();
 void decorate_native_snapshot(sote::menu_skin::Snapshot& snapshot);
 
 } // namespace sote::graphics_menu

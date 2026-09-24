@@ -545,7 +545,6 @@ bool play_startup_sequence() {
     std::lock_guard lock{cache_mutex};
     queued_movies = {
         "LONGTIME.SAN",
-        "L01INTRO.SAN",
     };
     if (start_cached_preview_locked("L00LOGO.SAN")) {
         return true;

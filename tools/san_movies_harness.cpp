@@ -285,11 +285,13 @@ int main(int argc, char** argv) {
         "queued movie has a new audio playback token");
     std::this_thread::sleep_for(std::chrono::milliseconds(25));
     startup_frame = sote::san_movies::latest_cached_frame();
+    check(!startup_frame.valid(),
+        "startup sequence ends before the level intro");
+    check(sote::san_movies::play_cached_preview("L01INTRO.SAN"),
+        "level entry can start the intro once after startup");
+    startup_frame = sote::san_movies::latest_cached_frame();
     check(startup_frame.valid() && startup_frame.rgba[2] == 23,
-        "startup sequence advances to intro crawl");
-    std::this_thread::sleep_for(std::chrono::milliseconds(25));
-    check(!sote::san_movies::latest_cached_frame().valid(),
-        "startup sequence stops after queued movies");
+        "level intro remains available at level entry");
     check(sote::san_movies::play_startup_sequence(),
         "startup sequence can restart");
     check(sote::san_movies::stop_cached_playback() &&

@@ -49,6 +49,17 @@ enum class TopCategory : int {
     Controls,
 };
 
+enum class MenuTransition {
+    None,
+    FocusOptions,
+    WaitOptionsFocus,
+    OpenOptions,
+    WaitOptions,
+    ReturnToMain,
+    WaitMain,
+    RestoreProfileFocus,
+};
+
 constexpr int graphics_submenu_item_count = 8;
 
 int submenu_item_count(TopCategory category) {
@@ -61,12 +72,20 @@ struct MenuState {
     std::mutex mutex;
     bool initialized = false;
     bool options_visible = false;
+    bool main_visible = false;
+    bool options_focused_in_main = false;
+    bool restore_profile_focus = false;
     bool graphics_focus = false;
     bool submenu_active = false;
     TopCategory category = TopCategory::Graphics;
     int original_selection = 52;
     int submenu_selection = 0;
     uint16_t previous_navigation = 0;
+    MenuTransition transition = MenuTransition::None;
+    bool open_controls = false;
+    std::chrono::steady_clock::time_point transition_started{};
+    std::chrono::steady_clock::time_point phase_started{};
+    std::chrono::steady_clock::time_point last_main_seen{};
     Settings applied{};
     Settings editing{};
     bool renderer_request = false;
@@ -636,18 +655,31 @@ void draw_graphics_submenu(uint8_t* rdram) {
         label_color(0));
 }
 
+void set_transition_locked(MenuTransition next) {
+    state.transition = next;
+    state.phase_started = std::chrono::steady_clock::now();
+}
+
+void return_to_main_locked() {
+    state.editing = state.applied;
+    state.transition_started = std::chrono::steady_clock::now();
+    set_transition_locked(MenuTransition::ReturnToMain);
+}
+
 void switch_page_locked(int direction) {
     if (direction == 0) {
         return;
     }
     if (!state.submenu_active) {
+        if (direction < 0) {
+            return_to_main_locked();
+            return;
+        }
         state.submenu_active = true;
         state.graphics_focus = false;
         state.submenu_selection = 0;
         state.editing = state.applied;
-        state.category = direction > 0
-            ? TopCategory::Graphics
-            : TopCategory::Controls;
+        state.category = TopCategory::Graphics;
         return;
     }
     if (state.category == TopCategory::Graphics) {
@@ -661,8 +693,7 @@ void switch_page_locked(int direction) {
         return;
     }
     if (direction > 0) {
-        state.submenu_active = false;
-        state.editing = state.applied;
+        return_to_main_locked();
     } else {
         state.category = TopCategory::Graphics;
         state.submenu_selection = 0;
@@ -673,6 +704,11 @@ void switch_page_locked(int direction) {
 
 void initialize(const std::filesystem::path& data_directory) {
     std::lock_guard lock{state.mutex};
+    state.options_visible = false;
+    state.main_visible = false;
+    state.submenu_active = false;
+    state.transition = MenuTransition::None;
+    state.previous_navigation = 0;
     state.persistence_path = data_directory / "sote_options.json";
     std::ifstream input{state.persistence_path};
     if (input.is_open()) {
@@ -745,14 +781,19 @@ bool take_window_request(Settings& settings) {
 }
 
 void filter_input(uint16_t* buttons, float* x, float* y) {
+    const auto view = sote::menu_skin::latest();
     std::lock_guard lock{state.mutex};
+    const auto now = std::chrono::steady_clock::now();
 
     if (state.options_visible &&
-        std::chrono::steady_clock::now() - state.last_options_seen >
-            std::chrono::milliseconds{150}) {
+        now - state.last_options_seen > std::chrono::seconds{3}) {
         state.options_visible = false;
         state.graphics_focus = false;
         state.submenu_active = false;
+    }
+    if (state.main_visible &&
+        now - state.last_main_seen > std::chrono::seconds{3}) {
+        state.main_visible = false;
     }
 
     uint16_t navigation = *buttons & menu_buttons;
@@ -764,28 +805,107 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         navigation & static_cast<uint16_t>(~state.previous_navigation);
     state.previous_navigation = navigation;
 
-    if (!state.options_visible) {
-        return;
-    }
-
     auto consume_menu_input = [&] {
         *buttons &= static_cast<uint16_t>(~menu_buttons);
         *x = 0.0f;
         *y = 0.0f;
     };
 
+    if (state.transition != MenuTransition::None) {
+        consume_menu_input();
+        if (now - state.transition_started > std::chrono::seconds{5}) {
+            std::fprintf(stderr, "[sote][menu] Page transition timed out.\n");
+            state.transition = MenuTransition::None;
+            state.submenu_active = false;
+            return;
+        }
+        switch (state.transition) {
+            case MenuTransition::FocusOptions:
+                if (state.main_visible && state.options_focused_in_main) {
+                    set_transition_locked(MenuTransition::OpenOptions);
+                } else {
+                    *buttons |= n64_z;
+                    if (now - state.phase_started > std::chrono::milliseconds{80}) {
+                        set_transition_locked(MenuTransition::WaitOptionsFocus);
+                    }
+                }
+                return;
+            case MenuTransition::WaitOptionsFocus:
+                if (state.main_visible && state.options_focused_in_main) {
+                    set_transition_locked(MenuTransition::OpenOptions);
+                }
+                return;
+            case MenuTransition::OpenOptions:
+                *buttons |= n64_a;
+                if (now - state.phase_started > std::chrono::milliseconds{80}) {
+                    set_transition_locked(MenuTransition::WaitOptions);
+                }
+                return;
+            case MenuTransition::WaitOptions:
+                if (state.options_visible) {
+                    if (state.open_controls) {
+                        state.submenu_active = true;
+                        state.category = TopCategory::Controls;
+                        state.submenu_selection = 0;
+                        state.editing = state.applied;
+                    }
+                    state.transition = MenuTransition::None;
+                }
+                return;
+            case MenuTransition::ReturnToMain:
+                *buttons |= n64_b;
+                if (now - state.phase_started > std::chrono::milliseconds{80}) {
+                    set_transition_locked(MenuTransition::WaitMain);
+                }
+                return;
+            case MenuTransition::WaitMain:
+                if (state.main_visible) {
+                    if (state.restore_profile_focus && state.options_focused_in_main) {
+                        set_transition_locked(MenuTransition::RestoreProfileFocus);
+                    } else {
+                        state.transition = MenuTransition::None;
+                    }
+                }
+                return;
+            case MenuTransition::RestoreProfileFocus:
+                *buttons |= n64_z;
+                if (now - state.phase_started > std::chrono::milliseconds{80}) {
+                    state.transition = MenuTransition::None;
+                }
+                return;
+            default:
+                return;
+        }
+    }
+
+    if (!state.options_visible) {
+        if (!state.main_visible || !view ||
+            view->screen != sote::menu_skin::Screen::Profiles) return;
+        if ((pressed & (n64_l | n64_r)) == 0) return;
+        state.restore_profile_focus = !state.options_focused_in_main;
+        state.open_controls = (pressed & n64_l) != 0;
+        state.submenu_active = state.open_controls;
+        if (state.open_controls) {
+            state.category = TopCategory::Controls;
+            state.submenu_selection = 0;
+            state.editing = state.applied;
+        }
+        state.transition_started = now;
+        set_transition_locked(MenuTransition::FocusOptions);
+        consume_menu_input();
+        return;
+    }
+
+    if (!view || (view->screen != sote::menu_skin::Screen::Options &&
+                  view->screen != sote::menu_skin::Screen::Graphics &&
+                  view->screen != sote::menu_skin::Screen::Schemes)) return;
+
     if (state.submenu_active) {
         consume_menu_input();
         int page_direction = 0;
         if ((pressed & n64_r) != 0) {
             page_direction = 1;
-        } else if ((pressed & (n64_l | n64_z)) != 0) {
-            page_direction = -1;
-        } else if (state.submenu_selection == 0 &&
-                   (pressed & n64_dr) != 0) {
-            page_direction = 1;
-        } else if (state.submenu_selection == 0 &&
-                   (pressed & n64_dl) != 0) {
+        } else if ((pressed & n64_l) != 0) {
             page_direction = -1;
         }
         if (page_direction != 0) {
@@ -840,9 +960,9 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     }
 
     int page_direction = 0;
-    if ((pressed & (n64_dr | n64_r)) != 0) {
+    if ((pressed & n64_r) != 0) {
         page_direction = 1;
-    } else if ((pressed & (n64_dl | n64_l | n64_z)) != 0) {
+    } else if ((pressed & n64_l) != 0) {
         page_direction = -1;
     }
     if (page_direction != 0) {
@@ -856,8 +976,31 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
 void observe_native_options(int selection) {
     std::lock_guard lock{state.mutex};
     state.options_visible = true;
+    state.main_visible = false;
     state.last_options_seen = std::chrono::steady_clock::now();
     state.original_selection = selection == 0 ? 52 : 51 + selection * 2;
+}
+
+void observe_main_menu(bool options_focused) {
+    std::lock_guard lock{state.mutex};
+    state.main_visible = true;
+    state.options_visible = false;
+    if (!state.open_controls ||
+        (state.transition != MenuTransition::FocusOptions &&
+         state.transition != MenuTransition::WaitOptionsFocus &&
+         state.transition != MenuTransition::OpenOptions &&
+         state.transition != MenuTransition::WaitOptions)) {
+        state.submenu_active = false;
+    }
+    state.options_focused_in_main = options_focused;
+    state.last_main_seen = std::chrono::steady_clock::now();
+}
+
+void observe_other_screen() {
+    std::lock_guard lock{state.mutex};
+    state.main_visible = false;
+    state.options_visible = false;
+    state.submenu_active = false;
 }
 
 void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
@@ -873,7 +1016,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
     view.rows = {};
     if (state.category == TopCategory::Controls) {
         view.screen = Screen::Schemes;
-        put(52, "Options   Graphics   < Controls >", 160, 50);
+        put(52, "Main   Options   Graphics   < Controls >", 160, 50);
         put(53, "On Foot", 52, 66, 1);
         put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 166, 66, 1);
         put(55, "Speeder Bike", 52, 78, 2);
@@ -892,7 +1035,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(76, "Apply", 220, 220, 3 + tuning_count);
     } else {
         view.screen = Screen::Graphics;
-        put(52, "Options   < Graphics >   Controls", 160, 50);
+        put(52, "Main   Options   < Graphics >   Controls", 160, 50);
         put(53, "Resolution", 72, 70, 1); put(54, output_resolution_name(state.editing), 160, 70, 1);
         put(55, "Render Scale", 72, 86, 2); put(56, resolution_name(state.editing.resolution), 160, 86, 2);
         put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);

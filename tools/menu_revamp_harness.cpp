@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <thread>
 #include <vector>
 
 extern "C" int sote_is_bike_stage_active() {
@@ -118,6 +119,30 @@ struct Memory {
             }
         }
     }
+
+    void profiles(bool options_focused) {
+        word(0x800dd5e4, 0);
+        word(0x800d0948, 1);
+        constexpr uint32_t table = 0x80230000;
+        word(0x8013ce30, table);
+        for (int row = 0; row < 80; ++row) {
+            word(table + static_cast<uint32_t>(row) * 4, text(""));
+            half(0x80111110 + static_cast<uint32_t>(row) * 4, 0xfc18);
+        }
+        auto put = [&](int row, const char* label, bool focused) {
+            word(table + static_cast<uint32_t>(row) * 4, text(label));
+            half(0x80111110 + static_cast<uint32_t>(row) * 4, 100);
+            word(0x80111250 + static_cast<uint32_t>(row) * 4,
+                focused ? 0xc8ffc8ff : 0x408040ff);
+        };
+        put(51, "Player A", !options_focused);
+        put(52, "Player B", false);
+        put(53, "Player C", false);
+        put(54, "New Player 4", false);
+        put(76, "Options", options_focused);
+        put(77, "Rename", false);
+        put(78, "Clear", false);
+    }
 };
 
 void press(uint16_t buttons) {
@@ -126,6 +151,32 @@ void press(uint16_t buttons) {
     uint16_t neutral = 0;
     sote::graphics_menu::filter_input(&neutral, &x, &y);
     sote::graphics_menu::filter_input(&buttons, &x, &y);
+}
+
+void pump_transition(Memory& memory, bool& options_focused,
+                     bool& native_options, int milliseconds = 500) {
+    uint16_t previous = 0;
+    for (int elapsed = 0; elapsed < milliseconds; elapsed += 10) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        uint16_t buttons = 0;
+        float x = 0.0f, y = 0.0f;
+        sote::graphics_menu::filter_input(&buttons, &x, &y);
+        const uint16_t rising = buttons & static_cast<uint16_t>(~previous);
+        if ((rising & 0x2000) != 0) {
+            options_focused = !options_focused;
+            memory.profiles(options_focused);
+        } else if ((rising & 0x8000) != 0 && options_focused) {
+            memory.native_options();
+            native_options = true;
+        } else if ((rising & 0x4000) != 0) {
+            memory.profiles(true);
+            options_focused = true;
+            native_options = false;
+        }
+        if (native_options) sote_capture_native_options(memory.bytes.data());
+        else sote_capture_menu(memory.bytes.data());
+        previous = buttons;
+    }
 }
 
 const sote::menu_skin::Snapshot& latest_snapshot() {
@@ -157,15 +208,22 @@ int main(int argc, char** argv) {
     sote::menu_skin::set_renderer_available(true);
 
     Memory memory;
-    memory.native_options();
-    sote_capture_native_options(memory.bytes.data());
-    check(latest_screen_is(sote::menu_skin::Screen::Options),
-        "starts on native Options page");
+    bool options_focused = false;
+    bool native_options = false;
+    memory.profiles(options_focused);
+    sote_capture_menu(memory.bytes.data());
+    check(latest_screen_is(sote::menu_skin::Screen::Profiles),
+        "starts on the profile picker");
 
-    press(0x0100);
+    press(0x0010);
+    pump_transition(memory, options_focused, native_options);
+    check(native_options && latest_screen_is(sote::menu_skin::Screen::Options),
+        "R shoulder opens real Options from profiles");
+
+    press(0x0010);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Graphics),
-        "D-right moves Options to Graphics");
+        "R shoulder moves Options to Graphics");
     check(
         latest_snapshot().rows[52].text.find("< Graphics >") != std::string::npos,
         "Graphics page title is selected");
@@ -178,29 +236,6 @@ int main(int argc, char** argv) {
         latest_snapshot().rows[52].text.find("< Controls >") != std::string::npos,
         "Controls page title is selected");
 
-    press(0x0010);
-    sote_capture_native_options(memory.bytes.data());
-    check(latest_screen_is(sote::menu_skin::Screen::Options),
-        "R shoulder wraps Controls to Options");
-
-    press(0x0020);
-    sote_capture_native_options(memory.bytes.data());
-    check(latest_screen_is(sote::menu_skin::Screen::Schemes),
-        "L shoulder wraps Options to Controls");
-
-    press(0x0020);
-    sote_capture_native_options(memory.bytes.data());
-    check(latest_screen_is(sote::menu_skin::Screen::Graphics),
-        "L shoulder moves Controls to Graphics");
-
-    press(0x0020);
-    sote_capture_native_options(memory.bytes.data());
-    check(latest_screen_is(sote::menu_skin::Screen::Options),
-        "L shoulder moves Graphics back to Options");
-
-    press(0x0100);
-    press(0x0010);
-    sote_capture_native_options(memory.bytes.data());
     press(0x0400);
     press(0x0100);
     sote_capture_native_options(memory.bytes.data());
@@ -218,6 +253,30 @@ int main(int argc, char** argv) {
     check(
         latest_snapshot().rows[58].text.find("[") != std::string::npos,
         "Controls tuning row is presented as a slider");
+
+    press(0x0010);
+    pump_transition(memory, options_focused, native_options);
+    check(!native_options && latest_screen_is(sote::menu_skin::Screen::Profiles),
+        "R shoulder wraps Controls back to profiles");
+    check(!options_focused,
+        "return restores focus to the original profile item");
+
+    press(0x0020);
+    pump_transition(memory, options_focused, native_options);
+    check(native_options && latest_screen_is(sote::menu_skin::Screen::Schemes),
+        "L shoulder wraps profiles back to Controls");
+    press(0x0020);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_screen_is(sote::menu_skin::Screen::Graphics),
+        "L shoulder moves Controls to Graphics");
+    press(0x0020);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_screen_is(sote::menu_skin::Screen::Options),
+        "L shoulder moves Graphics to Options");
+    press(0x0020);
+    pump_transition(memory, options_focused, native_options);
+    check(!native_options && latest_screen_is(sote::menu_skin::Screen::Profiles),
+        "L shoulder returns Options to profiles");
 
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

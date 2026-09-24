@@ -483,6 +483,8 @@ const char* san_movie_for_event(int16_t event) {
         case 27:
             return "L09BOSS.SAN";
         default:
+            // TODO: Event 31 is the final epilogue. Select L11WIN/L11LOSE
+            // from verified game state and avoid replaying native slides.
             return nullptr;
     }
 }
@@ -510,13 +512,25 @@ void update_san_movie_triggers(uint8_t* rdram) {
         read_guest_half(rdram, 0x8013CE0EU));
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
-    if (result != 2) {
-        return;
-    }
     if (sote::san_movies::menu_music_active()) {
         return;
     }
     const int event_level = level_index_for_event(event);
+    if (event_level >= 0) {
+        const int32_t lives = static_cast<int32_t>(
+            read_guest_word(rdram, 0x800E0EB0U));
+        if (lives < 0) {
+            if (!san_game_over_started) {
+                san_game_over_started = true;
+                sote::san_movies::play_cached_preview("GAMEOVER.SAN");
+            }
+            return;
+        }
+        san_game_over_started = false;
+    }
+    if (result != 2) {
+        return;
+    }
     if (event != san_last_movie_event) {
         san_last_movie_event = event;
         if (const char* movie = san_movie_for_event(event)) {
@@ -532,9 +546,6 @@ void update_san_movie_triggers(uint8_t* rdram) {
             }
         }
         san_last_event_level = event_level;
-    }
-    if (event_level >= 0) {
-        san_game_over_started = false;
     }
 }
 
@@ -782,6 +793,9 @@ void log_general_failure_telemetry(int vi) {
             if (smoke_expect_natural_game_over &&
                 previous_general_telemetry.lives == -1 &&
                 previous_general_telemetry.result == 4) {
+                if (sote::san_movies::cached_playback_active()) {
+                    return;
+                }
                 std::printf(
                     "[sote][smoke] NATURAL GAME OVER COMPLETE "
                     "expected_index=%d expected_name=%s VI=%d "
@@ -841,10 +855,6 @@ void log_general_failure_telemetry(int vi) {
                 current.stage,
                 current.failure_condition,
                 current.event);
-            if (!san_game_over_started) {
-                san_game_over_started = true;
-                sote::san_movies::play_cached_preview("GAMEOVER.SAN");
-            }
             if (smoke_refill_lives) {
                 constexpr int32_t diagnostic_lives = 3;
                 write_guest_word(

@@ -550,6 +550,11 @@ void poll_input() {
             raw_input.axes[a] = SDL_GameControllerGetAxis(controller, static_cast<SDL_GameControllerAxis>(a));
     }
     const auto menu = sote::menu_skin::latest();
+    const bool page_keys = menu &&
+        (menu->screen == sote::menu_skin::Screen::Profiles ||
+         menu->screen == sote::menu_skin::Screen::Options ||
+         menu->screen == sote::menu_skin::Screen::Graphics ||
+         menu->screen == sote::menu_skin::Screen::Schemes);
     const bool binding_screen = menu && menu->screen == sote::menu_skin::Screen::Controls && menu->rebinding;
     const auto now_ms = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count());
@@ -593,9 +598,9 @@ void poll_input() {
                     controller,
                     SDL_CONTROLLER_AXIS_TRIGGERLEFT),
                 controls) > 0.0f) {
-            buttons |= menu ? n64_l : n64_z;
+            buttons |= page_keys ? n64_l : n64_z;
         }
-        if (menu && normalize_trigger(
+        if (page_keys && normalize_trigger(
                 mapped_axis(
                     controller,
                     SDL_CONTROLLER_AXIS_TRIGGERRIGHT),
@@ -721,12 +726,12 @@ void poll_input() {
     if (key_down('X')) buttons |= n64_b;
     if (key_down('C')) buttons |= n64_z;
     if (key_down(VK_RETURN)) buttons |= n64_start;
-    if (key_down('Q')) buttons |= n64_l;
-    if (key_down('E')) buttons |= n64_r;
+    if (key_down('Q')) buttons |= page_keys ? n64_dl : n64_l;
+    if (key_down('E')) buttons |= page_keys ? n64_dr : n64_r;
     if (key_down(VK_UP)) buttons |= n64_du;
     if (key_down(VK_DOWN)) buttons |= n64_dd;
-    if (key_down(VK_LEFT)) buttons |= n64_dl;
-    if (key_down(VK_RIGHT)) buttons |= n64_dr;
+    if (key_down(VK_LEFT)) buttons |= page_keys ? n64_l : n64_dl;
+    if (key_down(VK_RIGHT)) buttons |= page_keys ? n64_r : n64_dr;
     if (key_down('I')) buttons |= n64_cu;
     if (key_down('K')) buttons |= n64_cd;
     if (key_down('J')) buttons |= n64_cl;

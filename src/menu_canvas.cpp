@@ -269,7 +269,9 @@ void summary(Canvas& c, const Snapshot& s) {
 }
 void options(Canvas& c, const Snapshot& s) {
     c.stars();
-    c.heading(s.rows[52].text, "options.return", selected(s.rows[52]) ? cyan : 0x66C2B6FF);
+    c.heading("Options", "options.heading");
+    c.text("Main   < Options >   Graphics   Controls", "options.tabs",
+        480, 84, 18, 0x697388FF, 820, 1);
     int index = 0;
     for (int row = 53; row <= 67; row += 2) {
         if (!s.rows[row].visible()) continue;
@@ -281,10 +283,13 @@ void options(Canvas& c, const Snapshot& s) {
         ++index;
     }
     c.rect(92, 469, 776, 2, purple);
-    c.text("Select with your usual controls", "options.hint", 480, 493, 18, 0x697388FF, 745, 1);
+    c.text(s.rows[52].text, "options.return", 480, 493, 24,
+        selected(s.rows[52]) ? cyan : teal, 745, 1);
 }
 void graphics(Canvas& c, const Snapshot& s) {
-    c.stars(); c.heading(s.rows[52].text, "graphics.heading");
+    c.stars(); c.heading("Graphics", "graphics.heading");
+    c.text(s.rows[52].text, "graphics.tabs", 480, 84, 18,
+        0x697388FF, 820, 1);
     for (int i = 0; i < 5; ++i) {
         const int row = 53 + i * 2;
         const bool focus = selected(s.rows[row]);
