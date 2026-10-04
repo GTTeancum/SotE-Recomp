@@ -261,10 +261,36 @@ Snapshot read_native_options(const uint8_t* rdram, size_t size) {
     }
     return s;
 }
+Snapshot read_native_pause(const uint8_t* rdram, size_t size) {
+    Snapshot s;
+    const Guest g{rdram, size};
+    // func_8001FC90 draws this branch when 0x800D0948 is set. 0x0944
+    // is its native highlighted entry (Resume, Options, Quit).
+    if (!native_pause_active(rdram, size)) return s;
+    const int selection = g.signed_half(0x800D0944U);
+    if (selection < 0 || selection > 2) return s;
+    s.original = read_original_font(rdram, size);
+    if (!s.original) return {};
+    // These three labels are fixed in the retail ROM. Its string segment is
+    // not copied into the RDRAM span supplied to the host-side decoder.
+    constexpr const char* labels[] = {"Resume", "Options", "Quit"};
+    for (int i = 0; i < 3; ++i) {
+        s.rows[70 + i] = {150, 130 + i * 20,
+            i == selection ? 0xC8FFC8FFU : 0x408080FFU, labels[i]};
+    }
+    s.focused_setting = selection;
+    s.screen = Screen::Pause;
+    return s;
+}
+bool native_pause_active(const uint8_t* rdram, size_t size) {
+    const Guest g{rdram, size};
+    return g.valid(0x800D0948U, 4) && g.word(0x800D0948U) != 0;
+}
 const char* screen_name(Screen s) {
     switch (s) {
         case Screen::Profiles: return "profiles";
         case Screen::Summary: return "summary";
+        case Screen::Pause: return "pause";
         case Screen::Options: return "options";
         case Screen::Controls: return "controls";
         case Screen::Graphics: return "graphics";

@@ -1,5 +1,87 @@
 # Live menu revamp — source integration / Windows test candidate
 
+## Current Windows update (October 2026)
+
+Pause now has a translucent overlay with native Resume, Options, and Quit
+focus over the live paused level. The game's player, difficulty, time, and
+challenge-point header remains visible. The capture path distinguishes Pause
+from the profile picker even though both use the same native menu flag.
+`Sdata/UI/fonts.ini` uses the installed Windows Segoe UI font for Pause,
+Options, Graphics, Controls, and scheme menus. The default remains the original
+font, preserving native level select and communicator text. If Segoe UI is
+unavailable, these roles fall back to the original glyphs.
+
+The Windows Release build and all eight CTest harnesses pass. Native RT64
+captures in `build/diagnostics/pause_menu_modern_font/frames` show the Pause
+header, styled action focus, paused gameplay background, and Options page
+after choosing Options. Captures in
+`build/diagnostics/options_submenus_modern_font/frames` show the Controls
+scheme page and its Mouse Aim setting. Physical keyboard, mouse, and controller
+feel still needs review. The older validation notes below describe the earlier
+delivery.
+
+Graphics now has a Cutscenes row. Choose **PC FMV** to use the cached SAN
+videos or **Original N64** to let the game present its native cutscenes, then
+choose Apply. The selection is saved in `sote_options.json`. Switching to
+Original N64 stops an active cached video. Placement of PC videos in several
+story sequences still needs correction against the reported examples.
+The local candidate at `build/candidate-controls-menu` links to the existing
+SAN cache in `SotE_Recompiled` for testing without duplicating it. A native
+capture of `L00LOGO.SAN` confirmed the cached PC frame appears in the running
+game; that muted diagnostic did not verify the audio output or story timing.
+A later process-local Escape from Echo Base run captured `L02INTRO.SAN`
+between level selection and native mission dialogue. The same route with a
+persisted Original N64 setting showed the mission dialogue without any PC
+movie. Compact valid JSON values for `pcCutscenes` now reload correctly; both
+directions have restart checks in `menu_revamp_harness`.
+An unskipped PC boot run captured the complete Hoth opening movie handing off
+to the native title screen. SDL's dummy audio device accepted non-silent movie
+PCM and returned to game audio afterward; physical speaker output is untested.
+An Asteroid Field comparison shows the short PC ship-approach film returning to
+the native TIE/asteroid briefing and playable Outrider sequence. Original N64
+mode starts with that briefing directly; the PC movie does not repeat native
+story slides in this route.
+Mos Eisley's PC film now starts on the Part III story event (16) and uses the
+native Start-skip transition into bike gameplay (17) after playback. A
+natural-route capture shows that handoff without repeated story slides and
+records non-silent movie PCM reaching SDL's dummy audio queue.
+Imperial Freighter's PC film now starts on native story event 18 or on event 19
+when the level is selected directly. Both use observed Start-skip transitions
+to playable event 20 after playback, avoiding repeated native story. The
+event-19 story requests the main-menu music cue, so that cue no longer blocks
+SAN triggers. A full selected-level capture shows the movie returning to the
+ship interior and supercomputer objective; SDL's dummy device received
+non-silent movie PCM before the game-audio handoff.
+Gall Spaceport plays `L05INTRO.SAN` at event 11. Its decoded soundtrack
+conveys the same story as the N64 slides, so PC mode now takes the game's
+native Start-skip transition after playback. A process-local capture shows
+the movie returning to the ship-side "find Boba Fett" mission briefing
+without replaying those slides. Other SAN placements and audible runtime
+verification remain open.
+The same story-specific transition is now used for the Sewers PC movie
+(`L08INTRO`, event 24 to 25) and Skyhook PC movie (`L10INTRO`, event 28 to 29).
+Ord Mantell also uses the native Start-skip destination after its PC movie
+(`L04INTRO`, event 7 to 8). A full natural-route capture shows the film ending
+and the train level becoming playable without repeated story slides.
+Native Start-skip probes established these destinations. Rendered PC runs show
+the full movies followed by their gameplay objectives, while Original N64
+captures retain the corresponding story screens. These diagnostics were muted.
+An event-14 diagnostic showed `L05BOSS.SAN` appearing before the Gall mission
+instruction to find Boba Fett. That event-entry trigger is removed, and chapter
+intros now run only on each level's opening event, so the event-14 checkpoint
+does not replay `L05INTRO.SAN`. The Boba encounter trigger remains to be found.
+Event-10 and event-27 probes support the existing IG-88 and Xizor droid boss
+placements; the event-27 PC movie returns to a playable Palace room. These
+were direct, muted event probes, so natural-route and audio verification remain.
+The final event (31) contains both epilogue scenes and the credits. PC mode
+now plays `L11LOSE.SAN` then `L11WIN.SAN`, holds the last black movie frame
+briefly while advancing the matching native scenes within the game process,
+and reveals the native credits. A full direct-event capture verified the two
+films, non-silent PCM queued to SDL's dummy audio device, and the credits
+without replayed dialogue. Original N64 mode still displays the native
+memorial scene directly. The natural campaign route and speaker output have
+not yet been checked.
+
 ## Install
 
 Extract `SotE_Control_Rebinding_And_Menus.zip` over the project root that already

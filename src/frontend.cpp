@@ -47,6 +47,7 @@ std::atomic<uint32_t> scripted_input_snapshot{0};
 std::atomic<bool> physical_input_enabled{true};
 std::atomic<bool> audio_output_enabled{true};
 std::atomic<uint64_t> movie_playback_token{0};
+std::atomic<bool> movie_guest_advance{false};
 std::atomic<bool> swallow_movie_skip{false};
 SDL_GameController* controller = nullptr;
 bool initialized = false;
@@ -95,15 +96,9 @@ void update_muted_audio_clock_locked() {
     muted_audio_clock = now;
 }
 
-// Modern speeder-bike scheme: RT throttle, LT brake, left stick steers,
-// RB fires. This assumes Classic's bike control reads the left stick's
-// Y axis as throttle-forward/brake-back and X axis as steering -- i.e.
-// Modern's whole point is moving throttle/brake off the stick and onto
-// triggers, leaving the stick to steering only. That assumption is NOT
-// verified against the original bike controller logic; if the bike
-// doesn't respond to speed changes correctly under Modern, this is the
-// first place to check. Fire-button identity is equally unverified --
-// see bike_fire_button in CONTROLS_MODERN.INI.
+// Modern speeder-bike scheme: RT throttle, LT brake, left stick steering.
+// The bike controller uses native Accelerate/Brakes actions and an analog
+// steering axis. Its Fire and Kick entries are unused in this stage.
 // The curve/falloff/stabilization math itself lives in controls_menu so it
 // can be exercised without SDL by tools/controls_harness.
 sote::controls_menu::ModernBikeFilterState modern_bike_filter;
@@ -213,9 +208,12 @@ void apply_modern_bike_scheme(
 
     // Steering stays on the stick, which the bike genuinely reads as an
     // analog value. Throttle and brake drive the game's actual Accelerate
-    // and Brakes buttons (A and B per its own control diagram) on a duty
-    // cycle, since those inputs are digital and cannot take a level.
+    // and Brakes buttons from the current native preset on a duty cycle,
+    // since those inputs are digital and cannot take a level.
     x = axes.x * n64_stick_scale;
+    // The native bike camera also reads vertical stick movement. Feed it
+    // the filtered throttle/brake axis without relying on that axis for speed.
+    y = axes.y * n64_stick_scale;
 
     const sote::controls_menu::ModernBikeButtons bike_buttons =
         sote::controls_menu::compute_modern_bike_buttons(
@@ -230,8 +228,6 @@ void apply_modern_bike_scheme(
     // No fire binding: the bike's Fire and Kick actions were never used by
     // the game, so pressing a pad button through to one of them would only
     // trigger whatever that N64 button does on the bike instead.
-    (void)tuning;
-    (void)y;
 }
 
 bool process_owns_foreground_window() {
@@ -482,11 +478,14 @@ bool movie_skip_pressed(uint64_t token, int vi) {
         return false;
     }
     const char* test_skip_vi = std::getenv("SOTE_SAN_TEST_SKIP_VI");
-    if (!process_owns_foreground_window() && test_skip_vi == nullptr) {
+    const bool focused = process_owns_foreground_window();
+    if (!focused && test_skip_vi == nullptr) {
         armed = false;
         return false;
     }
-    bool pressed = skip_controls_down();
+    // An offscreen diagnostic must not see unrelated host keyboard or pad
+    // state. Only its exact, process-local skip VI may advance the movie.
+    bool pressed = focused && skip_controls_down();
     if (test_skip_vi != nullptr && vi == std::atoi(test_skip_vi)) {
         pressed = true;
     }
@@ -517,7 +516,10 @@ void poll_input() {
         physical_input_enabled.load(std::memory_order_relaxed);
     const bool focused = process_owns_foreground_window();
     if (!input_enabled || !focused) {
-        control_bindings::focus_lost();
+        // The process-local binding probe has no foreground window. Its
+        // scripted pad still exercises the editor through get_input().
+        if (std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") == nullptr)
+            control_bindings::focus_lost();
         sote::modern_controls::publish({});
         input_snapshot.store(0, std::memory_order_relaxed);
         static bool reported_ignored_input = false;
@@ -574,8 +576,6 @@ void poll_input() {
     Sint16 raw_ly = 0;
     Sint16 raw_rx = 0;
     Sint16 raw_ry = 0;
-    if (controller == nullptr) sote::modern_controls::publish({});
-
     if (controller != nullptr) {
         auto pressed = [](SDL_GameControllerButton button) {
             return mapped_button(controller, button) != 0;
@@ -636,9 +636,6 @@ void poll_input() {
         x = normalize_axis(raw_lx, controls);
         y = -normalize_axis(raw_ly, controls);
 
-        sote::modern_controls::publish({
-            {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)},
-            {raw_axis_to_unit(raw_rx), raw_axis_to_unit(raw_ry)}, true});
         const bool on_foot_modern = !menu && sote::modern_controls::on_foot_active() &&
             sote::controls_menu::current_scheme(
                 sote::controls_menu::SchemeSlot::OnFoot) ==
@@ -736,6 +733,12 @@ void poll_input() {
     if (key_down('K')) buttons |= n64_cd;
     if (key_down('J')) buttons |= n64_cl;
     if (key_down('L')) buttons |= n64_cr;
+    // Mouse 1 is the default Modern on-foot Fire alias. It is sampled through
+    // the rebinding layer, so assigning the button elsewhere removes this alias.
+    if (!menu && sote::modern_controls::on_foot_active() &&
+        sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
+            sote::controls_menu::ControlScheme::Modern && key_down(VK_LBUTTON))
+        buttons |= n64_b;
 
     float keyboard_x = 0.0f;
     float keyboard_y = 0.0f;
@@ -743,13 +746,16 @@ void poll_input() {
     if (key_down('D')) keyboard_x += n64_stick_scale;
     if (key_down('W')) keyboard_y += n64_stick_scale;
     if (key_down('S')) keyboard_y -= n64_stick_scale;
-    if (controller != nullptr && (keyboard_x != 0 || keyboard_y != 0)) {
-        // Keep WASD usable when an idle gamepad is connected. The guest's
-        // Modern decoder consumes this snapshot instead of the N64 stick.
-        sote::modern_controls::publish({
-            {keyboard_x / n64_stick_scale, keyboard_y / n64_stick_scale},
-            {raw_axis_to_unit(raw_rx), raw_axis_to_unit(raw_ry)}, true});
-    }
+    // Feed keyboard movement and relative mouse look to the same Modern guest
+    // hooks used by the controller, including when no gamepad is connected.
+    const sote::modern_controls::Stick modern_move =
+        keyboard_x != 0 || keyboard_y != 0
+            ? sote::modern_controls::Stick{
+                keyboard_x / n64_stick_scale, keyboard_y / n64_stick_scale}
+            : sote::modern_controls::Stick{
+                raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)};
+    sote::modern_controls::publish({modern_move,
+        {raw_axis_to_unit(raw_rx), raw_axis_to_unit(raw_ry)}, !menu});
     if (x == 0.0f) x = keyboard_x;
     if (y == 0.0f) y = keyboard_y;
 
@@ -781,6 +787,10 @@ void poll_input() {
         std::memory_order_relaxed);
 }
 
+void add_mouse_delta(int x, int y) {
+    sote::modern_controls::add_mouse_delta(x, y);
+}
+
 void set_physical_input_enabled(bool enabled) {
     physical_input_enabled.store(enabled, std::memory_order_relaxed);
     if (!enabled) {
@@ -791,7 +801,11 @@ void set_physical_input_enabled(bool enabled) {
 
 bool get_input(int port, uint16_t* buttons, float* x, float* y) {
     if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
-        *buttons = 0;
+        // The PC ending replaces native dialogue but retains native credits.
+        // Short A pulses advance those hidden story cards during the final
+        // seconds of the second film. All other films keep guest input frozen.
+        *buttons = movie_guest_advance.load(std::memory_order_relaxed) ?
+            n64_a : 0;
         *x = 0.0f;
         *y = 0.0f;
         return true;
@@ -802,6 +816,50 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
     const uint32_t snapshot = input_snapshot.load(std::memory_order_relaxed);
     const uint32_t scripted =
         scripted_input_snapshot.load(std::memory_order_relaxed);
+    // In an offscreen game-process diagnostic, route scripted N64 pulses
+    // through the same binding editor state machine as a physical pad. The
+    // normal SDL poll is intentionally inactive without window focus.
+    if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") != nullptr) {
+        const auto menu = sote::menu_skin::latest();
+        if (menu && menu->screen == sote::menu_skin::Screen::Controls &&
+            menu->rebinding) {
+            control_bindings::PhysicalInput virtual_pad{};
+            virtual_pad.connected = true;
+            virtual_pad.instance = 1;
+            virtual_pad.buttons[SDL_CONTROLLER_BUTTON_A] =
+                (scripted & n64_a) != 0;
+            virtual_pad.buttons[SDL_CONTROLLER_BUTTON_B] =
+                (scripted & n64_b) != 0;
+            virtual_pad.buttons[SDL_CONTROLLER_BUTTON_DPAD_UP] =
+                (scripted & n64_du) != 0;
+            virtual_pad.buttons[SDL_CONTROLLER_BUTTON_DPAD_DOWN] =
+                (scripted & n64_dd) != 0;
+            virtual_pad.buttons[SDL_CONTROLLER_BUTTON_DPAD_LEFT] =
+                (scripted & n64_dl) != 0;
+            virtual_pad.buttons[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] =
+                (scripted & n64_dr) != 0;
+            const auto now = std::chrono::steady_clock::now();
+            const auto now_ms = static_cast<uint64_t>(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now.time_since_epoch()).count());
+            if ((scripted & n64_a) != 0) {
+                auto released = virtual_pad;
+                released.buttons[SDL_CONTROLLER_BUTTON_A] = 0;
+                (void)control_bindings::handle_menu(
+                    released, true, now_ms - 1, true);
+            }
+            const int action = control_bindings::handle_menu(
+                virtual_pad, true, now_ms, true);
+            if (action != 0) {
+                *buttons = action == 2 ? n64_b :
+                    action == 3 ? n64_start : 0;
+                *x = 0.0f;
+                *y = 0.0f;
+                return true;
+            }
+        }
+    }
     *buttons = static_cast<uint16_t>(snapshot | scripted);
     const int8_t scripted_x = static_cast<int8_t>(scripted >> 16);
     const int8_t scripted_y = static_cast<int8_t>(scripted >> 24);
@@ -854,6 +912,10 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
     }
     sote::graphics_menu::filter_input(buttons, x, y);
     return true;
+}
+
+void set_movie_guest_advance(bool pressed) {
+    movie_guest_advance.store(pressed, std::memory_order_relaxed);
 }
 
 void set_scripted_input(uint16_t buttons, int8_t x, int8_t y) {

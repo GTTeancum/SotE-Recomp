@@ -9,6 +9,10 @@
 #include <sstream>
 #include <string_view>
 #include <unordered_map>
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
 
 // Private implementation: never reuse or replace RT64/ImGui's font context.
 #define STBTT_STATIC
@@ -75,10 +79,22 @@ FontFace* face_for(std::string role) {
     bool safe = !relative.is_absolute() && !relative.has_root_name();
     for (const auto& part : relative) if (part == "..") safe = false;
     const auto root = std::filesystem::weakly_canonical(ui_root, ec);
-    const auto full = std::filesystem::weakly_canonical(ui_root / relative, ec);
-    const auto rel = full.lexically_relative(root);
-    if (rel.empty()) safe = false;
-    for (const auto& part : rel) if (part == "..") safe = false;
+    std::filesystem::path full;
+#ifdef _WIN32
+    if (path == "system:segoeui.ttf") {
+        wchar_t directory[MAX_PATH]{};
+        const UINT count = GetWindowsDirectoryW(directory, MAX_PATH);
+        safe = count > 0 && count < MAX_PATH;
+        if (safe) full = std::filesystem::path(directory) / L"Fonts" / L"segoeui.ttf";
+        ec.clear();
+    } else
+#endif
+    {
+        full = std::filesystem::weakly_canonical(ui_root / relative, ec);
+        const auto rel = full.lexically_relative(root);
+        if (rel.empty()) safe = false;
+        for (const auto& part : rel) if (part == "..") safe = false;
+    }
     const auto length = safe && !ec ? std::filesystem::file_size(full, ec) : 0;
     if (safe && !ec && length >= 12 && length <= 16 * 1024 * 1024) {
         std::ifstream in(full, std::ios::binary);
@@ -115,19 +131,23 @@ public:
     Image image;
     float scale, offset_x, offset_y;
     const OriginalFont& font;
-    Canvas(unsigned w, unsigned h, const OriginalFont& f) : image{w, h, std::vector<uint8_t>(size_t(w) * h * 4)},
+    Canvas(unsigned w, unsigned h, const OriginalFont& f, bool transparent = false) : image{w, h, std::vector<uint8_t>(size_t(w) * h * 4)},
         scale(std::min(w / 960.0f, h / 540.0f)), offset_x((w - 960 * scale) / 2), offset_y((h - 540 * scale) / 2), font(f) {
-        for (size_t i = 3; i < image.rgba.size(); i += 4) image.rgba[i] = 255;
+        if (!transparent) for (size_t i = 3; i < image.rgba.size(); i += 4) image.rgba[i] = 255;
     }
     void pixel(int x, int y, Color c, unsigned coverage = 255) {
         if (x < 0 || y < 0 || x >= int(image.width) || y >= int(image.height)) return;
         const unsigned a = (c & 255) * coverage / 255;
         if (!a) return;
         const size_t p = (size_t(y) * image.width + unsigned(x)) * 4;
+        const unsigned previous_alpha = image.rgba[p + 3];
+        const unsigned alpha = a + (previous_alpha * (255 - a) + 127) / 255;
         for (int k = 0; k < 3; ++k) {
             const unsigned v = (c >> (24 - k * 8)) & 255;
-            image.rgba[p + k] = uint8_t((v * a + image.rgba[p + k] * (255 - a) + 127) / 255);
+            const unsigned previous = image.rgba[p + k] * previous_alpha * (255 - a) / 255;
+            image.rgba[p + k] = uint8_t((v * a + previous + alpha / 2) / alpha);
         }
+        image.rgba[p + 3] = uint8_t(alpha);
     }
     void rect(float x, float y, float w, float h, Color c) {
         const int x0 = std::max(0, int(std::round(offset_x + x * scale)));
@@ -286,18 +306,35 @@ void options(Canvas& c, const Snapshot& s) {
     c.text(s.rows[52].text, "options.return", 480, 493, 24,
         selected(s.rows[52]) ? cyan : teal, 745, 1);
 }
+void pause(Canvas& c, const Snapshot& s) {
+    // The retail header carries the live player, difficulty, time, and score.
+    // Replace the three native action rows while retaining the paused scene.
+    c.rect(264, 207, 432, 145, 0x071019FF);
+    c.border(264, 207, 432, 145, 0x3F8078FF, 2);
+    for (int i = 0; i < 3; ++i) {
+        const bool focus = i == s.focused_setting;
+        const float y = 220.0f + i * 43;
+        if (focus) {
+            c.rect(278, y - 4, 404, 37, 0x17383CFF);
+            c.border(278, y - 4, 404, 37, 0x6FE9FFFF, 2);
+        }
+        c.text(s.rows[70 + i].text, "pause.action." + std::to_string(i),
+            480, y, 29, focus ? cyan : teal, 375, 1);
+    }
+}
 void graphics(Canvas& c, const Snapshot& s) {
     c.stars(); c.heading("Graphics", "graphics.heading");
     c.text(s.rows[52].text, "graphics.tabs", 480, 84, 18,
         0x697388FF, 820, 1);
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 6; ++i) {
         const int row = 53 + i * 2;
         const bool focus = selected(s.rows[row]);
-        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 131.0f + i * 49, 27, focus ? cyan : teal, 360);
-        c.text(s.rows[row + 1].text, "graphics.value." + std::to_string(i), 612, 131.0f + i * 49, 27, focus ? cyan : teal, 224);
+        const int value_row = i == 5 ? 65 : row + 1;
+        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 122.0f + i * 48, 27, focus ? cyan : teal, 360);
+        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 122.0f + i * 48, 27, focus ? cyan : teal, 224);
     }
-    for (int row : {63, 65, 66}) if (s.rows[row].visible())
-        c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 405, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
+    for (int row : {67, 68}) if (s.rows[row].visible())
+        c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 423, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
     c.rect(92, 452, 776, 2, purple);
     c.text(s.rows[64].text, "graphics.return", 480, 481, 26, selected(s.rows[64]) ? cyan : teal, 740, 1);
 }
@@ -319,7 +356,7 @@ void binding_column(Canvas& c, const std::vector<Binding>& rows, float x, float 
 void controls(Canvas& c, const Snapshot& s) {
     c.stars(); c.heading("Controls", "controls.heading");
     c.text("Action", "controls.columns.action", 115, 108, 19, teal, 250);
-    c.text("Keyboard", "controls.columns.keyboard", 546, 108, 19, teal, 200, 1);
+    c.text("Keyboard / Mouse", "controls.columns.keyboard", 546, 108, 19, teal, 200, 1);
     c.text("Controller", "controls.columns.pad", 763, 108, 19, teal, 200, 1);
     c.rect(92, 138, 776, 1, purple);
     const char* titles[] = {"On Foot", "Ship - Snowspeeder", "Turret", "Speeder Bike", "Ship - Outrider"};
@@ -354,14 +391,23 @@ void controls(Canvas& c, const Snapshot& s) {
     c.rect(92, 455, 776, 2, purple);
     c.text("Preset", "controls.preset.label", 116, 479, 25, teal, 190);
     c.text(s.preset, "controls.preset.value", 850, 479, 25, cyan, 489, 2);
+    const bool modern_aim = std::any_of(s.native_controls[0].begin(),
+        s.native_controls[0].end(), [](const Binding& binding) {
+            return binding.action == "Look Up";
+        });
     if (!s.rebinding) {
-        c.text("Scroll: wheel / PgUp-PgDn / right stick", "controls.scroll_hint", 480, 513, 16, 0x76819FFF, 790, 1);
+        c.text(modern_aim
+                ? "Modern aim: mouse movement (fixed) / right stick   Scroll: wheel / PgUp-PgDn"
+                : "Scroll: wheel / PgUp-PgDn / right stick",
+            "controls.scroll_hint", 480, 513, 16, 0x76819FFF, 790, 1);
         return;
     }
     if (!s.binding_editing) {
         c.text("Enter/A: edit bindings   Left/Right: native preset   Up/Down: options",
             "controls.rebind.open", 480, 510, 14, 0xA5B2CDFF, 850, 1);
-        c.text("Wheel: inspect bindings   Graphics / Controls schemes remain on the Options page",
+        c.text(modern_aim
+                ? "Modern aim: mouse movement (fixed) / right stick   Wheel: inspect bindings"
+                : "Wheel: inspect bindings   Graphics / Controls schemes remain on the Options page",
             "controls.rebind.reference_help", 480, 527, 12, 0x76819FFF, 850, 1);
         return;
     }
@@ -452,10 +498,11 @@ Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
     if (snapshot.screen == Screen::Native || !snapshot.original || !snapshot.original->valid ||
         width < 320 || height < 180 || width > 3840 || height > 2160) return {};
     std::lock_guard lock(font_mutex);
-    Canvas c(width, height, *snapshot.original);
+    Canvas c(width, height, *snapshot.original, snapshot.screen == Screen::Pause);
     switch (snapshot.screen) {
         case Screen::Profiles: profiles(c, snapshot); break;
         case Screen::Summary: summary(c, snapshot); break;
+        case Screen::Pause: pause(c, snapshot); break;
         case Screen::Options: options(c, snapshot); break;
         case Screen::Controls: controls(c, snapshot); break;
         case Screen::Graphics: graphics(c, snapshot); break;

@@ -52,6 +52,7 @@ uint64_t frame_serial = 1;
 uint64_t movie_serial = 1;
 bool current_music_is_main_menu = false;
 std::vector<std::string> queued_movies;
+bool hold_last_frame = false;
 
 struct CacheMetadata {
     unsigned width = 0;
@@ -329,6 +330,7 @@ uint32_t count_decoded_frames(
 }
 
 bool start_cached_preview_locked(std::string_view name) {
+    hold_last_frame = false;
     if (cache_root.empty()) {
         return false;
     }
@@ -541,6 +543,15 @@ bool play_cached_preview(std::string_view name) {
     return start_cached_preview_locked(name);
 }
 
+bool play_cached_sequence(std::initializer_list<std::string_view> names) {
+    std::lock_guard lock{cache_mutex};
+    queued_movies.clear();
+    for (const std::string_view name : names) {
+        queued_movies.emplace_back(name);
+    }
+    return start_next_queued_locked();
+}
+
 bool play_startup_sequence() {
     std::lock_guard lock{cache_mutex};
     queued_movies = {
@@ -558,6 +569,7 @@ bool stop_cached_playback() {
     current_frame = {};
     active_playback = {};
     queued_movies.clear();
+    hold_last_frame = false;
     if (was_active) {
         ++frame_serial;
     }
@@ -572,6 +584,23 @@ bool cached_playback_active() {
 uint64_t playback_token() {
     std::lock_guard lock{cache_mutex};
     return current_frame.valid() ? active_playback.token : 0;
+}
+
+double cached_playback_remaining_seconds() {
+    std::lock_guard lock{cache_mutex};
+    if (!current_frame.valid() || active_playback.metadata.fps <= 0.0) {
+        return 0.0;
+    }
+    const double duration = active_playback.metadata.frames /
+        active_playback.metadata.fps;
+    const double elapsed = std::chrono::duration<double>(
+        std::chrono::steady_clock::now() - active_playback.started).count();
+    return std::max(0.0, duration - elapsed);
+}
+
+void set_hold_last_frame(bool hold) {
+    std::lock_guard lock{cache_mutex};
+    hold_last_frame = hold;
 }
 
 std::vector<int16_t> next_cached_audio() {
@@ -629,6 +658,14 @@ CachedFrame latest_cached_frame() {
             std::chrono::steady_clock::now() - active_playback.started).count();
         const double exact_frame = elapsed * active_playback.metadata.fps;
         if (exact_frame >= active_playback.metadata.frames) {
+            if (hold_last_frame) {
+                const uint32_t last_frame =
+                    active_playback.metadata.frames - 1;
+                if (active_playback.frame_index != last_frame) {
+                    (void)read_cache_frame_locked(last_frame);
+                }
+                return current_frame;
+            }
             current_frame = {};
             active_playback = {};
             ++frame_serial;
@@ -650,6 +687,7 @@ void initialize(const std::filesystem::path& runtime_directory) {
             current_frame = {};
             active_playback = {};
             queued_movies.clear();
+            hold_last_frame = false;
             current_music_is_main_menu = false;
     }
     uint32_t found = 0;

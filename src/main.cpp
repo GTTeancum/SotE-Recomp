@@ -384,9 +384,13 @@ struct GeneralFailureTelemetry {
 
 GeneralFailureTelemetry previous_general_telemetry;
 bool san_logo_started = false;
-int san_last_event_level = -1;
 int16_t san_last_movie_event = INT16_MIN;
 bool san_game_over_started = false;
+int16_t san_pending_story_skip_event = INT16_MIN;
+bool san_ending_sequence_pending = false;
+uint64_t san_ending_first_token = 0;
+int san_ending_advance_start_vi = -1;
+std::atomic<bool> san_ending_handoff_active{false};
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -415,9 +419,9 @@ bool event_matches_level(int level_index, int16_t event) {
             return event >= 7 && event <= 10;
         case 4:
             return event == 11 || event == 12 ||
-                event == 13 || event == 14;
-        case 5: return event == 17;
-        case 6: return event == 20;
+                event == 13 || event == 14 || event == 15;
+        case 5: return event == 16 || event == 17;
+        case 6: return event >= 18 && event <= 20;
         case 7: return event == 24 || event == 25;
         case 8: return event == 26 || event == 27;
         case 9: return event == 28 || event == 29 || event == 30;
@@ -454,24 +458,37 @@ const char* level_name_for_index(int level_index) {
     return names[level_index];
 }
 
-const char* san_intro_for_level_index(int level_index) {
-    static constexpr const char* movies[] = {
-        "L01INTRO.SAN",
-        "L02INTRO.SAN",
-        "L03INTRO.SAN",
-        "L04INTRO.SAN",
-        "L05INTRO.SAN",
-        "L06INTRO.SAN",
-        "L07INTRO.SAN",
-        "L08INTRO.SAN",
-        nullptr,
-        "L10INTRO.SAN",
-    };
-    if (level_index < 0 ||
-        level_index >= static_cast<int>(std::size(movies))) {
-        return nullptr;
+const char* san_intro_for_event(int16_t event) {
+    // Only the opening event of a level plays its PC introduction. Later
+    // checkpoint events must not replay the chapter movie on entry.
+    switch (event) {
+        case 2: return "L01INTRO.SAN";
+        case 4: return "L02INTRO.SAN";
+        case 6: return "L03INTRO.SAN";
+        case 7: return "L04INTRO.SAN";
+        case 11: return "L05INTRO.SAN";
+        case 16: return "L06INTRO.SAN";
+        case 18: return "L07INTRO.SAN";
+        case 19: return "L07INTRO.SAN"; // Direct level selection enters here.
+        case 24: return "L08INTRO.SAN";
+        case 28: return "L10INTRO.SAN";
+        default: return nullptr;
     }
-    return movies[level_index];
+}
+
+int16_t san_story_skip_destination(int16_t event) {
+    // Verified native Start-skip transitions for story sequences whose PC
+    // movie narrates the same material. Keep later mission objectives intact.
+    switch (event) {
+        case 7: return 8;   // Ord Mantell story -> playable hover train.
+        case 11: return 14; // Gall story -> ship-side "find Boba Fett" briefing.
+        case 16: return 17; // Mos Eisley story -> playable speeder bike.
+        case 18: return 20; // Freighter story -> playable ship interior.
+        case 19: return 20; // Selected Freighter closing story -> gameplay.
+        case 24: return 25; // Sewers story -> playable sewer objective.
+        case 28: return 29; // Skyhook story -> playable turret battle.
+        default: return INT16_MIN;
+    }
 }
 
 const char* san_movie_for_event(int16_t event) {
@@ -479,12 +496,12 @@ const char* san_movie_for_event(int16_t event) {
         case 10:
             return "L04BOSS.SAN";
         case 14:
-            return "L05BOSS.SAN";
+            // This event opens with "find Boba Fett"; it is not the boss
+            // encounter. Keep the movie off this entry transition.
+            return nullptr;
         case 27:
             return "L09BOSS.SAN";
         default:
-            // TODO: Event 31 is the final epilogue. Select L11WIN/L11LOSE
-            // from verified game state and avoid replaying native slides.
             return nullptr;
     }
 }
@@ -492,6 +509,18 @@ const char* san_movie_for_event(int16_t event) {
 void update_san_movie_triggers(uint8_t* rdram) {
     if (rdram == nullptr ||
         display_list_count.load(std::memory_order_relaxed) == 0) {
+        return;
+    }
+    if (!sote::graphics_menu::pc_cutscenes_enabled()) {
+        san_logo_started = true;
+        san_pending_story_skip_event = INT16_MIN;
+        san_ending_sequence_pending = false;
+        san_ending_advance_start_vi = -1;
+        san_ending_handoff_active.store(false, std::memory_order_relaxed);
+        sote::san_movies::stop_cached_playback();
+        const int16_t current_event = static_cast<int16_t>(
+            read_guest_half(rdram, 0x8013CE0EU));
+        san_last_movie_event = current_event;
         return;
     }
     if (const char* preview = std::getenv("SOTE_SAN_PREVIEW")) {
@@ -503,7 +532,10 @@ void update_san_movie_triggers(uint8_t* rdram) {
     }
     if (!san_logo_started) {
         san_logo_started = true;
-        sote::san_movies::play_startup_sequence();
+        // A process-local route can bypass only the logo/long-time movies to
+        // inspect level trigger timing without sending host input.
+        if (std::getenv("SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP") == nullptr)
+            sote::san_movies::play_startup_sequence();
     }
     if (sote::san_movies::cached_playback_active()) {
         return;
@@ -512,9 +544,24 @@ void update_san_movie_triggers(uint8_t* rdram) {
         read_guest_half(rdram, 0x8013CE0EU));
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
-    if (sote::san_movies::menu_music_active()) {
-        return;
+    if (san_pending_story_skip_event != INT16_MIN) {
+        const int16_t from_event = san_pending_story_skip_event;
+        san_pending_story_skip_event = INT16_MIN;
+        const int16_t destination = san_story_skip_destination(from_event);
+        if (event == from_event && destination != INT16_MIN && result == 2 &&
+            read_guest_byte(rdram, 0x800D2558U) == 0) {
+            write_guest_half(rdram, 0x800D255CU,
+                static_cast<uint16_t>(destination));
+            write_guest_byte(rdram, 0x800D2558U, 2);
+            std::printf("[sote][san] PC story complete; native skip %d -> %d\n",
+                from_event, destination);
+            std::fflush(stdout);
+            return;
+        }
     }
+    // Native story screens can request the main-menu music cue while a
+    // chapter event is active (the Freighter's event 19 does). The event and
+    // result gates below, not the current music cue, decide movie placement.
     const int event_level = level_index_for_event(event);
     if (event_level >= 0) {
         const int32_t lives = static_cast<int32_t>(
@@ -533,19 +580,26 @@ void update_san_movie_triggers(uint8_t* rdram) {
     }
     if (event != san_last_movie_event) {
         san_last_movie_event = event;
-        if (const char* movie = san_movie_for_event(event)) {
-            sote::san_movies::play_cached_preview(movie);
-            san_last_event_level = event_level;
+        if (event == 31) {
+            // The N64 epilogue shows the memorial and Dash's survival in
+            // sequence, then rolls credits without changing the event id.
+            if (sote::san_movies::play_cached_sequence(
+                    {"L11LOSE.SAN", "L11WIN.SAN"})) {
+                san_ending_sequence_pending = true;
+                san_ending_first_token = sote::san_movies::playback_token();
+                san_ending_advance_start_vi = -1;
+            }
             return;
         }
-    }
-    if (event_level != san_last_event_level) {
-        if (event_level >= 0) {
-            if (const char* movie = san_intro_for_level_index(event_level)) {
-                sote::san_movies::play_cached_preview(movie);
-            }
+        if (const char* movie = san_movie_for_event(event)) {
+            sote::san_movies::play_cached_preview(movie);
+            return;
         }
-        san_last_event_level = event_level;
+        if (const char* movie = san_intro_for_event(event)) {
+            const bool playing = sote::san_movies::play_cached_preview(movie);
+            if (playing && san_story_skip_destination(event) != INT16_MIN)
+                san_pending_story_skip_event = event;
+        }
     }
 }
 
@@ -789,7 +843,9 @@ void log_general_failure_telemetry(int vi) {
             std::_Exit(EXIT_FAILURE);
         }
     } else {
-        if (!profile_still_matches) {
+        // Diagnostic event jumps leave the starting level on purpose.
+        if (!profile_still_matches &&
+            std::getenv("SOTE_DIAGNOSTIC_EVENT_JUMPS") == nullptr) {
             if (smoke_expect_natural_game_over &&
                 previous_general_telemetry.lives == -1 &&
                 previous_general_telemetry.result == 4) {
@@ -1563,6 +1619,18 @@ LRESULT CALLBACK window_proc(
                 return 0;
             }
             break;
+        case WM_INPUT: {
+            RAWINPUT input{};
+            UINT bytes = sizeof(input);
+            if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam),
+                    RID_INPUT, &input, &bytes, sizeof(RAWINPUTHEADER)) ==
+                    sizeof(input) && input.header.dwType == RIM_TYPEMOUSE &&
+                    !(input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)) {
+                sote::frontend::add_mouse_delta(
+                    input.data.mouse.lLastX, input.data.mouse.lLastY);
+            }
+            break;
+        }
         case WM_KEYDOWN:
             // Key navigation is sampled once by the binding editor, not also
             // handled here. In particular PgUp/Down must not move twice.
@@ -1651,6 +1719,15 @@ ultramodern::renderer::WindowHandle create_window(void*) {
         nullptr);
     if (window != nullptr) {
         graphics_window = window;
+        RAWINPUTDEVICE mouse{};
+        mouse.usUsagePage = 0x01;
+        mouse.usUsage = 0x02;
+        mouse.hwndTarget = window;
+        if (!RegisterRawInputDevices(&mouse, 1, sizeof(mouse))) {
+            std::fprintf(stderr,
+                "[sote] raw mouse input unavailable (Windows error %lu)\n",
+                GetLastError());
+        }
         MONITORINFO monitor_info{sizeof(monitor_info)};
         if (GetMonitorInfoW(
                 MonitorFromWindow(window, MONITOR_DEFAULTTONEAREST),
@@ -1835,6 +1912,32 @@ void on_vi() {
             }
         }
     }
+    // Periodic RDRAM snapshots tagged with the current event, for offline
+    // texture searches. SOTE_DUMP_RDRAM_EVERY="<startVI>:<periodVIs>:<dir>"
+    if (const char* every = std::getenv("SOTE_DUMP_RDRAM_EVERY");
+        every != nullptr && game_rdram != nullptr) {
+        static int start = -1, period = 0;
+        static std::string directory;
+        if (start < 0) {
+            start = std::atoi(every);
+            const char* c1 = std::strchr(every, ':');
+            const char* c2 = c1 != nullptr ? std::strchr(c1 + 1, ':') : nullptr;
+            period = c1 != nullptr ? std::atoi(c1 + 1) : 0;
+            directory = c2 != nullptr ? std::string(c2 + 1) : std::string(".");
+            if (period < 1) period = 600;
+        }
+        if (count >= start && (count - start) % period == 0) {
+            const int event = static_cast<int16_t>(
+                read_guest_half(game_rdram, 0x8013CE0EU));
+            char name[64];
+            std::snprintf(name, sizeof(name), "/rdram_%07d_ev%02d.bin",
+                          count, event);
+            if (std::FILE* file = std::fopen((directory + name).c_str(), "wb")) {
+                std::fwrite(game_rdram, 1, 0x800000U, file);
+                std::fclose(file);
+            }
+        }
+    }
     // Snapshot RDRAM at one VI and report every halfword that changed by a
     // small amount by another VI. Used to locate menu selection variables
     // whose owning function cannot be identified statically.
@@ -1948,9 +2051,42 @@ void on_vi() {
         std::printf("[sote][san] cutscene skipped\n");
         std::fflush(stdout);
         sote::san_movies::stop_cached_playback();
+        san_ending_sequence_pending = false;
         movie_token = 0;
     }
     sote::frontend::set_movie_playback(movie_token);
+    bool ending_advance = false;
+    if (san_ending_sequence_pending && movie_token != 0 &&
+        movie_token != san_ending_first_token && game_rdram != nullptr &&
+        static_cast<int16_t>(read_guest_half(game_rdram, 0x8013CE0EU)) == 31) {
+        sote::san_movies::set_hold_last_frame(true);
+        if (san_ending_advance_start_vi < 0 &&
+            sote::san_movies::cached_playback_remaining_seconds() <= 0.0) {
+            san_ending_advance_start_vi = count;
+            san_ending_handoff_active.store(true, std::memory_order_relaxed);
+            std::printf("[sote][san] ending native story advance begins at VI=%d\n", count);
+            std::fflush(stdout);
+        }
+        if (san_ending_advance_start_vi >= 0) {
+            const int elapsed = count - san_ending_advance_start_vi;
+            if (elapsed < 120) {
+                ending_advance = elapsed % 2 == 0;
+            } else {
+                sote::san_movies::stop_cached_playback();
+                sote::frontend::set_movie_playback(0);
+                movie_token = 0;
+                san_ending_handoff_active.store(false,
+                    std::memory_order_relaxed);
+                std::printf("[sote][san] ending credits handoff at VI=%d\n", count);
+                std::fflush(stdout);
+            }
+        }
+    }
+    if (san_ending_sequence_pending && movie_token == 0) {
+        san_ending_sequence_pending = false;
+        san_ending_handoff_active.store(false, std::memory_order_relaxed);
+    }
+    sote::frontend::set_movie_guest_advance(ending_advance);
     if (movie_token != 0) {
         const auto audio = sote::san_movies::next_cached_audio();
         sote::frontend::queue_movie_audio(audio.data(), audio.size());
@@ -1996,6 +2132,42 @@ void on_vi() {
         std::printf("[sote] diagnostic level selection unlocked\n");
         std::fflush(stdout);
     }
+    // Jump straight to an event record (level section or story sequence).
+    // The main loop (func_80017CC8) switches events when the byte at
+    // 0x800D2558 is 2, loading the halfword event at 0x800D255C. Used to
+    // reach sections the scripted smoke routes cannot play to.
+    // SOTE_DIAGNOSTIC_EVENT_JUMPS="<vi>:<event>[,<vi>:<event>...]"
+    if (const char* jumps = std::getenv("SOTE_DIAGNOSTIC_EVENT_JUMPS");
+        jumps != nullptr && game_rdram != nullptr) {
+        for (const char* entry = jumps; entry != nullptr && *entry != '\0';) {
+            const char* colon = std::strchr(entry, ':');
+            if (colon == nullptr) {
+                break;
+            }
+            if (std::atoi(entry) == count) {
+                const int event = std::atoi(colon + 1);
+                write_guest_half(
+                    game_rdram, 0x800D255CU, static_cast<uint16_t>(event));
+                write_guest_byte(game_rdram, 0x800D2558U, 2);
+                std::printf(
+                    "[sote] diagnostic event jump to %d at VI=%d\n",
+                    event, count);
+                std::fflush(stdout);
+            }
+            const char* comma = std::strchr(colon, ',');
+            entry = comma != nullptr ? comma + 1 : nullptr;
+        }
+    }
+    if (std::getenv("SOTE_TRACE_FINAL_EVENT") != nullptr &&
+        game_rdram != nullptr && count % 60 == 0) {
+        std::printf("[sote][final-event] VI=%d event=%d result=%d transition=%u destination=%d\n",
+            count,
+            static_cast<int16_t>(read_guest_half(game_rdram, 0x8013CE0EU)),
+            static_cast<int32_t>(read_guest_word(game_rdram, 0x800DD2B0U)),
+            read_guest_byte(game_rdram, 0x800D2558U),
+            static_cast<int16_t>(read_guest_half(game_rdram, 0x800D255CU)));
+        std::fflush(stdout);
+    }
     uint16_t scripted_buttons = 0;
     int8_t scripted_x = 0;
     int8_t scripted_y = 0;
@@ -2014,6 +2186,53 @@ void on_vi() {
                 pulse.x,
                 pulse.y);
         }
+    }
+    // Process-local route for checking the live binding editor. It follows
+    // observed menu state instead of guessing fixed VI timings, and never
+    // sends input to a host window or device.
+    if (std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") != nullptr &&
+        count >= 3100) {
+        static int next_route_vi = 3100;
+        static int route_pulse_end_vi = 0;
+        static uint16_t route_buttons = 0;
+        static int8_t route_y = 0;
+        if (count >= route_pulse_end_vi) {
+            route_buttons = 0;
+            route_y = 0;
+        }
+        if (count >= next_route_vi && route_pulse_end_vi <= count) {
+            const auto menu = sote::menu_skin::latest();
+            const auto screen = menu ? menu->screen :
+                sote::menu_skin::Screen::Native;
+            if (screen == sote::menu_skin::Screen::Pause) {
+                if (menu->focused_setting == 0) route_y = -80;
+                else if (menu->focused_setting == 1) route_buttons = 0x8000;
+            } else if (screen == sote::menu_skin::Screen::Options) {
+                if (menu->focused_setting < 6) route_y = -80;
+            } else if (screen == sote::menu_skin::Screen::Controls) {
+                if (menu->rebinding && !menu->binding_editing &&
+                    std::getenv("SOTE_DIAGNOSTIC_BINDING_BROWSE_ONLY") == nullptr)
+                    route_buttons = 0x8000;
+            } else if (screen == sote::menu_skin::Screen::Native) {
+                route_buttons = 0x1000;
+            }
+            if (route_buttons != 0 || route_y != 0) {
+                route_pulse_end_vi = count + 8;
+                std::printf(
+                    "[sote][binding-route] VI=%d screen=%s focus=%d "
+                    "buttons=%04X stick_y=%d\n",
+                    count,
+                    sote::menu_skin::screen_name(screen),
+                    menu ? menu->focused_setting : -1,
+                    route_buttons,
+                    route_y);
+                std::fflush(stdout);
+            }
+            next_route_vi = count + 90;
+        }
+        scripted_buttons = route_buttons;
+        scripted_x = 0;
+        scripted_y = route_y;
     }
     sote::frontend::set_scripted_input(
         scripted_buttons, scripted_x, scripted_y);
@@ -2081,7 +2300,8 @@ extern "C" void sote_wait_for_game_frame() {
     // each iteration for two VIs reduced player and jetpack physics to 30 Hz
     // and felt visibly slow. Allow exactly one gameplay iteration per VI.
     std::unique_lock lock(game_frame_mutex);
-    while (sote::san_movies::cached_playback_active()) {
+    while (sote::san_movies::cached_playback_active() &&
+           !san_ending_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }
     int current_vi = vi_count.load(std::memory_order_relaxed);
@@ -2204,6 +2424,70 @@ extern "C" void sote_enter_player_controller(
     // place the first independently plausible respawn death after 1,800 VIs.
     constexpr int minimum_stable_respawn_vis = 1800;
     const int controller_vi = vi_count.load(std::memory_order_relaxed);
+    // Walk the player through a square spiral of positions around where the
+    // current event started, holding each one, so texture captures can reach
+    // parts of a level the scripted input never plays to.
+    // SOTE_DIAGNOSTIC_TELEPORT="<startVI>:<step>:<height>:<dwellVIs>:<cells>"
+    if (const char* teleport = std::getenv("SOTE_DIAGNOSTIC_TELEPORT");
+        teleport != nullptr && object >= 0x80000000U &&
+        object < 0x80800000U) {
+        static int start_vi = -1, dwell = 60, cells = 400;
+        static float step = 400.0f, height = 0.0f;
+        static int16_t origin_event = -1;
+        static int origin_vi = -1;
+        static float origin[3] = {};
+        if (start_vi < 0) {
+            std::sscanf(teleport, "%d:%f:%f:%d:%d",
+                        &start_vi, &step, &height, &dwell, &cells);
+            if (dwell < 1) dwell = 1;
+        }
+        const int16_t event = static_cast<int16_t>(
+            read_guest_half(rdram, 0x8013CE0EU));
+        if (controller_vi >= start_vi) {
+            if (event != origin_event) {
+                origin_event = event;
+                origin_vi = controller_vi + 120;
+                for (int axis = 0; axis < 3; ++axis) {
+                    origin[axis] = read_guest_float(
+                        rdram, object + 0x50U + axis * 4U);
+                }
+                std::printf(
+                    "[sote][teleport] event=%d origin=%.1f,%.1f,%.1f\n",
+                    event, origin[0], origin[1], origin[2]);
+                std::fflush(stdout);
+            }
+            const int cell = (controller_vi - origin_vi) / dwell;
+            if (controller_vi >= origin_vi && cell < cells) {
+                // Square spiral: ring r holds 8r cells around the origin.
+                int x = 0, z = 0;
+                if (cell > 0) {
+                    int ring = 1;
+                    while ((2 * ring + 1) * (2 * ring + 1) <= cell) ++ring;
+                    int k = cell - (2 * ring - 1) * (2 * ring - 1);
+                    const int side = 2 * ring;
+                    if (k < side) { x = ring; z = -ring + 1 + k; }
+                    else if ((k -= side) < side) { x = ring - 1 - k; z = ring; }
+                    else if ((k -= side) < side) { x = -ring; z = ring - 1 - k; }
+                    else { k -= side; x = -ring + 1 + k; z = -ring; }
+                }
+                uint32_t bits;
+                const float target[3] = {
+                    origin[0] + x * step, origin[1] + height,
+                    origin[2] + z * step};
+                for (int axis = 0; axis < 3; ++axis) {
+                    std::memcpy(&bits, &target[axis], sizeof(bits));
+                    write_guest_word(rdram, object + 0x50U + axis * 4U, bits);
+                }
+                if ((controller_vi - origin_vi) % dwell == 0) {
+                    std::printf(
+                        "[sote][teleport] VI=%d event=%d cell=%d pos=%.1f,%.1f,%.1f\n",
+                        controller_vi, event, cell,
+                        target[0], target[1], target[2]);
+                    std::fflush(stdout);
+                }
+            }
+        }
+    }
     if (std::getenv("SOTE_TRACE_PLAYER_STATE") != nullptr &&
         object >= 0x80000000U && object < 0x80800000U) {
         static int last_player_state_vi = -1;

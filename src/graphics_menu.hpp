@@ -29,7 +29,10 @@ struct Settings {
     bool widescreen = true;
     AntialiasingPreset antialiasing = AntialiasingPreset::MSAA4x;
     bool borderless = false;
+    bool pc_cutscenes = true;
 };
+
+bool pc_cutscenes_enabled();
 
 void initialize(const std::filesystem::path& data_directory);
 void sync_display_resolution(int width, int height);

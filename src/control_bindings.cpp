@@ -186,6 +186,7 @@ Layout make_layout(const NativeTable& t) {
         routes[0] = {{key('Z'),0x8000},{key(32),0x8000},{key('X'),0x4000},{key('C'),0x2000},{key(13),0x1000},
             {key(38),0x0800},{key(40),0x0400},{key(37),0x0200},{key(39),0x0100},{key('Q'),0x20},{key('E'),0x10},
             {key('I'),8},{key('K'),4},{key('J'),2},{key('L'),1}};
+        if (mf) routes[0].push_back({key(1), 0x4000}); // Mouse 1 shares Fire with X.
         routes[1] = {{button(0),0x8000},{button(2),0x4000},{button(1),0x4000},{button(3),2},
             {button(6),0x1000},{button(9),0x20},{button(10),0x10},
             {button(11),0x0800},{button(12),0x0400},{button(13),0x0200},{button(14),0x0100},
@@ -460,7 +461,10 @@ void decorate(menu_skin::Snapshot& s) {
         s.native_controls[g].clear();
         for(const auto& a:state.menu_layout[g]) {
             auto text=[&](int d){return a.targets[d].empty()?std::string("--"):join_names(state.assignments.sources(a,static_cast<Device>(d)));};
-            s.native_controls[g].push_back({a.label,text(1),text(0)});
+            const bool fixed_mouse_aim = g == 0 &&
+                a.id.find(".look_") != std::string::npos;
+            s.native_controls[g].push_back({a.label,text(1),
+                fixed_mouse_aim ? "Mouse Move" : text(0)});
         }
     }
     ensure_selection();
@@ -521,11 +525,15 @@ int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_m
             return done(1);
         }
         const auto* a=selected();if(!a)return done(1);
+        const bool fixed_mouse_aim = e.group == 0 && e.column == 0 &&
+            a->id.find(".look_") != std::string::npos;
         if(edge(raw,key(46))||edge(raw,button(pad_x))) {
+            if(fixed_mouse_aim){e.status="Mouse aim is fixed; adjust Mouse Aim sensitivity in Options.";return done(1);}
             if(a->targets[e.column].empty()){e.status="This input belongs to another listed/shared control.";return done(1);}
             state.proposed={};state.conflicts.clear();commit(false);return done(1);
         }
         if(edge(raw,key(enter))||edge(raw,button(pad_a))) {
+            if(fixed_mouse_aim){e.status="Mouse aim is fixed; adjust Mouse Aim sensitivity in Options.";return done(1);}
             if(a->targets[e.column].empty()){e.status="No independent input in this column; use its linked row.";return done(1);}
             if(e.column==1&&!raw.connected){e.status="Connect a controller before assigning a button.";return done(1);}
             state.capture_instance=raw.instance;

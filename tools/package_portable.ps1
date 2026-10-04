@@ -68,6 +68,14 @@ foreach ($entry in $sources.GetEnumerator()) {
         -Destination (Join-Path $outputAbsolute $entry.Key) -Force
 }
 
+# Install the current control defaults for new portable folders. Existing
+# user tuning remains authoritative when refreshing a playable folder.
+$tuningTarget = Join-Path $outputAbsolute 'CONTROLS_MODERN.INI'
+if (-not (Test-Path -LiteralPath $tuningTarget -PathType Leaf)) {
+    Copy-Item -LiteralPath (Join-Path $repoRoot 'config\CONTROLS_MODERN.INI') `
+        -Destination $tuningTarget
+}
+
 # Optional external soundtrack. Merge source assets/maps into the actual play
 # folder, including the corrected map. Never clear existing user-owned music.
 $sourceMusic = Join-Path $repoRoot 'Sdata\MUSIC'

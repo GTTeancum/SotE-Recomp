@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <initializer_list>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -57,10 +58,13 @@ std::filesystem::path find_movie(
     const std::filesystem::path& runtime_directory,
     std::string_view name);
 bool play_cached_preview(std::string_view name);
+bool play_cached_sequence(std::initializer_list<std::string_view> names);
 bool play_startup_sequence();
 bool stop_cached_playback();
 bool cached_playback_active();
 uint64_t playback_token();
+double cached_playback_remaining_seconds();
+void set_hold_last_frame(bool hold);
 std::vector<int16_t> next_cached_audio();
 void note_music_command(std::string_view name);
 bool menu_music_active();

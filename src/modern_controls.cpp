@@ -14,14 +14,19 @@ namespace sote::modern_controls {
 namespace {
 std::mutex input_mutex;
 Input latest;
+std::atomic<int> mouse_delta_x{0};
+std::atomic<int> mouse_delta_y{0};
 std::atomic<int64_t> last_on_foot_ms{0};
+std::atomic<int64_t> last_aiming_ms{0};
 constexpr uint16_t canonical_buttons[] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20};
 constexpr uint32_t binding_offsets[] = {0x1A,0x18,0x24,0x26,0x28,0x2C,0x2E};
 std::atomic<uint16_t> bindings[7] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20};
 Input frame;
 Tuning tuning;
 bool active = false;
+uint32_t mouse_probe_frames = 0;
 float pitch = 0;
+float mouse_yaw_rate = 0;
 uint32_t owner = 0;
 int16_t level_event = -1;
 uint64_t frame_number = 0;
@@ -70,12 +75,25 @@ float advance_pitch(float value, float input, float speed, double seconds) {
 void publish(Input input) {
     std::lock_guard lock{input_mutex};
     latest = input;
+    if (!input.connected) {
+        mouse_delta_x.store(0, std::memory_order_relaxed);
+        mouse_delta_y.store(0, std::memory_order_relaxed);
+        last_aiming_ms.store(0, std::memory_order_relaxed);
+    }
+}
+void add_mouse_delta(int x, int y) {
+    mouse_delta_x.fetch_add(x, std::memory_order_relaxed);
+    mouse_delta_y.fetch_add(y, std::memory_order_relaxed);
 }
 bool on_foot_active() {
     const auto age = milliseconds() - last_on_foot_ms.load();
     return age >= 0 && age < 150;
 }
 bool aiming_active() { return active; }
+bool reticle_visible() {
+    const int64_t age = milliseconds() - last_aiming_ms.load(std::memory_order_relaxed);
+    return age >= 0 && age < 150;
+}
 uint16_t map_buttons(uint16_t canonical) {
     uint16_t result = canonical & ~uint16_t(0xC03E);
     for (unsigned i=0; i<7; ++i)
@@ -94,6 +112,7 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
     if (owner != object || level_event != event) {
         pitch = 0;
         frame_number = 0;
+        mouse_probe_frames = 0;
         camera_initialized = false;
     }
     owner = object;
@@ -102,6 +121,9 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
         std::lock_guard lock{input_mutex};
         frame = latest;
     }
+    int mouse_x = mouse_delta_x.exchange(0, std::memory_order_relaxed);
+    int mouse_y = mouse_delta_y.exchange(0, std::memory_order_relaxed);
+    mouse_yaw_rate = 0;
     tuning = sote::controls_menu::modern_controls_tuning().on_foot;
     const auto preset = read<int16_t>(ram, 0x800D252C);
     if (preset >= 0 && preset < 8) {
@@ -126,6 +148,22 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
         if (phase == 6) frame.move = {0.5f, 0.5f};
         if (phase == 7) { frame.move = {-0.5f, 0.5f}; frame.look.x = -0.5f; }
     }
+    if (std::getenv("SOTE_TEST_MOUSE_AIM") != nullptr ||
+        std::getenv("SOTE_TEST_MODERN_IDLE") != nullptr) {
+        // A game-process-only mouse probe: relative counts, with no
+        // host cursor movement or desktop input, through the production hook.
+        active = true;
+        frame = {};
+        frame.connected = true;
+        if (std::getenv("SOTE_TEST_MOUSE_AIM") != nullptr &&
+            !blocked(ram, object) && mouse_probe_frames < 120) {
+            if (mouse_probe_frames % 6 == 0) {
+                mouse_x += 10;
+                if (mouse_probe_frames % 12 == 0) mouse_y -= 2;
+            }
+            ++mouse_probe_frames;
+        }
+    }
     ++frame_number;
     if (std::getenv("SOTE_TRACE_MODERN_AIM") && frame_number % 60 == 0) {
         std::printf("[sote][aim-input] active=%d fire_bit=%04X buttons=%08X flags=%08X gate=%.4f weapon=%d\n",
@@ -147,6 +185,7 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
                 read<float>(ram,0x800DEB78));
         active = false; return;
     }
+    last_aiming_ms.store(now, std::memory_order_relaxed);
     if (!camera_initialized) {
         // Activate native camera slot 5/mode 6 through 8006A214. Our 69404
         // hooks adapt its overhead placement to a shoulder view.
@@ -160,6 +199,17 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
     std::memcpy(&dt, &bits, sizeof(dt));
     pitch = advance_pitch(pitch, frame.look.y * (tuning.invert_y ? 1 : -1),
         tuning.pitch_speed, dt);
+    if (std::isfinite(dt) && dt > 0) {
+        const float mouse_pitch = std::clamp(
+            static_cast<float>(mouse_y) * tuning.mouse_sensitivity,
+            -30.0f, 30.0f);
+        pitch = std::clamp(
+            pitch + mouse_pitch * (tuning.invert_y ? 1.0f : -1.0f),
+            -55.0f, 55.0f);
+        mouse_yaw_rate = std::clamp(
+            static_cast<float>(mouse_x) * tuning.mouse_sensitivity,
+            -30.0f, 30.0f) / static_cast<float>(std::max(dt, 1.0 / 240.0));
+    }
     if (std::getenv("SOTE_TRACE_MODERN_CONTROLS") && frame_number % 30 == 0) {
         std::printf("[sote][modern] frame=%llu event=%d move=%.4f,%.4f look=%.4f,%.4f yaw_rate=%.3f pitch=%.3f dt=%.6f heading=%.3f\n",
             static_cast<unsigned long long>(frame_number), event,
@@ -193,7 +243,8 @@ extern "C" void sote_modern_yaw(uint8_t* ram, uint32_t object) {
     if (!active || owner != object || blocked(ram, object)) return;
     // Native ground/air integration consumes degrees/sec at object+A4, then
     // wraps heading and rebuilds its own transforms. No per-poll acceleration.
-    write<float>(ram, object + 0xA4, -frame.look.x * tuning.yaw_speed);
+    write<float>(ram, object + 0xA4,
+        -frame.look.x * tuning.yaw_speed - mouse_yaw_rate);
 }
 
 extern "C" uint32_t sote_modern_aim(uint8_t* ram, uint32_t stack) {

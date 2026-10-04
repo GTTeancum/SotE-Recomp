@@ -14,6 +14,9 @@ struct Tuning {
     float aim_curve = 1.7f;
     float yaw_speed = 180.0f;
     float pitch_speed = 90.0f;
+    // Degrees of camera movement per raw mouse count. No stick deadzone or
+    // response curve is applied to mouse motion.
+    float mouse_sensitivity = 0.12f;
     bool invert_y = false;
     bool convergence = true;
     float convergence_range = 1500.0f;
@@ -26,9 +29,11 @@ struct Tuning {
 Stick shape_stick(Stick raw, float deadzone, float exponent);
 float advance_pitch(float pitch, float input, float speed, double seconds);
 void publish(Input input);
+void add_mouse_delta(int x, int y);
 bool on_foot_active();
 uint16_t map_buttons(uint16_t canonical);
 bool aiming_active();
+bool reticle_visible();
 float pitch_degrees();
 bool owns_player(uint32_t object);
 }

@@ -112,6 +112,18 @@ int main() {
     const float held_pitch = pitch_degrees();
     sote_modern_begin(ram.data(),object);
     check(pitch_degrees()==held_pitch,"neutral input does not recenter");
+    add_mouse_delta(10, -5);
+    sote_modern_begin(ram.data(), object);
+    sote_modern_yaw(ram.data(), object);
+    check(std::fabs(get<float>(ram, object + 0xA4) + 72.0f) < .01f,
+        "raw mouse X turns through the Modern yaw hook without stick input");
+    check(std::fabs(pitch_degrees() - (held_pitch + .6f)) < .01f,
+        "raw mouse Y changes the same persistent Modern pitch as the stick");
+    const float mouse_pitch = pitch_degrees();
+    sote_modern_begin(ram.data(), object);
+    sote_modern_yaw(ram.data(), object);
+    check(get<float>(ram, object + 0xA4) == 0 && pitch_degrees() == mouse_pitch,
+        "mouse deltas are consumed once and neutral motion holds pitch");
     put(ram,object+0x74,uint32_t(0x400));
     sote_modern_begin(ram.data(),object);
     const auto before_death = ram;

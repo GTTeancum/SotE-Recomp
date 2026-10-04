@@ -106,7 +106,7 @@ enum class TuningField : int {
     TriggerSensitivity,
     OnFootYawSpeed,
     OnFootPitchSpeed,
-    BikeSteeringCurve,
+    MouseSensitivity,
 };
 
 struct TuningRowSpec {
@@ -126,7 +126,7 @@ constexpr TuningRowSpec tuning_rows[] = {
     {"Trigger Sens", TuningField::TriggerSensitivity, 0.1f, 3.0f, 0.05f},
     {"Yaw Speed", TuningField::OnFootYawSpeed, 30.0f, 540.0f, 10.0f},
     {"Pitch Speed", TuningField::OnFootPitchSpeed, 15.0f, 270.0f, 5.0f},
-    {"Bike Steering", TuningField::BikeSteeringCurve, 0.25f, 4.0f, 0.05f},
+    {"Mouse Aim", TuningField::MouseSensitivity, 0.01f, 1.0f, 0.01f},
 };
 
 float get_tuning_field(const ModernControlsTuning& tuning, TuningField field) {
@@ -147,8 +147,8 @@ float get_tuning_field(const ModernControlsTuning& tuning, TuningField field) {
             return tuning.on_foot.yaw_speed;
         case TuningField::OnFootPitchSpeed:
             return tuning.on_foot.pitch_speed;
-        case TuningField::BikeSteeringCurve:
-            return tuning.bike.steering_curve_exponent;
+        case TuningField::MouseSensitivity:
+            return tuning.on_foot.mouse_sensitivity;
     }
     return 0.0f;
 }
@@ -182,8 +182,8 @@ void set_tuning_field(
         case TuningField::OnFootPitchSpeed:
             tuning.on_foot.pitch_speed = value;
             break;
-        case TuningField::BikeSteeringCurve:
-            tuning.bike.steering_curve_exponent = value;
+        case TuningField::MouseSensitivity:
+            tuning.on_foot.mouse_sensitivity = value;
             break;
     }
 }
@@ -227,6 +227,8 @@ void apply_tuning_value(
         tuning.on_foot.yaw_speed = parse_float_clamped(value, 180.0f, 30.0f, 540.0f);
     } else if (key == "on_foot_pitch_speed") {
         tuning.on_foot.pitch_speed = parse_float_clamped(value, 90.0f, 15.0f, 270.0f);
+    } else if (key == "on_foot_mouse_sensitivity") {
+        tuning.on_foot.mouse_sensitivity = parse_float_clamped(value, 0.12f, 0.01f, 1.0f);
     } else if (key == "on_foot_invert_y") {
         tuning.on_foot.invert_y = parse_bool(value);
     } else if (key == "on_foot_convergence") {
@@ -354,6 +356,8 @@ void write_default_tuning_ini_locked() {
         "on_foot_aim_curve = " << d.on_foot.aim_curve << "\n"
         "on_foot_yaw_speed = " << d.on_foot.yaw_speed << "\n"
         "on_foot_pitch_speed = " << d.on_foot.pitch_speed << "\n"
+        "; Mouse movement uses raw relative counts; sensitivity is degrees/count.\n"
+        "on_foot_mouse_sensitivity = " << d.on_foot.mouse_sensitivity << "\n"
         "on_foot_invert_y = " << (d.on_foot.invert_y ? 1 : 0) << "\n"
         "; Blaster convergence onto the camera center ray. Range is in game units.\n"
         "on_foot_convergence = " << (d.on_foot.convergence ? 1 : 0) << "\n"
@@ -716,11 +720,11 @@ int scheme_legend(
     static const LegendEntry on_foot_modern[] = {
         {"Move", "LS", "WASD"},
         {"Jump", "A", "Z"},
-        {"Fire", "RT", "X"},
+        {"Fire", "RT", "Mouse 1 / X"},
         {"Camera", "D-Up", "Q"},
         {"Doors", "X", "E"},
         {"Strafe", "LS", "E"},
-        {"Aim", "RS", "C"},
+        {"Aim", "RS", "Mouse Move / C"},
         {"Jetpack", "Y", "J"},
         {"Weapons", "LB/RB", "I"},
         {"Crouch", "B", "K"},

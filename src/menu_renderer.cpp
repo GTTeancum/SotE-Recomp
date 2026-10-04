@@ -1,6 +1,7 @@
 #include "menu_renderer.hpp"
 #include "menu_skin.hpp"
 #include "san_movies.hpp"
+#include "modern_controls.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -36,6 +37,7 @@ struct Resources {
     std::unique_ptr<RenderPipelineLayout> layout;
     std::unique_ptr<RenderShader> vertex, pixel;
     std::unique_ptr<RenderPipeline> pipeline;
+    std::unique_ptr<RenderPipeline> alpha_pipeline;
     std::unique_ptr<TextureSet> descriptor;
     std::unique_ptr<RenderTexture> texture;
     std::unique_ptr<RenderBuffer> upload;
@@ -98,6 +100,30 @@ menu_skin::Image letterbox_movie(
     return image;
 }
 
+menu_skin::Image centered_aim_marker(unsigned width, unsigned height) {
+    menu_skin::Image image{width, height,
+        std::vector<uint8_t>(size_t(width) * height * 4)};
+    const int cx = int(width / 2), cy = int(height / 2);
+    const float scale = std::max(0.75f, float(height) / 720.0f);
+    auto line = [&](int x0, int y0, int x1, int y1, uint8_t alpha) {
+        for (int y = y0; y <= y1; ++y) for (int x = x0; x <= x1; ++x) {
+            if (x < 0 || y < 0 || x >= int(width) || y >= int(height)) continue;
+            const size_t p = (size_t(y) * width + unsigned(x)) * 4;
+            image.rgba[p] = 111; image.rgba[p + 1] = 233;
+            image.rgba[p + 2] = 255; image.rgba[p + 3] = alpha;
+        }
+    };
+    const int inner = std::max(5, int(std::lround(8 * scale)));
+    const int outer = std::max(inner + 3, int(std::lround(15 * scale)));
+    const int thickness = std::max(1, int(std::lround(scale)));
+    line(cx - thickness, cy - thickness, cx + thickness, cy + thickness, 220);
+    line(cx - thickness, cy - outer, cx + thickness, cy - inner, 235);
+    line(cx - thickness, cy + inner, cx + thickness, cy + outer, 235);
+    line(cx - outer, cy - thickness, cx - inner, cy + thickness, 235);
+    line(cx + inner, cy - thickness, cx + outer, cy + thickness, 235);
+    return image;
+}
+
 void disable(const char* reason) {
     menu_skin::set_renderer_available(false);
     if (resources) resources->ready = false;
@@ -136,7 +162,9 @@ void initialize(RenderInterface* rhi, RenderDevice* device) {
         desc.renderTargetFormat[0] = RenderFormat::B8G8R8A8_UNORM;
         desc.renderTargetCount = 1;
         r.pipeline = device->createGraphicsPipeline(desc);
-        if (!r.pipeline) throw std::runtime_error("menu pipeline allocation");
+        desc.renderTargetBlend[0] = RenderBlendDesc::AlphaBlend();
+        r.alpha_pipeline = device->createGraphicsPipeline(desc);
+        if (!r.pipeline || !r.alpha_pipeline) throw std::runtime_error("menu pipeline allocation");
         r.ready = true; menu_skin::set_renderer_available(true);
         std::printf("[sote][menu] RT64 menu presentation ready.\n");
     } catch (const std::exception& e) { disable(e.what()); }
@@ -148,7 +176,9 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
     try {
         const auto movie_frame = san_movies::latest_cached_frame();
         const auto snapshot = menu_skin::latest();
-        if (!movie_frame.valid() && !snapshot) return;
+        const bool reticle = !movie_frame.valid() && !snapshot &&
+            modern_controls::reticle_visible();
+        if (!movie_frame.valid() && !snapshot && !reticle) return;
         auto& r = *resources;
         const unsigned fw = framebuffer->getWidth(), fh = framebuffer->getHeight();
         if (!fw || !fh) return;
@@ -159,11 +189,12 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
         if (w < 320 || h < 180) return;
         const uint64_t serial = movie_frame.valid()
             ? (UINT64_C(1) << 63) | movie_frame.serial
-            : snapshot->serial;
+            : reticle ? UINT64_MAX : snapshot->serial;
         const bool resized = r.width != w || r.height != h;
         if (resized || r.serial != serial || !r.texture) {
             auto image = movie_frame.valid()
                 ? letterbox_movie(movie_frame, w, h)
+                : reticle ? centered_aim_marker(w, h)
                 : menu_skin::render(*snapshot, w, h);
             if (!image.valid()) return;
             if (resized || !r.texture) {
@@ -189,7 +220,8 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
         }
         list->setFramebuffer(framebuffer);
         list->setGraphicsPipelineLayout(r.layout.get());
-        list->setPipeline(r.pipeline.get());
+        list->setPipeline((reticle || (snapshot && snapshot->screen == menu_skin::Screen::Pause)) && !movie_frame.valid()
+            ? r.alpha_pipeline.get() : r.pipeline.get());
         list->setGraphicsDescriptorSet(r.descriptor->get(), 0);
         const CopyConstants cb{0, 0, float(w), float(h)};
         list->setGraphicsPushConstants(0, &cb);

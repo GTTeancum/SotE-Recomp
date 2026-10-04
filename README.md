@@ -345,9 +345,10 @@ and Right. The `Controls` submenu offers a single player-facing choice:
   looking along the weapon direction, with native camera collision checks.
   Stick release stops turning and holds vertical aim.
   Speeder-bike stages use right trigger for throttle, left trigger for brake,
-  left stick steering, and right shoulder fire. Bike steering uses a
+  and left stick steering. The original bike stage has no active Fire/Kick
+  action, so RB is currently unassigned there. Bike steering uses a
   progressive curve, can lose sensitivity as throttle rises, and is lightly
-  stabilized.
+  stabilized. A filtered throttle/brake axis controls native camera framing.
 
 Highlight `Apply` to persist the choice to `sote_controls.json` next to the
 executable.
@@ -358,7 +359,8 @@ changes on disk. Each setting has comments describing its valid range and what
 higher or lower values do. Tunables include movement deadzone and sensitivity,
 aim deadzone and sensitivity, trigger deadzone and sensitivity, optional
 look-forward snap back, and speeder-bike steering curve, high-speed falloff,
-minimum steering scale, stabilization, camera smoothing, and fire binding.
+  minimum steering scale, stabilization, and camera smoothing. The legacy
+  `bike_fire_button` key is reserved and has no effect in the bike stage.
 
 The `[OnFoot]` settings are independent of the older General/Bike tuning:
 `on_foot_movement_deadzone` and `on_foot_aim_deadzone` ship at 0.18 in the 0.9.2

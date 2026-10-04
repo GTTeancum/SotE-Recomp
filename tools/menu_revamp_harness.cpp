@@ -202,6 +202,7 @@ int main(int argc, char** argv) {
 
     const std::filesystem::path scratch = argv[1];
     std::filesystem::create_directories(scratch / "Sdata" / "UI");
+    std::filesystem::remove(scratch / "sote_options.json");
     sote::graphics_menu::initialize(scratch);
     sote::controls_menu::initialize(scratch);
     sote::menu_skin::initialize(scratch);
@@ -227,6 +228,27 @@ int main(int argc, char** argv) {
     check(
         latest_snapshot().rows[52].text.find("< Graphics >") != std::string::npos,
         "Graphics page title is selected");
+
+    for (int index = 0; index < 6; ++index) press(0x0400);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[65].text == "PC FMV",
+        "Graphics starts with PC FMV cutscenes");
+    press(0x0100);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[65].text == "Original N64",
+        "Cutscene mode changes through the menu");
+    check(sote::graphics_menu::pc_cutscenes_enabled(),
+        "Cutscene mode waits for Apply");
+    press(0x0400);
+    press(0x8000);
+    check(!sote::graphics_menu::pc_cutscenes_enabled(),
+        "Apply activates original N64 cutscenes");
+    std::ifstream saved_options{scratch / "sote_options.json"};
+    const std::string saved_text{
+        std::istreambuf_iterator<char>{saved_options},
+        std::istreambuf_iterator<char>{}};
+    check(saved_text.find("\"pcCutscenes\": false") != std::string::npos,
+        "Apply persists cutscene mode");
 
     press(0x0010);
     sote_capture_native_options(memory.bytes.data());
@@ -277,6 +299,34 @@ int main(int argc, char** argv) {
     pump_transition(memory, options_focused, native_options);
     check(!native_options && latest_screen_is(sote::menu_skin::Screen::Profiles),
         "L shoulder returns Options to profiles");
+
+    Memory pause_memory;
+    pause_memory.word(0x800d0948, 1);
+    pause_memory.half(0x800d0944, 1);
+    auto paused = sote::menu_skin::read_native_pause(
+        pause_memory.bytes.data(), pause_memory.bytes.size());
+    check(paused.screen == sote::menu_skin::Screen::Pause &&
+        paused.focused_setting == 1 && paused.rows[71].text == "Options",
+        "Pause reads native focus and presents Options");
+    const auto pause_image = sote::menu_skin::render(paused, 960, 540);
+    check(pause_image.valid() && pause_image.rgba[3] == 0 &&
+        pause_image.rgba[(size_t(280) * 960 + 480) * 4 + 3] == 255,
+        "Pause overlay keeps gameplay visible outside its action panel");
+
+    {
+        std::ofstream options{scratch / "sote_options.json", std::ios::trunc};
+        options << "{\"pcCutscenes\":false,\"borderless\":true}";
+    }
+    sote::graphics_menu::initialize(scratch);
+    check(!sote::graphics_menu::pc_cutscenes_enabled(),
+        "compact persisted false disables PC movies on restart");
+    {
+        std::ofstream options{scratch / "sote_options.json", std::ios::trunc};
+        options << "{\"pcCutscenes\":true,\"borderless\":false}";
+    }
+    sote::graphics_menu::initialize(scratch);
+    check(sote::graphics_menu::pc_cutscenes_enabled(),
+        "compact persisted true re-enables PC movies on restart");
 
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

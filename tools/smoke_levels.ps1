@@ -100,12 +100,18 @@ function New-LevelInputScript {
         # Xizor's Palace and the sewers provide Dash's jetpack. C-left toggles
         # it and a sustained A press supplies thrust; the long input window
         # distinguishes working lift from an ordinary short jump.
-        # This level's route becomes identifiable before its final intro has
-        # released player input. Delay the toggle until Dash has been under
-        # normal controller processing for several seconds.
-        $pulses.Add(("{0}:8:cl" -f ($ObservationStartVi + 630)))
+        # The Sewer's opening communicator stays up until Start dismisses it.
+        # Inputs sent before that point do not reach Dash's controller.
+        $jetpackToggleVi = $ObservationStartVi + 630
+        $jetpackThrustVi = $ObservationStartVi + 690
+        if ($LevelIndex -eq 7) {
+            $pulses.Add(("{0}:5:start" -f ($ObservationStartVi + 810)))
+            $jetpackToggleVi = $ObservationStartVi + 930
+            $jetpackThrustVi = $ObservationStartVi + 1010
+        }
+        $pulses.Add(("{0}:8:cl" -f $jetpackToggleVi))
         for (
-            $vi = $ObservationStartVi + 690;
+            $vi = $jetpackThrustVi;
             $vi -lt $SmokeVi - 360;
             $vi += 600) {
             $pulses.Add(("{0}:360:a+stick_up" -f $vi))

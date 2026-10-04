@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace sote::menu_skin {
-enum class Screen { Native, Profiles, Summary, Options, Controls, Graphics, Schemes };
+enum class Screen { Native, Profiles, Summary, Pause, Options, Controls, Graphics, Schemes };
 struct Row {
     int x = -1000, y = 0;
     uint32_t color = 0;
@@ -56,7 +56,9 @@ Screen classify(const std::array<Row, 80>& rows);
 std::shared_ptr<OriginalFont> read_original_font(const uint8_t* rdram, size_t size);
 Snapshot read_guest(const uint8_t* rdram, size_t size);
 Snapshot read_native_options(const uint8_t* rdram, size_t size);
+Snapshot read_native_pause(const uint8_t* rdram, size_t size);
 bool native_options_active(const uint8_t* rdram, size_t size);
+bool native_pause_active(const uint8_t* rdram, size_t size);
 const char* screen_name(Screen screen);
 
 void initialize(const std::filesystem::path& runtime_directory);

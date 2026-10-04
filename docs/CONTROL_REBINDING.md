@@ -54,7 +54,14 @@ shortcuts are not assignable. Menu recovery/navigation itself is not remapped.
 Escape also remains an unbindable, edge-triggered gameplay Pause recovery
 key, so clearing Pause bindings cannot strand a keyboard-only player.
 This supports single inputs, not multi-key chords or macros. Mouse buttons are
-available in the keyboard column; mouse motion and wheel binding are not added.
+available in the keyboard column. In Modern on-foot mode, relative mouse motion
+drives the same camera and weapon-aim hooks as the controller right stick; its
+sensitivity is adjustable on the Controls page and in `CONTROLS_MODERN.INI`.
+Mouse 1 is the default Fire alias in Modern on-foot mode. Mouse movement and
+wheel direction are not assignable to button actions. In Modern mode the Look
+rows show `Mouse Move` next to the assignable right-stick directions. Mouse
+movement itself is fixed; trying to edit that column points to the Mouse Aim
+sensitivity control in Options.
 
 ## Shared actions and schemes
 

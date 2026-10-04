@@ -6,6 +6,23 @@ This adjusts launch velocity, preserving its speed and the original muzzle
 position. Native projectile collision still blocks shots on nearby cover.
 A surface behind the muzzle does not turn a shot backwards.
 
+Relative mouse movement feeds the same Modern camera yaw and pitch hooks as the
+right stick. `on_foot_mouse_sensitivity` in `CONTROLS_MODERN.INI` sets degrees
+per raw mouse count, and the Controls menu exposes it as Mouse Aim. Mouse
+buttons can be assigned in the binding editor's keyboard/mouse column; Mouse 1
+is the default Modern on-foot Fire alias.
+An October 2026 process-local comparison in Escape from Echo Base confirms
+relative mouse counts turn the rendered Modern view and change pitch. The
+neutral and mouse-fed captures are in `build/diagnostics/modern_mouse_idle_modern/`
+and `build/diagnostics/modern_mouse_active_counts_visible/`; actual mouse
+device feel still needs a playtest.
+
+The centered cyan marker follows the camera-center ray in active Modern on-foot
+play. It clears when Modern aiming stops, when focus is lost, and while a menu
+or PC movie is displayed. A process-local Escape from Echo Base capture at
+`build/diagnostics/modern_reticle_gameplay/frames/present_2800.png` verifies
+the marker over gameplay; close/far shot convergence still needs hands-on review.
+
 The camera, body pitch, enemy fire, Classic controls, seeker missiles and thermal
 detonators are unchanged by this hook. This initial implementation targets the
 standard blaster laser. It does not add target
@@ -41,9 +58,8 @@ near/far convergence, empty space, preserved speed/origin/registers, backwards
 shot prevention, partial/full magnetism, occlusion and cone rejection, INI off,
 other owner exclusions, disconnect and Classic isolation.
 
-Set `SOTE_TRACE_MODERN_AIM=1` for spawn/aim telemetry. The centered marker and
-hands-on close/far validation remain in the to-do list; this work establishes
-the launch-direction behavior that the marker will represent.
+Set `SOTE_TRACE_MODERN_AIM=1` for spawn/aim telemetry. The centered marker is
+implemented; hands-on close/far validation remains in the to-do list.
 
 Validation recorded September 9, 2026: all six CTest harnesses pass. The focused
 Echo Base run completed at VI 3600 and recorded 14 corrected laser launches

@@ -114,6 +114,7 @@ void capture(const uint8_t* rdram) {
         // unrelated cached HUD rows must not clear that frame's host snapshot.
         if (native_options_active(rdram, 0x800000)) return;
         auto snapshot = read_guest(rdram, 0x800000);
+        if (snapshot.screen == Screen::Native && native_pause_active(rdram, 0x800000)) return;
         if (snapshot.screen == Screen::Profiles && renderer_available.load()) {
             const auto& options = snapshot.rows[76];
             graphics_menu::observe_main_menu(
@@ -133,8 +134,13 @@ void capture(const uint8_t* rdram) {
         publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }
 }
+void capture_native_pause(const uint8_t* rdram);
 void capture_native_options(const uint8_t* rdram) {
-    if (!enabled.load(std::memory_order_relaxed) || !native_options_active(rdram, 0x800000)) return;
+    if (!enabled.load(std::memory_order_relaxed)) return;
+    if (!native_options_active(rdram, 0x800000)) {
+        capture_native_pause(rdram);
+        return;
+    }
     try {
         auto snapshot = read_native_options(rdram, 0x800000);
         if (snapshot.screen == Screen::Controls)
@@ -144,6 +150,17 @@ void capture_native_options(const uint8_t* rdram) {
             graphics_menu::decorate_native_snapshot(snapshot);
         }
         publish_snapshot(std::move(snapshot));
+    } catch (...) { failed_capture(); }
+}
+void capture_native_pause(const uint8_t* rdram) {
+    if (!enabled.load(std::memory_order_relaxed)) return;
+    try {
+        // The same native branch also draws the main-menu profile summary.
+        // Its cached rows identify that screen, while gameplay Pause has only
+        // HUD rows in the cache.
+        if (read_guest(rdram, 0x800000).screen != Screen::Native) return;
+        auto snapshot = read_native_pause(rdram, 0x800000);
+        if (snapshot.screen == Screen::Pause) publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }
 }
 std::shared_ptr<const Snapshot> latest() {

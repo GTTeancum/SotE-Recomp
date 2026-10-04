@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cctype>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -60,7 +61,7 @@ enum class MenuTransition {
     RestoreProfileFocus,
 };
 
-constexpr int graphics_submenu_item_count = 8;
+constexpr int graphics_submenu_item_count = 9;
 
 int submenu_item_count(TopCategory category) {
     return category == TopCategory::Controls
@@ -347,6 +348,24 @@ int read_persisted_integer(
     return static_cast<int>(parsed);
 }
 
+bool read_persisted_bool(
+    const std::string& contents,
+    std::string_view field,
+    bool fallback) {
+    const size_t field_position = contents.find(field);
+    if (field_position == std::string::npos) return fallback;
+    const size_t colon = contents.find(':', field_position + field.size());
+    if (colon == std::string::npos) return fallback;
+    size_t value = colon + 1;
+    while (value < contents.size() &&
+           std::isspace(static_cast<unsigned char>(contents[value]))) {
+        ++value;
+    }
+    if (contents.compare(value, 4, "true") == 0) return true;
+    if (contents.compare(value, 5, "false") == 0) return false;
+    return fallback;
+}
+
 void persist_window_mode_locked() {
     if (state.persistence_path.empty()) {
         return;
@@ -359,6 +378,8 @@ void persist_window_mode_locked() {
     }
     output << "{\n  \"borderless\": "
            << (state.applied.borderless ? "true" : "false")
+           << ",\n  \"pcCutscenes\": "
+           << (state.applied.pc_cutscenes ? "true" : "false")
            << ",\n  \"outputWidth\": "
            << state.applied.output_width
            << ",\n  \"outputHeight\": "
@@ -426,6 +447,10 @@ void adjust_selected_setting_locked(int direction) {
         case 5:
             state.editing.borderless =
                 !state.editing.borderless;
+            break;
+        case 6:
+            state.editing.pc_cutscenes =
+                !state.editing.pc_cutscenes;
             break;
         default:
             break;
@@ -635,23 +660,37 @@ void draw_graphics_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         63,
-        "~s~cApply",
-        110,
-        151,
+        "~sCutscenes",
+        72,
+        150,
         label_color(6));
     set_row(
         rdram,
-        66,
+        65,
+        state.editing.pc_cutscenes ? "~sPC FMV" : "~sOriginal N64",
+        160,
+        150,
+        value_color(6));
+    set_row(
+        rdram,
+        67,
+        "~s~cApply",
+        110,
+        170,
+        label_color(7));
+    set_row(
+        rdram,
+        68,
         "~s~cReset",
         210,
-        151,
-        label_color(7));
+        170,
+        label_color(8));
     set_row(
         rdram,
         64,
         "~s~cReturn to Game Options",
         160,
-        170,
+        190,
         label_color(0));
 }
 
@@ -704,6 +743,8 @@ void switch_page_locked(int direction) {
 
 void initialize(const std::filesystem::path& data_directory) {
     std::lock_guard lock{state.mutex};
+    state.applied = Settings{};
+    state.editing = state.applied;
     state.options_visible = false;
     state.main_visible = false;
     state.submenu_active = false;
@@ -715,8 +756,10 @@ void initialize(const std::filesystem::path& data_directory) {
         const std::string contents{
             std::istreambuf_iterator<char>{input},
             std::istreambuf_iterator<char>{}};
-        state.applied.borderless =
-            contents.find("\"borderless\": true") != std::string::npos;
+        state.applied.borderless = read_persisted_bool(
+            contents, "\"borderless\"", state.applied.borderless);
+        state.applied.pc_cutscenes = read_persisted_bool(
+            contents, "\"pcCutscenes\"", state.applied.pc_cutscenes);
         state.applied.output_width = read_persisted_integer(
             contents,
             "\"outputWidth\"",
@@ -726,6 +769,7 @@ void initialize(const std::filesystem::path& data_directory) {
             "\"outputHeight\"",
             state.applied.output_height);
         state.editing.borderless = state.applied.borderless;
+        state.editing.pc_cutscenes = state.applied.pc_cutscenes;
         state.editing.output_width = state.applied.output_width;
         state.editing.output_height = state.applied.output_height;
     }
@@ -744,10 +788,12 @@ void sync_display_resolution(int width, int height) {
 void sync_from_renderer(const Settings& settings) {
     std::lock_guard lock{state.mutex};
     const bool saved_borderless = state.applied.borderless;
+    const bool saved_pc_cutscenes = state.applied.pc_cutscenes;
     const int saved_output_width = state.applied.output_width;
     const int saved_output_height = state.applied.output_height;
     state.applied = settings;
     state.applied.borderless = saved_borderless;
+    state.applied.pc_cutscenes = saved_pc_cutscenes;
     state.applied.output_width = saved_output_width;
     state.applied.output_height = saved_output_height;
     state.editing = state.applied;
@@ -758,6 +804,11 @@ void sync_window_mode(bool borderless) {
     state.applied.borderless = borderless;
     state.editing.borderless = borderless;
     persist_window_mode_locked();
+}
+
+bool pc_cutscenes_enabled() {
+    std::lock_guard lock{state.mutex};
+    return state.applied.pc_cutscenes;
 }
 
 bool take_renderer_request(Settings& settings) {
@@ -948,9 +999,9 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 } else {
                     adjust_selected_setting_locked(1);
                 }
-            } else if (state.submenu_selection <= 5) {
+            } else if (state.submenu_selection <= 6) {
                 adjust_selected_setting_locked(1);
-            } else if (state.submenu_selection == 6) {
+            } else if (state.submenu_selection == 7) {
                 queue_apply_locked();
             } else {
                 state.editing = Settings{};
@@ -1041,8 +1092,9 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);
         put(59, "Antialiasing", 72, 118, 4); put(60, antialiasing_name(state.editing.antialiasing), 160, 118, 4);
         put(61, "Display Mode", 72, 134, 5); put(62, state.editing.borderless ? "Borderless" : "Windowed", 160, 134, 5);
-        put(63, "Apply", 110, 151, 6); put(66, "Reset", 210, 151, 7);
-        put(64, "Return to Game Options", 160, 170, 0);
+        put(63, "Cutscenes", 72, 150, 6); put(65, state.editing.pc_cutscenes ? "PC FMV" : "Original N64", 160, 150, 6);
+        put(67, "Apply", 110, 170, 7); put(68, "Reset", 210, 170, 8);
+        put(64, "Return to Game Options", 160, 190, 0);
     }
 }
 
