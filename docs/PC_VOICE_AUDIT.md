@@ -124,6 +124,22 @@ Base, but the isolated peaks identify the supplied clip in both mixes.
 `tools/check_voice_pcm.py` reproduces the measurements from the ignored
 diagnostic PCM files. This still does not verify physical speaker output.
 
+The Imperial Freighter direct event-20 route now has an unmuted paired check
+for two consecutive communications. Native captures at presents 900 and 1200
+show “Make your way through the ship, and find the Imperial super computer”
+and then “My scanners show that it is near the main cargo hangar” in both
+Original N64 and PC cutscene modes. Process-local Start dismissed the first
+message. `ILB33.WAV` queued at VI 842/845 (Original/PC) and `ILB34.WAV` at VI
+1058 in both modes (`voice_freighter_pcm_original_20261007/` and
+`voice_freighter_pcm_pc_20261007/`). The installed WAVs appear in the mixed
+PCM with normalized correlations of **0.992910/0.992913** for `ILB33` and
+**0.991711/0.991258** for `ILB34` (Original/PC). Their measured onsets were
+13.259/8.341 seconds and 16.789/11.823 seconds, respectively; the first
+clip is 3.38 seconds long, so this route has no voice overlap. The PC run
+skipped the startup film before jumping directly to event 20; this verifies
+the two communications in PC mode, not the preceding Freighter SAN handoff.
+The capture used SDL's dummy output and does not verify physical speakers.
+
 ## Remaining gameplay timing routes
 
 The 21 retained Leebo clips without a visible in-game pairing fall into these

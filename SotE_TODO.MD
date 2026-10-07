@@ -432,6 +432,13 @@ The same PCM comparison now finds `ILB06` in both Asteroid Field modes after
 the PC film's handoff. Native frames show the matching turret message, and
 `tools/check_voice_pcm.py` reproduces the waveform correlations; details
 and remaining limits are in `docs/PC_VOICE_AUDIT.md`.
+An unmuted direct Imperial Freighter event-20 pair now shows the two
+successive `ILB33/34` communications and finds each installed WAV in the
+mixed PCM in both modes (correlations above 0.99). The second voice begins
+after the first ends in both runs. This verifies audio and visible-message
+alignment for that direct event route, not the preceding PC film handoff or
+physical speaker output (`voice_freighter_pcm_original_20261007/` and
+`voice_freighter_pcm_pc_20261007/`; details in `docs/PC_VOICE_AUDIT.md`).
 The exact queue VIs and captured frames are tabulated in
 `docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
 not physical speaker output or syllable-level sync.
