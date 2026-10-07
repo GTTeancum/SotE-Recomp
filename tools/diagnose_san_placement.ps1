@@ -17,6 +17,7 @@ param(
     [string]$NativeGallCommandVi = '',
     [int]$SyntheticPalaceCueVi = 0,
     [int]$OrdBossTimerZeroVi = 0,
+    [string]$OrdBossWordPoke = '',
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
     [string]$Teleport = '',
@@ -89,6 +90,9 @@ if ($SyntheticPalaceCueVi -gt 0) {
 if ($OrdBossTimerZeroVi -gt 0) {
     $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_TIMER_ZERO_VI'] =
         [string]$OrdBossTimerZeroVi
+}
+if ($OrdBossWordPoke) {
+    $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_WORD_POKE'] = $OrdBossWordPoke
 }
 if ($InitialSkipVi -gt 0) {
     $info.Environment['SOTE_SAN_TEST_SKIP_VI'] = [string]$InitialSkipVi

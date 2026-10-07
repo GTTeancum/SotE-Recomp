@@ -428,11 +428,16 @@ for 10 Leebo lines and two Skyhook lines. The other 21 Leebo and three Skyhook
 lines still need their gameplay states reached and their voice onset checked
 against the on-screen communication. The contradictory `ILB42` palace clip
 stays unmapped; wording differences are recorded in `docs/PC_VOICE_AUDIT.md`.
-The Ord Mantell boss handoff still repeats the native IG-88 reveal after
-`L04BOSS.SAN`. An Original N64 event-10 timer probe showed that forcing the
-reveal countdown to zero also starts combat and exposes Dash to early damage
-(18 health versus 90 at present 1400). This is not a safe production skip;
-the native camera transition needs to be isolated from the fight state.
+The Ord Mantell boss film previously replayed the native IG-88 reveal after
+`L04BOSS.SAN`. A timer-zero probe caused early combat damage, so PC mode now
+runs the native reveal behind the film's final ten seconds while movie input
+and game audio remain suppressed. An unmuted direct event-10 replay captured
+the film's last frame, black transition, and immediate 100-health arena HUD
+without repeating the native camera sequence
+(`ord_boss_pc_hidden_reveal_10s_20261007/`). The paired Original N64 run
+reached the same playable view without a PC movie
+(`ord_boss_original_after_hidden_reveal_20261007/`). The natural train-to-boss
+route, physical speakers, and early movie-skip handoff remain to be checked.
 An exhaustive scan of the ROM's 484 control-prefixed message candidates
 confirms each of the 31 Leebo hashes resolves to one exact fixture string,
 with no hash collision between different normalized messages. This is a

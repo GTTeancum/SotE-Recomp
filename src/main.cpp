@@ -392,6 +392,8 @@ bool san_ending_sequence_pending = false;
 uint64_t san_ending_first_token = 0;
 int san_ending_advance_start_vi = -1;
 std::atomic<bool> san_ending_handoff_active{false};
+uint64_t san_ord_boss_movie_token = 0;
+std::atomic<bool> san_ord_boss_handoff_active{false};
 std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
 std::atomic<bool> san_palace_boss_cue_pending{false};
@@ -772,6 +774,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ending_sequence_pending = false;
         san_ending_advance_start_vi = -1;
         san_ending_handoff_active.store(false, std::memory_order_relaxed);
+        san_ord_boss_movie_token = 0;
+        san_ord_boss_handoff_active.store(false, std::memory_order_relaxed);
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
@@ -877,7 +881,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
             return;
         }
         if (const char* movie = san_movie_for_event(event)) {
-            sote::san_movies::play_cached_preview(movie);
+            if (sote::san_movies::play_cached_preview(movie) && event == 10)
+                san_ord_boss_movie_token = sote::san_movies::playback_token();
             return;
         }
         if (const char* movie = san_intro_for_event(event)) {
@@ -2343,6 +2348,23 @@ void on_vi() {
             before, count);
         std::fflush(stdout);
     }
+    if (const char* probe = std::getenv("SOTE_DIAGNOSTIC_ORD_BOSS_WORD_POKE");
+        probe != nullptr && game_rdram != nullptr) {
+        int poke_vi = 0;
+        unsigned int address = 0;
+        unsigned int value = 0;
+        if (std::sscanf(probe, "%d:%x:%x", &poke_vi, &address, &value) == 3 &&
+            count == poke_vi && address >= 0x80000000U &&
+            address <= 0x807FFFFCU && (address & 3U) == 0 &&
+            read_guest_half(game_rdram, 0x8013CE0EU) == 10) {
+            const uint32_t before = read_guest_word(game_rdram, address);
+            write_guest_word(game_rdram, address, value);
+            std::printf("[sote][san] diagnostic Ord event-10 word 0x%08X: "
+                        "0x%08X -> 0x%08X at VI=%d\n",
+                        address, before, value, count);
+            std::fflush(stdout);
+        }
+    }
     update_san_movie_triggers(game_rdram);
     (void)sote::san_movies::latest_cached_frame();
     uint64_t movie_token = sote::san_movies::playback_token();
@@ -2355,6 +2377,24 @@ void on_vi() {
         movie_token = 0;
     }
     sote::frontend::set_movie_playback(movie_token);
+    // Run the native IG-88 reveal behind the final seconds of its PC film.
+    // The guest's own countdown still controls when combat and input begin.
+    if (san_ord_boss_movie_token != 0 && movie_token == san_ord_boss_movie_token &&
+        game_rdram != nullptr && read_guest_half(game_rdram, 0x8013CE0EU) == 10 &&
+        sote::san_movies::cached_playback_remaining_seconds() <= 10.0) {
+        if (!san_ord_boss_handoff_active.exchange(true,
+                std::memory_order_relaxed)) {
+            std::printf("[sote][san] Ord boss native reveal advances at VI=%d\n",
+                count);
+            std::fflush(stdout);
+        }
+    } else if (san_ord_boss_handoff_active.exchange(false,
+                   std::memory_order_relaxed)) {
+        san_ord_boss_movie_token = 0;
+    }
+    if (san_ord_boss_movie_token != 0 &&
+        movie_token != san_ord_boss_movie_token)
+        san_ord_boss_movie_token = 0;
     bool ending_advance = false;
     if (san_ending_sequence_pending && movie_token != 0 &&
         movie_token != san_ending_first_token && game_rdram != nullptr &&
@@ -2631,7 +2671,8 @@ extern "C" void sote_wait_for_game_frame() {
     // and felt visibly slow. Allow exactly one gameplay iteration per VI.
     std::unique_lock lock(game_frame_mutex);
     while (sote::san_movies::cached_playback_active() &&
-           !san_ending_handoff_active.load(std::memory_order_relaxed)) {
+           !san_ending_handoff_active.load(std::memory_order_relaxed) &&
+           !san_ord_boss_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }
     int current_vi = vi_count.load(std::memory_order_relaxed);

@@ -31,15 +31,12 @@ matching and synthetic runtime cues support the placement; reaching both
 encounters through normal gameplay remains unverified.
 
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
-at arena entry, queues non-silent audio to SDL's dummy device, and hands back
-to native arena rendering (`build/diagnostics/
-san_ord_boss_pc_after_startup_skip_20261007/`). Native captures show a
-second IG-88 reveal camera sequence after the PC film; the matched Original
-N64 run shows that sequence directly
-(`san_ord_boss_original_matched_20261007/`). A process-local native Start
-pulse did not skip it (`san_ord_boss_native_start_skip_20261007/`). The
-post-film reveal overlap needs a verified native state transition before
-this boss placement can be signed off as a clean PC-mode handoff.
+at arena entry and queues non-silent audio to SDL's dummy device. Its first
+handoff replayed the native IG-88 reveal after the film
+(`san_ord_boss_pc_after_startup_skip_20261007/`). Original N64 mode shows
+that sequence directly (`san_ord_boss_original_matched_20261007/`), and a
+process-local native Start pulse does not skip it
+(`san_ord_boss_native_start_skip_20261007/`).
 An Original N64 event-10 timeline shows the reveal ending between presents
 1200 and 1400 as the countdown at `0x800DEB78` falls to zero. An opt-in
 process-local probe zeroed that value at VI 900
@@ -47,7 +44,18 @@ process-local probe zeroed that value at VI 900
 IG-88 attacked during the premature handoff and Dash had 18 health at present
 1400, compared with 90 in the unmodified run. This countdown also gates
 player input. Zeroing it is not a safe PC-mode reveal skip; the camera and
-combat states need to be separated before changing the handoff.
+combat states need to be preserved through the handoff.
+PC mode now advances the native arena during the film's final ten seconds,
+with input and game audio still suppressed by the movie overlay. A complete
+unmuted replay shows the film ending on black and handing directly to Dash's
+playable arena view with the HUD and 100 health at present 5100; the repeated
+native camera sequence is absent
+(`ord_boss_pc_hidden_reveal_10s_20261007/`). The corresponding Original N64
+run still has no PC movie and reaches the same 100-health arena view at
+present 1300 (`ord_boss_original_after_hidden_reveal_20261007/`). This
+verifies the direct event-10 path and SDL dummy-device queue, not a natural
+train-to-boss route or physical speaker playback. Skipping the boss film
+early still resumes the native reveal; that skip handoff needs separate work.
 
 The table does not prove movie sound, visual handoff, or native story skip.
 Those are checked separately in the running N64 recompilation and listed in
