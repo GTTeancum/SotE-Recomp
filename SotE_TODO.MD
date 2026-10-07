@@ -167,6 +167,14 @@ the opening corridor (`build/diagnostics/gall_boss_pool_teleport_compare/`).
 This rules out a proximity-only trigger and identifies targetable activation
 as a state transition worth tracing on the natural route; it does not yet
 prove that transition is the film's exact story cue.
+A VI-by-VI process-local Gall boss trace now logs changes to the three
+`Boss` records during event 15. At the direct event-15 entry, all three
+appear by VI 604 with targetable flags `0x0000`; no boss-record change was
+logged through VI 1400, and the native frame at present 1300 still shows
+Dash in the opening corridor (`build/diagnostics/
+gall_boss_trace_baseline/`). The trace is available with
+`-TraceGallBoss` in `tools/diagnose_san_placement.ps1`; it still needs the
+natural elevator route to identify the encounter transition.
 A [firsthand PC walkthrough](https://gamefaqs.gamespot.com/pc/53840-star-wars-shadows-of-the-empire/faqs/7691)
 places the Boba cutscene when the second tower's final elevator reaches the
 surface, immediately before the fight. This narrows the native transition to
