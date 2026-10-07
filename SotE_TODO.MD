@@ -263,6 +263,16 @@ non-silent PCM, returned audio to the game, and resumed the playable corridor
 with its HUD (`palace_command10_full_handoff_20261007/`). The synthetic cue
 does not execute the native reveal or establish that normal gameplay reaches
 this branch; a natural Palace boss approach still needs verification.
+An event-27 actor-state trace now records the Gladiator Droid's command,
+phase, and target flags with `-TracePalaceBoss`. Direct entry loads its
+`glad` actor at command 1, phase 0, flags `0000` (VI 603), and a sustained
+forward input stops Dash at the closed door without changing the actor state
+(`palace_boss_trace_entry_20261007/` and
+`palace_boss_forward_route_20261007/`). A level-selection route also advanced
+past the two service-panel messages into playable event 26, where the later
+event-27 boss section was not reached (`palace_story_to_event27_20261007/`).
+These checks explain why a direct event jump cannot prove the natural reveal;
+the palace objectives and boss approach still have to be played through.
 An Original N64 event-31 probe shows the Tatooine epilogue in which Luke and
 Leia believe Dash died (`build/diagnostics/san_ending_event31_native_probe/`).
 Direct previews show `L11LOSE.SAN` depicts that conversation, while

@@ -621,6 +621,62 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
     }
 }
 
+void trace_palace_boss_object(uint8_t* rdram, int vi) {
+    if (rdram == nullptr || std::getenv("SOTE_TRACE_PALACE_BOSS") == nullptr)
+        return;
+    static uint32_t previous_object = 0;
+    static uint32_t previous_command = UINT32_MAX;
+    static uint32_t previous_phase = UINT32_MAX;
+    static uint16_t previous_record_flags = UINT16_MAX;
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    if (event != 27) {
+        previous_object = 0;
+        previous_command = UINT32_MAX;
+        previous_phase = UINT32_MAX;
+        previous_record_flags = UINT16_MAX;
+        return;
+    }
+    constexpr uint32_t pool = 0x80112838U;
+    const int32_t count = static_cast<int32_t>(read_guest_word(rdram, pool + 8));
+    const int32_t stride = static_cast<int32_t>(read_guest_word(rdram, pool + 12));
+    const uint32_t base = read_guest_word(rdram, pool + 16);
+    if (count < 0 || count > 4096 || stride < 0x9C || stride > 4096 ||
+        base < 0x80000000U ||
+        static_cast<uint64_t>(base) + static_cast<uint64_t>(count) * stride >
+            0x80800000ULL)
+        return;
+    for (int32_t index = 0; index < count; ++index) {
+        const uint32_t record = base + index * stride;
+        const uint32_t object = read_guest_word(rdram, record + 0x98U);
+        if (object < 0x80000000U || object > 0x80800000U - 0x58CU ||
+            read_guest_word(rdram, object) != 0x426F7373U ||
+            read_guest_word(rdram, object + 0x78U) != 0x676C6164U)
+            continue;
+        const uint32_t command = read_guest_word(rdram, object + 0x584U);
+        const uint32_t phase = read_guest_word(rdram, object + 0x588U);
+        const uint16_t flags = read_guest_half(rdram, record + 0x68U);
+        if (object != previous_object || command != previous_command ||
+            phase != previous_phase || flags != previous_record_flags) {
+            std::printf("[sote][palace-boss] VI=%d record=%d actor=%08X "
+                        "command=%u phase=%u flags=%04X stage=%d result=%d "
+                        "pos=%.1f,%.1f,%.1f\n",
+                vi, index, object, command, phase, flags,
+                static_cast<int32_t>(read_guest_word(rdram, 0x800DD340U)),
+                static_cast<int32_t>(read_guest_word(rdram, 0x800DD2B0U)),
+                read_guest_float(rdram, object + 0x50U),
+                read_guest_float(rdram, object + 0x54U),
+                read_guest_float(rdram, object + 0x58U));
+            std::fflush(stdout);
+            previous_object = object;
+            previous_command = command;
+            previous_phase = phase;
+            previous_record_flags = flags;
+        }
+        return;
+    }
+}
+
 void inject_gall_boss_cue_for_test(uint8_t* rdram, int vi) {
     const char* requested = std::getenv("SOTE_DIAGNOSTIC_GALL_BOSS_CUE_VI");
     const char* native_requested =
@@ -2273,6 +2329,7 @@ void on_vi() {
     }
     log_general_failure_telemetry(count);
     trace_gall_boss_objects(game_rdram, count);
+    trace_palace_boss_object(game_rdram, count);
     inject_gall_boss_cue_for_test(game_rdram, count);
     inject_palace_boss_cue_for_test(game_rdram, count);
     update_san_movie_triggers(game_rdram);
