@@ -197,6 +197,15 @@ captures at presents 2600 and 4100 show the ship, targets, and HUD. Only
 remaining timing check needs the relevant battle progress, not a longer idle
 capture.
 
+An Original N64 direct event-5 jump reached a playable Echo Base chamber with
+a wall control and the normal Dash HUD. Captures at presents 1700, 2100, and
+2500 show no power-restored communication; the voice log likewise contains no
+`ILB04` queue through VI 2600 (`voice_echo_event5_extended_original_20261007/`).
+This direct entry bypasses the generator switches and cannot establish that
+`ILB04` is late or missing during the natural objective. Its timing check still
+requires restoring power through gameplay and capturing the resulting message
+and game-audio mix in each cutscene mode.
+
 | Section | Clips | Next visible state to reach |
 | --- | --- | --- |
 | Echo Base | `ILB04` | Restore generator power and display the ship-return message. |
