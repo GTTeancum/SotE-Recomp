@@ -273,6 +273,27 @@ height stayed near the starting walkway rather than rising ten units, so
 sustained upward lift and the physical Modern Y/A binding remain unverified
 (`sewers_jetpack_active_controller_probe/` and
 `sewers_jetpack_stationary_thrust_probe/`).
+A process-local virtual pad replay through the production Modern mapping
+resolved the lift check: Y produced the guest C-left toggle and activated the
+jetpack; held A produced the guest jump/thrust bit. Dash rose from 189.5 to
+202.2 game units before meeting the sewer ceiling, then descended after A
+was released. Native captures show the jetpack and flame while fuel drops
+from 98% to 23% (`build/diagnostics/modern_virtual_pad_jetpack_sewers/`).
+This verifies the mapping and game action path, not physical controller feel.
+A process-local virtual Start button in Escape dismissed the communicator,
+opened the revamped Pause menu over live gameplay, and resumed Dash. Native
+captures show the objective, live HUD, Pause's Resume/Options/Quit choices,
+and the restored HUD in order
+(`build/diagnostics/modern_virtual_pad_pause_communicator/`).
+The same virtual pad opened Pause -> Options -> Graphics -> Controls in the
+live Escape route. A right input changed On Foot from Modern to Classic while
+Speeder Bike stayed Modern; selecting Apply wrote those values to
+`sote_controls.json`. The diagnostic saved that written file, then restored
+the playable candidate's original settings byte-for-byte
+(`build/diagnostics/modern_virtual_pad_classic_persist/`). Native captures
+show the Controls page before/after the switch and the highlighted Apply
+button. Switching scheme in the running menu and persistence are verified;
+the physical controller's button delivery is not.
 An October 2026 process-local Mos Eisley run reached the live speeder-bike
 controller, showed 25% forced throttle moving the bike and left-stick steering
 changing its path, and captured the actual desert scene and HUD in

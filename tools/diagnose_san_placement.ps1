@@ -87,6 +87,9 @@ $info.Environment['SOTE_TRACE_MENU'] = '1'
 $optionsPath = Join-Path (Split-Path -Parent $exe) 'sote_options.json'
 $hadOptions = Test-Path -LiteralPath $optionsPath
 if ($hadOptions) { $savedOptions = [IO.File]::ReadAllBytes($optionsPath) }
+$controlsPath = Join-Path (Split-Path -Parent $exe) 'sote_controls.json'
+$hadControls = Test-Path -LiteralPath $controlsPath
+if ($hadControls) { $savedControls = [IO.File]::ReadAllBytes($controlsPath) }
 try {
     if ($OriginalN64) {
         [IO.File]::WriteAllText($optionsPath, '{"pcCutscenes":false}')
@@ -99,12 +102,21 @@ try {
     $process.WaitForExit()
     [IO.File]::WriteAllText((Join-Path $output 'stdout.log'), $stdout.GetAwaiter().GetResult())
     [IO.File]::WriteAllText((Join-Path $output 'stderr.log'), $stderr.GetAwaiter().GetResult())
+    if (Test-Path -LiteralPath $controlsPath) {
+        [IO.File]::WriteAllBytes(
+            (Join-Path $output 'controls_after.json'),
+            [IO.File]::ReadAllBytes($controlsPath))
+    }
     $exit = $process.ExitCode
     $process.Dispose()
     Write-Host "SAN placement probe exit: $exit"
     Write-Host "Native captures and logs: $output"
     if ($exit -ne 0) { exit $exit }
 } finally {
+    if ($hadControls) { [IO.File]::WriteAllBytes($controlsPath, $savedControls) }
+    elseif (Test-Path -LiteralPath $controlsPath) {
+        Remove-Item -LiteralPath $controlsPath
+    }
     if ($OriginalN64) {
         if ($hadOptions) { [IO.File]::WriteAllBytes($optionsPath, $savedOptions) }
         elseif (Test-Path -LiteralPath $optionsPath) {
