@@ -576,6 +576,21 @@ bool stop_cached_playback() {
     return was_active;
 }
 
+bool finish_cached_playback() {
+    std::lock_guard lock{cache_mutex};
+    if (!current_frame.valid() || active_playback.metadata.frames == 0 ||
+        active_playback.metadata.fps <= 0.0)
+        return false;
+    hold_last_frame = true;
+    const double seconds = active_playback.metadata.frames /
+        active_playback.metadata.fps;
+    active_playback.started = std::chrono::steady_clock::now() -
+        std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+            std::chrono::duration<double>(seconds));
+    active_playback.audio_cursor = active_playback.audio_frames;
+    return read_cache_frame_locked(active_playback.metadata.frames - 1);
+}
+
 bool cached_playback_active() {
     std::lock_guard lock{cache_mutex};
     return current_frame.valid();

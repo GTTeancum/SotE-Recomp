@@ -333,6 +333,18 @@ memorial or Outrider dialogue (`san_ending_pc_pair_held_handoff/`). Original
 N64 mode still opens the native memorial scene directly with no L11 SAN
 playback (`san_ending_original_after_pair_fix/`). The ending's natural
 campaign route and physical speaker output remain unverified.
+The Game Over film had another duplicate: after `GAMEOVER.SAN`, PC mode
+displayed the native Xizor Game Over screen again. A process-local Ord
+Mantell run set the remaining lives to zero, then let IG-88 cause the final
+life loss. The PC film started at the native game-over result, queued
+non-silent PCM, and now hands off directly to the title by advancing the
+hidden native screen with Start. Full-film and early-skip captures show the
+title without a second Game Over presentation
+(`ord_gameover_pc_title_handoff_20261007/` and
+`ord_gameover_pc_early_skip_handoff_20261007/`). Original N64 mode retains
+the native Xizor presentation and Start-to-title behavior
+(`ord_gameover_original_start_20261007/`). Physical speaker output and an
+unmodified multi-life route remain unverified.
 
 Two existing PC-mode captures provide initial communication checks. Gall's
 `ILB11.WAV` queued at VI 3894 in event 14, and present 3900 visibly shows

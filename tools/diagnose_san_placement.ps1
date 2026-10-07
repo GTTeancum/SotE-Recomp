@@ -8,6 +8,7 @@ param(
     [switch]$AudioProbe,
     [ValidateRange(0, 20000)][int]$InitialSkipVi = 600,
     [ValidateRange(0, 20000)][int]$SecondSkipVi = 0,
+    [ValidateRange(0, 20000)][int]$ThirdSkipVi = 0,
     [string]$PreviewMovie = '',
     [switch]$TraceFinal,
     [switch]$TracePlayer,
@@ -96,9 +97,10 @@ if ($OrdBossWordPoke) {
     $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_WORD_POKE'] = $OrdBossWordPoke
 }
 if ($InitialSkipVi -gt 0) {
-    $info.Environment['SOTE_SAN_TEST_SKIP_VI'] =
-        if ($SecondSkipVi -gt 0) { "$InitialSkipVi,$SecondSkipVi" }
-        else { [string]$InitialSkipVi }
+    $skipVis = @($InitialSkipVi)
+    if ($SecondSkipVi -gt 0) { $skipVis += $SecondSkipVi }
+    if ($ThirdSkipVi -gt 0) { $skipVis += $ThirdSkipVi }
+    $info.Environment['SOTE_SAN_TEST_SKIP_VI'] = $skipVis -join ','
 }
 if ($EventJumps) {
     $info.Environment['SOTE_DIAGNOSTIC_EVENT_JUMPS'] = $EventJumps

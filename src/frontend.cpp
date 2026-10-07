@@ -50,6 +50,7 @@ std::atomic<bool> physical_input_enabled{true};
 std::atomic<bool> audio_output_enabled{true};
 std::atomic<uint64_t> movie_playback_token{0};
 std::atomic<bool> movie_guest_advance{false};
+std::atomic<bool> movie_guest_start{false};
 std::atomic<bool> swallow_movie_skip{false};
 SDL_GameController* controller = nullptr;
 bool initialized = false;
@@ -1128,10 +1129,11 @@ void set_physical_input_enabled(bool enabled) {
 
 bool get_input(int port, uint16_t* buttons, float* x, float* y) {
     if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
-        // The PC ending replaces native dialogue but retains native credits.
-        // Short A pulses advance those hidden story cards during the final
-        // seconds of the second film. All other films keep guest input frozen.
-        *buttons = movie_guest_advance.load(std::memory_order_relaxed) ?
+        // The PC ending advances hidden native story cards with A. Game Over
+        // advances the hidden native return-to-title scene with Start. Other
+        // films keep guest input frozen.
+        *buttons = movie_guest_start.load(std::memory_order_relaxed) ?
+            n64_start : movie_guest_advance.load(std::memory_order_relaxed) ?
             n64_a : 0;
         *x = 0.0f;
         *y = 0.0f;
@@ -1243,6 +1245,10 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
 
 void set_movie_guest_advance(bool pressed) {
     movie_guest_advance.store(pressed, std::memory_order_relaxed);
+}
+
+void set_movie_guest_start(bool pressed) {
+    movie_guest_start.store(pressed, std::memory_order_relaxed);
 }
 
 void set_scripted_input(int vi, uint16_t buttons, int8_t x, int8_t y) {

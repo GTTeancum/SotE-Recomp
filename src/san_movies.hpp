@@ -61,6 +61,7 @@ bool play_cached_preview(std::string_view name);
 bool play_cached_sequence(std::initializer_list<std::string_view> names);
 bool play_startup_sequence();
 bool stop_cached_playback();
+bool finish_cached_playback();
 bool cached_playback_active();
 uint64_t playback_token();
 double cached_playback_remaining_seconds();

@@ -93,3 +93,19 @@ unverified. A fresh direct event-10 entry still starts the fallback film
 The table does not prove movie sound, visual handoff, or native story skip.
 Those are checked separately in the running N64 recompilation and listed in
 `SotE_TODO.MD`.
+
+`GAMEOVER.SAN` uses the game's final-life transition rather than the chapter
+dispatch table. An Ord Mantell process-local run set the remaining lives to
+zero, then let IG-88 inflict the last life loss. PC mode started the film at
+the native `2 -> 4` result transition and queued non-silent PCM. Before the
+handoff fix, rendered captures showed the same Xizor Game Over presentation
+again after the film (`ord_gameover_pc_last_life_20261007/`). Original N64
+mode shows that native presentation and a Start pulse returns to the title
+(`ord_gameover_original_start_20261007/`); A does not dismiss it
+(`ord_gameover_original_a_20261007/`). PC mode now holds the film's last frame
+while a process-local native Start pulse advances to event 2. A full-film run
+shows the PC Game Over presentation followed by the title with no native
+duplicate (`ord_gameover_pc_title_handoff_20261007/`). An explicit early film
+skip reaches the same title transition
+(`ord_gameover_pc_early_skip_handoff_20261007/`). The capture checks the
+rendered output and SDL dummy-device audio queue, not physical speakers.

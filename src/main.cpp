@@ -387,6 +387,9 @@ GeneralFailureTelemetry previous_general_telemetry;
 bool san_logo_started = false;
 int16_t san_last_movie_event = INT16_MIN;
 bool san_game_over_started = false;
+uint64_t san_game_over_movie_token = 0;
+int san_game_over_handoff_start_vi = -1;
+std::atomic<bool> san_game_over_handoff_active{false};
 int16_t san_pending_story_skip_event = INT16_MIN;
 bool san_ending_sequence_pending = false;
 uint64_t san_ending_first_token = 0;
@@ -777,6 +780,9 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ending_sequence_pending = false;
         san_ending_advance_start_vi = -1;
         san_ending_handoff_active.store(false, std::memory_order_relaxed);
+        san_game_over_movie_token = 0;
+        san_game_over_handoff_start_vi = -1;
+        san_game_over_handoff_active.store(false, std::memory_order_relaxed);
         san_ord_boss_movie_token = 0;
         san_ord_boss_handoff_active.store(false, std::memory_order_relaxed);
         san_ord_boss_skip_pending = false;
@@ -845,7 +851,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         if (lives < 0) {
             if (!san_game_over_started) {
                 san_game_over_started = true;
-                sote::san_movies::play_cached_preview("GAMEOVER.SAN");
+                if (sote::san_movies::play_cached_preview("GAMEOVER.SAN"))
+                    san_game_over_movie_token = sote::san_movies::playback_token();
             }
             return;
         }
@@ -2384,19 +2391,28 @@ void on_vi() {
         }
     }
     update_san_movie_triggers(game_rdram);
+    if (san_game_over_movie_token != 0 &&
+        sote::san_movies::playback_token() == san_game_over_movie_token)
+        sote::san_movies::set_hold_last_frame(true);
     (void)sote::san_movies::latest_cached_frame();
     uint64_t movie_token = sote::san_movies::playback_token();
     if (movie_token != 0 &&
         sote::frontend::movie_skip_pressed(movie_token, count)) {
-        if (movie_token == san_ord_boss_movie_token && game_rdram != nullptr &&
-            (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
-             read_guest_half(game_rdram, 0x8013CE0EU) == 10))
-            san_ord_boss_skip_pending = true;
-        std::printf("[sote][san] cutscene skipped\n");
-        std::fflush(stdout);
-        sote::san_movies::stop_cached_playback();
-        san_ending_sequence_pending = false;
-        movie_token = 0;
+        if (movie_token == san_game_over_movie_token &&
+            sote::san_movies::finish_cached_playback()) {
+            std::printf("[sote][san] game-over film skipped to title handoff\n");
+            std::fflush(stdout);
+        } else {
+            if (movie_token == san_ord_boss_movie_token && game_rdram != nullptr &&
+                (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
+                 read_guest_half(game_rdram, 0x8013CE0EU) == 10))
+                san_ord_boss_skip_pending = true;
+            std::printf("[sote][san] cutscene skipped\n");
+            std::fflush(stdout);
+            sote::san_movies::stop_cached_playback();
+            san_ending_sequence_pending = false;
+            movie_token = 0;
+        }
     }
     if (san_ord_boss_skip_pending && game_rdram != nullptr) {
         const int16_t event = static_cast<int16_t>(
@@ -2438,6 +2454,42 @@ void on_vi() {
     if (san_ord_boss_movie_token != 0 &&
         movie_token != san_ord_boss_movie_token)
         san_ord_boss_movie_token = 0;
+    bool game_over_advance = false;
+    if (san_game_over_movie_token != 0 &&
+        movie_token == san_game_over_movie_token && game_rdram != nullptr) {
+        if (san_game_over_handoff_start_vi < 0 &&
+            sote::san_movies::cached_playback_remaining_seconds() <= 0.0) {
+            san_game_over_handoff_start_vi = count;
+            san_game_over_handoff_active.store(true, std::memory_order_relaxed);
+            std::printf("[sote][san] game-over native title advance begins at VI=%d\n",
+                count);
+            std::fflush(stdout);
+        }
+        if (san_game_over_handoff_start_vi >= 0) {
+            const int elapsed = count - san_game_over_handoff_start_vi;
+            const int16_t event = static_cast<int16_t>(
+                read_guest_half(game_rdram, 0x8013CE0EU));
+            if (event == 2 || elapsed >= 180) {
+                sote::san_movies::stop_cached_playback();
+                sote::frontend::set_movie_playback(0);
+                movie_token = 0;
+                san_game_over_movie_token = 0;
+                san_game_over_handoff_start_vi = -1;
+                san_game_over_handoff_active.store(false,
+                    std::memory_order_relaxed);
+                if (event == 2) san_last_movie_event = 2;
+                std::printf("[sote][san] game-over title handoff event=%d VI=%d\n",
+                    event, count);
+                std::fflush(stdout);
+            } else {
+                game_over_advance = elapsed % 2 == 0;
+            }
+        }
+    } else if (san_game_over_movie_token != 0 && movie_token == 0) {
+        san_game_over_movie_token = 0;
+        san_game_over_handoff_start_vi = -1;
+        san_game_over_handoff_active.store(false, std::memory_order_relaxed);
+    }
     bool ending_advance = false;
     if (san_ending_sequence_pending && movie_token != 0 &&
         movie_token != san_ending_first_token && game_rdram != nullptr &&
@@ -2470,6 +2522,7 @@ void on_vi() {
         san_ending_handoff_active.store(false, std::memory_order_relaxed);
     }
     sote::frontend::set_movie_guest_advance(ending_advance);
+    sote::frontend::set_movie_guest_start(game_over_advance);
     if (movie_token != 0) {
         const auto audio = sote::san_movies::next_cached_audio();
         sote::frontend::queue_movie_audio(audio.data(), audio.size());
@@ -2715,7 +2768,8 @@ extern "C" void sote_wait_for_game_frame() {
     std::unique_lock lock(game_frame_mutex);
     while (sote::san_movies::cached_playback_active() &&
            !san_ending_handoff_active.load(std::memory_order_relaxed) &&
-           !san_ord_boss_handoff_active.load(std::memory_order_relaxed)) {
+           !san_ord_boss_handoff_active.load(std::memory_order_relaxed) &&
+           !san_game_over_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }
     int current_vi = vi_count.load(std::memory_order_relaxed);
