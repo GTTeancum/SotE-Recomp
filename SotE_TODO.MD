@@ -175,6 +175,13 @@ Dash in the opening corridor (`build/diagnostics/
 gall_boss_trace_baseline/`). The trace is available with
 `-TraceGallBoss` in `tools/diagnose_san_placement.ps1`; it still needs the
 natural elevator route to identify the encounter transition.
+Two further process-local event-15 routes turned back toward the visible
+doorway, moved Dash from (-628.9, -517.6) to the closed door, and pulsed the
+Modern X interaction. The door stayed closed, the player stopped at its
+collision plane, and all three boss records remained idle
+(`gall_event15_back_door_route/` and
+`gall_event15_back_door_aligned/`). A direct event jump therefore does not
+establish that the preceding mission switch or door state has been reached.
 A [firsthand PC walkthrough](https://gamefaqs.gamespot.com/pc/53840-star-wars-shadows-of-the-empire/faqs/7691)
 places the Boba cutscene when the second tower's final elevator reaches the
 surface, immediately before the fight. This narrows the native transition to
