@@ -296,8 +296,15 @@ The five existing Skyhook mappings correspond semantically to their N64
 messages; `ILU17` says "reactor core" where the N64 text says "power core."
 The earlier visible "I'll fly us to the skyhook" radio instruction in
 `san_skyhook_pc_natural_route/frames/present_4700.png` has no matching
-installed `ILU` recording, so it stays unvoiced. The five later lines still
-need running-game timing checks.
+installed `ILU` recording, so it stays unvoiced. A direct event-30 Original N64 run has now
+paired `ILB46` with the "take over the ship" message and `ILU13/16` with
+their visible Empire-attack and turret instructions. The PC voice log records
+frames 1086/1383 for `ILU13/16`; native captures show the corresponding
+messages at presents 1200/1500 (`voice_skyhook_event30_timing_20261007/`).
+A matched direct PC-mode event-30 run queued the same `ILB46/ILU13/ILU16`
+files with the same visible communications
+(`voice_skyhook_event30_pc_mode_20261007/`). `ILU17/19/20` and physical
+speaker output remain unverified.
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or

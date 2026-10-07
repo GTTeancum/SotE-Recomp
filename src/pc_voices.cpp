@@ -69,9 +69,9 @@ std::string normalized_text(const uint8_t* ram, uint32_t pointer) {
 }
 void play(std::string_view file, const char* trigger) {
     const bool queued = sote::hd_audio::play_file(file);
-    std::printf("[sote][pc-voice] %s %.*s event=%u trigger=%s\n",
+    std::printf("[sote][pc-voice] %s %.*s event=%u frame=%llu trigger=%s\n",
         queued ? "queued" : "unavailable", static_cast<int>(file.size()),
-        file.data(), event, trigger);
+        file.data(), event, static_cast<unsigned long long>(frame), trigger);
 }
 }
 

@@ -31,9 +31,19 @@ model. The five clips mapped by `src/pc_voices.cpp` match their on-screen
 speaker/message semantically: `ILU13` (Empire attacks Xizor's base),
 `ILU16` (destroy the arm turrets), `ILU17` (enter and destroy the core),
 `ILU19` (get out), and `ILU20` (Dash is missing). `ILU17` says **reactor
-core** where the N64 text says **power core**. Runtime timing for these five
-remains unverified: the current Skyhook film-to-gameplay capture reaches an
-earlier radio message, not these later lines.
+core** where the N64 text says **power core**. A direct event-30 Original N64
+run queued `ILU13` at game frame 1086 and `ILU16` at frame 1383. Native
+present-1200/1500 captures show their matching Empire-attack and turret
+instructions over the Skyhook battle
+(`build/diagnostics/voice_skyhook_event30_timing_20261007/`). The route also
+queued Leebo's `ILB46` at VI 631 while its "take over the ship" message was
+visible at present 800. These checks confirm the selected files and visible
+messages. A matched direct event-30 run in PC cutscene mode also queued
+`ILB46`, `ILU13`, and `ILU16`, with the same three messages visible at
+presents 800/1200/1500
+(`build/diagnostics/voice_skyhook_event30_pc_mode_20261007/`). Physical
+speaker output, `ILU17/19/20`, and the natural campaign route remain
+unverified.
 
 That earlier message, “I'll fly us to the skyhook while you fight off
 Xizor's fighters from the gun turret,” is visible at
