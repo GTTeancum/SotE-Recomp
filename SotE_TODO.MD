@@ -413,6 +413,10 @@ for 10 Leebo lines and two Skyhook lines. The other 21 Leebo and three Skyhook
 lines still need their gameplay states reached and their voice onset checked
 against the on-screen communication. The contradictory `ILB42` palace clip
 stays unmapped; wording differences are recorded in `docs/PC_VOICE_AUDIT.md`.
+An exhaustive scan of the ROM's 484 control-prefixed message candidates
+confirms each of the 31 Leebo hashes resolves to one exact fixture string,
+with no hash collision between different normalized messages. This is a
+static mapping check; it does not close the remaining gameplay timing work.
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or

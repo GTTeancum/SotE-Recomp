@@ -25,6 +25,16 @@ loads and mixes all 31 retained built-in mappings and rejects the withheld
 message. Full in-game voice/message timing review is still open in
 `SotE_TODO.MD` item 1.
 
+A static ROM-corpus audit (`python tools/audit_voice_rom_hashes.py
+SotE_Recompiled/main.bin tools/leebo_voice_cases.tsv`) checked all 31 keys
+against 484 NUL-terminated, control-prefixed message candidates in the
+decompressed ROM. Each key identifies exactly one byte-for-byte fixture
+string; no two *different normalized messages* in that corpus share a hash.
+Repeated copies of the same normalized text do exist, but none uses a mapped
+voice key. This rules out a hash collision with another candidate ROM
+message; it does not establish when the game displays a string or whether a
+runtime-constructed string can share its hash.
+
 ## Complete installed Leebo clip pass
 
 All 37 installed `ILB*.WAV` clips were run through the local transcript
@@ -141,6 +151,15 @@ Eisley bike stage stayed on `ILB24` through VI 6000 without the later warnings
 opening instruction twice did not reach its later key/deactivator messages
 (`voice_sewers_event25_followup_original_20261007/`). These are route limits,
 not evidence that the mappings fail during real mission progress.
+An additional process-local Ord Mantell event-8 route tried forward motion,
+jumps, and dismissing the opening train warning
+(`voice_ord_train_forward_probe_20261007/`,
+`voice_ord_train_early_jump_20261007/`, and
+`voice_ord_train_dismiss_then_jump_20261007/`). Native captures still show
+the opening warning before Dash falls from the train; none reaches an
+`ILB08/09/10` communication. Direct event 9 advances to the IG-88 arena
+event 10 instead (`voice_ord_event9_entry_20261007/`). Those later train
+messages require progressing event 8 itself; event 9 is not a shortcut.
 An extended process-local Sewer flight used Modern Y to enable the jetpack
 and held A until its displayed fuel fell from 98% to 2%. Thrust then stopped
 and fuel refilled to 85%, without an `ILB31` queue or visible “Jetpack
