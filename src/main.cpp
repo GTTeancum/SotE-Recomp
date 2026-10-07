@@ -740,7 +740,12 @@ void inject_gall_boss_cue_for_test(uint8_t* rdram, int vi) {
 void inject_palace_boss_cue_for_test(uint8_t* rdram, int vi) {
     const char* requested =
         std::getenv("SOTE_DIAGNOSTIC_PALACE_BOSS_CUE_VI");
-    if (requested == nullptr || std::atoi(requested) != vi || rdram == nullptr ||
+    const char* native_requested =
+        std::getenv("SOTE_DIAGNOSTIC_PALACE_BOSS_NATIVE_COMMAND_VI");
+    const bool direct_cue = requested != nullptr && std::atoi(requested) == vi;
+    const bool native_command = native_requested != nullptr &&
+        std::atoi(native_requested) == vi;
+    if ((!direct_cue && !native_command) || rdram == nullptr ||
         read_guest_half(rdram, 0x8013CE0EU) != 27U)
         return;
     constexpr uint32_t pool = 0x80112838U;
@@ -761,10 +766,12 @@ void inject_palace_boss_cue_for_test(uint8_t* rdram, int vi) {
             continue;
         const uint32_t original = read_guest_word(rdram, object + 0x584U);
         write_guest_word(rdram, object + 0x584U, 10U);
-        std::printf("[sote][san] diagnostic synthetic Palace command 10 VI=%d\n",
-            vi);
-        sote_palace_boss_movie_cue(rdram, object);
-        write_guest_word(rdram, object + 0x584U, original);
+        std::printf("[sote][san] diagnostic synthetic Palace command 10 VI=%d mode=%s\n",
+            vi, native_command ? "native" : "direct cue");
+        if (!native_command) {
+            sote_palace_boss_movie_cue(rdram, object);
+            write_guest_word(rdram, object + 0x584U, original);
+        }
         return;
     }
 }

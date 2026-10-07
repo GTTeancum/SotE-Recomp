@@ -292,6 +292,17 @@ past the two service-panel messages into playable event 26, where the later
 event-27 boss section was not reached (`palace_story_to_event27_20261007/`).
 These checks explain why a direct event jump cannot prove the natural reveal;
 the palace objectives and boss approach still have to be played through.
+A process-local diagnostic then set the loaded Gladiator Droid actor's
+command to 10 at VI 850 without calling the SAN cue directly. The actor
+held command 10 through VI 4000, but the native command-10 branch did not
+execute and `L09BOSS.SAN` did not start
+(`palace_native_command10_pc_20261007b/`). Captures at presents 800 and
+3850 show Dash still in the corridor before the closed door. This confirms
+that changing the command field alone does not activate the boss actor;
+the normal Palace objective/encounter state remains necessary for a valid
+film-to-reveal test. The first probe in
+`palace_native_command10_pc_20261007/` stayed in the Hoth startup film
+because that run did not skip it and provides no Palace evidence.
 The installed `L09BOSS.SAN` audio describes Xizor leaving Dash with his
 Gladiator Droid (`L09BOSS_audio_transcript_20261007.txt`). The hooked native
 Palace command-10 branch still calls `func_80006CB0` after requesting that

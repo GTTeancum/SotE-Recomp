@@ -18,6 +18,7 @@ param(
     [string]$SyntheticGallCueVi = '',
     [string]$NativeGallCommandVi = '',
     [int]$SyntheticPalaceCueVi = 0,
+    [int]$NativePalaceCommandVi = 0,
     [int]$OrdBossTimerZeroVi = 0,
     [string]$OrdBossWordPoke = '',
     [switch]$DirectEventOnly,
@@ -88,6 +89,11 @@ if ($SyntheticPalaceCueVi -gt 0) {
     $info.Environment['SOTE_DIAGNOSTIC_PALACE_BOSS_CUE_VI'] =
         [string]$SyntheticPalaceCueVi
     Write-Host "Synthetic Palace cue at VI $SyntheticPalaceCueVi"
+}
+if ($NativePalaceCommandVi -gt 0) {
+    $info.Environment['SOTE_DIAGNOSTIC_PALACE_BOSS_NATIVE_COMMAND_VI'] =
+        [string]$NativePalaceCommandVi
+    Write-Host "Native Palace command 10 at VI $NativePalaceCommandVi"
 }
 if ($OrdBossTimerZeroVi -gt 0) {
     $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_TIMER_ZERO_VI'] =
