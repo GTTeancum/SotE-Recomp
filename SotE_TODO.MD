@@ -417,6 +417,10 @@ the film before the skip, a black handoff, and scrolling credits at presents
 1800 and 2100 without showing either native story scene
 (`san_ending_pc_early_skip_fixed_20261007/`). This checks the direct event-31
 route; the natural campaign finish remains unverified.
+Skipping after `L11WIN.SAN` begins follows the same path: a process-local
+capture shows the Outrider film at present 3000, a black handoff at 3250,
+and native scrolling credits at 3650
+(`san_ending_second_film_skip_20261007/`).
 The Game Over film had another duplicate: after `GAMEOVER.SAN`, PC mode
 displayed the native Xizor Game Over screen again. A process-local Ord
 Mantell run set the remaining lives to zero, then let IG-88 cause the final
