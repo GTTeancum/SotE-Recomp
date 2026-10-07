@@ -157,6 +157,19 @@ handoff into the visible communication and actual voice mix on this route.
 It does not establish physical speaker output or the natural preceding
 campaign route.
 
+The Palace three-panel follow-up now has a paired mixed-audio check. In both
+cutscene modes, the first visible communication says there are “several”
+service panels at present 2200 and queues no `ILB42.WAV`. A process-local
+Start dismissal reveals the instruction to bomb **three** panels at present
+2400; `ILB43.WAV` queues at VI 2358. The installed `ILB43.WAV` waveform
+appears in the game stereo mix with normalized three-second correlations
+**0.888385** (Original N64) and **0.888391** (PC), with next peaks outside
+one second below 0.072. The paired captures and PCM are in
+`voice_palace_ilb43_pcm_original_20261007/` and
+`voice_palace_ilb43_pcm_pc_20261007/`. The PC voice says “each of them”
+without contradicting the visible count. This verifies the selected clip in
+the SDL dummy-device mix, not physical speaker output.
+
 ## Remaining gameplay timing routes
 
 The 21 retained Leebo clips without a visible in-game pairing fall into these

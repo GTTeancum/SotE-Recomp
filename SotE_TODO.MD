@@ -510,6 +510,13 @@ Matched Original and PC-mode Palace runs now dismiss that first message,
 show the three-panel follow-up, and queue `ILB43.WAV` at VI 2358 in both
 modes (`voice_palace_ilb43_original_20261007/` and
 `voice_palace_ilb43_pc_20261007/`). Neither run queues the withheld `ILB42`.
+An unmuted paired replay now also finds the installed `ILB43.WAV` waveform
+in the game audio mix in both modes (correlations 0.888385 and 0.888391)
+while the three-panel message is visible; the preceding “several panels”
+message remains unvoiced. Native frames and SDL dummy-device PCM are in
+`voice_palace_ilb43_pcm_original_20261007/` and
+`voice_palace_ilb43_pcm_pc_20261007/`. Physical speaker output remains
+unverified.
 All 18 installed `ILU` clips have now been machine-transcribed for the
 Skyhook radio audit (`build/diagnostics/pc_all_ilu_transcripts_20261007.txt`).
 The five existing Skyhook mappings correspond semantically to their N64
