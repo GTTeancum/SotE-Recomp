@@ -432,8 +432,15 @@ and its supercomputer communication at event 20
 at event 28 to the turret briefing and live battle at event 29
 (`san_skyhook_intro_early_skip_20261007/`). Each process-local run captured
 the actual film frame before skipping and the indicated native scene after;
-none replayed its redundant story slides. Other intro skip routes and
-natural campaign transitions remain to be checked.
+none replayed its redundant story slides. The remaining `san_story_skip_destination`
+entries now have the same early-skip check: Ord Mantell event 7 reached the
+moving train, its HUD, and the jump warning at event 8
+(`san_ord_intro_early_skip_20261007/`); Sewers event 24 reached the native
+shaft, objective communication, and event 25
+(`san_sewers_intro_early_skip_20261007/`); Freighter event 18 reached the
+ship interior and supercomputer communication at event 20
+(`san_freighter_story_early_skip_20261007/`). Natural campaign transitions,
+boss encounters, and untested non-story movie skips remain open.
 The Game Over film had another duplicate: after `GAMEOVER.SAN`, PC mode
 displayed the native Xizor Game Over screen again. A process-local Ord
 Mantell run set the remaining lives to zero, then let IG-88 cause the final
