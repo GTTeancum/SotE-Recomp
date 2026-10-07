@@ -31,6 +31,14 @@ selection for this route, not the other reported misplacements or audio.
 The comparison exposed and fixed a settings loader bug: valid compact JSON
 `{"pcCutscenes":false}` had been ignored. Both compact true/false reload cases
 now pass in `menu_revamp_harness`.
+The SAN diagnostic now writes the requested mode explicitly for every run and
+restores the candidate build's previous options file afterward. A short
+process-local comparison confirmed the PC setting rendered the ongoing Hoth
+film while Original N64 displayed the Escape from Echo Base communicator
+(`san_explicit_mode_pc_event4_20261007/` and
+`san_explicit_mode_n64_event4_20261007/`). This checks mode isolation; the PC
+film had already started before the diagnostic's event-4 jump, so this pair
+does not establish Escape movie placement or voice timing.
 Gall Spaceport starts at event 11 and plays `L05INTRO.SAN` there. A longer
 process-local run showed no premature `L05BOSS.SAN` while idle after the
 intro (`build/diagnostics/san_gall_post_intro_timing/`). The initial PC path

@@ -113,9 +113,10 @@ $controlsPath = Join-Path (Split-Path -Parent $exe) 'sote_controls.json'
 $hadControls = Test-Path -LiteralPath $controlsPath
 if ($hadControls) { $savedControls = [IO.File]::ReadAllBytes($controlsPath) }
 try {
-    if ($OriginalN64) {
-        [IO.File]::WriteAllText($optionsPath, '{"pcCutscenes":false}')
-    }
+    # Set the requested mode explicitly so a PC probe cannot silently inherit
+    # a previous Original N64 setting from the candidate build.
+    $pcCutscenes = if ($OriginalN64) { 'false' } else { 'true' }
+    [IO.File]::WriteAllText($optionsPath, "{`"pcCutscenes`":$pcCutscenes}")
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $info
     if (-not $process.Start()) { throw 'Could not start game' }
@@ -139,10 +140,8 @@ try {
     elseif (Test-Path -LiteralPath $controlsPath) {
         Remove-Item -LiteralPath $controlsPath
     }
-    if ($OriginalN64) {
-        if ($hadOptions) { [IO.File]::WriteAllBytes($optionsPath, $savedOptions) }
-        elseif (Test-Path -LiteralPath $optionsPath) {
-            Remove-Item -LiteralPath $optionsPath
-        }
+    if ($hadOptions) { [IO.File]::WriteAllBytes($optionsPath, $savedOptions) }
+    elseif (Test-Path -LiteralPath $optionsPath) {
+        Remove-Item -LiteralPath $optionsPath
     }
 }
