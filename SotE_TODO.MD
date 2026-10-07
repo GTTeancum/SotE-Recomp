@@ -71,6 +71,15 @@ transitions after the corresponding movies. Full-movie captures show the
 Sewers PC film handing off to the sewer objective and the Skyhook PC film
 handing off to the turret briefing/HUD without replaying story slides
 (`san_sewers_pc_story_skip_hermetic/`, `san_skyhook_pc_natural_route/`).
+An unmuted selected-level Skyhook replay confirmed the full `L10INTRO.SAN`
+handoff with audio enabled. Native captures show the film's ship approach and
+fighters at presents 2000, 3000, and 4000, a black transition at 4300, the
+turret communication at 4500, and the live turret HUD by 5000
+(`san_skyhook_pc_audio_handoff_20261007/`). The runtime queued non-silent
+movie PCM to SDL's dummy device and switched back to game audio at VI 4425;
+the decoded film PCM contains nonzero samples. This establishes the local
+audio queue and visual handoff, not physical speaker output or an audible
+human review.
 Ord Mantell has the same overlap: `L04INTRO.SAN` tells the Xizor/IG-88/train
 story shown by native event 7. Native Start skips event 7 to playable event 8.
 PC mode now makes that transition after the movie. A full natural-route capture
