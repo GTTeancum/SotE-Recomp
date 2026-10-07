@@ -37,9 +37,24 @@ sets the global reveal countdown at `0x800DEB78` to 16 seconds. The Boba
 command-10 branch also calls `func_80006CB0` after its cue. Thus the actor
 hook identifies the story moment, but it does not establish that the native
 camera/reveal will finish before either PC film ends. The synthetic cues used
-so far do not execute these native branches. A natural encounter capture must
-check for repeated reveals and hidden combat before either boss handoff can
-be signed off.
+so far do not execute these native branches. Later isolated calls to the
+actual native dispatchers confirmed the repeated reveals and supported
+movie-to-arena handoff fixes. A natural encounter capture remains necessary
+to check boss presence, combat, and player safety.
+
+For Palace, the isolated native command-10 call started `L09BOSS.SAN` and
+then replayed the N64 arena reveal after the film
+(`palace_native_dispatch10_full_pc_20261007/`). PC mode now advances that
+16-second native reveal during the film's final 16 seconds and holds the
+movie's last frame until the native countdown reaches zero. A repeat run
+shows the Gladiator film, non-silent PCM queued to SDL's dummy device, a black
+final transition, and the 100-health arena HUD without the repeated reveal
+(`palace_native_dispatch10_hidden_pc_20261007/`). The direct event-27
+injection used invalid corridor state and left the boss actor at a non-finite
+position. It cannot establish a valid natural fight or physical audio output.
+The ordinary rebuilt candidate's direct event-27 entry shows the closed-door
+corridor and no boss film (`palace_boss_handoff_entry_guard_20261007/`).
+The early-skip handoff also remains unverified.
 
 For Palace event 27, a direct jump loads the `glad` actor but leaves it
 inactive in the corridor. Setting its stored command to 10 does not call the

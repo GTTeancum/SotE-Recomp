@@ -405,6 +405,8 @@ uint64_t san_gall_boss_movie_token = 0;
 std::atomic<bool> san_gall_boss_handoff_active{false};
 std::atomic<bool> san_palace_boss_cue_pending{false};
 bool san_palace_boss_started = false;
+uint64_t san_palace_boss_movie_token = 0;
+std::atomic<bool> san_palace_boss_handoff_active{false};
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -802,6 +804,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
+        san_palace_boss_movie_token = 0;
+        san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
         sote::san_movies::stop_cached_playback();
         const int16_t current_event = static_cast<int16_t>(
             read_guest_half(rdram, 0x8013CE0EU));
@@ -836,6 +840,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (event != 27) {
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
+        san_palace_boss_movie_token = 0;
+        san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
     }
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
@@ -894,6 +900,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_palace_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
         san_palace_boss_started =
             sote::san_movies::play_cached_preview("L09BOSS.SAN");
+        if (san_palace_boss_started)
+            san_palace_boss_movie_token = sote::san_movies::playback_token();
         std::printf("[sote][san] Palace Gladiator encounter cue: %s\n",
             san_palace_boss_started ? "L09BOSS.SAN started" : "movie unavailable");
         std::fflush(stdout);
@@ -2414,6 +2422,9 @@ void on_vi() {
     if (san_gall_boss_movie_token != 0 &&
         sote::san_movies::playback_token() == san_gall_boss_movie_token)
         sote::san_movies::set_hold_last_frame(true);
+    if (san_palace_boss_movie_token != 0 &&
+        sote::san_movies::playback_token() == san_palace_boss_movie_token)
+        sote::san_movies::set_hold_last_frame(true);
     if (san_game_over_movie_token != 0 &&
         sote::san_movies::playback_token() == san_game_over_movie_token)
         sote::san_movies::set_hold_last_frame(true);
@@ -2433,6 +2444,11 @@ void on_vi() {
             if (movie_token == san_gall_boss_movie_token) {
                 san_gall_boss_movie_token = 0;
                 san_gall_boss_handoff_active.store(false,
+                    std::memory_order_relaxed);
+            }
+            if (movie_token == san_palace_boss_movie_token) {
+                san_palace_boss_movie_token = 0;
+                san_palace_boss_handoff_active.store(false,
                     std::memory_order_relaxed);
             }
             std::printf("[sote][san] cutscene skipped\n");
@@ -2504,6 +2520,35 @@ void on_vi() {
     if (san_gall_boss_movie_token != 0 && movie_token == 0) {
         san_gall_boss_movie_token = 0;
         san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
+    }
+    if (san_palace_boss_movie_token != 0 &&
+        movie_token == san_palace_boss_movie_token && game_rdram != nullptr &&
+        read_guest_half(game_rdram, 0x8013CE0EU) == 27U) {
+        const double remaining =
+            sote::san_movies::cached_playback_remaining_seconds();
+        if (remaining <= 16.0 &&
+            !san_palace_boss_handoff_active.exchange(true,
+                std::memory_order_relaxed)) {
+            std::printf("[sote][san] Palace native reveal advances at VI=%d\n",
+                count);
+            std::fflush(stdout);
+        }
+        if (remaining <= 0.0 &&
+            read_guest_float(game_rdram, 0x800DEB78U) <= 0.0f) {
+            sote::san_movies::stop_cached_playback();
+            sote::frontend::set_movie_playback(0);
+            movie_token = 0;
+            san_palace_boss_movie_token = 0;
+            san_palace_boss_handoff_active.store(false,
+                std::memory_order_relaxed);
+            std::printf("[sote][san] Palace boss native reveal complete; "
+                        "PC film handoff at VI=%d\n", count);
+            std::fflush(stdout);
+        }
+    }
+    if (san_palace_boss_movie_token != 0 && movie_token == 0) {
+        san_palace_boss_movie_token = 0;
+        san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
     }
     bool game_over_advance = false;
     if (san_game_over_movie_token != 0 &&
@@ -2821,6 +2866,7 @@ extern "C" void sote_wait_for_game_frame() {
            !san_ending_handoff_active.load(std::memory_order_relaxed) &&
            !san_ord_boss_handoff_active.load(std::memory_order_relaxed) &&
            !san_gall_boss_handoff_active.load(std::memory_order_relaxed) &&
+           !san_palace_boss_handoff_active.load(std::memory_order_relaxed) &&
            !san_game_over_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }

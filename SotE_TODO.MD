@@ -322,10 +322,26 @@ Gladiator Droid (`L09BOSS_audio_transcript_20261007.txt`). The hooked native
 Palace command-10 branch still calls `func_80006CB0` after requesting that
 film and sets its reveal countdown to 16 seconds. Boba's command-10 branch
 also calls `func_80006CB0` after its PC film cue. These static branch facts
-make duplicate post-film native reveals a concrete risk; the synthetic movie
-cues bypass the branch and cannot validate those handoffs. Reach each native
-encounter and inspect the rendered film-to-combat transition before signing
-off either boss movie.
+made duplicate post-film native reveals a concrete risk; the synthetic movie
+cues bypass the branch and cannot validate those handoffs. Isolated native
+dispatcher runs now confirm that risk for both bosses. Reach each encounter
+through gameplay before signing off either boss movie.
+An isolated game-thread call to the loaded `glad` actor's actual native
+command-10 dispatcher started `L09BOSS.SAN`. Before the handoff fix, the film
+finished and then the N64 arena reveal played (`palace_native_dispatch10_full_pc_20261007/`).
+PC mode now advances the native 16-second reveal behind the film's final
+16 seconds, holds the film's last frame until the reveal countdown reaches
+zero, and returns to game audio. A repeat run captured the Gladiator film,
+non-silent PCM queued to SDL's dummy device, a black final transition, and
+Dash's 100-health arena view without a second reveal
+(`palace_native_dispatch10_hidden_pc_20261007/`). The forced dispatcher call
+began in invalid corridor state and left the actor at a non-finite position;
+this does not verify boss presence, combat, or the natural Palace route. The
+temporary dispatcher hook was removed from the ordinary build.
+The rebuilt candidate's direct event-27 entry stays in the closed-door
+corridor at 100 health and does not start `L09BOSS.SAN`
+(`palace_boss_handoff_entry_guard_20261007/`). An early movie skip and the
+natural boss approach remain unverified.
 An isolated game-thread invocation of Boba's actual native command-10
 dispatcher now confirms the Gall duplication: `L05BOSS.SAN` starts from the
 real hook, but its end exposes the N64 camera/reveal flyover again before
