@@ -170,6 +170,20 @@ one second below 0.072. The paired captures and PCM are in
 without contradicting the visible count. This verifies the selected clip in
 the SDL dummy-device mix, not physical speaker output.
 
+Mos Eisley `ILB24.WAV` also has a paired mixed-audio check. Original N64
+mode uses the native event-16-to-17 Start transition; PC mode shows
+`L06INTRO.SAN` at present 2100, its black ending, and the event-17 bike
+scene. The warning to stop the swoop gang before they reach **Luke** is
+visible at present 2400 (Original) and 2780 (PC). `ILB24.WAV` queues at
+VI 2336/2756, and its first two seconds correlate with the game stereo mix
+at **0.792369/0.791615**, with next peaks outside one second below 0.091.
+The paired captures and PCM are in `voice_mos_ilb24_pcm_original_20261007/`
+and `voice_mos_ilb24_pcm_pc_20261007/`. The installed clip's local
+transcript says **Kenobi's place** where the screen says **Luke**; this is
+the actual mapped recording entering the mix, so the wording difference
+remains a deliberate, documented scene match. Physical speakers were not
+checked.
+
 ## Remaining gameplay timing routes
 
 The 21 retained Leebo clips without a visible in-game pairing fall into these

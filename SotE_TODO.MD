@@ -446,6 +446,13 @@ present-2750/2780 captures show the same "Stop the swoop gang" message over
 the bike scene (`voice_mos_pc_comm_20261007/`). This verifies the selected
 voice file and visible message across both cutscene modes for this line;
 speaker output and the other mapped messages remain open.
+An unmuted paired replay now also finds `ILB24.WAV` in the game audio mix
+at that warning (correlations 0.792369/0.791615). The PC film, black
+transition, and bike warning are visible in sequence
+(`voice_mos_ilb24_pcm_original_20261007/` and
+`voice_mos_ilb24_pcm_pc_20261007/`). The PC recording names Kenobi's place
+where the N64 message names Luke; the scene matches, but the spoken wording
+is not exact. Physical speaker output remains unverified.
 An automated local transcription of the installed PC WAVs exposed a
 contradictory palace line: `ILB42.WAV` says **four** service panels while
 the N64 on-screen `0x2E000141` objective says **three**. The built-in
