@@ -2332,6 +2332,17 @@ void on_vi() {
     trace_palace_boss_object(game_rdram, count);
     inject_gall_boss_cue_for_test(game_rdram, count);
     inject_palace_boss_cue_for_test(game_rdram, count);
+    // Diagnostic only: this countdown also suppresses player input. Zeroing it
+    // exposes combat early, so it must never be used for the PC movie handoff.
+    if (const char* probe = std::getenv("SOTE_DIAGNOSTIC_ORD_BOSS_TIMER_ZERO_VI");
+        probe != nullptr && game_rdram != nullptr && count == std::atoi(probe) &&
+        read_guest_half(game_rdram, 0x8013CE0EU) == 10) {
+        const float before = read_guest_float(game_rdram, 0x800DEB78U);
+        write_guest_word(game_rdram, 0x800DEB78U, 0);
+        std::printf("[sote][san] diagnostic Ord event-10 timer %.3f -> 0 at VI=%d\n",
+            before, count);
+        std::fflush(stdout);
+    }
     update_san_movie_triggers(game_rdram);
     (void)sote::san_movies::latest_cached_frame();
     uint64_t movie_token = sote::san_movies::playback_token();

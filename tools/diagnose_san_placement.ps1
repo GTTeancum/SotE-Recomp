@@ -16,6 +16,7 @@ param(
     [string]$SyntheticGallCueVi = '',
     [string]$NativeGallCommandVi = '',
     [int]$SyntheticPalaceCueVi = 0,
+    [int]$OrdBossTimerZeroVi = 0,
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
     [string]$Teleport = '',
@@ -84,6 +85,10 @@ if ($SyntheticPalaceCueVi -gt 0) {
     $info.Environment['SOTE_DIAGNOSTIC_PALACE_BOSS_CUE_VI'] =
         [string]$SyntheticPalaceCueVi
     Write-Host "Synthetic Palace cue at VI $SyntheticPalaceCueVi"
+}
+if ($OrdBossTimerZeroVi -gt 0) {
+    $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_TIMER_ZERO_VI'] =
+        [string]$OrdBossTimerZeroVi
 }
 if ($InitialSkipVi -gt 0) {
     $info.Environment['SOTE_SAN_TEST_SKIP_VI'] = [string]$InitialSkipVi

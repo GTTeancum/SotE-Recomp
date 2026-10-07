@@ -40,6 +40,14 @@ N64 run shows that sequence directly
 pulse did not skip it (`san_ord_boss_native_start_skip_20261007/`). The
 post-film reveal overlap needs a verified native state transition before
 this boss placement can be signed off as a clean PC-mode handoff.
+An Original N64 event-10 timeline shows the reveal ending between presents
+1200 and 1400 as the countdown at `0x800DEB78` falls to zero. An opt-in
+process-local probe zeroed that value at VI 900
+(`ord_boss_timer_zero_probe_20261007/`): the arena HUD appeared earlier, but
+IG-88 attacked during the premature handoff and Dash had 18 health at present
+1400, compared with 90 in the unmodified run. This countdown also gates
+player input. Zeroing it is not a safe PC-mode reveal skip; the camera and
+combat states need to be separated before changing the handoff.
 
 The table does not prove movie sound, visual handoff, or native story skip.
 Those are checked separately in the running N64 recompilation and listed in
