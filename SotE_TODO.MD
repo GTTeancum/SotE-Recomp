@@ -370,7 +370,11 @@ WAV waveform is present in the game's mixed PCM at the on-screen Bay 3
 communication in both modes (normalized three-second correlation 0.9884),
 after the `L02INTRO.SAN` handoff in PC mode. The rendered film and message
 frames, queue VIs, and analysis are in `docs/PC_VOICE_AUDIT.md`; the SDL
-dummy device does not verify physical speaker output or other lines.
+dummy device does not verify physical speaker output.
+The same PCM comparison now finds `ILB06` in both Asteroid Field modes after
+the PC film's handoff. Native frames show the matching turret message, and
+`tools/check_voice_pcm.py` reproduces the waveform correlations; details
+and remaining limits are in `docs/PC_VOICE_AUDIT.md`.
 The exact queue VIs and captured frames are tabulated in
 `docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
 not physical speaker output or syllable-level sync.

@@ -98,7 +98,21 @@ in both output files. The next strongest match outside a one-second window
 is below 0.075. This confirms the actual voice waveform entered the game
 audio mix in both modes, beyond the earlier file-load and queue logs. The
 diagnostic used SDL's dummy output; physical speaker playback remains
-unverified. These audio results cover `ILB01` only.
+unverified.
+
+The same check now covers Asteroid Field `ILB06.WAV`. Direct event-6 runs
+queued it at VI 983 in Original N64 mode and VI 1543 in PC FMV mode, after
+`L03INTRO.SAN` returned to the game. Native captures at presents 1000 and
+1800 show Leebo's “I'll try to avoid asteroids while you're busy in the gun
+turret” communication in each mode; the PC capture at present 800 shows the
+preceding movie (`voice_asteroid_pcm_original_20261007/` and
+`voice_asteroid_pcm_pc_20261007/`). The first two seconds of the installed
+voice clip correlate with the mixed PCM at **0.5614** and **0.5948**,
+respectively, while the next peak outside a one-second window stays below
+0.065. Background game audio lowers these correlations relative to Echo
+Base, but the isolated peaks identify the supplied clip in both mixes.
+`tools/check_voice_pcm.py` reproduces the measurements from the ignored
+diagnostic PCM files. This still does not verify physical speaker output.
 
 ## Remaining gameplay timing routes
 
