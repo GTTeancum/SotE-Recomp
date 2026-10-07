@@ -80,6 +80,14 @@ movie PCM to SDL's dummy device and switched back to game audio at VI 4425;
 the decoded film PCM contains nonzero samples. This establishes the local
 audio queue and visual handoff, not physical speaker output or an audible
 human review.
+The matching unmuted Original N64 level-selection route showed the native
+Part IV crawl instead of `L10INTRO.SAN` at presents 1850–3000
+(`san_skyhook_n64_audio_story_20261007/`). A native Start skip then advanced
+event 28 to 29: captures show the turret communication at present 3200 and
+the live HUD at 3500 (`san_skyhook_n64_selected_skip_story_20261007/`). A
+second Start paused the game, so later frames in that probe are not evidence
+of continued battle. The game-audio dump was non-silent; speaker output and
+the unskipped end of the native crawl were not checked.
 Ord Mantell has the same overlap: `L04INTRO.SAN` tells the Xizor/IG-88/train
 story shown by native event 7. Native Start skips event 7 to playable event 8.
 PC mode now makes that transition after the movie. A full natural-route capture
