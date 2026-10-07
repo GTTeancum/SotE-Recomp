@@ -16,7 +16,7 @@ passes its SAN filename to the movie player at `0x464460`.
 | `L02INTRO.SAN` | 4 | 4 | Escape opening before mission dialogue. |
 | `L03INTRO.SAN` | 6 | 6 | Asteroid Field approach before briefing. |
 | `L04INTRO.SAN` | 8 | 7 | Ord Mantell story before playable train event 8. |
-| `L04BOSS.SAN` | 10 | 10 | IG-88 arena entry. |
+| `L04BOSS.SAN` | 10 | 9; direct 10 fallback | IG-88 dialogue before the arena; direct boss entry still has a film. |
 | `L05INTRO.SAN` | 14 | 11 | Gall story before ship-side briefing/event 14. |
 | `L06INTRO.SAN` | 17 | 16 | Mos Eisley Part III story before bike/event 17. |
 | `L07INTRO.SAN` | 20 | 18 or 19 | Freighter story before interior/event 20; direct selection enters 19. |
@@ -63,6 +63,21 @@ playable HUD and 100 health at present 1100, with no flyover replay
 (`ord_boss_pc_early_skip_fixed_20261007/`). Dash remains unharmed through
 present 1500; at present 1600, an unattended IG-88 attack reduces health to
 81. That later damage occurs during active combat, after control has returned.
+The preceding N64 event 9 contains IG-88's spoken confrontation as text
+slides. Its first visible line says he has been monitoring Dash; the local
+automated transcript of `L04BOSS.SAN` begins with the same line
+(`L04BOSS_audio_transcript_20261007.txt`). An Original N64 Start pulse at
+event 9 requests event 10 (`ord_event9_native_start_to10_20261007/`). PC mode
+now starts the film on event 9, queues that native 9-to-10 transition, and
+suppresses a second film at event 10. An unmuted event-9 run shows the PC film,
+non-silent PCM queued to SDL's dummy device, then the playable arena with
+100 health and no repeated IG-88 slides or camera reveal
+(`ord_event9_pc_film_handoff_20261007/`). An early skip of the event-9 film
+also reaches the arena at 100 health
+(`ord_event9_pc_early_skip_fixed_20261007/`). The direct event-10 fallback
+remains for level selection. Reaching event 9 by completing the train remains
+unverified. A fresh direct event-10 entry still starts the fallback film
+(`ord_event10_pc_direct_fallback_20261007/`).
 
 The table does not prove movie sound, visual handoff, or native story skip.
 Those are checked separately in the running N64 recompilation and listed in

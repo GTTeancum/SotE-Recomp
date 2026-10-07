@@ -73,7 +73,9 @@ does not replay `L05INTRO.SAN`. The installed PC executable starts the Boba
 movie from his actor's command-10 reveal branch. The matching native branch
 now cues `L05BOSS.SAN` in PC mode; synthetic and mode-gating checks pass, but
 the natural elevator-to-encounter route still needs verification.
-Event 10 opens the IG-88 arena and retains `L04BOSS.SAN`. Palace event 27
+N64 event 9 carries the IG-88 dialogue, so PC mode plays `L04BOSS.SAN` there
+and hands off to the event-10 arena. Direct event-10 selection retains a film
+fallback. Palace event 27
 opens before the Gladiator Droid reveal, so its old event-entry trigger for
 `L09BOSS.SAN` was premature. The movie now starts from the droid's native
 command-10 reveal branch in PC mode. A synthetic cue played the full movie,

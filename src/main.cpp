@@ -395,6 +395,7 @@ std::atomic<bool> san_ending_handoff_active{false};
 uint64_t san_ord_boss_movie_token = 0;
 std::atomic<bool> san_ord_boss_handoff_active{false};
 bool san_ord_boss_skip_pending = false;
+bool san_ord_boss_story_handoff_pending = false;
 std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
 std::atomic<bool> san_palace_boss_cue_pending{false};
@@ -467,13 +468,14 @@ const char* level_name_for_index(int level_index) {
 }
 
 const char* san_intro_for_event(int16_t event) {
-    // Only the opening event of a level plays its PC introduction. Later
-    // checkpoint events must not replay the chapter movie on entry.
+    // Chapter openings and the Ord IG-88 story play their matching PC film.
+    // Later checkpoints must not replay a chapter introduction.
     switch (event) {
         case 2: return "L01INTRO.SAN";
         case 4: return "L02INTRO.SAN";
         case 6: return "L03INTRO.SAN";
         case 7: return "L04INTRO.SAN";
+        case 9: return "L04BOSS.SAN";
         case 11: return "L05INTRO.SAN";
         case 16: return "L06INTRO.SAN";
         case 18: return "L07INTRO.SAN";
@@ -778,6 +780,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ord_boss_movie_token = 0;
         san_ord_boss_handoff_active.store(false, std::memory_order_relaxed);
         san_ord_boss_skip_pending = false;
+        san_ord_boss_story_handoff_pending = false;
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
@@ -871,6 +874,10 @@ void update_san_movie_triggers(uint8_t* rdram) {
     }
     if (event != san_last_movie_event) {
         san_last_movie_event = event;
+        if (event == 10 && san_ord_boss_story_handoff_pending) {
+            san_ord_boss_story_handoff_pending = false;
+            return; // Event 9 already played the same IG-88 PC film.
+        }
         if (event == 31) {
             // The N64 epilogue shows the memorial and Dash's survival in
             // sequence, then rolls credits without changing the event id.
@@ -889,7 +896,16 @@ void update_san_movie_triggers(uint8_t* rdram) {
         }
         if (const char* movie = san_intro_for_event(event)) {
             const bool playing = sote::san_movies::play_cached_preview(movie);
-            if (playing && san_story_skip_destination(event) != INT16_MIN)
+            if (playing && event == 9) {
+                san_ord_boss_movie_token = sote::san_movies::playback_token();
+                san_ord_boss_story_handoff_pending = true;
+                // The guest is held during the film. Queue its native story
+                // transition now so the arena reveal can run under the end.
+                write_guest_half(rdram, 0x800D255CU, 10U);
+                write_guest_byte(rdram, 0x800D2558U, 2);
+                std::printf("[sote][san] Ord IG-88 story film; native 9 -> 10 queued\n");
+                std::fflush(stdout);
+            } else if (playing && san_story_skip_destination(event) != INT16_MIN)
                 san_pending_story_skip_event = event;
         }
     }
@@ -2373,7 +2389,8 @@ void on_vi() {
     if (movie_token != 0 &&
         sote::frontend::movie_skip_pressed(movie_token, count)) {
         if (movie_token == san_ord_boss_movie_token && game_rdram != nullptr &&
-            read_guest_half(game_rdram, 0x8013CE0EU) == 10)
+            (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
+             read_guest_half(game_rdram, 0x8013CE0EU) == 10))
             san_ord_boss_skip_pending = true;
         std::printf("[sote][san] cutscene skipped\n");
         std::fflush(stdout);
@@ -2384,9 +2401,10 @@ void on_vi() {
     if (san_ord_boss_skip_pending && game_rdram != nullptr) {
         const int16_t event = static_cast<int16_t>(
             read_guest_half(game_rdram, 0x8013CE0EU));
-        if (event != 10) {
+        if (event != 9 && event != 10) {
             san_ord_boss_skip_pending = false;
-        } else if (read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
+        } else if (event == 10 &&
+                   read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
             // The player explicitly skipped the film. Wait for arena loading
             // to finish, then skip its redundant reveal before play resumes.
             const float before = read_guest_float(game_rdram, 0x800DEB78U);
@@ -2395,15 +2413,17 @@ void on_vi() {
                 std::printf("[sote][san] Ord boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
                     before, count);
                 std::fflush(stdout);
+                san_ord_boss_skip_pending = false;
             }
-            san_ord_boss_skip_pending = false;
         }
     }
     sote::frontend::set_movie_playback(movie_token);
     // Run the native IG-88 reveal behind the final seconds of its PC film.
     // The guest's own countdown still controls when combat and input begin.
     if (san_ord_boss_movie_token != 0 && movie_token == san_ord_boss_movie_token &&
-        game_rdram != nullptr && read_guest_half(game_rdram, 0x8013CE0EU) == 10 &&
+        game_rdram != nullptr &&
+        (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
+         read_guest_half(game_rdram, 0x8013CE0EU) == 10) &&
         sote::san_movies::cached_playback_remaining_seconds() <= 10.0) {
         if (!san_ord_boss_handoff_active.exchange(true,
                 std::memory_order_relaxed)) {

@@ -253,24 +253,20 @@ A direct preview of `L05BOSS.SAN` shows Boba Fett beside his ship
 (`build/diagnostics/san_gall_boss_movie_preview/`). That supports placing it
 at the actual encounter reveal rather than at Gall's opening event-14 briefing
 or blindly at event 15. The video has no reliable speech transcript.
-An event-10 Original N64 capture opens inside the IG-88 combat arena, which
-supports keeping `L04BOSS.SAN` there (`build/diagnostics/
-san_ord_event10_native_scene/`). The installed PC executable references that
-movie through its event-10 transition table.
-An unmuted direct event-10 PC run now plays all 962 frames of
-`L04BOSS.SAN` after the event becomes active, queues non-silent PCM to SDL's
-dummy device, and returns to the native IG-88 arena
-(`san_ord_boss_pc_after_startup_skip_20261007/`). The first direct probe
-was masked by Hoth's long startup film and is not boss-placement evidence
-(`san_ord_boss_pc_full_20261007/`). A matched Original N64 run has no PC
-movie and shows the arena reveal directly
-(`san_ord_boss_original_matched_20261007/`). The PC film ends around VI 4545,
-then the native camera replays an IG-88 reveal that resembles Original N64's
-event-10 opening. A native Start pulse at VI 850 did not skip that reveal
-(`san_ord_boss_native_start_skip_20261007/`). The PC boss handoff therefore
-still needs a verified way to avoid a duplicated reveal while preserving
-the fight; visual overlap is confirmed, but physical speaker output and the
-natural train-to-arena transition remain unverified.
+The installed PC executable dispatches `L04BOSS.SAN` on PC event 10, but the
+N64 event 9 contains IG-88's confrontation before event 10 loads the combat
+arena. The native event-9 slide begins “I've been monitoring you,” as does the
+movie's locally transcribed soundtrack (`ord_event9_to_boss_pc_20261007/` and
+`L04BOSS_audio_transcript_20261007.txt`). A native Start pulse on event 9
+requests event 10 (`ord_event9_native_start_to10_20261007/`). PC mode now
+plays the film at N64 event 9 and queues that transition under the movie,
+then enters event-10 gameplay without replaying the slides or film. The
+unmuted process-local run queues non-silent movie PCM and shows Dash with
+100 health in the playable arena (`ord_event9_pc_film_handoff_20261007/`).
+An early event-9 movie skip also reaches the arena with 100 health
+(`ord_event9_pc_early_skip_fixed_20261007/`). Direct entry into event 10
+still plays the film as a level-selection fallback. Reaching event 9 by
+finishing the train and physical speaker output remain unverified.
 Palace event 27 instead opens
 with Dash facing the closed arena door, well before the Gladiator Droid reveal
 (`palace_glad_event27_entry_20261007/`). The earlier event-entry placement of
@@ -444,6 +440,11 @@ advances directly to the HUD and combat with 100 health by present 1100
 (`ord_boss_pc_early_skip_fixed_20261007/`). Dash retains 100 health through
 present 1500; an unattended later IG-88 hit at present 1600 is active combat.
 The natural train-to-boss route and physical speaker output remain open.
+The event-9 story entry is now separately verified as the PC boss-film start:
+its native IG-88 slides and the film have the same opening dialogue. A full
+PC-mode event-9 replay transitions once to event 10 and lands in combat at
+100 health without showing those slides; an early film skip also reaches the
+arena. The direct event-10 film remains for level selection.
 An exhaustive scan of the ROM's 484 control-prefixed message candidates
 confirms each of the 31 Leebo hashes resolves to one exact fixture string,
 with no hash collision between different normalized messages. This is a
