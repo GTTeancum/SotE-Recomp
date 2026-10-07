@@ -223,6 +223,13 @@ seconds correlate with the captured game stereo mix at **0.966880** and
 **0.967058** (Original/PC), with next peaks outside one second below 0.172.
 This verifies that the matched recording enters the mix for the visible
 communication in both modes; physical speaker output remains unchecked.
+A full, unskipped PC `L08INTRO.SAN` replay now strengthens the PC handoff
+check: its film frames, black transition, sewer shaft, and visible event-25
+communication appear in sequence; `ILB37.WAV` queues at VI 3062. Its first
+2.5 seconds correlate with the game PCM at **0.959919**, with the next peak
+outside one second at 0.156535
+(`san_sewers_pc_audio_handoff_20261007/`). This direct event-24 replay does
+not cover entry from the preceding campaign chapter.
 
 ## Remaining gameplay timing routes
 

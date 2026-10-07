@@ -71,6 +71,14 @@ transitions after the corresponding movies. Full-movie captures show the
 Sewers PC film handing off to the sewer objective and the Skyhook PC film
 handing off to the turret briefing/HUD without replaying story slides
 (`san_sewers_pc_story_skip_hermetic/`, `san_skyhook_pc_natural_route/`).
+An unmuted direct event-24 PC replay now shows the complete `L08INTRO.SAN`
+city/Outrider sequence, a black final transition, the native sewer shaft,
+and the visible entrance instruction at present 3200
+(`san_sewers_pc_audio_handoff_20261007/`). The film queued non-silent PCM
+to SDL's dummy device, switched back to game audio at event 25, and queued
+`ILB37.WAV` with the on-screen instruction. The voice's first 2.5 seconds
+correlate with the captured game PCM at 0.959919. The process-local event
+entry bypasses the preceding campaign; physical speakers were not checked.
 An unmuted selected-level Skyhook replay confirmed the full `L10INTRO.SAN`
 handoff with audio enabled. Native captures show the film's ship approach and
 fighters at presents 2000, 3000, and 4000, a black transition at 4300, the
