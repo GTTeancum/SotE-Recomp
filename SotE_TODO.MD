@@ -462,6 +462,11 @@ the native Controls screen displays the same assignments
 (`pc_classic_outrider_event30_probe_20261007/` and
 `pc_classic_outrider_binding_20261007/`). Turret variants, PC joystick
 mapping, and long-flight feel remain open.
+The installed PC turret tables differ by scene: Asteroid Field binds Missile
+to Space/C/Mouse 2, while Skyhook binds it to Z/C/Mouse 2. The current single
+Turret editor section needs a stage-aware Classic default and a clear display
+of that distinction before it can claim PC parity; see
+`docs/PC_CLASSIC_CONTROL_AUDIT.md`.
 
 Modern on-foot controls now have analog movement/strafe, continuous right-stick
 turning, persistent pitch shared by weapon and view, circular deadzones, and

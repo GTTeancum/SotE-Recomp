@@ -151,3 +151,16 @@ from five to four after Space. The Controls capture at present 4300 shows
 both device columns and the combined Accelerate / Roll row
 (`pc_classic_outrider_binding_20261007/`). This validates the input route
 and one missile action, not long-flight handling or physical devices.
+
+## Turret input-table variation still to implement
+
+The installed PC event selector does not use one input array for every
+turret scene. PC event 6 (Asteroid Field) selects VA `0x4CB800`, where the
+first built-in set's Missile action (`0x820`) uses Space, C, or Mouse 2.
+PC event 30 (Skyhook battle) selects VA `0x4CB910`, where that same action
+uses Z, C, or Mouse 2. Both arrays give Fire (`0x1000`) to X/Mouse 1 and
+Camera Position (`0x40`) to Tab. The current recompilation exposes one
+Turret binding section for both scenes, so a single unconditional Missile
+default would misrepresent one PC scene. The remaining Classic turret work
+needs a stage-aware route and an editor display that explains the two
+defaults, followed by live checks in Asteroid Field and Skyhook.
