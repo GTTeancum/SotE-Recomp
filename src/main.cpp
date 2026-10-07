@@ -3685,7 +3685,8 @@ int main(int argc, char** argv) {
          std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr) ||
         (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
          (std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_PAD") != nullptr ||
-          std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_MOUSE") != nullptr)));
+          std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_MOUSE") != nullptr ||
+          std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_KEYS") != nullptr)));
     sote::frontend::set_audio_enabled(!muted_output);
     if (muted_output) {
         std::printf("[sote] audio output muted\n");

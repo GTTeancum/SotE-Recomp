@@ -72,6 +72,63 @@ struct DiagnosticMousePulse {
 std::vector<DiagnosticMousePulse> diagnostic_mouse_pulses;
 bool diagnostic_mouse_loaded = false;
 
+struct DiagnosticKeyPulse {
+    int start_vi = 0;
+    int duration = 0;
+    int virtual_key = 0;
+};
+std::vector<DiagnosticKeyPulse> diagnostic_key_pulses;
+bool diagnostic_keys_loaded = false;
+
+bool diagnostic_keys_enabled() {
+    return std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_KEYS") != nullptr;
+}
+
+void load_diagnostic_key_pulses() {
+    diagnostic_keys_loaded = true;
+    diagnostic_key_pulses.clear();
+    const char* specification = std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_KEYS");
+    if (!diagnostic_keys_enabled() || specification == nullptr) return;
+    // startVI:duration:Win32-virtual-key, comma separated. This injects only
+    // a process-local snapshot; no host keyboard event is sent.
+    const std::string script(specification);
+    size_t begin = 0;
+    while (begin < script.size()) {
+        const size_t end = script.find(',', begin);
+        const std::string item = script.substr(begin, end - begin);
+        DiagnosticKeyPulse pulse;
+        if (std::sscanf(item.c_str(), "%d:%d:%d", &pulse.start_vi,
+                &pulse.duration, &pulse.virtual_key) == 3 &&
+            pulse.start_vi >= 0 && pulse.duration > 0 &&
+            pulse.virtual_key >= 0 && pulse.virtual_key < 256) {
+            diagnostic_key_pulses.push_back(pulse);
+        }
+        if (end == std::string::npos) break;
+        begin = end + 1;
+    }
+    std::printf("[sote][diagnostic-keys] loaded %zu in-process pulses\n",
+        diagnostic_key_pulses.size());
+    std::fflush(stdout);
+}
+
+void diagnostic_keys_at(int vi, control_bindings::PhysicalInput& raw) {
+    for (const auto& pulse : diagnostic_key_pulses) {
+        if (vi < pulse.start_vi || vi >= pulse.start_vi + pulse.duration)
+            continue;
+        if (pulse.virtual_key != 0) raw.keys[pulse.virtual_key] = 1;
+        if (vi == pulse.start_vi) {
+            static int last_reported_vi = -1;
+            if (last_reported_vi != vi) {
+                std::printf("[sote][diagnostic-keys] VI=%d key=%d\n",
+                    vi, pulse.virtual_key);
+                std::fflush(stdout);
+                last_reported_vi = vi;
+            }
+        }
+    }
+}
+
 bool diagnostic_mouse_enabled() {
     return std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
         std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_MOUSE") != nullptr;
@@ -503,7 +560,8 @@ bool initialize() {
     initialized = true;
     SDL_GameControllerEventState(SDL_ENABLE);
     load_diagnostic_pad_pulses();
-    if (!diagnostic_pad_enabled() && !diagnostic_mouse_enabled())
+    if (!diagnostic_pad_enabled() && !diagnostic_mouse_enabled() &&
+        !diagnostic_keys_enabled())
         find_controller();
     return true;
 }
@@ -653,13 +711,18 @@ void poll_input() {
         physical_input_enabled.load(std::memory_order_relaxed);
     const bool diagnostic_pad = diagnostic_pad_enabled();
     const bool diagnostic_mouse = diagnostic_mouse_enabled();
+    const bool diagnostic_keys = diagnostic_keys_enabled();
     if (diagnostic_pad && !diagnostic_pad_loaded)
         load_diagnostic_pad_pulses();
     if (diagnostic_mouse && !diagnostic_mouse_loaded)
         load_diagnostic_mouse_pulses();
+    if (diagnostic_keys && !diagnostic_keys_loaded)
+        load_diagnostic_key_pulses();
     const bool focused = !diagnostic_pad && !diagnostic_mouse &&
+        !diagnostic_keys &&
         process_owns_foreground_window();
-    if (!input_enabled || (!focused && !diagnostic_pad && !diagnostic_mouse)) {
+    if (!input_enabled ||
+        (!focused && !diagnostic_pad && !diagnostic_mouse && !diagnostic_keys)) {
         // The process-local binding probe has no foreground window. Its
         // scripted pad still exercises the editor through get_input().
         if (std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") == nullptr)
@@ -679,7 +742,7 @@ void poll_input() {
         return;
     }
 
-    if (initialized && !diagnostic_pad && !diagnostic_mouse) {
+    if (initialized && !diagnostic_pad && !diagnostic_mouse && !diagnostic_keys) {
         SDL_GameControllerUpdate();
         find_controller();
     }
@@ -687,7 +750,7 @@ void poll_input() {
     control_bindings::PhysicalInput raw_input;
     if (diagnostic_pad) {
         raw_input = diagnostic_pad_at(diagnostic_vi.load(std::memory_order_relaxed));
-    } else if (!diagnostic_mouse) {
+    } else if (!diagnostic_mouse && !diagnostic_keys) {
         for (int vk = 1; vk < 256; ++vk)
             raw_input.keys[vk] = (GetAsyncKeyState(vk) & 0x8000) != 0;
         raw_input.connected = controller != nullptr;
@@ -701,6 +764,8 @@ void poll_input() {
     }
     if (diagnostic_mouse)
         diagnostic_mouse_at(diagnostic_vi.load(std::memory_order_relaxed), raw_input);
+    if (diagnostic_keys)
+        diagnostic_keys_at(diagnostic_vi.load(std::memory_order_relaxed), raw_input);
     const auto menu = sote::menu_skin::latest();
     const bool page_keys = menu &&
         (menu->screen == sote::menu_skin::Screen::Profiles ||

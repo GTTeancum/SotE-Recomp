@@ -4,6 +4,7 @@ param(
     [string]$OutputDirectory = '.\build\diagnostics\modern_bike_probe',
     [string]$Throttle = 'sweep',
     [string]$PhysicalPad = '',
+    [string]$PhysicalKeys = '',
     [ValidateRange(0.0, 1.0)][double]$Brake = 0.0,
     [switch]$Straight,
     [ValidateRange(-127, 127)][int]$StickY = 0
@@ -56,8 +57,13 @@ try {
     $info.Environment['SOTE_DIAGNOSTIC_CONFIG_PATH'] = Join-Path $output 'config'
     $info.Environment['SOTE_DIAGNOSTIC_UNLOCK_LEVELS'] = '1'
     $info.Environment['SOTE_SMOKE_REFILL_LIVES'] = '1'
-    if ($PhysicalPad) {
-        $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_PAD'] = $PhysicalPad
+    if ($PhysicalPad -or $PhysicalKeys) {
+        if ($PhysicalPad) {
+            $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_PAD'] = $PhysicalPad
+        }
+        if ($PhysicalKeys) {
+            $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_KEYS'] = $PhysicalKeys
+        }
         $info.Environment['SOTE_TRACE_INPUT'] = '1'
         $info.Environment['SOTE_TRACE_GUEST_INPUT'] = '1'
     } else {

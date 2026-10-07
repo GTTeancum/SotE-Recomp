@@ -394,6 +394,18 @@ throttle/brake camera axis. A matched 50% throttle replay captured the changed
 camera framing, with bike position within 0.1 game units of the prior run at
 VI 2280 (`build/diagnostics/modern_bike_camera_wired/`). Longer riding and
 physical feel remain to be checked.
+Process-local keyboard snapshots now verify the bike's displayed keyboard
+actions through the live controller. With no key held, its horizontal position
+stayed at (-826.606, -437.777) through VI 2295. Holding Z produced native
+accelerate `0x8000` and moved the bike to (-832.301, -419.308) by VI 2250;
+holding Z+X produced accelerate/brake `0xC000` and a shorter advance to
+(-830.614, -424.772). Z+E produced right-ram `0x8010` and moved to
+(-825.367, -423.517), while Z+D sent right stick X=80 and moved to
+(-816.551, -432.627) at that same VI. Native captures show the bike on the
+Mos Eisley route in each run (`build/diagnostics/bike_keyboard_idle/`,
+`bike_keyboard_z_throttle/`, `bike_keyboard_zx_brake/`,
+`bike_keyboard_ze_ram/`, and `bike_keyboard_zd_steer/`). These short routes
+reach nearby walls and do not settle longer-course steering feel.
 A compact valid `sote_controls.json` exposed that the loader required a space
 after each colon; the bike diagnostic had silently selected Classic. The
 loader now accepts ordinary JSON whitespace, with a regression test. A
