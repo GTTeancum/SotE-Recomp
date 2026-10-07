@@ -2438,7 +2438,16 @@ void on_vi() {
     uint64_t movie_token = sote::san_movies::playback_token();
     if (movie_token != 0 &&
         sote::frontend::movie_skip_pressed(movie_token, count)) {
-        if (movie_token == san_game_over_movie_token &&
+        if (san_ending_sequence_pending && game_rdram != nullptr &&
+            read_guest_half(game_rdram, 0x8013CE0EU) == 31U &&
+            sote::san_movies::play_cached_preview("L11WIN.SAN") &&
+            sote::san_movies::finish_cached_playback()) {
+            // The final frame is black. Keep it over the native memorial and
+            // survival scenes while their ordinary A-advance reaches credits.
+            movie_token = sote::san_movies::playback_token();
+            std::printf("[sote][san] ending films skipped to credits handoff\n");
+            std::fflush(stdout);
+        } else if (movie_token == san_game_over_movie_token &&
             sote::san_movies::finish_cached_playback()) {
             std::printf("[sote][san] game-over film skipped to title handoff\n");
             std::fflush(stdout);

@@ -409,6 +409,14 @@ memorial or Outrider dialogue (`san_ending_pc_pair_held_handoff/`). Original
 N64 mode still opens the native memorial scene directly with no L11 SAN
 playback (`san_ending_original_after_pair_fix/`). The ending's natural
 campaign route and physical speaker output remain unverified.
+An explicit skip during `L11LOSE.SAN` previously exposed the native memorial
+scene instead of ending the sequence (`san_ending_pc_early_skip_actual_20261007/`).
+PC mode now holds the black final frame of `L11WIN.SAN`, advances the native
+epilogue under it, and returns to credits. A repeat process-local run shows
+the film before the skip, a black handoff, and scrolling credits at presents
+1800 and 2100 without showing either native story scene
+(`san_ending_pc_early_skip_fixed_20261007/`). This checks the direct event-31
+route; the natural campaign finish remains unverified.
 The Game Over film had another duplicate: after `GAMEOVER.SAN`, PC mode
 displayed the native Xizor Game Over screen again. A process-local Ord
 Mantell run set the remaining lives to zero, then let IG-88 cause the final
