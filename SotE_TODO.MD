@@ -39,10 +39,15 @@ slides to event 14, which retains the ship-side mission briefing. PC mode now
 requests that same native event transition when its movie ends. A rendered
 run shows the PC movie, then the ship and "find Boba Fett" mission dialogue,
 without repeating the story slides (`build/diagnostics/
-san_gall_pc_story_skip_fixed/`). The diagnostic was muted, so runtime audio
-handoff still needs an audible check. A post-fix Original N64 run still shows
+san_gall_pc_story_skip_fixed/`). A post-fix Original N64 run still shows
 the native IG-88/Boba Fett slide without PC playback
 (`build/diagnostics/san_gall_original_after_pc_skip_fix/`).
+An unmuted process-local Gall replay now queues non-silent `L05INTRO.SAN` PCM
+to SDL's dummy audio device, restores game audio as event 14 starts, and
+queues Leebo's `ILB11.WAV` briefing. Native captures show the Gall film and
+the subsequent ship-side "find Boba Fett" message
+(`build/diagnostics/san_gall_pc_audio_handoff/`). Speaker output was not
+tested.
 The same overlap affected Sewers and Skyhook. Automated local transcripts of
 `L08INTRO.SAN` and `L10INTRO.SAN` match their native story text, and Original
 N64 captures show those slides (`build/diagnostics/
@@ -58,8 +63,12 @@ Ord Mantell has the same overlap: `L04INTRO.SAN` tells the Xizor/IG-88/train
 story shown by native event 7. Native Start skips event 7 to playable event 8.
 PC mode now makes that transition after the movie. A full natural-route capture
 shows the movie, the audio handoff, and train gameplay without replaying the
-story (`build/diagnostics/san_ord_pc_story_skip_full/`). The run was muted, so
-its soundtrack output remains unverified.
+story (`build/diagnostics/san_ord_pc_story_skip_full/`).
+An unmuted full replay now queues non-silent `L04INTRO.SAN` PCM to SDL's
+dummy audio device, restores game audio at the verified native 7 -> 8 skip,
+and displays the playable train with its HUD. The movie and game captures are
+in `build/diagnostics/san_ord_pc_audio_handoff/`; speaker output was not
+tested.
 An Original N64 Hoth level-selection capture shows the event-3 stage objective
 and probe-droid gameplay, with no duplicate native story slides after selection
 (`build/diagnostics/san_hoth_original_story_audit/`). A PC diagnostic that

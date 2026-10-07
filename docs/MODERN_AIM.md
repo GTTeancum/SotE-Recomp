@@ -68,4 +68,8 @@ matched muzzle-to-target directions within the rounded trace precision (maximum
 vector difference 0.000261). Magnetism remained off. Evidence and native captures
 are in `build/diagnostics/convergence/final/`; `shot_audit.json` records each shot.
 Magnetism selection/occlusion is validated in the harness, with hands-on tuning
-still pending. The playable executable matches the verified Release build.
+still pending. An October 2026 process-local virtual-pad route passed RT,
+left-stick motion, and right-stick aim through the production frontend mapping
+and produced a corrected blaster launch in Escape after dismissing the
+communicator (`build/diagnostics/modern_virtual_pad_aim_trace/`). Physical
+device feel and close/far playtesting remain unverified.
