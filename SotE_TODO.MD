@@ -537,6 +537,12 @@ native story slide, then the same instruction and voice after a native Start
 skip (`voice_gall_intro_pcm_pc_20261007/` and
 `voice_gall_intro_pcm_original_20261007/`). This checks the full PC film-to-
 communication handoff; speaker output and the preceding campaign remain open.
+The Sewer opening instruction now has an actual audio-mix match in both
+cutscene modes. The visible event-25 communication queues `ILB37.WAV`; its
+first two seconds correlate with the captured stereo PCM at 0.966880 in
+Original N64 mode and 0.967058 after an early PC `L08INTRO.SAN` skip
+(`voice_sewers_ilb37_pcm_original_20261007/` and
+`san_sewers_intro_early_skip_20261007/`). Physical speakers remain unchecked.
 The exact queue VIs and captured frames are tabulated in
 `docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
 not physical speaker output or syllable-level sync.

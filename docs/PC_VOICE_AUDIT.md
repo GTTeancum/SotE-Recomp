@@ -184,6 +184,18 @@ the actual mapped recording entering the mix, so the wording difference
 remains a deliberate, documented scene match. Physical speakers were not
 checked.
 
+The Sewer opening `ILB37.WAV` now has the same waveform check. An Original
+N64 direct event-25 run shows “Find your way through the sewers to get to the
+entrance of Xizor's lair” at present 1100 and queues `ILB37` at VI 1045
+(`voice_sewers_ilb37_pcm_original_20261007/`). In PC mode, an early
+`L08INTRO.SAN` skip reaches event 25, shows that instruction at present 1700,
+and queues `ILB37` at VI 1645
+(`san_sewers_intro_early_skip_20261007/`). The installed clip's first two
+seconds correlate with the captured game stereo mix at **0.966880** and
+**0.967058** (Original/PC), with next peaks outside one second below 0.172.
+This verifies that the matched recording enters the mix for the visible
+communication in both modes; physical speaker output remains unchecked.
+
 ## Remaining gameplay timing routes
 
 The 21 retained Leebo clips without a visible in-game pairing fall into these
