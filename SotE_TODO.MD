@@ -86,8 +86,11 @@ Part IV crawl instead of `L10INTRO.SAN` at presents 1850–3000
 event 28 to 29: captures show the turret communication at present 3200 and
 the live HUD at 3500 (`san_skyhook_n64_selected_skip_story_20261007/`). A
 second Start paused the game, so later frames in that probe are not evidence
-of continued battle. The game-audio dump was non-silent; speaker output and
-the unskipped end of the native crawl were not checked.
+of continued battle. A separate unskipped selected-level replay ended the
+native crawl and advanced event 28 to 29 at VI 3137, showing the turret
+communication at present 3300, live HUD at 3800, and later fighter/bomb
+activity at 4300–6100 (`san_skyhook_n64_unskipped_handoff_20261007/`). The
+game-audio dump was non-silent; physical speaker output remains unverified.
 Ord Mantell has the same overlap: `L04INTRO.SAN` tells the Xizor/IG-88/train
 story shown by native event 7. Native Start skips event 7 to playable event 8.
 PC mode now makes that transition after the movie. A full natural-route capture
