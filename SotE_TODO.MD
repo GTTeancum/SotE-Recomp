@@ -138,6 +138,12 @@ record at offset `0xC3BC`, alongside several `Boss` records. This supports
 investigating the encounter state within event 15, but the records are level
 data and do not identify when the boss becomes active. Do not use their
 mere presence as a movie trigger.
+The segment layout places the `boba` actor immediately after the `Boss`
+record at `0xC344` and the `slav` actor immediately after the `Boss` record
+at `0xCB0C`. Their record positions match the two nearby runtime `Boss`
+objects: approximately (-173, 277, 516) and (-190, 271, 522), respectively.
+This separates the Boba and Slave I phases for activation tracing; both
+records still load before the encounter.
 A process-local event-15 teleport probe moved Dash's traced position to
 approximately (-229, 277, 514), near the level record at (-173, 277, 516).
 The event stayed at 15, the camera continued showing the spawn corridor, and
@@ -154,6 +160,17 @@ opening corridor (`gall_boss_pool_event14/` and
 `gall_boss_pool_event15/`). These records load at the beginning of event 15,
 before the encounter, so a mere `Boss` tag or proximity test would be
 premature. A natural-route state change is still needed to place the film.
+The records' targetable flag at offset `0x68` is `0x0000` in all three idle
+event-15 snapshots. A repeat RDRAM capture during the process-local teleport
+near the Boba record still shows `0x0000` at VI 1050, with the camera showing
+the opening corridor (`build/diagnostics/gall_boss_pool_teleport_compare/`).
+This rules out a proximity-only trigger and identifies targetable activation
+as a state transition worth tracing on the natural route; it does not yet
+prove that transition is the film's exact story cue.
+A [firsthand PC walkthrough](https://gamefaqs.gamespot.com/pc/53840-star-wars-shadows-of-the-empire/faqs/7691)
+places the Boba cutscene when the second tower's final elevator reaches the
+surface, immediately before the fight. This narrows the native transition to
+inspect but is external evidence, not a verified trigger in this runtime.
 A direct preview of `L05BOSS.SAN` shows Boba Fett beside his ship
 (`build/diagnostics/san_gall_boss_movie_preview/`). That supports placing it
 at the actual encounter reveal rather than at Gall's opening event-14 briefing
