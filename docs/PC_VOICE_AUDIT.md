@@ -56,6 +56,26 @@ takes of already covered Bay 3, Gall, swoop-gang, or exit instructions.
 panel objective. An ignored local `Sdata/hd_voice_map.tsv` may override any
 built-in pairing, so a packaged map must be checked separately before release.
 
+## Visible communication checks in both cutscene modes
+
+The following game runs pair the selected WAV name and queue time with a
+native frame that visibly contains the matching communication. They check
+which clip the runtime requests at message display; they do not establish
+speaker output or exact synchronization of audible syllables.
+
+| Clip | Original N64 mode | PC cutscene mode | Visible message |
+| --- | --- | --- | --- |
+| `ILB01` | `san_escape_original_n64_fixed/`: queued VI 1646; present 1800 | `san_escape_full_transition/`: queued VI 3265; present 3400 | Empire destroyed the generator; Bay 3 shield door closed. A fresh event-4 Original run also queued at VI 842 and displayed it at present 1000 (`voice_escape_event4_20261007/`). |
+| `ILB06` | `san_asteroid_original_story_audit/`: queued VI 1785; present 1900 | `san_asteroid_pc_intro_audit/`: queued VI 2340; present 2400 | Leebo avoids asteroids while Dash mans the gun turret. |
+| `ILB11` | `san_gall_native_start_skip_probe/`: queued VI 2048; present 2200 | `san_gall_pc_audio_handoff/`: queued VI 3894; present 3900 | Leebo watches the ship and tells Dash to find Boba Fett. |
+| `ILB33` | `san_freighter_event19_native_story/`: queued VI 1147; present 1400 | `san_freighter_pc_story_skip_music_guard_fixed/`: queued VI 6326; present 6600 | Find the Imperial super computer aboard the ship. |
+| `ILB37` | `san_sewers_event24_native_start_skip/`: queued VI 2147; present 2300 | `san_sewers_pc_story_skip_hermetic/`: queued VI 3165; present 3300 | Reach the entrance to Xizor's lair through the sewers. |
+
+All paths in this table are under `build/diagnostics/`; the named `present`
+images are native game captures. Mos Eisley `ILB24` and Skyhook `ILB46` are
+also checked in both modes as described in `SotE_TODO.MD`. The other built-in
+lines still need gameplay timing checks.
+
 ## Skyhook radio lines
 
 All 18 installed `ILU*.WAV` files were transcribed with the same local

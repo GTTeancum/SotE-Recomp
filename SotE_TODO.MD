@@ -195,8 +195,9 @@ at VI 604 with phase zero and inactive boss flags
 (`build/diagnostics/gall_pc_state_comparison_baseline/`).
 The PC actor dispatch table sends Boba command 10 to the branch containing
 the `l05Boss.san` call (table at `0x456F80`, branch at `0x454C8F`, call at
-`0x4550B1`). The N64 executable has the same Boba command table: index 10
-at `0x800EA67C` leads to `0x80042480`, which finds Slave I, sets the player
+`0x4550B1`). The N64 executable's shared actor command dispatcher has a
+Boba command-10 branch: table index 10 at `0x800EA67C` leads to
+`0x80042480`, which finds Slave I, sets the player
 camera, and reaches the native reveal branch after the player check. A hook
 at `0x80042850` now requests `L05BOSS.SAN` only for the event-15 `Boss`/`boba`
 actor whose command field is 10. A direct event-15 entry instead loads that
@@ -321,6 +322,12 @@ must be stopped before *Kenobi's place*, while the visible N64 message says
 before *Luke*. Both prescribe stopping the gang, but this is not an exact
 voice/text match. Five unused clips are shorter alternate or fragmentary
 takes; the sixth is the withheld `ILB42`.
+Existing native captures and voice queue logs now also pair `ILB01`
+(Echo Base), `ILB06` (Asteroid Field), `ILB33` (Imperial Freighter), and
+`ILB37` (Sewers) with their visible communications in both cutscene modes.
+The exact queue VIs and captured frames are tabulated in
+`docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
+not physical speaker output or syllable-level sync.
 An unmuted process-local Original N64 palace entry rendered the first
 service-panel communication at present 2200 with no `ILB42` voice queued
 (`voice_palace_three_panel_guard_20261007/`). The on-screen message itself
