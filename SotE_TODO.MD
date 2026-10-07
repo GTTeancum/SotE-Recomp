@@ -145,6 +145,15 @@ and takes that native skip after playback. A natural-route capture shows the
 full film, non-silent PCM queued to SDL's dummy device, and a handoff to
 playable speeder-bike gameplay without replaying the slides
 (`san_mos_pc_story_skip_natural/`). Physical audio output remains unverified.
+An unmuted Original N64 direct event-16 replay now follows the complete
+Part III crawl into the native Jabba/Kenobi scene. After its visible continue
+prompt at present 3900, a process-local Start press advances to event 17
+at VI 3953. Native captures then show the bike, the “Stop the swoop gang
+before they reach Luke!” communication at present 4200, and live bike play.
+`ILB24.WAV` queued at VI 4189 and its first 2.5 seconds correlate with the
+captured game PCM at 0.772909 (`san_mos_n64_full_story_handoff_20261007/`).
+This verifies the full N64 story-to-bike handoff and opening voice; the
+direct event jump bypasses the preceding Gall mission.
 Imperial Freighter's `L07INTRO.SAN` was also late: native event 18 contains
 the Luke/Leia conversation, and event 19 contains its closing line, but the
 old PC trigger waited until playable event 20. The native Start-skip from 18

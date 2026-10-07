@@ -212,6 +212,14 @@ the actual mapped recording entering the mix, so the wording difference
 remains a deliberate, documented scene match. Physical speakers were not
 checked.
 
+An additional unskipped Original N64 event-16 replay follows the complete
+Part III crawl and native Jabba/Kenobi scene to its continue prompt. Start
+at that prompt advances to event 17 at VI 3953. The bike warning appears
+at present 4200 and `ILB24.WAV` queues at VI 4189. Its first 2.5 seconds
+correlate with the mixed PCM at **0.772909** (next peak outside one second
+0.072079; `san_mos_n64_full_story_handoff_20261007/`). The earlier paired
+check used a native story skip; this run verifies the full N64 opening path.
+
 The Sewer opening `ILB37.WAV` now has the same waveform check. An Original
 N64 direct event-25 run shows “Find your way through the sewers to get to the
 entrance of Xizor's lair” at present 1100 and queues `ILB37` at VI 1045
