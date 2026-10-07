@@ -20,7 +20,7 @@ void poll_input();
 void add_mouse_delta(int x, int y);
 bool get_input(int controller, uint16_t* buttons, float* x, float* y);
 void set_physical_input_enabled(bool enabled);
-void set_scripted_input(uint16_t buttons, int8_t x, int8_t y);
+void set_scripted_input(int vi, uint16_t buttons, int8_t x, int8_t y);
 ultramodern::input::connected_device_info_t get_connected_device_info(
     int controller);
 void set_rumble(int controller, bool enabled);

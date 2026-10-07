@@ -2235,7 +2235,7 @@ void on_vi() {
         scripted_y = route_y;
     }
     sote::frontend::set_scripted_input(
-        scripted_buttons, scripted_x, scripted_y);
+        count, scripted_buttons, scripted_x, scripted_y);
     current_scripted_buttons.store(
         scripted_buttons, std::memory_order_relaxed);
     current_scripted_stick_x.store(
@@ -3584,8 +3584,10 @@ int main(int argc, char** argv) {
         parse_scripted_input(input_script);
     }
     sote::frontend::set_physical_input_enabled(
-        !smoke_test &&
-        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr);
+        (!smoke_test &&
+         std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr) ||
+        (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+         std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_PAD") != nullptr));
     sote::frontend::set_audio_enabled(!muted_output);
     if (muted_output) {
         std::printf("[sote] audio output muted\n");

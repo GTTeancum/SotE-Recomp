@@ -129,6 +129,22 @@ record at offset `0xC3BC`, alongside several `Boss` records. This supports
 investigating the encounter state within event 15, but the records are level
 data and do not identify when the boss becomes active. Do not use their
 mere presence as a movie trigger.
+A process-local event-15 teleport probe moved Dash's traced position to
+approximately (-229, 277, 514), near the level record at (-173, 277, 516).
+The event stayed at 15, the camera continued showing the spawn corridor, and
+no boss reveal appeared in the native captures
+(`build/diagnostics/gall_boba_teleport_probe/`). This bypassed normal level
+objectives and collision traversal, so proximity alone is not a verified
+encounter cue; the natural mission route or boss object state is still needed.
+RDRAM snapshots of the game's targetable-object pool provide a baseline for
+that state: event 14 has 112 pool records and no `Boss` tags, while event 15
+has 122 records and three `Boss` tags at VI 750, 1050, and 1350. The two
+near the Boba area are at (-173.0, 277.0, 516.1) and (-189.6, 271.3,
+521.7); their object/target flags remain unchanged while Dash is at the
+opening corridor (`gall_boss_pool_event14/` and
+`gall_boss_pool_event15/`). These records load at the beginning of event 15,
+before the encounter, so a mere `Boss` tag or proximity test would be
+premature. A natural-route state change is still needed to place the film.
 A direct preview of `L05BOSS.SAN` shows Boba Fett beside his ship
 (`build/diagnostics/san_gall_boss_movie_preview/`). That supports placing it
 at the actual encounter reveal rather than at Gall's opening event-14 briefing
@@ -221,7 +237,7 @@ the native jump bit. Player height rose from about -0.04 to 2.59 and returned
 to floor level; native captures show the character and level geometry
 (`build/diagnostics/modern_jump_jetpack_fire_virtual/`). The short C-left
 jetpack toggle pulse caused no visible change in that Escape route, so
-jetpack operation is still unverified. Scripted N64 button pulses exercise
+jetpack operation in that route was unverified. Scripted N64 button pulses exercise
 the game action path, not physical controller delivery.
 A subsequent Sewer process-local jetpack route completed its renderer and
 game-frame observation, but the player-state callback stopped after VI 3555,

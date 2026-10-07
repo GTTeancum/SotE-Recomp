@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include <Windows.h>
@@ -44,6 +45,7 @@ constexpr float n64_stick_scale = 80.0f / 127.0f;
 
 std::atomic<uint32_t> input_snapshot{0};
 std::atomic<uint32_t> scripted_input_snapshot{0};
+std::atomic<int> diagnostic_vi{0};
 std::atomic<bool> physical_input_enabled{true};
 std::atomic<bool> audio_output_enabled{true};
 std::atomic<uint64_t> movie_playback_token{0};
@@ -51,6 +53,80 @@ std::atomic<bool> movie_guest_advance{false};
 std::atomic<bool> swallow_movie_skip{false};
 SDL_GameController* controller = nullptr;
 bool initialized = false;
+
+struct DiagnosticPadPulse {
+    int start_vi = 0;
+    int duration = 0;
+    unsigned buttons = 0;
+    int lx = 0, ly = 0, rx = 0, ry = 0, lt = 0, rt = 0;
+};
+std::vector<DiagnosticPadPulse> diagnostic_pad_pulses;
+bool diagnostic_pad_loaded = false;
+
+bool diagnostic_pad_enabled() {
+    return std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_PAD") != nullptr;
+}
+
+void load_diagnostic_pad_pulses() {
+    diagnostic_pad_loaded = true;
+    diagnostic_pad_pulses.clear();
+    const char* specification = std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_PAD");
+    if (!diagnostic_pad_enabled() || specification == nullptr) return;
+    // startVI:duration:SDL-button-mask:LX:LY:RX:RY:LT:RT, repeated with commas.
+    // This is an in-process input snapshot; no host device is created.
+    const std::string script(specification);
+    size_t begin = 0;
+    while (begin < script.size()) {
+        const size_t end = script.find(',', begin);
+        const std::string item = script.substr(begin, end - begin);
+        DiagnosticPadPulse pulse;
+        if (std::sscanf(item.c_str(), "%d:%d:%x:%d:%d:%d:%d:%d:%d",
+                &pulse.start_vi, &pulse.duration, &pulse.buttons,
+                &pulse.lx, &pulse.ly, &pulse.rx, &pulse.ry,
+                &pulse.lt, &pulse.rt) == 9 &&
+            pulse.start_vi >= 0 && pulse.duration > 0) {
+            diagnostic_pad_pulses.push_back(pulse);
+        }
+        if (end == std::string::npos) break;
+        begin = end + 1;
+    }
+    std::printf("[sote][diagnostic-pad] loaded %zu in-process pulses\n",
+        diagnostic_pad_pulses.size());
+    std::fflush(stdout);
+}
+
+control_bindings::PhysicalInput diagnostic_pad_at(int vi) {
+    control_bindings::PhysicalInput raw;
+    raw.connected = true;
+    raw.instance = 0x534f5445;
+    static int last_reported_vi = -1;
+    auto axis = [](int value) {
+        return static_cast<Sint16>(std::clamp(value, -32768, 32767));
+    };
+    for (const auto& pulse : diagnostic_pad_pulses) {
+        if (vi < pulse.start_vi || vi >= pulse.start_vi + pulse.duration)
+            continue;
+        if (vi == pulse.start_vi && vi != last_reported_vi) {
+            last_reported_vi = vi;
+            std::printf("[sote][diagnostic-pad] VI=%d buttons=%08X "
+                "axes=%d,%d,%d,%d,%d,%d\n", vi, pulse.buttons,
+                pulse.lx, pulse.ly, pulse.rx, pulse.ry, pulse.lt, pulse.rt);
+            std::fflush(stdout);
+        }
+        for (size_t button = 0; button < raw.buttons.size() && button < 32;
+             ++button) {
+            if (pulse.buttons & (1U << button)) raw.buttons[button] = 1;
+        }
+        raw.axes[SDL_CONTROLLER_AXIS_LEFTX] = axis(pulse.lx);
+        raw.axes[SDL_CONTROLLER_AXIS_LEFTY] = axis(pulse.ly);
+        raw.axes[SDL_CONTROLLER_AXIS_RIGHTX] = axis(pulse.rx);
+        raw.axes[SDL_CONTROLLER_AXIS_RIGHTY] = axis(pulse.ry);
+        raw.axes[SDL_CONTROLLER_AXIS_TRIGGERLEFT] = axis(pulse.lt);
+        raw.axes[SDL_CONTROLLER_AXIS_TRIGGERRIGHT] = axis(pulse.rt);
+    }
+    return raw;
+}
 
 std::mutex audio_mutex;
 SDL_AudioDeviceID audio_device = 0;
@@ -367,7 +443,8 @@ bool initialize() {
     }
     initialized = true;
     SDL_GameControllerEventState(SDL_ENABLE);
-    find_controller();
+    load_diagnostic_pad_pulses();
+    if (!diagnostic_pad_enabled()) find_controller();
     return true;
 }
 
@@ -506,7 +583,7 @@ void poll_input() {
         return;
     }
     if (swallow_movie_skip.exchange(false, std::memory_order_relaxed) &&
-        skip_controls_down()) {
+        process_owns_foreground_window() && skip_controls_down()) {
         swallow_movie_skip.store(true, std::memory_order_relaxed);
         input_snapshot.store(0, std::memory_order_relaxed);
         sote::modern_controls::publish({});
@@ -514,8 +591,11 @@ void poll_input() {
     }
     const bool input_enabled =
         physical_input_enabled.load(std::memory_order_relaxed);
-    const bool focused = process_owns_foreground_window();
-    if (!input_enabled || !focused) {
+    const bool diagnostic_pad = diagnostic_pad_enabled();
+    if (diagnostic_pad && !diagnostic_pad_loaded)
+        load_diagnostic_pad_pulses();
+    const bool focused = !diagnostic_pad && process_owns_foreground_window();
+    if (!input_enabled || (!focused && !diagnostic_pad)) {
         // The process-local binding probe has no foreground window. Its
         // scripted pad still exercises the editor through get_input().
         if (std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") == nullptr)
@@ -535,21 +615,25 @@ void poll_input() {
         return;
     }
 
-    if (initialized) {
+    if (initialized && !diagnostic_pad) {
         SDL_GameControllerUpdate();
         find_controller();
     }
 
     control_bindings::PhysicalInput raw_input;
-    for (int vk = 1; vk < 256; ++vk)
-        raw_input.keys[vk] = (GetAsyncKeyState(vk) & 0x8000) != 0;
-    raw_input.connected = controller != nullptr;
-    if (controller != nullptr) {
-        raw_input.instance = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
-        for (int b = 0; b < SDL_CONTROLLER_BUTTON_MAX; ++b)
-            raw_input.buttons[b] = SDL_GameControllerGetButton(controller, static_cast<SDL_GameControllerButton>(b));
-        for (int a = 0; a < SDL_CONTROLLER_AXIS_MAX; ++a)
-            raw_input.axes[a] = SDL_GameControllerGetAxis(controller, static_cast<SDL_GameControllerAxis>(a));
+    if (diagnostic_pad) {
+        raw_input = diagnostic_pad_at(diagnostic_vi.load(std::memory_order_relaxed));
+    } else {
+        for (int vk = 1; vk < 256; ++vk)
+            raw_input.keys[vk] = (GetAsyncKeyState(vk) & 0x8000) != 0;
+        raw_input.connected = controller != nullptr;
+        if (controller != nullptr) {
+            raw_input.instance = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
+            for (int b = 0; b < SDL_CONTROLLER_BUTTON_MAX; ++b)
+                raw_input.buttons[b] = SDL_GameControllerGetButton(controller, static_cast<SDL_GameControllerButton>(b));
+            for (int a = 0; a < SDL_CONTROLLER_AXIS_MAX; ++a)
+                raw_input.axes[a] = SDL_GameControllerGetAxis(controller, static_cast<SDL_GameControllerAxis>(a));
+        }
     }
     const auto menu = sote::menu_skin::latest();
     const bool page_keys = menu &&
@@ -576,7 +660,7 @@ void poll_input() {
     Sint16 raw_ly = 0;
     Sint16 raw_rx = 0;
     Sint16 raw_ry = 0;
-    if (controller != nullptr) {
+    if (raw_input.connected) {
         auto pressed = [](SDL_GameControllerButton button) {
             return mapped_button(controller, button) != 0;
         };
@@ -918,7 +1002,8 @@ void set_movie_guest_advance(bool pressed) {
     movie_guest_advance.store(pressed, std::memory_order_relaxed);
 }
 
-void set_scripted_input(uint16_t buttons, int8_t x, int8_t y) {
+void set_scripted_input(int vi, uint16_t buttons, int8_t x, int8_t y) {
+    diagnostic_vi.store(vi, std::memory_order_relaxed);
     scripted_input_snapshot.store(
         buttons |
             (static_cast<uint32_t>(static_cast<uint8_t>(x)) << 16) |

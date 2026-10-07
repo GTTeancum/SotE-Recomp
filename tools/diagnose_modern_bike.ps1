@@ -3,6 +3,7 @@ param(
     [string]$ExePath = '.\build\runtime\Release\sote_recomp.exe',
     [string]$OutputDirectory = '.\build\diagnostics\modern_bike_probe',
     [string]$Throttle = 'sweep',
+    [string]$PhysicalPad = '',
     [ValidateRange(0.0, 1.0)][double]$Brake = 0.0,
     [switch]$Straight,
     [ValidateRange(-127, 127)][int]$StickY = 0
@@ -49,9 +50,15 @@ try {
     $info.Environment['SOTE_DIAGNOSTIC_CONFIG_PATH'] = Join-Path $output 'config'
     $info.Environment['SOTE_DIAGNOSTIC_UNLOCK_LEVELS'] = '1'
     $info.Environment['SOTE_SMOKE_REFILL_LIVES'] = '1'
-    $info.Environment['SOTE_FORCE_BIKE_THROTTLE'] = $Throttle
-    $info.Environment['SOTE_FORCE_BIKE_BRAKE'] = $Brake.ToString(
-        [Globalization.CultureInfo]::InvariantCulture)
+    if ($PhysicalPad) {
+        $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_PAD'] = $PhysicalPad
+        $info.Environment['SOTE_TRACE_INPUT'] = '1'
+        $info.Environment['SOTE_TRACE_GUEST_INPUT'] = '1'
+    } else {
+        $info.Environment['SOTE_FORCE_BIKE_THROTTLE'] = $Throttle
+        $info.Environment['SOTE_FORCE_BIKE_BRAKE'] = $Brake.ToString(
+            [Globalization.CultureInfo]::InvariantCulture)
+    }
     $info.Environment['SOTE_TRACE_BIKE_STATE'] = '1'
     $info.Environment['SOTE_INPUT_SCRIPT'] = $inputScript
     $info.Environment['SOTE_SMOKE_VIS'] = '3050'

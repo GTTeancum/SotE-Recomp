@@ -10,8 +10,11 @@ param(
     [string]$PreviewMovie = '',
     [switch]$TraceFinal,
     [switch]$TracePlayer,
+    [switch]$TraceAim,
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
+    [string]$Teleport = '',
+    [string]$PhysicalPad = '',
     [string]$ExtraInput = '',
     [int]$RdramSnapshotStartVi = 0,
     [int]$RdramSnapshotPeriodVi = 300,
@@ -54,11 +57,20 @@ $info.Environment['SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP'] = '1'
 if ($PreviewMovie) { $info.Environment['SOTE_SAN_PREVIEW'] = $PreviewMovie }
 if ($TraceFinal) { $info.Environment['SOTE_TRACE_FINAL_EVENT'] = '1' }
 if ($TracePlayer) { $info.Environment['SOTE_TRACE_PLAYER_STATE'] = '1' }
+if ($TraceAim) { $info.Environment['SOTE_TRACE_MODERN_AIM'] = '1' }
 if ($InitialSkipVi -gt 0) {
     $info.Environment['SOTE_SAN_TEST_SKIP_VI'] = [string]$InitialSkipVi
 }
 if ($EventJumps) {
     $info.Environment['SOTE_DIAGNOSTIC_EVENT_JUMPS'] = $EventJumps
+}
+if ($Teleport) {
+    $info.Environment['SOTE_DIAGNOSTIC_TELEPORT'] = $Teleport
+}
+if ($PhysicalPad) {
+    $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_PAD'] = $PhysicalPad
+    $info.Environment['SOTE_TRACE_INPUT'] = '1'
+    $info.Environment['SOTE_TRACE_GUEST_INPUT'] = '1'
 }
 if ($RdramSnapshotStartVi -gt 0) {
     $memoryOutput = Join-Path $output 'rdram'
