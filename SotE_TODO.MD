@@ -756,6 +756,18 @@ RT produced native A (`ord_modern_a_preset6_live_fix_20261007/` and
 `ord_modern_rt_preset6_live_fix_20261007/`). Continuous Modern right-stick
 aim in this special train controller, a visible fire effect there, and
 physical device feel remain unverified.
+An event-8 process-local comparison held full right-stick X from VI 900 to
+1100. Modern's train path did not enter the regular on-foot aim hook, sent
+no guest C-right bit, and the native captures at presents 1000/1100 matched
+an idle run's trailing camera. Classic sent C-right (`0x0001`) for the same
+input but its captures also retained that trailing camera
+(`ord_modern_train_look_idle_20261007/`,
+`ord_modern_train_rightstick_20261007/`, and
+`ord_classic_train_rightstick_20261007/`). This rules out claiming that the
+Modern right-stick aim works on the train; it also shows that forwarding
+Classic C-right alone would not supply continuous aim there. A train-specific
+camera/weapon hook and an actual aimed-shot check are still needed if that
+stage is to support Modern free aim.
 The Classic snowspeeder keyboard/mouse defaults now match the PC event-3
 input table: arrows/numpad steer, Z/Mouse 2 thrust, X/Mouse 1 fire,
 Space/C harpoon, and A brakes. A process-local Hoth flight received the
