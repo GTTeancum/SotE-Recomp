@@ -340,8 +340,13 @@ this does not verify boss presence, combat, or the natural Palace route. The
 temporary dispatcher hook was removed from the ordinary build.
 The rebuilt candidate's direct event-27 entry stays in the closed-door
 corridor at 100 health and does not start `L09BOSS.SAN`
-(`palace_boss_handoff_entry_guard_20261007/`). An early movie skip and the
-natural boss approach remain unverified.
+(`palace_boss_handoff_entry_guard_20261007/`). An explicit early skip of the
+PC film now clears the native reveal countdown after arena loading. An
+isolated native-dispatch run skipped at VI 1000 and showed Dash's arena HUD
+with 100 health by present 1050, without replaying the camera sequence
+(`palace_native_dispatch10_early_skip_pc_20261007b/`). The injected actor
+again had an invalid position, so boss combat and the natural Palace approach
+remain unverified.
 An isolated game-thread invocation of Boba's actual native command-10
 dispatcher now confirms the Gall duplication: `L05BOSS.SAN` starts from the
 real hook, but its end exposes the N64 camera/reveal flyover again before

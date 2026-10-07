@@ -407,6 +407,7 @@ std::atomic<bool> san_palace_boss_cue_pending{false};
 bool san_palace_boss_started = false;
 uint64_t san_palace_boss_movie_token = 0;
 std::atomic<bool> san_palace_boss_handoff_active{false};
+bool san_palace_boss_skip_pending = false;
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -806,6 +807,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_palace_boss_started = false;
         san_palace_boss_movie_token = 0;
         san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
+        san_palace_boss_skip_pending = false;
         sote::san_movies::stop_cached_playback();
         const int16_t current_event = static_cast<int16_t>(
             read_guest_half(rdram, 0x8013CE0EU));
@@ -842,6 +844,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_palace_boss_started = false;
         san_palace_boss_movie_token = 0;
         san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
+        san_palace_boss_skip_pending = false;
     }
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
@@ -2447,6 +2450,8 @@ void on_vi() {
                     std::memory_order_relaxed);
             }
             if (movie_token == san_palace_boss_movie_token) {
+                san_palace_boss_skip_pending = game_rdram != nullptr &&
+                    read_guest_half(game_rdram, 0x8013CE0EU) == 27U;
                 san_palace_boss_movie_token = 0;
                 san_palace_boss_handoff_active.store(false,
                     std::memory_order_relaxed);
@@ -2515,6 +2520,22 @@ void on_vi() {
             std::printf("[sote][san] Gall boss native reveal complete; "
                         "PC film handoff at VI=%d\n", count);
             std::fflush(stdout);
+        }
+    }
+    if (san_palace_boss_skip_pending && game_rdram != nullptr) {
+        const int16_t event = static_cast<int16_t>(
+            read_guest_half(game_rdram, 0x8013CE0EU));
+        if (event != 27) {
+            san_palace_boss_skip_pending = false;
+        } else if (read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
+            const float before = read_guest_float(game_rdram, 0x800DEB78U);
+            if (before > 0.0f) {
+                write_guest_word(game_rdram, 0x800DEB78U, 0);
+                std::printf("[sote][san] Palace boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
+                    before, count);
+                std::fflush(stdout);
+            }
+            san_palace_boss_skip_pending = false;
         }
     }
     if (san_gall_boss_movie_token != 0 && movie_token == 0) {

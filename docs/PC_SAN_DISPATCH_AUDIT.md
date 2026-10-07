@@ -54,7 +54,11 @@ injection used invalid corridor state and left the boss actor at a non-finite
 position. It cannot establish a valid natural fight or physical audio output.
 The ordinary rebuilt candidate's direct event-27 entry shows the closed-door
 corridor and no boss film (`palace_boss_handoff_entry_guard_20261007/`).
-The early-skip handoff also remains unverified.
+An explicit PC-film skip at VI 1000 now clears the native reveal countdown
+after arena loading. The isolated dispatcher capture reaches Dash's 100-health
+arena HUD by present 1050 without repeating the camera reveal
+(`palace_native_dispatch10_early_skip_pc_20261007b/`). The injected boss
+position remains invalid, so this does not verify natural combat.
 
 For Palace event 27, a direct jump loads the `glad` actor but leaves it
 inactive in the corridor. Setting its stored command to 10 does not call the
