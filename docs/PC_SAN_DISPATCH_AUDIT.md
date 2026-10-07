@@ -48,6 +48,12 @@ through VI 3500. The encounter's activation path is therefore still needed
 before the Palace boss film handoff can be judged
 (`palace_native_command10_pc_20261007b/`,
 `palace_dispatch_command10_pc_20261007/`).
+The native actor update also requires bit `0x2` in its pool-record flags.
+Forcing that bit with a stored command 10 made the game reset the command to
+zero, with no SAN cue, even when repeated for 600 VIs
+(`palace_active_flag_pc_20261007/`,
+`palace_active_hold_pc_20261007/`). This temporary diagnostic was removed;
+it is not a substitute for the Palace mission route.
 
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
 at arena entry and queues non-silent audio to SDL's dummy device. Its first

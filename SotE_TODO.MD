@@ -309,6 +309,14 @@ command field, selects the native command-10 branch. The temporary hook was
 removed after the test. The first probe in
 `palace_native_command10_pc_20261007/` stayed in the Hoth startup film
 because that run did not skip it and provides no Palace evidence.
+The native actor-update path at `func_800512EC` also gates on bit `0x2` in
+the actor's pool-record flags. Direct Palace entry has that bit clear. A
+diagnostic set it alongside stored command 10, first once and then for
+600 VIs. The game reset the stored command to zero, never called the
+command-10 branch, and the present-1400 capture still shows Dash before
+the closed door (`palace_active_flag_pc_20261007/`,
+`palace_active_hold_pc_20261007/`). The forced flag is insufficient to
+reconstruct the encounter and was removed from the candidate build.
 The installed `L09BOSS.SAN` audio describes Xizor leaving Dash with his
 Gladiator Droid (`L09BOSS_audio_transcript_20261007.txt`). The hooked native
 Palace command-10 branch still calls `func_80006CB0` after requesting that
