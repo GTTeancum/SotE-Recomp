@@ -175,7 +175,9 @@ Layout make_layout(const NativeTable& t) {
         const bool pc_classic_foot = g == 0 && !mf;
         const bool pc_classic_snow = g == 1;
         const bool pc_classic_bike = g == 3 && !mb;
-        const bool pc_classic_arrows = pc_classic_foot || pc_classic_snow || pc_classic_bike;
+        const bool pc_classic_outrider = g == 4;
+        const bool pc_classic_arrows = pc_classic_foot || pc_classic_snow ||
+            pc_classic_bike || pc_classic_outrider;
         add_fixed("move_forward", "Move Forward", key(pc_classic_arrows ? up : 'W'), mb ? Token{} : axis(1,-1));
         add_fixed("move_back", "Move Backward", key(pc_classic_arrows ? down : 'S'), mb ? Token{} : axis(1,1));
         add_fixed("move_left", "Move Left", key(pc_classic_arrows ? left : 'A'), axis(0,-1));
@@ -219,6 +221,14 @@ Layout make_layout(const NativeTable& t) {
                 {key('A'),0x4000},{key(2),0x4000},
                 {key('S'),0x20},{key('D'),0x10},
                 {key(9),1},{key(13),0x1000},{key(112),0x1000},
+                {key('I'),0x0800},{key('K'),0x0400},
+                {key('J'),0x0200},{key('L'),0x0100}};
+        } else if (pc_classic_outrider) {
+            routes[0] = {{key('Z'),0x8000},{key(2),0x8000},
+                {key('X'),0x4000},{key(1),0x4000},
+                {key(32),0x2000},{key('C'),0x2000},
+                {key('A'),0x10},{key('Q'),0x2},{key(9),1},
+                {key(13),0x1000},{key(112),0x1000},
                 {key('I'),0x0800},{key('K'),0x0400},
                 {key('J'),0x0200},{key('L'),0x0100}};
         }

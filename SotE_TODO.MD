@@ -452,8 +452,16 @@ The Classic snowspeeder keyboard/mouse defaults now match the PC event-3
 input table: arrows/numpad steer, Z/Mouse 2 thrust, X/Mouse 1 fire,
 Space/C harpoon, and A brakes. A process-local Hoth flight received the
 corresponding native inputs and rendered a harpoon response
-(`pc_classic_snow_key_probe_20261007/`). Outrider and turret Classic defaults,
+(`pc_classic_snow_key_probe_20261007/`). Turret Classic defaults,
 physical feel, and PC joystick controls remain open.
+The Classic Outrider keyboard/mouse defaults now follow the PC event-30
+input table: Z/Mouse 2 accelerates and rolls, A decelerates, X/Mouse 1 fires,
+Space/C launches missiles, and Q rolls. A direct Skyhook event-30 capture
+shows the Outrider and a missile count falling from five to four after Space;
+the native Controls screen displays the same assignments
+(`pc_classic_outrider_event30_probe_20261007/` and
+`pc_classic_outrider_binding_20261007/`). Turret variants, PC joystick
+mapping, and long-flight feel remain open.
 
 Modern on-foot controls now have analog movement/strafe, continuous right-stick
 turning, persistent pitch shared by weapon and view, circular deadzones, and

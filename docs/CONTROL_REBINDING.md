@@ -78,7 +78,7 @@ Bindings are separate for each native preset, gameplay section, and Classic or
 Modern scheme. Changing preset/scheme selects its saved assignments or defaults.
 Sections are On Foot, Snowspeeder, Outrider, Speeder Bike and Turret. Reset affects
 only the current section in the selected preset/scheme, for both device columns.
-Classic on-foot, snowspeeder, and speeder-bike keyboard/mouse defaults now follow the
+Classic on-foot, snowspeeder, Outrider, and speeder-bike keyboard/mouse defaults now follow the
 installed PC release's first built-in control set; see
 `docs/PC_CLASSIC_CONTROL_AUDIT.md`. Their game translator and editor rows
 use the same keys and mouse buttons. The remaining vehicle defaults and the

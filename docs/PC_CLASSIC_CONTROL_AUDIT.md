@@ -92,7 +92,8 @@ columns with the bike bindings and the combined Reverse / Brakes label
 
 The PC game labels the action Reverse, but this short process-local run
 verifies the native B input rather than a sustained reverse trajectory.
-The PC Outrider and turret mappings and legacy joystick input IDs remain open.
+The PC Outrider mapping below is now also implemented; turret mappings and
+legacy joystick input IDs remain open.
 
 ## Snowspeeder in the first built-in set
 
@@ -123,3 +124,30 @@ and pause assignments beside the controller column
 (`pc_classic_snow_binding_actions_20261007/`). This checks live input
 translation and a harpoon response, not flight feel or the result of sustained
 braking against a target.
+
+## Outrider in the first built-in set
+
+The PC event-30 selector uses the input array at VA `0x4CB910`. In the first
+action-mask group, Outrider actions 39–44 yield these keyboard/mouse inputs:
+
+| PC action | Input | Recompilation's native route |
+| --- | --- | --- |
+| Move / steer | Arrow keys or numpad 8/2/4/6 | Analog stick |
+| Accelerate / Roll | Z or Mouse 2 | N64 A, which also combines these actions |
+| Decelerate | A | N64 R |
+| Fire | X or Mouse 1 | N64 B |
+| Missile | Space or C | N64 Z |
+| Roll | Q | N64 C-left |
+| Camera Position | Tab | N64 C-right |
+| Camera Up/Down/Left/Right | I/K/J/L | N64 D-pad directions |
+| Pause | Escape, Enter, numpad Enter or F1 | Native pause/recovery |
+
+The Classic Outrider translator and Controls editor use the same routes. A
+direct event-30 process-local Skyhook run received A→`0x0010`, Q→`0x0002`,
+X→`0x4000`, Space→`0x2000`, Z/Mouse 2→`0x8000`, and Left as analog X=-80
+(`build/diagnostics/pc_classic_outrider_event30_probe_20261007/`). Native
+captures show the Outrider beside Skyhook; its visible missile count fell
+from five to four after Space. The Controls capture at present 4300 shows
+both device columns and the combined Accelerate / Roll row
+(`pc_classic_outrider_binding_20261007/`). This validates the input route
+and one missile action, not long-flight handling or physical devices.
