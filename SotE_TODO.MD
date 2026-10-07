@@ -231,6 +231,14 @@ Validation: both CTest harnesses pass. A rendered Escape from Echo Base run
 reached VI 3150 with analog turning, vertical aiming, firing, and diagonal
 movement. Native captures and telemetry are in
 `build/diagnostics/modern_controls/firing/`. This is not a full playthrough.
+A process-local virtual pad now feeds SDL-style button and axis snapshots
+through the production binding and Modern scheme path without sending host
+input. In Escape after dismissing the communicator, RT launched a blaster
+shot, simultaneous left-stick and right-stick input moved Dash diagonally
+and turned the view, and A jumped; the native guest input trace and rendered
+captures agree (`modern_virtual_pad_escape_after_second_message/` and
+`modern_virtual_pad_aim_trace/`). Physical device delivery and feel remain
+unverified.
 A further process-local Escape run held the native fire bit while Modern's
 diagnostic movement phase changed the player position diagonally, then held
 the native jump bit. Player height rose from about -0.04 to 2.59 and returned
@@ -277,6 +285,18 @@ throttle/brake camera axis. A matched 50% throttle replay captured the changed
 camera framing, with bike position within 0.1 game units of the prior run at
 VI 2280 (`build/diagnostics/modern_bike_camera_wired/`). Longer riding and
 physical feel remain to be checked.
+A compact valid `sote_controls.json` exposed that the loader required a space
+after each colon; the bike diagnostic had silently selected Classic. The
+loader now accepts ordinary JSON whitespace, with a regression test. A
+repeat in the live Mos Eisley controller confirms the virtual RT produces
+native accelerate presses and forward motion, left-stick input changes the
+trajectory, and LT produces brake presses. At VI 2295 the RT-only bike was at
+(-835.74, -408.15), while the matched route holding LT from VI 2250 was at
+(-834.14, -413.35), about 5.4 game units behind. Native captures show the
+bike beside desert walls in both cases (`modern_bike_virtual_pad_accel_baseline/`,
+`modern_bike_virtual_pad_brake_route/`, and
+`modern_bike_virtual_pad_modern_scheme/`). Both test routes hit a wall shortly
+afterwards, so longer-course steering and camera feel remain unverified.
 
 User playtest (Gall and Hoth): controls feel substantially better, but need
 more deadzone. The playable folder's Modern on-foot movement and aim deadzones

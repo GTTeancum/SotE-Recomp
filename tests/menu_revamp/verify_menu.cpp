@@ -105,5 +105,13 @@ int main(int argc,char**argv){
   std::ofstream(root/"fonts.ini")<<"default=test-font.ttf\nprofile=original\n";configure_menu_fonts(root);check(hash(render(s,960,540))==hash(baseline),"page override preserves original font");
   std::ofstream(root/"fonts.ini")<<"profile.name=test-font.ttf\nprofile.name.0=original\nprofile.name.1=original\nprofile.name.2=original\nprofile.name.3=original\n";configure_menu_fonts(root);check(hash(render(s,960,540))==hash(baseline),"individual overrides win over role");
  }
+ auto compact_root=scratch/"compact_controls";
+ std::filesystem::create_directories(compact_root);
+ std::ofstream(compact_root/"sote_controls.json")<<"{\"on_foot\":\"Modern\",\"bike\":\"Modern\"}";
+ sote::controls_menu::initialize(compact_root);
+ check(sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot)==sote::controls_menu::ControlScheme::Modern,
+       "compact JSON on-foot scheme");
+ check(sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::Bike)==sote::controls_menu::ControlScheme::Modern,
+       "compact JSON bike scheme");
  std::cout<<"Menu checks: "<<checks<<"; failures: "<<failures<<"\n";return failures?1:0;
 }

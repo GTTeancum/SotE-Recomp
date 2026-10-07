@@ -3,6 +3,7 @@
 #include "recomp_hooks.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -601,9 +602,20 @@ void initialize(const std::filesystem::path& data_directory) {
             std::istreambuf_iterator<char>{input},
             std::istreambuf_iterator<char>{}};
         auto slot_is_modern = [&contents](const char* key) {
-            const std::string needle =
-                std::string{"\""} + key + "\": \"Modern\"";
-            return contents.find(needle) != std::string::npos;
+            const std::string needle = std::string{"\""} + key + '"';
+            const size_t key_pos = contents.find(needle);
+            if (key_pos == std::string::npos) return false;
+            size_t pos = key_pos + needle.size();
+            auto skip_space = [&]() {
+                while (pos < contents.size() &&
+                       std::isspace(static_cast<unsigned char>(contents[pos])))
+                    ++pos;
+            };
+            skip_space();
+            if (pos == contents.size() || contents[pos++] != ':') return false;
+            skip_space();
+            return contents.compare(pos, sizeof("\"Modern\"") - 1,
+                                    "\"Modern\"") == 0;
         };
         state.schemes[static_cast<int>(SchemeSlot::OnFoot)] =
             slot_is_modern("on_foot") ? ControlScheme::Modern
