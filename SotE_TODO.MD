@@ -562,6 +562,15 @@ message remains unvoiced. Native frames and SDL dummy-device PCM are in
 `voice_palace_ilb43_pcm_original_20261007/` and
 `voice_palace_ilb43_pcm_pc_20261007/`. Physical speaker output remains
 unverified.
+
+The opt-in visual trace now includes unmapped text draws. A fresh Palace
+level-selection run logged the initial “several service panels” line as
+`mapped=0` at VI 1947, then the three-panel line as `mapped=1` with
+`ILB43.WAV` queued on its first draw at VI 2308. Native captures show both
+communications (`voice_palace_mapped_unmapped_trace_20261007/`). This
+confirms that the conflicting `ILB42.WAV` is withheld at the actual display
+point rather than merely absent from a static voice table.
+
 All 18 installed `ILU` clips have now been machine-transcribed for the
 Skyhook radio audit (`build/diagnostics/pc_all_ilu_transcripts_20261007.txt`).
 The five existing Skyhook mappings correspond semantically to their N64

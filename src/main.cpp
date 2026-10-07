@@ -3839,7 +3839,10 @@ extern "C" void sote_note_droid_text_buffer_draw(
     uint32_t color_pointer) {
     const std::string text =
         read_guest_ascii_string(rdram, text_pointer, 512);
-    if (!sote::hd_audio::has_voice_for_text(text)) {
+    const bool mapped_voice = sote::hd_audio::has_voice_for_text(text);
+    const bool trace_visual =
+        std::getenv("SOTE_TRACE_DROID_VISUAL") != nullptr;
+    if (!mapped_voice && !trace_visual) {
         return;
     }
 
@@ -3861,7 +3864,7 @@ extern "C" void sote_note_droid_text_buffer_draw(
     const int16_t event = static_cast<int16_t>(
         read_guest_half(rdram, 0x8013CE0EU));
 
-    if (std::getenv("SOTE_TRACE_DROID_VISUAL") != nullptr) {
+    if (trace_visual) {
         std::printf(
             "[sote][droid-text-draw] source=%08X slot=%u "
             "text_pointer=%08X pos=%d,%d color=%02X,%02X,%02X,%02X "
@@ -3877,13 +3880,15 @@ extern "C" void sote_note_droid_text_buffer_draw(
             a,
             vi_count.load(std::memory_order_relaxed),
             static_cast<int>(event),
-            sote::hd_audio::has_voice_for_text(text) ? 1 : 0,
+            mapped_voice ? 1 : 0,
             text.c_str());
         std::fflush(stdout);
     }
 
-    sote::hd_audio::play_visible_voice(text,
-        static_cast<uint64_t>(vi_count.load(std::memory_order_relaxed)), event);
+    if (mapped_voice)
+        sote::hd_audio::play_visible_voice(text,
+            static_cast<uint64_t>(vi_count.load(std::memory_order_relaxed)),
+            event);
 }
 
 extern "C" uint32_t sote_play_hd_sound_request(

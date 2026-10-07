@@ -33,6 +33,16 @@ VI that `ILB11.WAV` queued
 distinguish a missing mapping from a message that has not yet appeared; it
 does not establish the later Gall conversations' gameplay triggers.
 
+The trace previously returned before logging any unmapped text, making
+`mapped=0` impossible to observe. In a fresh Palace level-selection run,
+the initial “several service panels” communication appeared at VI 1947 with
+`mapped=0`, and no `ILB42.WAV` queue. After a process-local Start dismissal,
+the three-panel instruction appeared at VI 2308 with `mapped=1` and queued
+`ILB43.WAV` on that same VI. Native frames at presents 2200 and 2400 show
+both messages (`build/diagnostics/voice_palace_mapped_unmapped_trace_20261007/`).
+The flag describes the built-in voice selection at draw time; the capture
+does not establish physical speaker output.
+
 A static ROM-corpus audit (`python tools/audit_voice_rom_hashes.py
 SotE_Recompiled/main.bin tools/leebo_voice_cases.tsv`) checked all 31 keys
 against 484 NUL-terminated, control-prefixed message candidates in the
