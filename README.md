@@ -317,7 +317,7 @@ An SDL-compatible controller uses the expected N64 layout:
 - Right stick: C buttons
 - D-pad and Start: N64 D-pad and Start
 
-Modern on-foot and current snowspeeder, Outrider and turret keyboard defaults:
+Modern on-foot and current Outrider and turret keyboard defaults:
 
 - `WASD`: analog stick
 - `Z` or Space: A
@@ -333,11 +333,14 @@ first built-in control set: arrow keys or numpad 8/2/4/6 move, `IJKL` controls
 the camera, `X`/Mouse 1 fires, `Z`/Mouse 2 jumps, Space aims, `A` strafes or
 activates, `C` ducks, `Q` toggles the jetpack, `W` changes weapon, and Tab
 changes camera position. Enter or F1 pauses; Escape remains the recovery
-pause key. Snowspeeder, Outrider and turret Classic defaults still need
+pause key. Outrider and turret Classic defaults still need
 comparison with the PC game.
 Classic speeder-bike keyboard and mouse defaults also follow the PC release:
 arrows or numpad 8/2/4/6 steer, `Z`/Mouse 1 throttles, `A`/Mouse 2 reverses
 or brakes, `S` rams left, `D` rams right, and Tab changes the camera.
+Classic snowspeeder uses arrows or numpad 8/2/4/6 to steer, `Z`/Mouse 2
+for thrust, `X`/Mouse 1 to fire, Space or `C` for the harpoon, and `A` for
+brakes, matching the first PC built-in set.
 
 Physical keyboard and controller input is accepted only while the game window
 has focus. This prevents normal desktop typing from steering an unattended
@@ -348,7 +351,7 @@ game.
 The injected Options entry cycles between `Graphics` and `Controls` with Left
 and Right. The `Controls` submenu offers a single player-facing choice:
 
-- `Classic` - PC-style on-foot and speeder-bike keyboard/mouse controls,
+- `Classic` - PC-style on-foot, snowspeeder, and speeder-bike keyboard/mouse controls,
   with the native N64 controller mapping. The remaining PC vehicle and
   joystick comparison is in progress.
 - `Modern` - controller-focused aiming, movement, and vehicle tuning.

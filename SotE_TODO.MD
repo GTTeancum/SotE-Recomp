@@ -448,6 +448,12 @@ bike-stage guest-input run and native Controls capture verify these routes
 `pc_classic_bike_binding_final_20261007/`); Modern bike A still steers in
 its matched run. The PC's other control sets, remaining vehicle sections,
 joystick mapping, and interactive feel still need comparison.
+The Classic snowspeeder keyboard/mouse defaults now match the PC event-3
+input table: arrows/numpad steer, Z/Mouse 2 thrust, X/Mouse 1 fire,
+Space/C harpoon, and A brakes. A process-local Hoth flight received the
+corresponding native inputs and rendered a harpoon response
+(`pc_classic_snow_key_probe_20261007/`). Outrider and turret Classic defaults,
+physical feel, and PC joystick controls remain open.
 
 Modern on-foot controls now have analog movement/strafe, continuous right-stick
 turning, persistent pitch shared by weapon and view, circular deadzones, and

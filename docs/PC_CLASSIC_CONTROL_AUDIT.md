@@ -92,5 +92,34 @@ columns with the bike bindings and the combined Reverse / Brakes label
 
 The PC game labels the action Reverse, but this short process-local run
 verifies the native B input rather than a sustained reverse trajectory.
-The PC snowspeeder, Outrider and turret mappings and legacy joystick input
-IDs remain open.
+The PC Outrider and turret mappings and legacy joystick input IDs remain open.
+
+## Snowspeeder in the first built-in set
+
+The PC event-3 selector uses the 34-slot input array at VA `0x4CB6F0`.
+The first action-mask group at VA `0x4C4F00` associates these inputs with
+the snowspeeder actions:
+
+| PC action | Input | Recompilation's native route |
+| --- | --- | --- |
+| Move / steer | Arrow keys or numpad 8/2/4/6 | Analog stick |
+| Thrust | Z or Mouse 2 | N64 A |
+| Fire | X or Mouse 1 | N64 B |
+| Harpoon | Space or C | N64 Z |
+| Brakes | A | N64 L and R together |
+| Camera Position | Tab | N64 C-right |
+| Camera Up/Down/Left/Right | I/K/J/L | N64 D-pad directions |
+| Pause | Escape, Enter, numpad Enter or F1 | Native pause/recovery |
+
+The Classic snowspeeder keyboard translator and Controls editor now share
+these defaults. A direct event-3 process-local run received Z→`0x8000`,
+X→`0x4000`, Space/C→`0x2000`, A→`0x0030`, Mouse 1→`0x4000`, Mouse 2→`0x8000`,
+and Left as analog X=-80 without a D-pad bit
+(`build/diagnostics/pc_classic_snow_key_probe_20261007/`). Its native frames
+show the Hoth stage objective and then playable flight; Space also triggered
+the game's "harpoon fired without target" voice event. The native Controls
+capture at present 4300 shows the same thrust, fire, harpoon, brakes, camera,
+and pause assignments beside the controller column
+(`pc_classic_snow_binding_actions_20261007/`). This checks live input
+translation and a harpoon response, not flight feel or the result of sustained
+braking against a target.
