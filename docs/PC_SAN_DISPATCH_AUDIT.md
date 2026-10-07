@@ -55,6 +55,25 @@ zero, with no SAN cue, even when repeated for 600 VIs
 `palace_active_hold_pc_20261007/`). This temporary diagnostic was removed;
 it is not a substitute for the Palace mission route.
 
+An October 2026 process-local Gall diagnostic called the recompiled native
+`func_8003FDB8` dispatcher with command 10 for the loaded `boba` actor on the
+game thread, rather than only setting its stored command field. The native
+branch executed: it set Boba's command to 10 and Slave I's to 15, activated
+their pool flags, hit the `0x80042850` SAN hook, and started `L05BOSS.SAN`
+(`gall_native_dispatch10_pc_20261007/`). When the 211-frame movie ended,
+the native camera/reveal resumed visibly. Captures at presents 1700, 2000,
+and 2300 show the repeated flyover before combat; the longer run reaches
+active Boba combat by present 2900
+(`gall_native_dispatch10_long_pc_20261007/`). This confirms a PC-mode
+film-to-native-reveal duplication that the earlier direct movie cue could not
+expose. The diagnostic invoked the branch from the opening corridor without
+the preceding elevator objectives. Dash fell into invalid encounter geometry
+and lost health afterward, so that damage is not evidence of the natural
+fight's difficulty or handoff. The temporary dispatcher hook and its runtime
+diagnostic were removed after these captures; the ordinary candidate build
+was restored. The film overlay still needs to advance or otherwise reconcile
+the native reveal without exposing a second cinematic or hidden combat.
+
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
 at arena entry and queues non-silent audio to SDL's dummy device. Its first
 handoff replayed the native IG-88 reveal after the film

@@ -326,6 +326,18 @@ make duplicate post-film native reveals a concrete risk; the synthetic movie
 cues bypass the branch and cannot validate those handoffs. Reach each native
 encounter and inspect the rendered film-to-combat transition before signing
 off either boss movie.
+An isolated game-thread invocation of Boba's actual native command-10
+dispatcher now confirms the Gall duplication: `L05BOSS.SAN` starts from the
+real hook, but its end exposes the N64 camera/reveal flyover again before
+combat (`gall_native_dispatch10_pc_20261007/` and
+`gall_native_dispatch10_long_pc_20261007/`). The loaded Boba and Slave I
+actors change commands and activation flags, proving that this run exercised
+the native branch rather than the earlier direct film cue. The invocation
+bypassed the natural elevator route; Dash later fell from the invalid entry
+geometry, so the health loss does not describe a valid boss fight. The
+temporary diagnostic and generated hook were removed and the ordinary build
+restored. PC mode still needs a boss-film handoff that consumes the native
+reveal while preserving its camera, combat gate, and player safety.
 An Original N64 event-31 probe shows the Tatooine epilogue in which Luke and
 Leia believe Dash died (`build/diagnostics/san_ending_event31_native_probe/`).
 Direct previews show `L11LOSE.SAN` depicts that conversation, while
