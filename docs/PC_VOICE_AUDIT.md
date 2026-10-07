@@ -81,6 +81,33 @@ also checked in both modes as described in `SotE_TODO.MD`. Together, these
 are ten of the 31 built-in Leebo pairings. The other 21 still need gameplay
 timing checks.
 
+## Remaining gameplay timing routes
+
+The 21 retained Leebo clips without a visible in-game pairing fall into these
+mission sections. Their content comparisons above remain valid; the listed
+routes identify what still needs to appear in native captures in both modes.
+
+| Section | Clips | Next visible state to reach |
+| --- | --- | --- |
+| Echo Base | `ILB04` | Restore generator power and display the ship-return message. |
+| Ord Mantell | `ILB08/09/10` | Advance the hover-train sequence through jump, miss, and impact cues. |
+| Gall | `ILB14/15/16/17/18/21/31` | Progress ship interactions, observation tower, Boba encounter, and jetpack state. |
+| Mos Eisley | `ILB26/27/29` | Progress the swoop-gang chase to its warning, failure, and success messages. |
+| Freighter | `ILB35/36` | Find the super computer and receive the return-lift instruction. |
+| Sewers | `ILB38/39/40/41` | Reach the key gate and deactivator pickups. |
+| Palace | `ILB44` | Set the pulse bombs and display the escape instruction. |
+
+Entry or idle shortcuts did not surface these later messages: a direct Gall
+event-12 jump returned to Hoth (`voice_gall_event12_entry_20261007/`); a
+direct Ord event-8 entry showed no mapped voice through VI 2000
+(`voice_ord_event8_entry_20261007/`); a dismissed Gall ship briefing stayed
+idle through VI 4600 (`voice_gall_idle_followup_original_20261007/`); a Mos
+Eisley bike stage stayed on `ILB24` through VI 6000 without the later warnings
+(`voice_mos_bike_idle_followup_original_20261007/`); and dismissing the Sewer
+opening instruction twice did not reach its later key/deactivator messages
+(`voice_sewers_event25_followup_original_20261007/`). These are route limits,
+not evidence that the mappings fail during real mission progress.
+
 ## Skyhook radio lines
 
 All 18 installed `ILU*.WAV` files were transcribed with the same local
