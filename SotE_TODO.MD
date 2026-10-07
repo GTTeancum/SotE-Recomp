@@ -452,6 +452,14 @@ bike-stage guest-input run and native Controls capture verify these routes
 `pc_classic_bike_binding_final_20261007/`); Modern bike A still steers in
 its matched run. The PC's other control sets, joystick mapping, and
 interactive feel still need comparison.
+An Ord Mantell event-8 train-state input probe exposed a Classic/Modern
+on-foot mapping question: native B (`0x4000`) raised Dash from about 1.58 to
+2.20 units at VI 950, while native A (`0x8000`) did not. The current generic
+on-foot defaults send PC Z/Mouse 2 and Modern A to native A for Jump, and
+PC X/Mouse 1 and Modern RT to native B for Fire. Verify the train's active
+action table and make the stage-specific mapping correct before signing off
+Classic PC parity or Modern jumping there (`voice_ord_stationary_b_950_20261007/`
+and `voice_ord_stationary_jump_950_20261007/`).
 The Classic snowspeeder keyboard/mouse defaults now match the PC event-3
 input table: arrows/numpad steer, Z/Mouse 2 thrust, X/Mouse 1 fire,
 Space/C harpoon, and A brakes. A process-local Hoth flight received the

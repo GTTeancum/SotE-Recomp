@@ -160,6 +160,18 @@ the opening warning before Dash falls from the train; none reaches an
 `ILB08/09/10` communication. Direct event 9 advances to the IG-88 arena
 event 10 instead (`voice_ord_event9_entry_20261007/`). Those later train
 messages require progressing event 8 itself; event 9 is not a shortcut.
+An idle native-frame timeline shows the first train approaching a turn and
+track break by present 1150 (`voice_ord_train_idle_timeline_20261007/`). The
+earlier attempts used an N64 A pulse for Jump, but a stationary input
+comparison at VI 950 shows A leaves Dash at train height while N64 B raises
+him from about 1.58 to 2.20 game units
+(`voice_ord_stationary_jump_950_20261007/` and
+`voice_ord_stationary_b_950_20261007/`). A corrected B jump at VI 1170
+visibly lifts Dash above the departing train, but he falls beside the rail
+before reaching the next car (`voice_ord_b_jump_1170_20261007/`). A
+left-and-forward B jump also falls (`voice_ord_left_jump_1170_20261007/`).
+No `ILB08/09/10` visible pairing was reached. Future train timing probes
+must use the verified B jump action and land on the next car.
 An extended process-local Sewer flight used Modern Y to enable the jetpack
 and held A until its displayed fuel fell from 98% to 2%. Thrust then stopped
 and fuel refilled to 85%, without an `ILB31` queue or visible “Jetpack
