@@ -317,7 +317,7 @@ An SDL-compatible controller uses the expected N64 layout:
 - Right stick: C buttons
 - D-pad and Start: N64 D-pad and Start
 
-Modern on-foot and current turret keyboard defaults:
+Modern on-foot keyboard defaults:
 
 - `WASD`: analog stick
 - `Z` or Space: A
@@ -333,8 +333,7 @@ first built-in control set: arrow keys or numpad 8/2/4/6 move, `IJKL` controls
 the camera, `X`/Mouse 1 fires, `Z`/Mouse 2 jumps, Space aims, `A` strafes or
 activates, `C` ducks, `Q` toggles the jetpack, `W` changes weapon, and Tab
 changes camera position. Enter or F1 pauses; Escape remains the recovery
-pause key. Turret Classic defaults still need
-comparison with the PC game.
+pause key.
 Classic speeder-bike keyboard and mouse defaults also follow the PC release:
 arrows or numpad 8/2/4/6 steer, `Z`/Mouse 1 throttles, `A`/Mouse 2 reverses
 or brakes, `S` rams left, `D` rams right, and Tab changes the camera.
@@ -344,6 +343,9 @@ brakes, matching the first PC built-in set.
 Classic Outrider uses arrows or numpad 8/2/4/6 to steer, `Z`/Mouse 2 to
 accelerate and roll, `A` to decelerate, `X`/Mouse 1 to fire, Space or `C`
 for missiles, and `Q` to roll.
+Classic turret uses arrows or numpad 8/2/4/6 to aim, `X`/Mouse 1 to fire,
+and `C`/Mouse 2 for missiles. The additional missile key is Space in
+Asteroid Field and `Z` in Skyhook; the Controls screen shows both defaults.
 
 Physical keyboard and controller input is accepted only while the game window
 has focus. This prevents normal desktop typing from steering an unattended
@@ -354,9 +356,9 @@ game.
 The injected Options entry cycles between `Graphics` and `Controls` with Left
 and Right. The `Controls` submenu offers a single player-facing choice:
 
-- `Classic` - PC-style on-foot, snowspeeder, Outrider, and speeder-bike keyboard/mouse controls,
-  with the native N64 controller mapping. The remaining PC vehicle and
-  joystick comparison is in progress.
+- `Classic` - PC-style keyboard/mouse controls in all five gameplay sections,
+  with the native N64 controller mapping. The PC joystick comparison is in
+  progress.
 - `Modern` - controller-focused aiming, movement, and vehicle tuning.
   On foot, LS moves and strafes while RS continuously turns and aims. There
   is no LT aim mode. A jumps, RT fires, X opens doors, Y toggles the jetpack,

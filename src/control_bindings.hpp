@@ -46,6 +46,8 @@ struct NativeTable {
     std::array<std::string, 48> labels{};
     bool modern_foot = false;
     bool modern_bike = false;
+    bool turret_skyhook = false;
+    int event = -1;
 };
 struct Action {
     std::string id, label;
@@ -93,6 +95,7 @@ bool capturing();
 EditorView editor_view();
 PhysicalInput remap(const PhysicalInput& input, bool native_menu_visible);
 bool context_active(Context context);
+bool turret_skyhook_active();
 uint16_t bike_button(bool accelerate);
 // Diagnostics/tests read the same live model used by the menu and remapper.
 Layout current_layout();

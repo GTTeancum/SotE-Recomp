@@ -78,12 +78,13 @@ Bindings are separate for each native preset, gameplay section, and Classic or
 Modern scheme. Changing preset/scheme selects its saved assignments or defaults.
 Sections are On Foot, Snowspeeder, Outrider, Speeder Bike and Turret. Reset affects
 only the current section in the selected preset/scheme, for both device columns.
-Classic on-foot, snowspeeder, Outrider, and speeder-bike keyboard/mouse defaults now follow the
-installed PC release's first built-in control set; see
-`docs/PC_CLASSIC_CONTROL_AUDIT.md`. Their game translator and editor rows
-use the same keys and mouse buttons. The remaining vehicle defaults and the
-controller column still follow the N64 mappings while their PC equivalents
-are audited.
+Classic keyboard/mouse defaults in all five gameplay sections now follow
+the installed PC release's first built-in control set; see
+`docs/PC_CLASSIC_CONTROL_AUDIT.md`. Turret Missile uses Space in Asteroid
+Field and Z in Skyhook; its editor row shows both stage defaults, and a
+custom assignment applies to both. The game translator and editor rows
+use the same assignments. The controller column still follows the N64
+mapping while the PC joystick controls are audited.
 
 Modern on-foot right-stick input still reaches the existing analog aim hooks,
 not native C-button actions. Modern bike trigger replacements retain their

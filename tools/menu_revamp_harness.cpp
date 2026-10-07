@@ -1,7 +1,9 @@
 #include "controls_menu.hpp"
+#include "control_bindings.hpp"
 #include "graphics_menu.hpp"
 #include "menu_skin.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -201,6 +203,41 @@ int main(int argc, char** argv) {
     }
 
     const std::filesystem::path scratch = argv[1];
+    {
+        namespace bindings = sote::control_bindings;
+        bindings::NativeTable asteroid{};
+        asteroid.masks[3] = 0x1000;
+        asteroid.masks[37] = 0x2016;
+        asteroid.labels[37] = "Missile";
+        auto skyhook = asteroid;
+        skyhook.turret_skyhook = true;
+        const auto asteroid_layout = bindings::make_layout(asteroid);
+        const auto skyhook_layout = bindings::make_layout(skyhook);
+        auto missile_row = [](const bindings::Layout& layout, bindings::Token key) {
+            const auto& turret = layout[2];
+            return std::find_if(turret.begin(), turret.end(), [&](const auto& action) {
+                return std::find(action.targets[0].begin(), action.targets[0].end(), key) !=
+                    action.targets[0].end();
+            });
+        };
+        const auto asteroid_missile = missile_row(asteroid_layout, bindings::key(32));
+        const auto skyhook_missile = missile_row(skyhook_layout, bindings::key('Z'));
+        check(asteroid_missile != asteroid_layout[2].end() &&
+            skyhook_missile != skyhook_layout[2].end() &&
+            asteroid_missile->id == skyhook_missile->id,
+            "Turret Missile retains one binding across PC stage variants");
+        if (asteroid_missile != asteroid_layout[2].end()) {
+            bindings::Assignments edited;
+            edited.overrides[bindings::storage_key(*asteroid_missile,
+                bindings::Device::Keyboard)] = bindings::key('M');
+            bindings::PhysicalInput raw{};
+            raw.keys['M'] = 1;
+            const auto a = edited.apply(raw, asteroid_layout[2]);
+            const auto s = edited.apply(raw, skyhook_layout[2]);
+            check(a.keys[32] && !a.keys['Z'] && s.keys['Z'] && !s.keys[32],
+                "rebound Turret Missile key uses the active stage route");
+        }
+    }
     std::filesystem::create_directories(scratch / "Sdata" / "UI");
     std::filesystem::remove(scratch / "sote_options.json");
     sote::graphics_menu::initialize(scratch);

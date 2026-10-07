@@ -943,6 +943,8 @@ void poll_input() {
             sote::controls_menu::ControlScheme::Classic;
     const bool classic_snow_keyboard = !menu &&
         control_bindings::context_active(control_bindings::Context::Snowspeeder);
+    const bool classic_turret_keyboard = !menu &&
+        control_bindings::context_active(control_bindings::Context::Turret);
     const bool classic_bike_keyboard = !menu &&
         control_bindings::context_active(control_bindings::Context::Bike) &&
         sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::Bike) ==
@@ -970,6 +972,17 @@ void poll_input() {
         if (key_down('X') || key_down(VK_LBUTTON)) keyboard_buttons |= n64_b;
         if (key_down(VK_SPACE) || key_down('C')) keyboard_buttons |= n64_z;
         if (key_down('A')) keyboard_buttons |= n64_l | n64_r;
+        if (key_down(VK_TAB)) keyboard_buttons |= n64_cr;
+        if (key_down(VK_RETURN) || key_down(VK_F1)) keyboard_buttons |= n64_start;
+        if (key_down('I')) keyboard_buttons |= n64_du;
+        if (key_down('K')) keyboard_buttons |= n64_dd;
+        if (key_down('J')) keyboard_buttons |= n64_dl;
+        if (key_down('L')) keyboard_buttons |= n64_dr;
+    } else if (classic_turret_keyboard) {
+        if (key_down('X') || key_down(VK_LBUTTON)) keyboard_buttons |= n64_b;
+        if (key_down('C') || key_down(VK_RBUTTON) ||
+            key_down(control_bindings::turret_skyhook_active() ? 'Z' : VK_SPACE))
+            keyboard_buttons |= n64_z;
         if (key_down(VK_TAB)) keyboard_buttons |= n64_cr;
         if (key_down(VK_RETURN) || key_down(VK_F1)) keyboard_buttons |= n64_start;
         if (key_down('I')) keyboard_buttons |= n64_du;
@@ -1029,8 +1042,8 @@ void poll_input() {
 
     float keyboard_x = 0.0f;
     float keyboard_y = 0.0f;
-    if (classic_foot_keyboard || classic_snow_keyboard || classic_bike_keyboard ||
-        classic_outrider_keyboard) {
+    if (classic_foot_keyboard || classic_snow_keyboard || classic_turret_keyboard ||
+        classic_bike_keyboard || classic_outrider_keyboard) {
         if (key_down(VK_LEFT) || key_down(VK_NUMPAD4)) keyboard_x -= n64_stick_scale;
         if (key_down(VK_RIGHT) || key_down(VK_NUMPAD6)) keyboard_x += n64_stick_scale;
         if (key_down(VK_UP) || key_down(VK_NUMPAD8)) keyboard_y += n64_stick_scale;

@@ -174,10 +174,11 @@ Layout make_layout(const NativeTable& t) {
         };
         const bool pc_classic_foot = g == 0 && !mf;
         const bool pc_classic_snow = g == 1;
+        const bool pc_classic_turret = g == 2;
         const bool pc_classic_bike = g == 3 && !mb;
         const bool pc_classic_outrider = g == 4;
         const bool pc_classic_arrows = pc_classic_foot || pc_classic_snow ||
-            pc_classic_bike || pc_classic_outrider;
+            pc_classic_turret || pc_classic_bike || pc_classic_outrider;
         add_fixed("move_forward", "Move Forward", key(pc_classic_arrows ? up : 'W'), mb ? Token{} : axis(1,-1));
         add_fixed("move_back", "Move Backward", key(pc_classic_arrows ? down : 'S'), mb ? Token{} : axis(1,1));
         add_fixed("move_left", "Move Left", key(pc_classic_arrows ? left : 'A'), axis(0,-1));
@@ -214,6 +215,13 @@ Layout make_layout(const NativeTable& t) {
                 {key(32),0x2000},{key('C'),0x2000},
                 {key('A'),0x30},{key(9),1},
                 {key(13),0x1000},{key(112),0x1000},
+                {key('I'),0x0800},{key('K'),0x0400},
+                {key('J'),0x0200},{key('L'),0x0100}};
+        } else if (pc_classic_turret) {
+            routes[0] = {{key('X'),0x4000},{key(1),0x4000},
+                {key(t.turret_skyhook ? 'Z' : 32),0x2000},
+                {key('C'),0x2000},{key(2),0x2000},
+                {key(9),1},{key(13),0x1000},{key(112),0x1000},
                 {key('I'),0x0800},{key('K'),0x0400},
                 {key('J'),0x0200},{key('L'),0x0100}};
         } else if (pc_classic_bike) {
@@ -447,7 +455,9 @@ void set_dialog(Phase phase, std::string title,std::string detail,std::string hi
     state.editor.phase=phase;state.editor.title=std::move(title);state.editor.detail=std::move(detail);state.editor.hint=std::move(hint);
 }
 bool same_table(const NativeTable& a,const NativeTable& b) {
-    return a.preset==b.preset&&a.masks==b.masks&&a.labels==b.labels&&a.modern_foot==b.modern_foot&&a.modern_bike==b.modern_bike;
+    return a.preset==b.preset&&a.masks==b.masks&&a.labels==b.labels&&
+        a.modern_foot==b.modern_foot&&a.modern_bike==b.modern_bike&&
+        a.turret_skyhook==b.turret_skyhook;
 }
 bool read_table(const uint8_t* ram,size_t size,bool menu,NativeTable& table) {
     if(!ram||size<0x190000||(size&3)!=0)return false;
@@ -474,6 +484,8 @@ bool read_table(const uint8_t* ram,size_t size,bool menu,NativeTable& table) {
     if(table.masks[3]!=0x1000)return false; // loaded native control-table guard
     table.modern_foot=controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot)==controls_menu::ControlScheme::Modern;
     table.modern_bike=controls_menu::current_scheme(controls_menu::SchemeSlot::Bike)==controls_menu::ControlScheme::Modern;
+    table.event=int16_t(half(0x8013CE0E));
+    table.turret_skyhook=!menu&&table.event==29;
     return true;
 }
 }
@@ -497,6 +509,10 @@ void observe_menu(const uint8_t* ram,size_t size) {
 void observe_context(const uint8_t* ram,size_t size,Context context) {
     if(int(context)<0||int(context)>=5)return;
     NativeTable table;if(!read_table(ram,size,false,table))return;
+    // Shared ship objects invoke both hooks each frame. Follow the playable
+    // section rather than letting the last hook overwrite the active layout.
+    if((table.event==6||table.event==29) && context==Context::Outrider)return;
+    if(table.event==30 && context==Context::Turret)return;
     std::lock_guard lock(state.mutex);
     if(!state.play_valid||!same_table(state.play_table,table)) {
         state.play_table=table;state.play_layout=make_layout(table);state.play_valid=true;
@@ -512,8 +528,12 @@ void decorate(menu_skin::Snapshot& s) {
             auto text=[&](int d){return a.targets[d].empty()?std::string("--"):join_names(state.assignments.sources(a,static_cast<Device>(d)));};
             const bool fixed_mouse_aim = g == 0 &&
                 a.id.find(".look_") != std::string::npos;
+            const bool stage_turret_missile = g == 2 &&
+                a.label == "Missile" &&
+                !state.assignments.overrides.contains(storage_key(a,Device::Keyboard));
             s.native_controls[g].push_back({a.label,text(1),
-                fixed_mouse_aim ? "Mouse Move" : text(0)});
+                fixed_mouse_aim ? "Mouse Move" : stage_turret_missile ?
+                    "Space (Asteroid) / Z (Skyhook) / C / Mouse 2" : text(0)});
         }
     }
     ensure_selection();
@@ -666,6 +686,12 @@ PhysicalInput remap(const PhysicalInput& raw,bool native_menu_visible) {
 bool context_active(Context context) {
     std::lock_guard lock(state.mutex);
     return state.play_valid && state.context == int(context) &&
+        clock_ms() - state.context_time <= 200;
+}
+bool turret_skyhook_active() {
+    std::lock_guard lock(state.mutex);
+    return state.play_valid && state.context == int(Context::Turret) &&
+        state.play_table.turret_skyhook &&
         clock_ms() - state.context_time <= 200;
 }
 uint16_t bike_button(bool accelerate) {

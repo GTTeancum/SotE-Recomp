@@ -92,8 +92,8 @@ columns with the bike bindings and the combined Reverse / Brakes label
 
 The PC game labels the action Reverse, but this short process-local run
 verifies the native B input rather than a sustained reverse trajectory.
-The PC Outrider mapping below is now also implemented; turret mappings and
-legacy joystick input IDs remain open.
+The PC Outrider and stage-specific turret mappings below are now also
+implemented; legacy joystick input IDs remain open.
 
 ## Snowspeeder in the first built-in set
 
@@ -152,15 +152,32 @@ both device columns and the combined Accelerate / Roll row
 (`pc_classic_outrider_binding_20261007/`). This validates the input route
 and one missile action, not long-flight handling or physical devices.
 
-## Turret input-table variation still to implement
+## Stage-specific turret input tables
 
 The installed PC event selector does not use one input array for every
 turret scene. PC event 6 (Asteroid Field) selects VA `0x4CB800`, where the
 first built-in set's Missile action (`0x820`) uses Space, C, or Mouse 2.
 PC event 30 (Skyhook battle) selects VA `0x4CB910`, where that same action
 uses Z, C, or Mouse 2. Both arrays give Fire (`0x1000`) to X/Mouse 1 and
-Camera Position (`0x40`) to Tab. The current recompilation exposes one
-Turret binding section for both scenes, so a single unconditional Missile
-default would misrepresent one PC scene. The remaining Classic turret work
-needs a stage-aware route and an editor display that explains the two
-defaults, followed by live checks in Asteroid Field and Skyhook.
+Camera Position (`0x40`) to Tab. The recompilation exposes one Turret
+binding section for both scenes. Its Missile row now shows the two stage
+defaults. Reassigning that row applies the new key to both scenes, while
+unmodified defaults stay stage-specific.
+
+The game calls both its Turret and Outrider context hooks in these space
+stages. The binding system now retains Turret for N64 events 6 and 29, and
+Outrider for event 30, instead of letting the last shared ship-object hook
+overwrite the active section. Direct process-local runs in Asteroid Field
+and Skyhook sent Space→native Z only in event 6, Z→native Z only in event 29,
+and C/Mouse 2→native Z in both; X/Mouse 1 sent native B and Left sent analog
+X=-80 in both (`pc_classic_turret_asteroid_fixed_20261007/` and
+`pc_classic_turret_skyhook_fixed_20261007/`). Native frames show the two
+playable turret views, with Skyhook's missile count falling to two after the
+missile-key pulses. The Controls capture at present 4300 displays the
+stage-specific Missile row beside the controller column
+(`pc_classic_turret_binding_20261007/`). A follow-up event-30 Outrider run
+still received A→native R, Q→native C-left, and Space→native Z, with a native
+Skyhook ship frame (`pc_classic_outrider_after_turret_gate_20261007/`).
+The stage-aware binding override is also checked in `menu_revamp_harness`.
+These runs verify input routing and selected game responses; physical
+controller and keyboard feel and full space-stage playthroughs remain open.

@@ -50,6 +50,21 @@ void pure_tests(GameMemory& memory,const std::filesystem::path& scratch) {
         }
     }
     const auto layout=cb::make_layout(memory.table(0));
+    auto skyhook_table=memory.table(0);
+    skyhook_table.turret_skyhook=true;
+    const auto skyhook_layout=cb::make_layout(skyhook_table);
+    const auto& asteroid_missile=find_target(layout,2,0,cb::key(VK_SPACE));
+    const auto& skyhook_missile=find_target(skyhook_layout,2,0,cb::key('Z'));
+    check(asteroid_missile.id==skyhook_missile.id,
+        "one Turret Missile binding applies to both stage variants");
+    cb::Assignments turret_override;
+    turret_override.overrides[cb::storage_key(asteroid_missile,cb::Device::Keyboard)]=cb::key('M');
+    cb::PhysicalInput turret_raw;turret_raw.keys['M']=1;
+    auto asteroid_mapped=turret_override.apply(turret_raw,layout[2]);
+    auto skyhook_mapped=turret_override.apply(turret_raw,skyhook_layout[2]);
+    check(asteroid_mapped.keys[VK_SPACE]&&!asteroid_mapped.keys['Z']&&
+        skyhook_mapped.keys['Z']&&!skyhook_mapped.keys[VK_SPACE],
+        "custom Turret Missile key follows each stage's PC default route");
     const auto& fire=find_target(layout,0,0,cb::key('X'));
     const auto& jump=find_target(layout,0,0,cb::key('Z'));
     cb::Assignments b;b.overrides[cb::storage_key(fire,cb::Device::Keyboard)]=cb::key('F');
