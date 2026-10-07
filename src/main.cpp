@@ -506,6 +506,82 @@ const char* san_movie_for_event(int16_t event) {
     }
 }
 
+void trace_gall_boss_objects(uint8_t* rdram, int vi) {
+    if (rdram == nullptr || std::getenv("SOTE_TRACE_GALL_BOSS") == nullptr)
+        return;
+    const int16_t event = static_cast<int16_t>(
+        read_guest_half(rdram, 0x8013CE0EU));
+    if (event != 15) return;
+
+    constexpr uint32_t pool = 0x80112838U;
+    const int32_t count = static_cast<int32_t>(read_guest_word(rdram, pool + 8));
+    const int32_t stride = static_cast<int32_t>(read_guest_word(rdram, pool + 12));
+    const uint32_t base = read_guest_word(rdram, pool + 16);
+    if (count < 0 || count > 4096 || stride < 0x9C || stride > 4096 ||
+        base < 0x80000000U ||
+        static_cast<uint64_t>(base) +
+            static_cast<uint64_t>(count) * stride > 0x80800000ULL)
+        return;
+
+    struct BossState {
+        uint32_t object = 0;
+        uint16_t record_flags = 0;
+        uint16_t object_flags = 0;
+        float health = 0.0f;
+    };
+    static std::array<BossState, 8> previous{};
+    static uint32_t last_base = 0;
+    if (base != last_base) {
+        previous.fill({});
+        last_base = base;
+    }
+    for (int32_t index = 0; index < count; ++index) {
+        const uint32_t record = base + index * stride;
+        const uint32_t object = read_guest_word(rdram, record + 0x98U);
+        if (object < 0x80000000U || object > 0x807FFF90U ||
+            read_guest_word(rdram, object) != 0x426F7373U)
+            continue;
+        const BossState current{
+            object,
+            read_guest_half(rdram, record + 0x68U),
+            read_guest_half(rdram, object + 6U),
+            read_guest_float(rdram, object + 0x60U),
+        };
+        BossState* prior = nullptr;
+        for (auto& slot : previous) {
+            if (slot.object == object) { prior = &slot; break; }
+        }
+        if (prior == nullptr) {
+            for (auto& slot : previous) {
+                if (slot.object == 0) { prior = &slot; break; }
+            }
+        }
+        if (prior == nullptr) continue;
+        if (prior->object != current.object ||
+            prior->record_flags != current.record_flags ||
+            prior->object_flags != current.object_flags ||
+            std::fabs(prior->health - current.health) > 0.001f) {
+            std::printf(
+                "[sote][gall-boss] VI=%d record=%d object=%08X "
+                "record_flags=%04X object_flags=%04X health=%.3f "
+                "pos=%.1f,%.1f,%.1f result=%d stage=%d "
+                "transition=%d->%d\n",
+                vi, index, object, current.record_flags,
+                current.object_flags, current.health,
+                read_guest_float(rdram, object + 0x50U),
+                read_guest_float(rdram, object + 0x54U),
+                read_guest_float(rdram, object + 0x58U),
+                static_cast<int32_t>(read_guest_word(rdram, 0x800DD2B0U)),
+                static_cast<int32_t>(read_guest_word(rdram, 0x800DD340U)),
+                read_guest_byte(rdram, 0x800D2558U),
+                static_cast<int16_t>(
+                    read_guest_half(rdram, 0x800D255CU)));
+            std::fflush(stdout);
+            *prior = current;
+        }
+    }
+}
+
 void update_san_movie_triggers(uint8_t* rdram) {
     if (rdram == nullptr ||
         display_list_count.load(std::memory_order_relaxed) == 0) {
@@ -2043,6 +2119,7 @@ void on_vi() {
         std::fflush(stdout);
     }
     log_general_failure_telemetry(count);
+    trace_gall_boss_objects(game_rdram, count);
     update_san_movie_triggers(game_rdram);
     (void)sote::san_movies::latest_cached_frame();
     uint64_t movie_token = sote::san_movies::playback_token();
