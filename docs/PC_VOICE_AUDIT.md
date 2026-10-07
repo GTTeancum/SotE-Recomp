@@ -267,6 +267,15 @@ Eisley bike stage stayed on `ILB24` through VI 6000 without the later warnings
 opening instruction twice did not reach its later key/deactivator messages
 (`voice_sewers_event25_followup_original_20261007/`). These are route limits,
 not evidence that the mappings fail during real mission progress.
+Three further Original N64 Gall event-14 routes dismissed the opening briefing,
+walked from the ship corridor into its adjoining rooms, and captured the actual
+native frames. A short right turn reached another wall; an earlier left turn
+reached the red side door, where a native R/Activate pulse did not open the
+door or display another communication (`voice_gall_ship_right_short_original_20261007/`,
+`voice_gall_ship_left_early_original_20261007/`, and
+`voice_gall_ship_door_original_20261007/`). `ILB14/15/16` were not queued in
+these routes. The door may need a different approach or mission state; these
+captures do not establish those lines' natural triggers.
 An additional process-local Ord Mantell event-8 route tried forward motion,
 jumps, and dismissing the opening train warning
 (`voice_ord_train_forward_probe_20261007/`,
