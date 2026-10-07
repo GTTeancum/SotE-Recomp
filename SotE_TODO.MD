@@ -252,6 +252,16 @@ N64 mode still opens the native memorial scene directly with no L11 SAN
 playback (`san_ending_original_after_pair_fix/`). The ending's natural
 campaign route and physical speaker output remain unverified.
 
+Two existing PC-mode captures provide initial communication checks. Gall's
+`ILB11.WAV` queued at VI 3894 in event 14, and present 3900 visibly shows
+"I'll watch the ship. Get out there and find Boba Fett!" beside the ship
+(`san_gall_pc_audio_handoff/`). Imperial Freighter's `ILB33.WAV` queued at
+VI 6326 in event 20, and present 6600 shows "Make your way through the
+ship, and find the Imperial super computer" (`san_freighter_pc_story_skip_
+music_guard_fixed/`). These pair the selected WAV names with visible ROM
+messages and queue timing, but the captures do not verify audible output or
+every mapped line.
+
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or
       premature playback when entering or leaving an event.
