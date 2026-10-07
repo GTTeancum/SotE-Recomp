@@ -290,6 +290,14 @@ service-panel communication at present 2200 with no `ILB42` voice queued
 (`voice_palace_three_panel_guard_20261007/`). The on-screen message itself
 says "several"; its follow-up ROM line specifies three. The 31 remaining
 mapped clips load and mix in `leebo_voices_harness`.
+All 18 installed `ILU` clips have now been machine-transcribed for the
+Skyhook radio audit (`build/diagnostics/pc_all_ilu_transcripts_20261007.txt`).
+The five existing Skyhook mappings correspond semantically to their N64
+messages; `ILU17` says "reactor core" where the N64 text says "power core."
+The earlier visible "I'll fly us to the skyhook" radio instruction in
+`san_skyhook_pc_natural_route/frames/present_4700.png` has no matching
+installed `ILU` recording, so it stays unvoiced. The five later lines still
+need running-game timing checks.
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or

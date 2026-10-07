@@ -23,3 +23,21 @@ the diagnostic queues no `ILB42.WAV` speech. The `leebo_voices_harness`
 loads and mixes all 31 retained built-in mappings and rejects the withheld
 message. Full in-game voice/message timing review is still open in
 `SotE_TODO.MD` item 1.
+
+## Skyhook radio lines
+
+All 18 installed `ILU*.WAV` files were transcribed with the same local
+model. The five clips mapped by `src/pc_voices.cpp` match their on-screen
+speaker/message semantically: `ILU13` (Empire attacks Xizor's base),
+`ILU16` (destroy the arm turrets), `ILU17` (enter and destroy the core),
+`ILU19` (get out), and `ILU20` (Dash is missing). `ILU17` says **reactor
+core** where the N64 text says **power core**. Runtime timing for these five
+remains unverified: the current Skyhook film-to-gameplay capture reaches an
+earlier radio message, not these later lines.
+
+That earlier message, “I'll fly us to the skyhook while you fight off
+Xizor's fighters from the gun turret,” is visible at
+`build/diagnostics/san_skyhook_pc_natural_route/frames/present_4700.png`.
+None of the installed `ILU` clips transcribes to this instruction, and the
+runtime has no mapping for it. It remains native text without an added PC
+voice, rather than playing an unrelated recording.
