@@ -666,6 +666,14 @@ nearer surface at 18.8 units, with the changed view and ammo loss visible
 `gall_modern_convergence_reverse/`). This verifies the running aim hook at
 two nearby ranges; far-target accuracy and physical fine aim still need
 review.
+A later process-local Escape run steered the right stick toward the distant
+tunnel opening, then fired RT. Its live aim trace records a 151.624-unit
+camera-ray hit and a corrected muzzle shot 1.17 degrees from that ray.
+The same run records a 30.025-unit nearby shot and a 67.896-unit shot after
+another turn. Native frames show the changed view, centered marker, and
+laser ammo use (`modern_aim_opening_sweep_20261007/`). This extends
+launch-geometry evidence beyond the earlier near shots, but impact
+accuracy and physical fine-aim feel remain unverified.
 A process-local virtual Start button in Escape dismissed the communicator,
 opened the revamped Pause menu over live gameplay, and resumed Dash. Native
 captures show the objective, live HUD, Pause's Resume/Options/Quit choices,

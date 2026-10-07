@@ -7,6 +7,7 @@ param(
     [switch]$OriginalN64,
     [string]$GameplayInput = '',
     [string]$PhysicalMouse = '',
+    [string]$PhysicalPad = '',
     [int]$StopVi = 3350,
     [string]$CapturePresents = '2800,3000,3100',
     [switch]$TracePlayer
@@ -44,7 +45,12 @@ $startInfo.Environment["SOTE_DIAGNOSTIC_OFFSCREEN"] = "1"
 $startInfo.Environment["SOTE_DIAGNOSTIC_CONFIG_PATH"] = Join-Path $output "config"
 $startInfo.Environment["SOTE_DIAGNOSTIC_UNLOCK_LEVELS"] = "1"
 $startInfo.Environment["SOTE_SMOKE_REFILL_LIVES"] = "1"
-if ($PhysicalMouse) {
+if ($PhysicalPad) {
+    $startInfo.Environment["SOTE_DIAGNOSTIC_PHYSICAL_PAD"] = $PhysicalPad
+    $startInfo.Environment["SOTE_TRACE_INPUT"] = "1"
+    $startInfo.Environment["SOTE_TRACE_GUEST_INPUT"] = "1"
+    $startInfo.Environment["SOTE_TRACE_MODERN_CONTROLS"] = "1"
+} elseif ($PhysicalMouse) {
     $startInfo.Environment["SOTE_DIAGNOSTIC_PHYSICAL_MOUSE"] = $PhysicalMouse
 } elseif ($MouseAim) {
     $startInfo.Environment["SOTE_TEST_MOUSE_AIM"] = "1"

@@ -5,6 +5,7 @@ param(
     [int]$StopVi = 3500,
     [ValidateRange(0, 9)][int]$LevelIndex = 1,
     [switch]$OriginalN64,
+    [switch]$ModernOnFoot,
     [switch]$AudioProbe,
     [ValidateRange(0, 20000)][int]$InitialSkipVi = 600,
     [ValidateRange(0, 20000)][int]$SecondSkipVi = 0,
@@ -147,6 +148,10 @@ try {
     # a previous Original N64 setting from the candidate build.
     $pcCutscenes = if ($OriginalN64) { 'false' } else { 'true' }
     [IO.File]::WriteAllText($optionsPath, "{`"pcCutscenes`":$pcCutscenes}")
+    if ($ModernOnFoot) {
+        [IO.File]::WriteAllText(
+            $controlsPath, '{"on_foot":"Modern","bike":"Modern"}')
+    }
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $info
     if (-not $process.Start()) { throw 'Could not start game' }

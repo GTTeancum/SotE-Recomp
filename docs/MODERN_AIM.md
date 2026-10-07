@@ -73,3 +73,15 @@ left-stick motion, and right-stick aim through the production frontend mapping
 and produced a corrected blaster launch in Escape after dismissing the
 communicator (`build/diagnostics/modern_virtual_pad_aim_trace/`). Physical
 device feel and close/far playtesting remain unverified.
+
+A further process-local Escape run passed right-stick motion and RT through
+the production pad path. A neutral shot converged on nearby geometry at
+30.025 game units. Turning toward the distant tunnel opening and pitching
+up produced a corrected shot at 151.624 game units; the shot vector was
+1.17 degrees from the camera-center ray after accounting for the muzzle
+offset. Native captures show the shifted view, centered marker, and reduced
+laser ammo (`build/diagnostics/modern_aim_opening_sweep_20261007/`). A
+second turn found geometry at 67.896 units. The trace verifies launch
+geometry, not visible impact or physical controller feel. An earlier full
+upward tilt hit the Escape Base ceiling and supplied no distant-shot trace
+(`modern_far_aim_up_20261007/`).
