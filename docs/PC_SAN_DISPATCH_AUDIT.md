@@ -73,6 +73,20 @@ fight's difficulty or handoff. The temporary dispatcher hook and its runtime
 diagnostic were removed after these captures; the ordinary candidate build
 was restored. The film overlay still needs to advance or otherwise reconcile
 the native reveal without exposing a second cinematic or hidden combat.
+PC mode now advances the native Gall reveal under `L05BOSS.SAN` from its
+actual command-10 cue and holds the film's last frame until the native reveal
+countdown reaches zero. A second isolated dispatcher run shows the complete
+movie, non-silent PCM queued to SDL's dummy device, then a black transition
+and the active Boba arena without a second flyover
+(`gall_native_dispatch10_hidden_pc_20261007/`). The native branch's command
+and pool-flag changes still occur; the film handoff logged at VI 1689 after
+the countdown finished. Dash later lost a life because this diagnostic began
+in the opening corridor, outside the normal elevator/arena route. This test
+does not establish the natural fight's player safety or speaker output.
+The temporary dispatcher diagnostic was again removed and the ordinary
+candidate rebuilt. A direct event-15 entry with that candidate remains in
+the corridor and does not play `L05BOSS.SAN`
+(`gall_boss_handoff_entry_guard_20261007/`).
 
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
 at arena entry and queues non-silent audio to SDL's dummy device. Its first

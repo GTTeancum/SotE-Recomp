@@ -401,6 +401,8 @@ bool san_ord_boss_skip_pending = false;
 bool san_ord_boss_story_handoff_pending = false;
 std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
+uint64_t san_gall_boss_movie_token = 0;
+std::atomic<bool> san_gall_boss_handoff_active{false};
 std::atomic<bool> san_palace_boss_cue_pending{false};
 bool san_palace_boss_started = false;
 
@@ -796,6 +798,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ord_boss_story_handoff_pending = false;
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
+        san_gall_boss_movie_token = 0;
+        san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
         sote::san_movies::stop_cached_playback();
@@ -826,6 +830,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (event != 15) {
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
+        san_gall_boss_movie_token = 0;
+        san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
     }
     if (event != 27) {
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
@@ -872,6 +878,13 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_gall_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
         san_gall_boss_started =
             sote::san_movies::play_cached_preview("L05BOSS.SAN");
+        if (san_gall_boss_started) {
+            san_gall_boss_movie_token = sote::san_movies::playback_token();
+            // The native command-10 branch has already started its timed
+            // reveal. Advance it under the PC film so it is not shown twice.
+            san_gall_boss_handoff_active.store(true,
+                std::memory_order_relaxed);
+        }
         std::printf("[sote][san] Gall Boba encounter cue: %s\n",
             san_gall_boss_started ? "L05BOSS.SAN started" : "movie unavailable");
         std::fflush(stdout);
@@ -2398,6 +2411,9 @@ void on_vi() {
         }
     }
     update_san_movie_triggers(game_rdram);
+    if (san_gall_boss_movie_token != 0 &&
+        sote::san_movies::playback_token() == san_gall_boss_movie_token)
+        sote::san_movies::set_hold_last_frame(true);
     if (san_game_over_movie_token != 0 &&
         sote::san_movies::playback_token() == san_game_over_movie_token)
         sote::san_movies::set_hold_last_frame(true);
@@ -2414,6 +2430,11 @@ void on_vi() {
                 (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
                  read_guest_half(game_rdram, 0x8013CE0EU) == 10))
                 san_ord_boss_skip_pending = true;
+            if (movie_token == san_gall_boss_movie_token) {
+                san_gall_boss_movie_token = 0;
+                san_gall_boss_handoff_active.store(false,
+                    std::memory_order_relaxed);
+            }
             std::printf("[sote][san] cutscene skipped\n");
             std::fflush(stdout);
             sote::san_movies::stop_cached_playback();
@@ -2461,6 +2482,29 @@ void on_vi() {
     if (san_ord_boss_movie_token != 0 &&
         movie_token != san_ord_boss_movie_token)
         san_ord_boss_movie_token = 0;
+    if (san_gall_boss_movie_token != 0 &&
+        movie_token == san_gall_boss_movie_token && game_rdram != nullptr &&
+        sote::san_movies::cached_playback_remaining_seconds() <= 0.0) {
+        // The same native countdown gates the reveal and combat. Keep the
+        // film's final frame until the guest finishes that transition.
+        const float reveal_seconds =
+            read_guest_float(game_rdram, 0x800DEB78U);
+        if (reveal_seconds <= 0.0f) {
+            sote::san_movies::stop_cached_playback();
+            sote::frontend::set_movie_playback(0);
+            movie_token = 0;
+            san_gall_boss_movie_token = 0;
+            san_gall_boss_handoff_active.store(false,
+                std::memory_order_relaxed);
+            std::printf("[sote][san] Gall boss native reveal complete; "
+                        "PC film handoff at VI=%d\n", count);
+            std::fflush(stdout);
+        }
+    }
+    if (san_gall_boss_movie_token != 0 && movie_token == 0) {
+        san_gall_boss_movie_token = 0;
+        san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
+    }
     bool game_over_advance = false;
     if (san_game_over_movie_token != 0 &&
         movie_token == san_game_over_movie_token && game_rdram != nullptr) {
@@ -2776,6 +2820,7 @@ extern "C" void sote_wait_for_game_frame() {
     while (sote::san_movies::cached_playback_active() &&
            !san_ending_handoff_active.load(std::memory_order_relaxed) &&
            !san_ord_boss_handoff_active.load(std::memory_order_relaxed) &&
+           !san_gall_boss_handoff_active.load(std::memory_order_relaxed) &&
            !san_game_over_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }

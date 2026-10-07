@@ -338,6 +338,16 @@ geometry, so the health loss does not describe a valid boss fight. The
 temporary diagnostic and generated hook were removed and the ordinary build
 restored. PC mode still needs a boss-film handoff that consumes the native
 reveal while preserving its camera, combat gate, and player safety.
+PC mode now advances Boba's native reveal behind `L05BOSS.SAN` and holds the
+movie's final frame until the native countdown reaches zero. A second
+isolated native-dispatch run shows the movie and non-silent PCM, then the
+active arena without a repeated flyover
+(`gall_native_dispatch10_hidden_pc_20261007/`). Its later life loss comes
+from entering the branch in invalid corridor geometry, so the natural
+elevator-to-boss route and player safety remain unverified. The temporary
+dispatcher hook was removed, the ordinary candidate rebuilt, and direct
+event-15 entry still does not play the movie
+(`gall_boss_handoff_entry_guard_20261007/`).
 An Original N64 event-31 probe shows the Tatooine epilogue in which Luke and
 Leia believe Dash died (`build/diagnostics/san_ending_event31_native_probe/`).
 Direct previews show `L11LOSE.SAN` depicts that conversation, while
