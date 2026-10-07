@@ -140,6 +140,23 @@ skipped the startup film before jumping directly to event 20; this verifies
 the two communications in PC mode, not the preceding Freighter SAN handoff.
 The capture used SDL's dummy output and does not verify physical speakers.
 
+A complete Gall Spaceport PC intro now also has a mixed-audio handoff check.
+The selected-level route displays `L05INTRO.SAN` at present 1500, reaches its
+black final frame by present 3600, takes the native story skip from event 11
+to event 14 at VI 3650, and shows the ship-side “I'll watch the ship. Get out
+there and find Boba Fett!” communication at present 3900. `ILB11.WAV`
+queues when that message appears at VI 3891. The installed voice recording
+correlates **0.951081** with the game's mixed PCM, with the next peak outside
+one second below 0.070 (`voice_gall_intro_pcm_pc_20261007/`). In the matching
+Original N64 mode, present 1600 shows the native IG-88/Boba story slide; a
+process-local Start press takes its native 11-to-14 skip at VI 1807, the same
+ship-side communication appears at present 2100, and `ILB11.WAV` queues at
+VI 2048. Its PCM correlation is **0.951882**, with the next peak below 0.073
+(`voice_gall_intro_pcm_original_20261007/`). This verifies the full PC film
+handoff into the visible communication and actual voice mix on this route.
+It does not establish physical speaker output or the natural preceding
+campaign route.
+
 ## Remaining gameplay timing routes
 
 The 21 retained Leebo clips without a visible in-game pairing fall into these

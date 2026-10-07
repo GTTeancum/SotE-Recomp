@@ -439,6 +439,14 @@ after the first ends in both runs. This verifies audio and visible-message
 alignment for that direct event route, not the preceding PC film handoff or
 physical speaker output (`voice_freighter_pcm_original_20261007/` and
 `voice_freighter_pcm_pc_20261007/`; details in `docs/PC_VOICE_AUDIT.md`).
+A fresh selected-level Gall pair verifies `ILB11` through the full PC
+`L05INTRO.SAN` handoff: the film ends, the native 11 -> 14 story skip occurs,
+the ship-side Boba instruction appears, and the installed voice waveform is
+present in the mixed PCM (correlation 0.951). Original N64 mode shows its
+native story slide, then the same instruction and voice after a native Start
+skip (`voice_gall_intro_pcm_pc_20261007/` and
+`voice_gall_intro_pcm_original_20261007/`). This checks the full PC film-to-
+communication handoff; speaker output and the preceding campaign remain open.
 The exact queue VIs and captured frames are tabulated in
 `docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
 not physical speaker output or syllable-level sync.
