@@ -7,7 +7,7 @@
 
 ## Open work
 
-### SOTE-OPEN-007 - Cutscene presentation and SAN placement (OPEN)
+### SOTE-OPEN-007 - SAN placement, N64/PC modes, and voice-to-communication mapping (OPEN)
 
 User report: SAN videos play at the wrong points in several places. The current
 runtime has event- and level-based movie triggers in `src/main.cpp`; passing
@@ -402,6 +402,17 @@ A matched direct PC-mode event-30 run queued the same `ILB46/ILU13/ILU16`
 files with the same visible communications
 (`voice_skyhook_event30_pc_mode_20261007/`). `ILU17/19/20` and physical
 speaker output remain unverified.
+
+Acceptance status for item 1: the N64/PC selection is implemented and
+persistent. Placement fixes and rendered handoffs cover the chapter intros,
+but natural gameplay timing for the Boba and Gladiator Droid encounter films,
+the ending route, and any further user-observed misplacements remain open.
+Voice content has been compared against all 31 enabled Leebo pairings and
+five Skyhook pairings, while visible-message timing in both modes is confirmed
+for 10 Leebo lines and two Skyhook lines. The other 21 Leebo and three Skyhook
+lines still need their gameplay states reached and their voice onset checked
+against the on-screen communication. The contradictory `ILB42` palace clip
+stays unmapped; wording differences are recorded in `docs/PC_VOICE_AUDIT.md`.
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or
