@@ -256,7 +256,22 @@ or blindly at event 15. The video has no reliable speech transcript.
 An event-10 Original N64 capture opens inside the IG-88 combat arena, which
 supports keeping `L04BOSS.SAN` there (`build/diagnostics/
 san_ord_event10_native_scene/`). The installed PC executable references that
-movie through its event-10 transition table. Palace event 27 instead opens
+movie through its event-10 transition table.
+An unmuted direct event-10 PC run now plays all 962 frames of
+`L04BOSS.SAN` after the event becomes active, queues non-silent PCM to SDL's
+dummy device, and returns to the native IG-88 arena
+(`san_ord_boss_pc_after_startup_skip_20261007/`). The first direct probe
+was masked by Hoth's long startup film and is not boss-placement evidence
+(`san_ord_boss_pc_full_20261007/`). A matched Original N64 run has no PC
+movie and shows the arena reveal directly
+(`san_ord_boss_original_matched_20261007/`). The PC film ends around VI 4545,
+then the native camera replays an IG-88 reveal that resembles Original N64's
+event-10 opening. A native Start pulse at VI 850 did not skip that reveal
+(`san_ord_boss_native_start_skip_20261007/`). The PC boss handoff therefore
+still needs a verified way to avoid a duplicated reveal while preserving
+the fight; visual overlap is confirmed, but physical speaker output and the
+natural train-to-arena transition remain unverified.
+Palace event 27 instead opens
 with Dash facing the closed arena door, well before the Gladiator Droid reveal
 (`palace_glad_event27_entry_20261007/`). The earlier event-entry placement of
 `L09BOSS.SAN` was premature. The installed PC executable calls that movie from

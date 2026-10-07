@@ -30,6 +30,17 @@ command-10 branches now cue those movies in PC cutscene mode. Static branch
 matching and synthetic runtime cues support the placement; reaching both
 encounters through normal gameplay remains unverified.
 
+For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
+at arena entry, queues non-silent audio to SDL's dummy device, and hands back
+to native arena rendering (`build/diagnostics/
+san_ord_boss_pc_after_startup_skip_20261007/`). Native captures show a
+second IG-88 reveal camera sequence after the PC film; the matched Original
+N64 run shows that sequence directly
+(`san_ord_boss_original_matched_20261007/`). A process-local native Start
+pulse did not skip it (`san_ord_boss_native_start_skip_20261007/`). The
+post-film reveal overlap needs a verified native state transition before
+this boss placement can be signed off as a clean PC-mode handoff.
+
 The table does not prove movie sound, visual handoff, or native story skip.
 Those are checked separately in the running N64 recompilation and listed in
 `SotE_TODO.MD`.
