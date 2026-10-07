@@ -305,6 +305,15 @@ jetpack; held A produced the guest jump/thrust bit. Dash rose from 189.5 to
 was released. Native captures show the jetpack and flame while fuel drops
 from 98% to 23% (`build/diagnostics/modern_virtual_pad_jetpack_sewers/`).
 This verifies the mapping and game action path, not physical controller feel.
+In live Gall gameplay, a process-local Modern RT pulse fired the blaster at
+the camera marker; the native HUD ammo count fell from 100 to 93. The aim
+trace shows camera-ray convergence on the corridor wall at 38.8 game units.
+A paired run used the right stick to turn before firing and converged on a
+nearer surface at 18.8 units, with the changed view and ammo loss visible
+(`build/diagnostics/gall_modern_convergence_direct/` and
+`gall_modern_convergence_reverse/`). This verifies the running aim hook at
+two nearby ranges; far-target accuracy and physical fine aim still need
+review.
 A process-local virtual Start button in Escape dismissed the communicator,
 opened the revamped Pause menu over live gameplay, and resumed Dash. Native
 captures show the objective, live HUD, Pause's Resume/Options/Quit choices,
