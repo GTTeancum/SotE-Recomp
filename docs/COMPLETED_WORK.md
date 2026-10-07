@@ -47,6 +47,9 @@ the user's desktop.
 
 Implemented 32 distinct mapped messages from the 37 supplied ILB clips;
 five shorter clips duplicate selected lines rather than separate events.
+October 2026 audit correction: the current build retains 31 mappings.
+`ILB42.WAV` was withheld because it says four palace service panels while
+the N64 objective specifies three; see `docs/PC_VOICE_AUDIT.md`.
 Removed the three-prompt/slot-31 restriction and session-long suppression.
 Speech follows actual visible text and can replay after disappearance or a
 level change. Sewage-key speech is restricted to the sewers. Existing
