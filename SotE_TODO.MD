@@ -365,6 +365,12 @@ its cargo-hangar message is visible in both modes
 (`voice_freighter_followup_original_20261007/` and
 `voice_freighter_followup_pc_20261007/`). The PC recording says “scopes”
 where the displayed N64 line says “scanners.”
+An Echo Base audio-dump comparison goes further for `ILB01`: the installed
+WAV waveform is present in the game's mixed PCM at the on-screen Bay 3
+communication in both modes (normalized three-second correlation 0.9884),
+after the `L02INTRO.SAN` handoff in PC mode. The rendered film and message
+frames, queue VIs, and analysis are in `docs/PC_VOICE_AUDIT.md`; the SDL
+dummy device does not verify physical speaker output or other lines.
 The exact queue VIs and captured frames are tabulated in
 `docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
 not physical speaker output or syllable-level sync.

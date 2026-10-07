@@ -81,6 +81,25 @@ also checked in both modes as described in `SotE_TODO.MD`. Together, these
 are ten of the 31 built-in Leebo pairings. The other 21 still need gameplay
 timing checks.
 
+### Mixed audio check for the Echo Base opening
+
+The SAN diagnostic can now dump the game's host-order stereo PCM when
+`-AudioProbe` is set. Fresh event-4 runs in both modes queued `ILB01.WAV`
+when the Bay 3 communicator appeared: VI 850 in Original N64 and VI 2457
+after `L02INTRO.SAN` finished in PC FMV mode. Native frames show that text at
+present 1000 and 3200, respectively
+(`voice_escape_pcm_original_20261007/` and
+`voice_escape_pcm_pc_20261007/`). The PC capture at present 1000 also shows
+the Hoth ship approach in `L02INTRO.SAN` before the communicator.
+
+A normalized cross-correlation of the first three seconds of the installed
+`ILB01.WAV` against the stereo mix, averaged to mono, peaks at **0.9884**
+in both output files. The next strongest match outside a one-second window
+is below 0.075. This confirms the actual voice waveform entered the game
+audio mix in both modes, beyond the earlier file-load and queue logs. The
+diagnostic used SDL's dummy output; physical speaker playback remains
+unverified. These audio results cover `ILB01` only.
+
 ## Remaining gameplay timing routes
 
 The 21 retained Leebo clips without a visible in-game pairing fall into these

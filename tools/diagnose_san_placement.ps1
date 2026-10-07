@@ -56,6 +56,10 @@ $info.RedirectStandardOutput = $true
 $info.RedirectStandardError = $true
 $info.Environment['SOTE_DIAGNOSTIC_OFFSCREEN'] = '1'
 if ($AudioProbe) { $info.Environment['SDL_AUDIODRIVER'] = 'dummy' }
+$audioDumpPath = Join-Path $output 'game_audio_s16le_stereo.pcm'
+if ($AudioProbe) {
+    $info.Environment['SOTE_AUDIO_DUMP_PATH'] = $audioDumpPath
+}
 $info.Environment['SOTE_DIAGNOSTIC_CONFIG_PATH'] = Join-Path $output 'config'
 $info.Environment['SOTE_DIAGNOSTIC_UNLOCK_LEVELS'] = '1'
 $info.Environment['SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP'] = '1'
