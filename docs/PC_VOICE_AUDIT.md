@@ -225,6 +225,18 @@ before reaching the next car (`voice_ord_b_jump_1170_20261007/`). A
 left-and-forward B jump also falls (`voice_ord_left_jump_1170_20261007/`).
 No `ILB08/09/10` visible pairing was reached. Future train timing probes
 must use the verified B jump action and land on the next car.
+Three more process-local B-jump timings at VIs 1135, 1165, and 1225
+(`voice_ord_train_b_forward_1135_20261007/`,
+`voice_ord_train_b_forward_1165_20261007/`, and
+`voice_ord_train_b_forward_1225_20261007/`) all stayed in the opening
+train segment. The 1135 jump landed back on the same car; the other two
+entered the sludge before a new car was reached. Native frames and player
+height traces confirm those outcomes, with no `ILB08/09/10` queue.
+A [level walkthrough](https://gamefaqs.gamespot.com/n64/198789-star-wars-shadows-of-the-empire/faqs/7691)
+places “Jump to the next hovertrain!” near the final transfer after several
+earlier train changes. This external account is a route guide, not runtime
+verification. The next `ILB08` check must first progress through those
+earlier cars; shifting this opening jump alone cannot test the line.
 The Classic PC Z/Mouse 2 and Modern A actions now resolve to that B jump
 through the train's live N64 preset. This fixes the input route but has not
 yet reached the later voice messages.

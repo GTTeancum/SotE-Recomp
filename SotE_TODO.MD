@@ -536,6 +536,14 @@ An extended Original N64 event-30 idle capture retained the playable
 Outrider battle through VI 4200 and showed no `ILU17/19/20` queue, even
 after a life loss (`voice_skyhook_event30_extended_original_20261007/`).
 Those lines require the relevant battle progress to verify their onset.
+Ord Mantell `ILB08/09/10` likewise remain unverified. Three additional
+opening-train B-jump timings landed on the same car or fell into sludge;
+none reached the later communication (`voice_ord_train_b_forward_1135_20261007/`,
+`voice_ord_train_b_forward_1165_20261007/`, and
+`voice_ord_train_b_forward_1225_20261007/`). A walkthrough places `ILB08`
+near a final train transfer after several earlier cars; the runtime must
+progress that sequence before this voice timing can be checked. See
+`docs/PC_VOICE_AUDIT.md` for the source and capture limits.
 
 Acceptance status for item 1: the N64/PC selection is implemented and
 persistent. Placement fixes and rendered handoffs cover the chapter intros,
