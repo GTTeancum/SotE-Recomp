@@ -511,7 +511,25 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
         return;
     const int16_t event = static_cast<int16_t>(
         read_guest_half(rdram, 0x8013CE0EU));
-    if (event != 15) return;
+    static int32_t previous_stage = INT32_MIN;
+    if (event != 15) {
+        previous_stage = INT32_MIN;
+        return;
+    }
+
+    const int32_t stage = static_cast<int32_t>(
+        read_guest_word(rdram, 0x800DD340U));
+    if (stage != previous_stage) {
+        std::printf("[sote][gall-boss] VI=%d stage=%d previous_stage=%d "
+                    "result=%d transition=%d->%d\n",
+                    vi, stage, previous_stage,
+                    static_cast<int32_t>(read_guest_word(rdram, 0x800DD2B0U)),
+                    read_guest_byte(rdram, 0x800D2558U),
+                    static_cast<int16_t>(
+                        read_guest_half(rdram, 0x800D255CU)));
+        std::fflush(stdout);
+        previous_stage = stage;
+    }
 
     constexpr uint32_t pool = 0x80112838U;
     const int32_t count = static_cast<int32_t>(read_guest_word(rdram, pool + 8));

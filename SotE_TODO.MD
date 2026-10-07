@@ -175,6 +175,13 @@ Dash in the opening corridor (`build/diagnostics/
 gall_boss_trace_baseline/`). The trace is available with
 `-TraceGallBoss` in `tools/diagnose_san_placement.ps1`; it still needs the
 natural elevator route to identify the encounter transition.
+The trace now also logs changes to Gall's stage value. A direct event-15
+baseline starts at stage 0, loads the boss records by VI 603, and stays in
+the opening corridor through the captured VI 900 frame
+(`build/diagnostics/gall_stage_trace_baseline/`). In the extracted Gall
+segment, placement IDs 4 and 5 are the Boba/Slave I objects at those boss
+coordinates. Nearby `Show`/`Hide` script commands target placement ID 94 at
+(-129, 425, 209), not either boss. They cannot justify a Boba movie trigger.
 Two further process-local event-15 routes turned back toward the visible
 doorway, moved Dash from (-628.9, -517.6) to the closed door, and pulsed the
 Modern X interaction. The door stayed closed, the player stopped at its
