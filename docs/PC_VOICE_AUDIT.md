@@ -91,11 +91,12 @@ routes identify what still needs to appear in native captures in both modes.
 | --- | --- | --- |
 | Echo Base | `ILB04` | Restore generator power and display the ship-return message. |
 | Ord Mantell | `ILB08/09/10` | Advance the hover-train sequence through jump, miss, and impact cues. |
-| Gall | `ILB14/15/16/17/18/21/31` | Progress ship interactions, observation tower, Boba encounter, and jetpack state. |
+| Gall | `ILB14/15/16/17/18/21` | Progress ship interactions, observation tower, and Boba encounter. |
 | Mos Eisley | `ILB26/27/29` | Progress the swoop-gang chase to its warning, failure, and success messages. |
 | Freighter | `ILB35/36` | Find the super computer and receive the return-lift instruction. |
 | Sewers | `ILB38/39/40/41` | Reach the key gate and deactivator pickups. |
 | Palace | `ILB44` | Set the pulse bombs and display the escape instruction. |
+| Jetpack status | `ILB31` | Find the actual “Jetpack Malfunction” display trigger; its level context is not yet established. |
 
 Entry or idle shortcuts did not surface these later messages: a direct Gall
 event-12 jump returned to Hoth (`voice_gall_event12_entry_20261007/`); a
@@ -107,6 +108,19 @@ Eisley bike stage stayed on `ILB24` through VI 6000 without the later warnings
 opening instruction twice did not reach its later key/deactivator messages
 (`voice_sewers_event25_followup_original_20261007/`). These are route limits,
 not evidence that the mappings fail during real mission progress.
+An extended process-local Sewer flight used Modern Y to enable the jetpack
+and held A until its displayed fuel fell from 98% to 2%. Thrust then stopped
+and fuel refilled to 85%, without an `ILB31` queue or visible “Jetpack
+Malfunction” message (`voice_jetpack_depletion_original_20261007/`). Fuel
+depletion is therefore not a verified route to that communication; the
+malfunction trigger still needs to be found.
+The ROM stores “Jetpack Malfunction” among alphabetized short status labels
+near “Lives” and level names, rather than beside a chapter-specific dialogue
+block (`SotE_Recompiled/main.bin`, offset `0xCFE24`). A process-local
+Echo Base run with no jetpack also showed no such message after a C-left
+toggle (`voice_jetpack_no_pack_escape_20261007/`). Neither observation
+establishes which in-game state displays the label or whether the PC voice
+should accompany it; `ILB31` remains unverified in the running game.
 
 ## Skyhook radio lines
 
