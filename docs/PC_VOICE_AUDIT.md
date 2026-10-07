@@ -43,6 +43,16 @@ voice key. This rules out a hash collision with another candidate ROM
 message; it does not establish when the game displays a string or whether a
 runtime-constructed string can share its hash.
 
+The same audit now checks the ROM's 30-pointer communicator table at
+decompressed `.main` offset `0xDF4CC`. It contains 21 of the 31 mapped Leebo
+strings, including Gall's `ILB16`, `ILB14`, and `ILB15` at table indices 3,
+5, and 6. Ten mapped strings use other ROM text paths: `ILB06`, `ILB08/09/10`,
+`ILB24/26/27/29`, `ILB31`, and `ILB46`. In particular, `ILB31` is a short
+status label outside this communicator table. Table membership locates the
+source text; it does not establish a gameplay trigger, visible presentation,
+or audible timing for any untested line. The script prints both groups so a
+future mapping change is visible in this static check.
+
 ## Complete installed Leebo clip pass
 
 All 37 installed `ILB*.WAV` clips were run through the local transcript

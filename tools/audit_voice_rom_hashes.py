@@ -10,6 +10,13 @@ import argparse
 from collections import defaultdict
 from pathlib import Path
 import re
+import struct
+
+
+# USA Rev 1.2 decompressed .main section and its 30-entry communicator table.
+MAIN_VRAM = 0x80001EC0
+COMMUNICATOR_TABLE_START = 0xDF4CC
+COMMUNICATOR_TABLE_ENTRIES = 30
 
 
 def normalize(text: str) -> str:
@@ -77,10 +84,30 @@ def main() -> None:
         if len({normalize(text) for _, text in entries}) > 1:
             problems.append(f"ROM hash {key:08X} collides across distinct messages")
 
+    communicator_pointers = {
+        struct.unpack_from(">I", rom, COMMUNICATOR_TABLE_START + index * 4)[0]
+        for index in range(COMMUNICATOR_TABLE_ENTRIES)
+    }
+    for address in communicator_pointers:
+        offset = address - MAIN_VRAM
+        if offset < 0 or offset >= len(rom) or rom[offset:offset + 1] != b"~":
+            problems.append(f"invalid communicator pointer {address:08X}")
+    table_voices = [
+        wave for key, wave, _ in fixtures
+        if any(MAIN_VRAM + offset in communicator_pointers
+               for offset, _ in by_hash[key])
+    ]
+    outside_voices = [
+        wave for _, wave, _ in fixtures if wave not in table_voices
+    ]
+
     print(f"{len(fixtures)} voice keys checked against {len(candidates)} ROM message candidates")
     if problems:
         raise SystemExit("\n".join(problems))
     print("Every voice key identifies one exact ROM string; no distinct-message hash collisions")
+    print(f"Communicator table: {len(communicator_pointers)} pointers, "
+          f"{len(table_voices)} mapped voices, {len(outside_voices)} outside")
+    print("Outside table: " + ", ".join(outside_voices))
 
 
 if __name__ == "__main__":
