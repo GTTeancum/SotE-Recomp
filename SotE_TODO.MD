@@ -13,6 +13,10 @@ User report: SAN videos play at the wrong points in several places. The current
 runtime has event- and level-based movie triggers in `src/main.cpp`; passing
 decoder and playback tests does not establish that those triggers occur at the
 correct story moments.
+The installed PC executable's movie dispatch table and separate boss-actor
+branches are compared with N64 story events in `docs/PC_SAN_DISPATCH_AUDIT.md`.
+PC and N64 event IDs are not one-to-one, so placement follows matching scenes
+and rendered transitions rather than equal event numbers.
 An October 2026 idle-startup capture verified `L00LOGO.SAN`, then
 `LONGTIME.SAN`, followed by the native license screen without a premature
 level intro (`build/diagnostics/san_startup_placement/`). This checks only
