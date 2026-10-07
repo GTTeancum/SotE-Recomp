@@ -95,6 +95,16 @@ void publish_snapshot(Snapshot snapshot) {
     }
     next->controls_scroll = scroll_offset.load();
     if (renderer_available.load()) control_bindings::decorate(*next);
+    if (next->screen == Screen::Controls &&
+        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr) {
+        if (const char* rows = std::getenv("SOTE_DIAGNOSTIC_CONTROLS_SCROLL")) {
+            int total = 0;
+            for (int group : {0, 1, 4, 3, 2})
+                total += 2 + static_cast<int>(next->native_controls[group].size());
+            next->controls_scroll = std::clamp(
+                std::atoi(rows), 0, std::max(0, total - 10));
+        }
+    }
     const uint64_t hash = fingerprint(*next);
     if (hash != previous_hash) { ++sequence; previous_hash = hash; }
     next->serial = sequence;

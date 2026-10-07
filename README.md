@@ -345,8 +345,8 @@ and Right. The `Controls` submenu offers a single player-facing choice:
   looking along the weapon direction, with native camera collision checks.
   Stick release stops turning and holds vertical aim.
   Speeder-bike stages use right trigger for throttle, left trigger for brake,
-  and left stick steering. The original bike stage has no active Fire/Kick
-  action, so RB is currently unassigned there. Bike steering uses a
+  left stick steering, and LB/RB for the native left/right ram actions.
+  The bike has no blaster fire action. Bike steering uses a
   progressive curve, can lose sensitivity as throttle rises, and is lightly
   stabilized. A filtered throttle/brake axis controls native camera framing.
 

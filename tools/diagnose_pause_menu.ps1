@@ -7,7 +7,9 @@ param(
     [switch]$ExploreCutscenes,
     [switch]$ExploreBindings,
     [switch]$BrowseBindings,
-    [switch]$OriginalN64
+    [switch]$OriginalN64,
+    [string]$ExtraInput = '',
+    [ValidateRange(0, 200)][int]$ControlsScrollRows = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -39,6 +41,7 @@ if ($ExploreSubmenus) {
 if ($ExploreCutscenes) {
     $inputScript += ",3380:8:r,3470:8:stick_down,3530:8:stick_down,3590:8:stick_down,3650:8:stick_down,3710:8:stick_down,3770:8:stick_down,3830:8:stick_right,3890:8:stick_down,3950:8:a"
 }
+if ($ExtraInput) { $inputScript += ",$ExtraInput" }
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
 $startInfo.FileName = $exe
@@ -52,6 +55,9 @@ $startInfo.Environment["SOTE_DIAGNOSTIC_CONFIG_PATH"] = Join-Path $output "confi
 $startInfo.Environment["SOTE_DIAGNOSTIC_UNLOCK_LEVELS"] = "1"
 $startInfo.Environment["SOTE_SMOKE_REFILL_LIVES"] = "1"
 $startInfo.Environment["SOTE_INPUT_SCRIPT"] = $inputScript
+if ($ControlsScrollRows -gt 0) {
+    $startInfo.Environment["SOTE_DIAGNOSTIC_CONTROLS_SCROLL"] = [string]$ControlsScrollRows
+}
 if ($ExploreBindings -or $BrowseBindings) {
     $startInfo.Environment["SOTE_DIAGNOSTIC_BINDING_ROUTE"] = "1"
 }

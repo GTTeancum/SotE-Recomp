@@ -23,6 +23,9 @@ Copy-Item -LiteralPath '.\SotE_Recompiled\saves\sote.us.v1.2.bin' `
 $schemes = Join-Path (Split-Path -Parent $exe) 'sote_controls.json'
 $hadSchemes = Test-Path -LiteralPath $schemes
 if ($hadSchemes) { $savedSchemes = [IO.File]::ReadAllBytes($schemes) }
+$options = Join-Path (Split-Path -Parent $exe) 'sote_options.json'
+$hadOptions = Test-Path -LiteralPath $options
+if ($hadOptions) { $savedOptions = [IO.File]::ReadAllBytes($options) }
 $inputScript = @(
     '120:5:start', '300:5:start', '660:5:start',
     '840:5:stick_down', '900:5:a',
@@ -39,6 +42,9 @@ if ($StickY -ne 0) {
 }
 try {
     [IO.File]::WriteAllText($schemes, '{"on_foot":"Modern","bike":"Modern"}')
+    # Keep the input timeline on the playable bike route when SAN caches are
+    # installed. The movie selection is restored byte-for-byte below.
+    [IO.File]::WriteAllText($options, '{"pcCutscenes":false}')
     $info = [Diagnostics.ProcessStartInfo]::new()
     $info.FileName = $exe
     $info.Arguments = '--frontend-smoke --muted'
@@ -81,4 +87,6 @@ try {
 } finally {
     if ($hadSchemes) { [IO.File]::WriteAllBytes($schemes, $savedSchemes) }
     elseif (Test-Path -LiteralPath $schemes) { Remove-Item -LiteralPath $schemes }
+    if ($hadOptions) { [IO.File]::WriteAllBytes($options, $savedOptions) }
+    elseif (Test-Path -LiteralPath $options) { Remove-Item -LiteralPath $options }
 }

@@ -172,9 +172,8 @@ void update_muted_audio_clock_locked() {
     muted_audio_clock = now;
 }
 
-// Modern speeder-bike scheme: RT throttle, LT brake, left stick steering.
-// The bike controller uses native Accelerate/Brakes actions and an analog
-// steering axis. Its Fire and Kick entries are unused in this stage.
+// Modern speeder-bike scheme: RT throttle, LT brake, left stick steering,
+// and LB/RB for the native left/right ram actions.
 // The curve/falloff/stabilization math itself lives in controls_menu so it
 // can be exercised without SDL by tools/controls_harness.
 sote::controls_menu::ModernBikeFilterState modern_bike_filter;
@@ -301,9 +300,8 @@ void apply_modern_bike_scheme(
         buttons |= control_bindings::bike_button(false);
     }
 
-    // No fire binding: the bike's Fire and Kick actions were never used by
-    // the game, so pressing a pad button through to one of them would only
-    // trigger whatever that N64 button does on the bike instead.
+    // LB/RB retain the native L/R ram actions from the common pad mapping.
+    // The bike has no blaster fire action.
 }
 
 bool process_owns_foreground_window() {

@@ -225,6 +225,8 @@ Layout make_layout(const NativeTable& t) {
                     std::string name = t.labels[a];
                     if (a >= 4 && a <= 7) name = std::string("D-Pad Move ") + std::array<const char*,4>{"Forward","Back","Left","Right"}[a-4];
                     if (a >= 8 && a <= 11) name = std::string("Camera ") + std::array<const char*,4>{"Up","Down","Left","Right"}[a-8];
+                    if (g == 3 && a == 34) name = "Ram Left";
+                    if (g == 3 && a == 35) name = "Ram Right";
                     if (name.empty()) name = "Action " + std::to_string(a);
                     if (used.insert(name).second) { if (!label.empty()) label += " / "; label += name; }
                 }

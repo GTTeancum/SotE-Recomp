@@ -246,7 +246,9 @@ Snapshot read_native_options(const uint8_t* rdram, size_t size) {
         bindings.push_back({"Move", "LS", "WASD"});
         for (int action = 0; action < 48; ++action) {
             if (!(action < 12 || (action >= ranges[group][0] && action < ranges[group][1]))) continue;
-            const std::string label = plain_text(g.string(g.word(0x800DA70CU + unsigned(action) * 4)));
+            std::string label = plain_text(g.string(g.word(0x800DA70CU + unsigned(action) * 4)));
+            if (group == 3 && action == 34) label = "Ram Left";
+            if (group == 3 && action == 35) label = "Ram Right";
             const uint16_t mask = g.half(0x800E6808U + preset * 96 + unsigned(action) * 2);
             if (label.empty() || !mask) continue;
             Binding line{label, {}, {}};

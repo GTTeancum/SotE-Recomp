@@ -424,10 +424,9 @@ void write_default_tuning_ini_locked() {
             << "\n\n"
 
         "[SpeederBike]\n"
-        "; bike_fire_button accepts A, B, Z, L, or R. It is only used if the\n"
-        "; bike sequence ever needs a separate Modern fire mapping. The current\n"
-        "; Modern bike path leaves Fire/Kick unbound because the game did not\n"
-        "; use them in the bike stage.\n"
+        "; bike_fire_button accepts A, B, Z, L, or R. It is reserved and has\n"
+        "; no effect in this stage. LB/RB use native left/right ram actions;\n"
+        "; the speeder bike has no blaster fire action.\n"
         "bike_fire_button = " << fire_button_name(d.bike.fire_button_bit)
             << "\n\n"
 
@@ -742,13 +741,13 @@ int scheme_legend(
         {"Crouch", "B", "K"},
         {"Pause", "Start", "Enter"},
     };
-    // Bike bindings come from the game's own controller diagram for this
-    // stage. Its Fire and Kick actions were never used, so nothing binds to
-    // them in either scheme.
+    // The bike has left/right ram actions, not a blaster fire action.
     static const LegendEntry bike_classic[] = {
         {"Steer", "LS", "WASD"},
         {"Accel", "A", "Z"},
         {"Brakes", "X", "X"},
+        {"Ram Left", "LB", "C / Q"},
+        {"Ram Right", "RB", "E"},
         {"Camera", "RS-Right", "L"},
         {"Pause", "Start", "Enter"},
     };
@@ -756,6 +755,8 @@ int scheme_legend(
         {"Accel", "RT", "Z"},
         {"Brakes", "LT", "X"},
         {"Steer", "LS", "WASD"},
+        {"Ram Left", "LB", "C / Q"},
+        {"Ram Right", "RB", "E"},
         {"Camera", "RS-Right", "L"},
         {"Pause", "Start", "Enter"},
     };
@@ -767,7 +768,7 @@ int scheme_legend(
         count = 11;
     } else {
         source = scheme == ControlScheme::Modern ? bike_modern : bike_classic;
-        count = 5;
+        count = 7;
     }
     if (count > max_entries) {
         count = max_entries;

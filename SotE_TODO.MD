@@ -346,8 +346,23 @@ at (-823.08, -446.71). Native captures show the bike and Mos Eisley scene in
 both runs (`build/diagnostics/modern_bike_throttle_50_straight/` and
 `build/diagnostics/modern_bike_brake_100_straight/`). Both routes soon reached
 walls; sustained camera behavior and physical trigger feel remain unverified.
-The original bike stage does not use its Fire/Kick entries, so RB currently has
-no firing action there; confirm intended behavior with the user during review.
+The original bike stage has left/right ram actions rather than blaster fire.
+The user chose native Ram Right for Modern RB. A paired process-local Mos
+Eisley run holds the same RT throttle with and without RB. RB produces native
+R input (`0x0010`) and shifts the bike from (-835.729, -408.184) to
+(-823.178, -404.375) by VI 2295; the native captures show a changed bike
+pose and trajectory (`modern_bike_rb_ram_baseline_fixed/` and
+`modern_bike_rb_ram_probe_fixed/`). LB/RB now appear as Ram Left/Right in the
+Controls legend. The bike diagnostic selects Original N64 cutscenes for its
+scripted route and restores the prior movie setting after the run.
+An event-15 guest-memory snapshot identifies bike action records 34/35 as
+`Lf Kick`/`Rt Kick`, with default N64 masks `0x2020`/`0x0010`. The refreshed
+Controls binding page presents those actions as Ram Left/Right; keyboard Q/E
+and controller LB/RB remain assignable together. The user chose Ram Right
+for RB after confirming the bike has no blaster fire action.
+A native RT64 capture shows Ram Right with keyboard E and controller RB on
+the same live Controls screen, with Ram Left and its Q/LB bindings above it
+(`build/diagnostics/modern_bike_ram_right_visible/frames/present_4300.png`).
 The native bike reads vertical stick input for camera framing without changing
 position: a process-local +80 stick test left the bike at the same coordinates
 as a zero-stick run while visibly changing its camera (`build/diagnostics/
@@ -383,7 +398,7 @@ are now 18% (up from 12%) for the next feel check.
       shot magnetism is tuned through `CONTROLS_MODERN.INI` before menu exposure.
       Do not steer the camera toward targets.
 - [ ] Validate the pre-tuned Modern bike scheme:
-      RT throttle, LT brake, left-stick steering, and RB fire; progressive
+      RT throttle, LT brake, left-stick steering, and RB Ram Right; progressive
       steering, reduced high-speed sensitivity, mild stabilization, and
       smoother camera behavior.
 - [x] Keep the player-facing bike choice as Classic/Modern without separate
