@@ -424,10 +424,13 @@ speaker output remain unverified.
 The user requested Classic controls to match the installed PC release after
 SAN validation. `docs/PC_CLASSIC_CONTROL_AUDIT.md` now derives the first
 built-in PC on-foot keyboard/mouse layout directly from `Shadows.exe`. It
-confirms the current N64-style Classic defaults differ: the PC uses arrow
+found that the old N64-style Classic defaults differed: the PC uses arrow
 keys for movement, IJKL for camera, X/Mouse 1 for Fire, and Z/Mouse 2 for
-Jump. The gameplay translator and binding editor still need to adopt this
-mapping together; other PC control sets and vehicle sections need comparison.
+Jump. The on-foot gameplay translator and binding editor now use those PC
+defaults together. Process-local guest input and a native Controls capture
+verify the playable route and both device columns; a matched Modern route
+retains its existing W movement. The PC's other control sets, vehicle
+sections, joystick mapping, and interactive feel still need comparison.
 
 Modern on-foot controls now have analog movement/strafe, continuous right-stick
 turning, persistent pitch shared by weapon and view, circular deadzones, and

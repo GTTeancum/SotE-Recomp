@@ -31,11 +31,31 @@ scan codes.
 | Camera Position | Tab | Mask `0x40` uses slot 6. |
 | Pause | Escape, Enter, numpad Enter, F1 | Mask `0x2000` uses slots 19–22. |
 
-The current recompilation's Classic keyboard defaults are the N64-style
-`WASD` movement, `IJKL` C-buttons, `X` fire, `Z`/Space jump, and `C` Z.
-That is a real mismatch with the installed PC on-foot mapping. The
-keyboard translation and the Controls editor's default rows must change
-together; changing only the displayed names would leave gameplay wrong.
-PC stage-specific defaults, the other built-in sets, and the effect of the
-PC game's selected set at startup still need verification before declaring
-the whole Classic scheme matched.
+The recompilation's Classic **on-foot** keyboard translator and Controls
+editor defaults now use this PC layout. They retain the N64 game's native
+action mechanics and its active preset relationships. The change is gated by
+the binding system's live on-foot context, so the native menu and other
+sections keep their existing navigation. The controller column remains the
+N64 controller layout pending a PC joystick comparison.
+
+The first process-local test pressed Up while the communicator was still
+visible and saw the old camera/D-pad bit. This exposed why the Modern camera
+hook is not a reliable Classic context gate during story text. After switching
+to the binding system's gameplay context, a playable Escape run dismissed
+both opening communications and held Up at VI 1200–1320. The guest received
+analog stick Y=80 with no D-pad button, and Dash's traced position changed
+(`build/diagnostics/pc_classic_up_playable_20261007/`). A second run in that
+scene confirmed I→`0x0800` (camera up), W→`0x0008` (weapon), Space→`0x2000`
+(aim), Mouse 1→`0x4000` (fire), Mouse 2→`0x8000` (jump), A→`0x0010`
+(strafe/activate), and Q→`0x0002` (jetpack toggle)
+(`pc_classic_actions_playable_20261007/`). The native Controls capture at
+present 4300 shows both Keyboard / Mouse and Controller columns with the
+new arrows, numpad, Mouse 1/2 and camera assignments
+(`pc_classic_binding_menu_20261007/`). A matched Modern run still sent W
+to analog forward movement and Up to its previous D-pad bit
+(`pc_classic_modern_isolation_20261007/`). All eight CTest targets pass.
+
+This verifies translation and display for the first PC built-in on-foot set,
+not the entire Classic scheme. PC stage-specific defaults, other built-in
+sets, joystick behavior, and startup selection still need comparison before
+declaring full parity. Interactive feel and physical devices were not tested.

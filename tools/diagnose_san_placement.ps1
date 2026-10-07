@@ -20,6 +20,7 @@ param(
     [string]$EventJumps = '',
     [string]$Teleport = '',
     [string]$PhysicalPad = '',
+    [string]$PhysicalKeys = '',
     [string]$ExtraInput = '',
     [int]$RdramSnapshotStartVi = 0,
     [int]$RdramSnapshotPeriodVi = 300,
@@ -95,6 +96,11 @@ if ($Teleport) {
 }
 if ($PhysicalPad) {
     $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_PAD'] = $PhysicalPad
+    $info.Environment['SOTE_TRACE_INPUT'] = '1'
+    $info.Environment['SOTE_TRACE_GUEST_INPUT'] = '1'
+}
+if ($PhysicalKeys) {
+    $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_KEYS'] = $PhysicalKeys
     $info.Environment['SOTE_TRACE_INPUT'] = '1'
     $info.Environment['SOTE_TRACE_GUEST_INPUT'] = '1'
 }

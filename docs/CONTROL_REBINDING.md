@@ -78,6 +78,11 @@ Bindings are separate for each native preset, gameplay section, and Classic or
 Modern scheme. Changing preset/scheme selects its saved assignments or defaults.
 Sections are On Foot, Snowspeeder, Outrider, Speeder Bike and Turret. Reset affects
 only the current section in the selected preset/scheme, for both device columns.
+Classic on-foot keyboard/mouse defaults now follow the installed PC release's
+first built-in control set; see `docs/PC_CLASSIC_CONTROL_AUDIT.md`. The
+on-foot game translator and editor rows use the same keys and mouse buttons.
+Vehicle defaults and the controller column still follow the N64 mappings
+while their PC equivalents are audited.
 
 Modern on-foot right-stick input still reaches the existing analog aim hooks,
 not native C-button actions. Modern bike trigger replacements retain their

@@ -102,10 +102,10 @@ struct Harness {
         memory.show_controls(menu);
         if(menu)sote_capture_native_options(memory.bytes.data());
         else {sote::menu_skin::capture(memory.bytes.data());sote_bindings_context(memory.bytes.data(),int(context));}
-        const bool modern_foot=!menu&&context==cb::Context::OnFoot&&cm::current_scheme(cm::SchemeSlot::OnFoot)==cm::ControlScheme::Modern;
-        if(modern_foot)sote_modern_begin(memory.bytes.data(),0x80250000);
+        const bool foot=!menu&&context==cb::Context::OnFoot;
+        if(foot)sote_modern_begin(memory.bytes.data(),0x80250000);
         sote::frontend::poll_input();
-        if(modern_foot)sote_modern_begin(memory.bytes.data(),0x80250000);
+        if(foot)sote_modern_begin(memory.bytes.data(),0x80250000);
         if(menu)sote_capture_native_options(memory.bytes.data());
         sote::frontend::get_input(0,&buttons,&x,&y);
     }
@@ -138,6 +138,14 @@ void preview(const std::filesystem::path& file) {
 void integration_tests(GameMemory& memory,const std::filesystem::path& root) {
     cm::initialize(root);sote::graphics_menu::initialize(root);ms::initialize(root);ms::set_renderer_available(true);cb::initialize(root);
     Harness h(memory);h.neutral();require(ms::latest()&&ms::latest()->rebinding,"native Controls screen activates binding model");
+    h.menu=false;h.context=cb::Context::OnFoot;h.neutral();
+    h.keydown(VK_UP);check(h.y>0.60f&&h.buttons==0,"PC Classic Up moves without sending the N64 camera/D-pad bit");h.neutral();
+    h.keydown('I');check(h.buttons==0x0800,"PC Classic I drives camera up");h.neutral();
+    h.keydown('W');check(h.buttons==0x0008&&h.y==0,"PC Classic W selects weapon rather than moving");h.neutral();
+    h.keydown(VK_LBUTTON);check(h.buttons==0x4000,"PC Classic Mouse 1 fires");h.neutral();
+    h.keydown(VK_RBUTTON);check(h.buttons==0x8000,"PC Classic Mouse 2 jumps");h.neutral();
+    h.keydown(VK_SPACE);check(h.buttons==0x2000,"PC Classic Space aims");h.neutral();
+    h.menu=true;h.neutral();
     check(!cb::editor_view().editing,"native preset/reference mode precedes editor");
     h.keydown(39);check(h.buttons==0x0100,"native preset Right remains available before editor");h.neutral();
     const auto before_editor_serial=ms::latest()->serial;
@@ -186,8 +194,8 @@ void integration_tests(GameMemory& memory,const std::filesystem::path& root) {
     h.context=cb::Context::Snowspeeder;h.keydown('F');check(h.buttons==0x4000,"Snowspeeder F is Fire");h.neutral();
     // Movement is remappable independently; native stick and Modern input
     // snapshot continue to be produced by the existing frontend code.
-    h.menu=true;h.neutral();h.target(0,cb::key('W'),0);h.begin_key_capture();h.keydown('T');h.neutral();
-    h.menu=false;h.context=cb::Context::OnFoot;h.neutral();h.keydown('T');check(h.y>0.60f,"new movement key reaches N64 analog stick");h.neutral();h.keydown('W');check(h.y==0,"old movement key suppressed");h.neutral();
+    h.menu=true;h.neutral();h.target(0,cb::key(38),0);h.begin_key_capture();h.keydown('T');h.neutral();
+    h.menu=false;h.context=cb::Context::OnFoot;h.neutral();h.keydown('T');check(h.y>0.60f,"new movement key reaches N64 analog stick");h.neutral();h.keydown(38);check(h.y==0,"old movement key suppressed");h.neutral();
     // Modern uses a separate physical path. Test the production path, not
     // merely the pure snapshot transformer, and preserve native preset masks.
     cm::cycle_scheme(cm::SchemeSlot::OnFoot,1);

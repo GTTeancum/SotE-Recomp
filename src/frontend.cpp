@@ -937,20 +937,42 @@ void poll_input() {
     // pad. Keep them separate from already-translated pad bits to avoid
     // translating a native binding twice.
     uint16_t keyboard_buttons = 0;
-    if (key_down('Z') || key_down(VK_SPACE)) keyboard_buttons |= n64_a;
-    if (key_down('X')) keyboard_buttons |= n64_b;
-    if (key_down('C')) keyboard_buttons |= n64_z;
-    if (key_down(VK_RETURN)) keyboard_buttons |= n64_start;
-    if (key_down('Q')) keyboard_buttons |= page_keys ? n64_dl : n64_l;
-    if (key_down('E')) keyboard_buttons |= page_keys ? n64_dr : n64_r;
-    if (key_down(VK_UP)) keyboard_buttons |= n64_du;
-    if (key_down(VK_DOWN)) keyboard_buttons |= n64_dd;
-    if (key_down(VK_LEFT)) keyboard_buttons |= page_keys ? n64_l : n64_dl;
-    if (key_down(VK_RIGHT)) keyboard_buttons |= page_keys ? n64_r : n64_dr;
-    if (key_down('I')) keyboard_buttons |= n64_cu;
-    if (key_down('K')) keyboard_buttons |= n64_cd;
-    if (key_down('J')) keyboard_buttons |= n64_cl;
-    if (key_down('L')) keyboard_buttons |= n64_cr;
+    const bool classic_foot_keyboard = !menu &&
+        control_bindings::context_active(control_bindings::Context::OnFoot) &&
+        sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
+            sote::controls_menu::ControlScheme::Classic;
+    if (classic_foot_keyboard) {
+        // Installed PC release, first built-in control set. Movement uses
+        // arrow/numpad keys below; these are its non-movement actions.
+        if (key_down('Z') || key_down(VK_RBUTTON)) keyboard_buttons |= n64_a;
+        if (key_down('X') || key_down(VK_LBUTTON)) keyboard_buttons |= n64_b;
+        if (key_down(VK_SPACE)) keyboard_buttons |= n64_z;
+        if (key_down(VK_RETURN) || key_down(VK_F1)) keyboard_buttons |= n64_start;
+        if (key_down('I')) keyboard_buttons |= n64_du;
+        if (key_down('K')) keyboard_buttons |= n64_dd;
+        if (key_down('J')) keyboard_buttons |= n64_dl;
+        if (key_down('L')) keyboard_buttons |= n64_dr;
+        if (key_down(VK_TAB)) keyboard_buttons |= n64_l | n64_cr;
+        if (key_down('A')) keyboard_buttons |= n64_r;
+        if (key_down('W')) keyboard_buttons |= n64_cu;
+        if (key_down('C')) keyboard_buttons |= n64_cd;
+        if (key_down('Q')) keyboard_buttons |= n64_cl;
+    } else {
+        if (key_down('Z') || key_down(VK_SPACE)) keyboard_buttons |= n64_a;
+        if (key_down('X')) keyboard_buttons |= n64_b;
+        if (key_down('C')) keyboard_buttons |= n64_z;
+        if (key_down(VK_RETURN)) keyboard_buttons |= n64_start;
+        if (key_down('Q')) keyboard_buttons |= page_keys ? n64_dl : n64_l;
+        if (key_down('E')) keyboard_buttons |= page_keys ? n64_dr : n64_r;
+        if (key_down(VK_UP)) keyboard_buttons |= n64_du;
+        if (key_down(VK_DOWN)) keyboard_buttons |= n64_dd;
+        if (key_down(VK_LEFT)) keyboard_buttons |= page_keys ? n64_l : n64_dl;
+        if (key_down(VK_RIGHT)) keyboard_buttons |= page_keys ? n64_r : n64_dr;
+        if (key_down('I')) keyboard_buttons |= n64_cu;
+        if (key_down('K')) keyboard_buttons |= n64_cd;
+        if (key_down('J')) keyboard_buttons |= n64_cl;
+        if (key_down('L')) keyboard_buttons |= n64_cr;
+    }
     // Mouse 1 is the default Modern on-foot Fire alias. It is sampled through
     // the rebinding layer, so assigning the button elsewhere removes this alias.
     if (!menu && sote::modern_controls::on_foot_active() &&
@@ -965,10 +987,17 @@ void poll_input() {
 
     float keyboard_x = 0.0f;
     float keyboard_y = 0.0f;
-    if (key_down('A')) keyboard_x -= n64_stick_scale;
-    if (key_down('D')) keyboard_x += n64_stick_scale;
-    if (key_down('W')) keyboard_y += n64_stick_scale;
-    if (key_down('S')) keyboard_y -= n64_stick_scale;
+    if (classic_foot_keyboard) {
+        if (key_down(VK_LEFT) || key_down(VK_NUMPAD4)) keyboard_x -= n64_stick_scale;
+        if (key_down(VK_RIGHT) || key_down(VK_NUMPAD6)) keyboard_x += n64_stick_scale;
+        if (key_down(VK_UP) || key_down(VK_NUMPAD8)) keyboard_y += n64_stick_scale;
+        if (key_down(VK_DOWN) || key_down(VK_NUMPAD2)) keyboard_y -= n64_stick_scale;
+    } else {
+        if (key_down('A')) keyboard_x -= n64_stick_scale;
+        if (key_down('D')) keyboard_x += n64_stick_scale;
+        if (key_down('W')) keyboard_y += n64_stick_scale;
+        if (key_down('S')) keyboard_y -= n64_stick_scale;
+    }
     // Feed keyboard movement and relative mouse look to the same Modern guest
     // hooks used by the controller, including when no gamepad is connected.
     const sote::modern_controls::Stick modern_move =

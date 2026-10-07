@@ -92,6 +92,7 @@ void scroll(int rows);
 bool capturing();
 EditorView editor_view();
 PhysicalInput remap(const PhysicalInput& input, bool native_menu_visible);
+bool context_active(Context context);
 uint16_t bike_button(bool accelerate);
 // Diagnostics/tests read the same live model used by the menu and remapper.
 Layout current_layout();

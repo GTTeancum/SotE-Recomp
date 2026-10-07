@@ -172,10 +172,17 @@ Layout make_layout(const NativeTable& t) {
             if (p.kind != Kind::None) a.targets[1].push_back(p);
             result[g].push_back(std::move(a));
         };
-        add_fixed("move_forward", "Move Forward", key('W'), mb ? Token{} : axis(1,-1));
-        add_fixed("move_back", "Move Backward", key('S'), mb ? Token{} : axis(1,1));
-        add_fixed("move_left", "Move Left", key('A'), axis(0,-1));
-        add_fixed("move_right", "Move Right", key('D'), axis(0,1));
+        const bool pc_classic_foot = g == 0 && !mf;
+        add_fixed("move_forward", "Move Forward", key(pc_classic_foot ? up : 'W'), mb ? Token{} : axis(1,-1));
+        add_fixed("move_back", "Move Backward", key(pc_classic_foot ? down : 'S'), mb ? Token{} : axis(1,1));
+        add_fixed("move_left", "Move Left", key(pc_classic_foot ? left : 'A'), axis(0,-1));
+        add_fixed("move_right", "Move Right", key(pc_classic_foot ? right : 'D'), axis(0,1));
+        if (pc_classic_foot) {
+            result[g][0].targets[0].push_back(key(104)); // Numpad 8.
+            result[g][1].targets[0].push_back(key(98));  // Numpad 2.
+            result[g][2].targets[0].push_back(key(100)); // Numpad 4.
+            result[g][3].targets[0].push_back(key(102)); // Numpad 6.
+        }
         if (mf) {
             add_fixed("look_up", "Look Up", {}, axis(3,-1));
             add_fixed("look_down", "Look Down", {}, axis(3,1));
@@ -186,6 +193,17 @@ Layout make_layout(const NativeTable& t) {
         routes[0] = {{key('Z'),0x8000},{key(32),0x8000},{key('X'),0x4000},{key('C'),0x2000},{key(13),0x1000},
             {key(38),0x0800},{key(40),0x0400},{key(37),0x0200},{key(39),0x0100},{key('Q'),0x20},{key('E'),0x10},
             {key('I'),8},{key('K'),4},{key('J'),2},{key('L'),1}};
+        if (pc_classic_foot) {
+            // First built-in PC control set. Keep these target bits in sync
+            // with frontend.cpp; grouping still follows the active N64 table.
+            routes[0] = {{key('Z'),0x8000},{key(2),0x8000},
+                {key('X'),0x4000},{key(1),0x4000},{key(32),0x2000},
+                {key(13),0x1000},{key(112),0x1000},
+                {key('I'),0x0800},{key('K'),0x0400},
+                {key('J'),0x0200},{key('L'),0x0100},
+                {key(9),0x21},{key('A'),0x10},{key('W'),8},
+                {key('C'),4},{key('Q'),2}};
+        }
         if (mf) routes[0].push_back({key(1), 0x4000}); // Mouse 1 shares Fire with X.
         routes[1] = {{button(0),0x8000},{button(2),0x4000},{button(1),0x4000},{button(3),2},
             {button(6),0x1000},{button(9),0x20},{button(10),0x10},
@@ -615,6 +633,11 @@ PhysicalInput remap(const PhysicalInput& raw,bool native_menu_visible) {
     std::lock_guard lock(state.mutex);
     if(native_menu_visible||!state.play_valid||clock_ms()-state.context_time>200)return raw;
     return state.assignments.apply(raw,state.play_layout[state.context]);
+}
+bool context_active(Context context) {
+    std::lock_guard lock(state.mutex);
+    return state.play_valid && state.context == int(context) &&
+        clock_ms() - state.context_time <= 200;
 }
 uint16_t bike_button(bool accelerate) {
     std::lock_guard lock(state.mutex);

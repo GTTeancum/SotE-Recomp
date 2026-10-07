@@ -317,7 +317,7 @@ An SDL-compatible controller uses the expected N64 layout:
 - Right stick: C buttons
 - D-pad and Start: N64 D-pad and Start
 
-Keyboard controls:
+Modern on-foot and current vehicle keyboard defaults:
 
 - `WASD`: analog stick
 - `Z` or Space: A
@@ -328,6 +328,13 @@ Keyboard controls:
 - `IJKL`: C buttons
 - Enter: Start
 
+Classic on-foot keyboard and mouse defaults follow the installed PC release's
+first built-in control set: arrow keys or numpad 8/2/4/6 move, `IJKL` controls
+the camera, `X`/Mouse 1 fires, `Z`/Mouse 2 jumps, Space aims, `A` strafes or
+activates, `C` ducks, `Q` toggles the jetpack, `W` changes weapon, and Tab
+changes camera position. Enter or F1 pauses; Escape remains the recovery
+pause key. Vehicle Classic defaults still need comparison with the PC game.
+
 Physical keyboard and controller input is accepted only while the game window
 has focus. This prevents normal desktop typing from steering an unattended
 game.
@@ -337,7 +344,8 @@ game.
 The injected Options entry cycles between `Graphics` and `Controls` with Left
 and Right. The `Controls` submenu offers a single player-facing choice:
 
-- `Classic` - the original N64 mapping described above.
+- `Classic` - PC-style on-foot keyboard/mouse controls and the native N64
+  controller/vehicle mapping while the remaining PC comparison is completed.
 - `Modern` - controller-focused aiming, movement, and vehicle tuning.
   On foot, LS moves and strafes while RS continuously turns and aims. There
   is no LT aim mode. A jumps, RT fires, X opens doors, Y toggles the jetpack,
@@ -370,7 +378,8 @@ INI (the fallback when keys are absent is 0.12),
 look. Larger aim exponents give finer center control; 1.0 is linear. Both
 sticks use circular deadzones, preserving shallow diagonals. Existing INIs
 without these keys use the defaults; add the `[OnFoot]` block from
-`config/CONTROLS_MODERN.INI` to expose them. Classic retains its original path.
+`config/CONTROLS_MODERN.INI` to expose them. Classic uses the game's native
+movement and camera mechanics with the PC-style on-foot keyboard layout above.
 
 Beta testers are encouraged to tune `CONTROLS_MODERN.INI` for real controllers
 and submit the best-feeling setups with controller model details.
