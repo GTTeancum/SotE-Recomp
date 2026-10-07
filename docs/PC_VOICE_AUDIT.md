@@ -270,12 +270,18 @@ not evidence that the mappings fail during real mission progress.
 Three further Original N64 Gall event-14 routes dismissed the opening briefing,
 walked from the ship corridor into its adjoining rooms, and captured the actual
 native frames. A short right turn reached another wall; an earlier left turn
-reached the red side door, where a native R/Activate pulse did not open the
-door or display another communication (`voice_gall_ship_right_short_original_20261007/`,
+reached the red side door, where a raw N64 R pulse changed weapons to Seekers
+without displaying another communication (`voice_gall_ship_right_short_original_20261007/`,
 `voice_gall_ship_left_early_original_20261007/`, and
 `voice_gall_ship_door_original_20261007/`). `ILB14/15/16` were not queued in
-these routes. The door may need a different approach or mission state; these
-captures do not establish those lines' natural triggers.
+these routes. A level-selection route that naturally advanced story event 11
+through 13 to 14 reproduced the same room and opening `ILB11` voice. A
+process-local Classic Y press translated to guest `0x0008` near the entrance,
+but did not show a later message; the frame shows Dash facing the partition,
+so it is not a conclusive door interaction
+(`voice_gall_selected_ship_door_original_20261007/` and
+`voice_gall_selected_ship_classic_y_original_20261007/`). These captures do
+not establish the later lines' natural triggers.
 An additional process-local Ord Mantell event-8 route tried forward motion,
 jumps, and dismissing the opening train warning
 (`voice_ord_train_forward_probe_20261007/`,
