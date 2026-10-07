@@ -421,6 +421,19 @@ Skipping after `L11WIN.SAN` begins follows the same path: a process-local
 capture shows the Outrider film at present 3000, a black handoff at 3250,
 and native scrolling credits at 3650
 (`san_ending_second_film_skip_20261007/`).
+Early PC intro-film skips were also checked on four different native
+transitions. Mos Eisley moved from `L06INTRO.SAN` at event 16 to the playable
+bike at event 17 (`san_mos_intro_early_skip_20261007/`). The selected
+Freighter entry moved from `L07INTRO.SAN` at event 19 to the ship interior
+and its supercomputer communication at event 20
+(`san_freighter_selected_early_skip_20261007/`). Gall moved from
+`L05INTRO.SAN` at event 11 to the ship-side Boba instruction at event 14
+(`san_gall_intro_early_skip_20261007/`). Skyhook moved from `L10INTRO.SAN`
+at event 28 to the turret briefing and live battle at event 29
+(`san_skyhook_intro_early_skip_20261007/`). Each process-local run captured
+the actual film frame before skipping and the indicated native scene after;
+none replayed its redundant story slides. Other intro skip routes and
+natural campaign transitions remain to be checked.
 The Game Over film had another duplicate: after `GAMEOVER.SAN`, PC mode
 displayed the native Xizor Game Over screen again. A process-local Ord
 Mantell run set the remaining lives to zero, then let IG-88 cause the final
