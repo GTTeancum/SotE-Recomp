@@ -357,8 +357,8 @@ the native branch rather than the earlier direct film cue. The invocation
 bypassed the natural elevator route; Dash later fell from the invalid entry
 geometry, so the health loss does not describe a valid boss fight. The
 temporary diagnostic and generated hook were removed and the ordinary build
-restored. PC mode still needs a boss-film handoff that consumes the native
-reveal while preserving its camera, combat gate, and player safety.
+restored. This established the need to consume the native reveal beneath
+the PC film while preserving its camera, combat gate, and player safety.
 PC mode now advances Boba's native reveal behind `L05BOSS.SAN` and holds the
 movie's final frame until the native countdown reaches zero. A second
 isolated native-dispatch run shows the movie and non-silent PCM, then the
@@ -369,6 +369,14 @@ elevator-to-boss route and player safety remain unverified. The temporary
 dispatcher hook was removed, the ordinary candidate rebuilt, and direct
 event-15 entry still does not play the movie
 (`gall_boss_handoff_entry_guard_20261007/`).
+An explicit early skip of `L05BOSS.SAN` previously exposed the N64 flyover
+(`gall_native_dispatch10_early_skip_baseline_20261007/`). PC mode now clears
+the reveal countdown once the arena has loaded. An isolated native-dispatch
+skip at VI 1000 removes that flyover in the next capture
+(`gall_native_dispatch10_early_skip_fixed_20261007/`). Dash subsequently
+falls from the invalid corridor geometry used by the injection and loses a
+life at VI 1155. This does not establish safety on the natural elevator route;
+that route, boss presence, and combat still need verification.
 An Original N64 event-31 probe shows the Tatooine epilogue in which Luke and
 Leia believe Dash died (`build/diagnostics/san_ending_event31_native_probe/`).
 Direct previews show `L11LOSE.SAN` depicts that conversation, while

@@ -90,8 +90,8 @@ the preceding elevator objectives. Dash fell into invalid encounter geometry
 and lost health afterward, so that damage is not evidence of the natural
 fight's difficulty or handoff. The temporary dispatcher hook and its runtime
 diagnostic were removed after these captures; the ordinary candidate build
-was restored. The film overlay still needs to advance or otherwise reconcile
-the native reveal without exposing a second cinematic or hidden combat.
+was restored. This exposed the need to reconcile the native reveal beneath
+the film without showing a second cinematic or hidden combat.
 PC mode now advances the native Gall reveal under `L05BOSS.SAN` from its
 actual command-10 cue and holds the film's last frame until the native reveal
 countdown reaches zero. A second isolated dispatcher run shows the complete
@@ -106,6 +106,13 @@ The temporary dispatcher diagnostic was again removed and the ordinary
 candidate rebuilt. A direct event-15 entry with that candidate remains in
 the corridor and does not play `L05BOSS.SAN`
 (`gall_boss_handoff_entry_guard_20261007/`).
+An explicit skip of `L05BOSS.SAN` at VI 1000 previously exposed the native
+flyover (`gall_native_dispatch10_early_skip_baseline_20261007/`). PC mode now
+clears the reveal countdown after arena loading when that film is skipped.
+The isolated native-dispatch retest shows no repeated flyover in the next
+capture (`gall_native_dispatch10_early_skip_fixed_20261007/`). Dash falls
+from the invalid corridor geometry and loses a life at VI 1155, so this does
+not verify player safety on the natural elevator route.
 
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
 at arena entry and queues non-silent audio to SDL's dummy device. Its first

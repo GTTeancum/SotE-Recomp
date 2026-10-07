@@ -403,6 +403,7 @@ std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
 uint64_t san_gall_boss_movie_token = 0;
 std::atomic<bool> san_gall_boss_handoff_active{false};
+bool san_gall_boss_skip_pending = false;
 std::atomic<bool> san_palace_boss_cue_pending{false};
 bool san_palace_boss_started = false;
 uint64_t san_palace_boss_movie_token = 0;
@@ -803,6 +804,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_gall_boss_started = false;
         san_gall_boss_movie_token = 0;
         san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
+        san_gall_boss_skip_pending = false;
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
         san_palace_boss_movie_token = 0;
@@ -838,6 +840,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_gall_boss_started = false;
         san_gall_boss_movie_token = 0;
         san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
+        san_gall_boss_skip_pending = false;
     }
     if (event != 27) {
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
@@ -2445,6 +2448,8 @@ void on_vi() {
                  read_guest_half(game_rdram, 0x8013CE0EU) == 10))
                 san_ord_boss_skip_pending = true;
             if (movie_token == san_gall_boss_movie_token) {
+                san_gall_boss_skip_pending = game_rdram != nullptr &&
+                    read_guest_half(game_rdram, 0x8013CE0EU) == 15U;
                 san_gall_boss_movie_token = 0;
                 san_gall_boss_handoff_active.store(false,
                     std::memory_order_relaxed);
@@ -2536,6 +2541,22 @@ void on_vi() {
                 std::fflush(stdout);
             }
             san_palace_boss_skip_pending = false;
+        }
+    }
+    if (san_gall_boss_skip_pending && game_rdram != nullptr) {
+        const int16_t event = static_cast<int16_t>(
+            read_guest_half(game_rdram, 0x8013CE0EU));
+        if (event != 15) {
+            san_gall_boss_skip_pending = false;
+        } else if (read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
+            const float before = read_guest_float(game_rdram, 0x800DEB78U);
+            if (before > 0.0f) {
+                write_guest_word(game_rdram, 0x800DEB78U, 0);
+                std::printf("[sote][san] Gall boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
+                    before, count);
+                std::fflush(stdout);
+            }
+            san_gall_boss_skip_pending = false;
         }
     }
     if (san_gall_boss_movie_token != 0 && movie_token == 0) {
@@ -2876,6 +2897,7 @@ extern "C" void sote_palace_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
         actor, vi_count.load(std::memory_order_relaxed));
     std::fflush(stdout);
 }
+
 
 extern "C" void sote_wait_for_game_frame() {
     // HLE can finish two complete gameplay iterations within one 60 Hz VI,
