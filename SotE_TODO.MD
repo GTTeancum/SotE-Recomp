@@ -609,6 +609,17 @@ for 10 Leebo lines and two Skyhook lines. The other 21 Leebo and three Skyhook
 lines still need their gameplay states reached and their voice onset checked
 against the on-screen communication. The contradictory `ILB42` palace clip
 stays unmapped; wording differences are recorded in `docs/PC_VOICE_AUDIT.md`.
+
+The N64 `xJet` collision branch sets the status timer that draws “Jetpack
+Malfunction.” Reproducing only that timer write in an offscreen Sewer run
+displayed the status and queued `ILB31.WAV` on its first draw in both
+cutscene modes. The installed voice waveform appeared in each mixed PCM
+capture (correlations 0.990350 and 0.990489), and native frames show the
+message (`voice_jetpack_status_after_comm_20261007/` and
+`voice_jetpack_status_pc_skip_20261007/`). This tests presentation and
+audio mapping, while natural collision timing remains open; it is not
+included in the ten naturally presented communicator checks above.
+
 The Ord Mantell boss film previously replayed the native IG-88 reveal after
 `L04BOSS.SAN`. A timer-zero probe caused early combat damage, so PC mode now
 runs the native reveal behind the film's final ten seconds while movie input

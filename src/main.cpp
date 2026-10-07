@@ -2396,6 +2396,19 @@ void on_vi() {
     trace_palace_boss_object(game_rdram, count);
     inject_gall_boss_cue_for_test(game_rdram, count);
     inject_palace_boss_cue_for_test(game_rdram, count);
+    // The xJet collision branch at 0x8007AB98 sets this exact 10-second
+    // status timer. Reproduce only its presentation state in an offscreen
+    // process-local run so the visible text/voice pairing can be inspected.
+    if (const char* probe = std::getenv("SOTE_DIAGNOSTIC_JETPACK_STATUS_VI");
+        probe != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+        game_rdram != nullptr && count == std::atoi(probe) &&
+        read_guest_half(game_rdram, 0x8013CE0EU) == 25) {
+        write_guest_word(game_rdram, 0x800E0E34U, 0x41200000U);
+        std::printf("[sote][voice] diagnostic xJet status timer set VI=%d\n",
+            count);
+        std::fflush(stdout);
+    }
     // Diagnostic only: this countdown also suppresses player input. Zeroing it
     // exposes combat early, so it must never be used for the PC movie handoff.
     if (const char* probe = std::getenv("SOTE_DIAGNOSTIC_ORD_BOSS_TIMER_ZERO_VI");

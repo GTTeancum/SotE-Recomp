@@ -22,6 +22,7 @@ param(
     [int]$SyntheticPalaceCueVi = 0,
     [int]$NativePalaceCommandVi = 0,
     [int]$OrdBossTimerZeroVi = 0,
+    [int]$JetpackStatusVi = 0,
     [string]$OrdBossWordPoke = '',
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
@@ -101,6 +102,10 @@ if ($NativePalaceCommandVi -gt 0) {
 if ($OrdBossTimerZeroVi -gt 0) {
     $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_TIMER_ZERO_VI'] =
         [string]$OrdBossTimerZeroVi
+}
+if ($JetpackStatusVi -gt 0) {
+    $info.Environment['SOTE_DIAGNOSTIC_JETPACK_STATUS_VI'] =
+        [string]$JetpackStatusVi
 }
 if ($OrdBossWordPoke) {
     $info.Environment['SOTE_DIAGNOSTIC_ORD_BOSS_WORD_POKE'] = $OrdBossWordPoke

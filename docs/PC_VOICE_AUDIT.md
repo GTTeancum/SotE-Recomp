@@ -255,7 +255,7 @@ and game-audio mix in each cutscene mode.
 | Freighter | `ILB35/36` | Find the super computer and receive the return-lift instruction. |
 | Sewers | `ILB38/39/40/41` | Reach the key gate and deactivator pickups. |
 | Palace | `ILB44` | Set the pulse bombs and display the escape instruction. |
-| Jetpack status | `ILB31` | Find the actual “Jetpack Malfunction” display trigger; its level context is not yet established. |
+| Jetpack status | `ILB31` | Reach an actual `xJet` collision and check the status/voice onset; the timer-driven presentation has been reproduced in both modes. |
 
 Entry or idle shortcuts did not surface these later messages: a direct Gall
 event-12 jump returned to Hoth (`voice_gall_event12_entry_20261007/`); a
@@ -315,7 +315,23 @@ block (`SotE_Recompiled/main.bin`, offset `0xCFE24`). A process-local
 Echo Base run with no jetpack also showed no such message after a C-left
 toggle (`voice_jetpack_no_pack_escape_20261007/`). Neither observation
 establishes which in-game state displays the label or whether the PC voice
-should accompany it; `ILB31` remains unverified in the running game.
+should accompany it; `ILB31` remained unverified in the running game at that
+point.
+
+The generated N64 code narrows the trigger: `func_8007A29C` branches on
+entity type `xJet` at `0x8007A320` and sets the status timer at
+`0x800E0E34` to 10.0 at `0x8007ABA8`. The HUD routine at `0x8006B9D0`
+uses that timer to format the exact ROM string. An offscreen process-local
+probe reproduces only that timer write after the Sewer opening communication
+has been dismissed. In Original N64 mode, the status is drawn at VI 1401,
+`ILB31.WAV` queues on that draw, and its first 1.5 seconds correlate with
+the mixed game PCM at 0.990350. In PC cutscene mode, the status and queue
+occur at VI 1400, with PCM correlation 0.990489. Native captures show the
+status above Dash in both modes (`voice_jetpack_status_after_comm_20261007/`
+and `voice_jetpack_status_pc_skip_20261007/`; a closer PC frame is in
+`voice_jetpack_status_pc_visual_20261007/`). This verifies presentation,
+mapping, and audio mixing for the status in both modes. It does not show an
+actual `xJet` collision, so the natural gameplay onset remains open.
 
 ## Skyhook radio lines
 
