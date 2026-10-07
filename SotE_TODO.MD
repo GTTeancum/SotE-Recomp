@@ -242,14 +242,23 @@ A direct preview of `L05BOSS.SAN` shows Boba Fett beside his ship
 at the actual encounter reveal rather than at Gall's opening event-14 briefing
 or blindly at event 15. The video has no reliable speech transcript.
 An event-10 Original N64 capture opens inside the IG-88 combat arena, which
-supports keeping `L04BOSS.SAN` there. An event-27 Original N64 capture opens
-inside Xizor's Palace facing the arena door. In PC mode, `L09BOSS.SAN` shows
-Xizor's droid entering and returns to that playable room with the HUD visible
-(`build/diagnostics/san_ord_event10_native_scene/`,
-`san_palace_event27_native_scene/`, and
-`san_palace_event27_pc_postmovie/`). These process-local runs were muted and
-used direct event jumps; they support the event-27 transition but do not prove
-the complete natural campaign route or audio timing.
+supports keeping `L04BOSS.SAN` there (`build/diagnostics/
+san_ord_event10_native_scene/`). The installed PC executable references that
+movie through its event-10 transition table. Palace event 27 instead opens
+with Dash facing the closed arena door, well before the Gladiator Droid reveal
+(`palace_glad_event27_entry_20261007/`). The earlier event-entry placement of
+`L09BOSS.SAN` was premature. The installed PC executable calls that movie from
+the Gladiator Droid actor's command-10 reveal branch. The matching native N64
+branch at `0x80044D1C` now cues it in PC mode only; Original N64 mode keeps the
+native scene. A normal PC event-27 entry played no boss movie
+(`palace_event27_entry_guard_20261007/`). A synthetic command-10 cue started
+the movie in PC mode and stayed silent in Original mode
+(`palace_command10_synthetic_pc_20261007/`,
+`palace_command10_synthetic_original_20261007/`). The full PC movie run queued
+non-silent PCM, returned audio to the game, and resumed the playable corridor
+with its HUD (`palace_command10_full_handoff_20261007/`). The synthetic cue
+does not execute the native reveal or establish that normal gameplay reaches
+this branch; a natural Palace boss approach still needs verification.
 An Original N64 event-31 probe shows the Tatooine epilogue in which Luke and
 Leia believe Dash died (`build/diagnostics/san_ending_event31_native_probe/`).
 Direct previews show `L11LOSE.SAN` depicts that conversation, while

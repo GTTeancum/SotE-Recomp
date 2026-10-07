@@ -394,6 +394,8 @@ int san_ending_advance_start_vi = -1;
 std::atomic<bool> san_ending_handoff_active{false};
 std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
+std::atomic<bool> san_palace_boss_cue_pending{false};
+bool san_palace_boss_started = false;
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -503,7 +505,8 @@ const char* san_movie_for_event(int16_t event) {
             // encounter. Keep the movie off this entry transition.
             return nullptr;
         case 27:
-            return "L09BOSS.SAN";
+            // The Gladiator Droid's reveal is later than event-27 entry.
+            return nullptr;
         default:
             return nullptr;
     }
@@ -670,6 +673,38 @@ void inject_gall_boss_cue_for_test(uint8_t* rdram, int vi) {
     }
 }
 
+void inject_palace_boss_cue_for_test(uint8_t* rdram, int vi) {
+    const char* requested =
+        std::getenv("SOTE_DIAGNOSTIC_PALACE_BOSS_CUE_VI");
+    if (requested == nullptr || std::atoi(requested) != vi || rdram == nullptr ||
+        read_guest_half(rdram, 0x8013CE0EU) != 27U)
+        return;
+    constexpr uint32_t pool = 0x80112838U;
+    const int32_t count = static_cast<int32_t>(read_guest_word(rdram, pool + 8));
+    const int32_t stride = static_cast<int32_t>(read_guest_word(rdram, pool + 12));
+    const uint32_t base = read_guest_word(rdram, pool + 16);
+    if (count < 0 || count > 4096 || stride < 0x9C || stride > 4096 ||
+        base < 0x80000000U ||
+        static_cast<uint64_t>(base) + static_cast<uint64_t>(count) * stride >
+            0x80800000ULL)
+        return;
+    for (int32_t index = 0; index < count; ++index) {
+        const uint32_t object =
+            read_guest_word(rdram, base + index * stride + 0x98U);
+        if (object < 0x80000000U || object > 0x80800000U - 0x58CU ||
+            read_guest_word(rdram, object) != 0x426F7373U ||
+            read_guest_word(rdram, object + 0x78U) != 0x676C6164U)
+            continue;
+        const uint32_t original = read_guest_word(rdram, object + 0x584U);
+        write_guest_word(rdram, object + 0x584U, 10U);
+        std::printf("[sote][san] diagnostic synthetic Palace command 10 VI=%d\n",
+            vi);
+        sote_palace_boss_movie_cue(rdram, object);
+        write_guest_word(rdram, object + 0x584U, original);
+        return;
+    }
+}
+
 void update_san_movie_triggers(uint8_t* rdram) {
     if (rdram == nullptr ||
         display_list_count.load(std::memory_order_relaxed) == 0) {
@@ -683,6 +718,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ending_handoff_active.store(false, std::memory_order_relaxed);
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
+        san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
+        san_palace_boss_started = false;
         sote::san_movies::stop_cached_playback();
         const int16_t current_event = static_cast<int16_t>(
             read_guest_half(rdram, 0x8013CE0EU));
@@ -711,6 +748,10 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (event != 15) {
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
+    }
+    if (event != 27) {
+        san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
+        san_palace_boss_started = false;
     }
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
@@ -754,6 +795,15 @@ void update_san_movie_triggers(uint8_t* rdram) {
             sote::san_movies::play_cached_preview("L05BOSS.SAN");
         std::printf("[sote][san] Gall Boba encounter cue: %s\n",
             san_gall_boss_started ? "L05BOSS.SAN started" : "movie unavailable");
+        std::fflush(stdout);
+        return;
+    }
+    if (event == 27 && !san_palace_boss_started &&
+        san_palace_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
+        san_palace_boss_started =
+            sote::san_movies::play_cached_preview("L09BOSS.SAN");
+        std::printf("[sote][san] Palace Gladiator encounter cue: %s\n",
+            san_palace_boss_started ? "L09BOSS.SAN started" : "movie unavailable");
         std::fflush(stdout);
         return;
     }
@@ -2224,6 +2274,7 @@ void on_vi() {
     log_general_failure_telemetry(count);
     trace_gall_boss_objects(game_rdram, count);
     inject_gall_boss_cue_for_test(game_rdram, count);
+    inject_palace_boss_cue_for_test(game_rdram, count);
     update_san_movie_triggers(game_rdram);
     (void)sote::san_movies::latest_cached_frame();
     uint64_t movie_token = sote::san_movies::playback_token();
@@ -2486,6 +2537,21 @@ extern "C" void sote_gall_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
         return;
     san_gall_boss_cue_pending.store(true, std::memory_order_relaxed);
     std::printf("[sote][san] Gall Boba native command 10 actor=%08X VI=%d\n",
+        actor, vi_count.load(std::memory_order_relaxed));
+    std::fflush(stdout);
+}
+
+extern "C" void sote_palace_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
+    if (rdram == nullptr || actor < 0x80000000U ||
+        actor > 0x80800000U - 0x58CU)
+        return;
+    if (read_guest_half(rdram, 0x8013CE0EU) != 27U ||
+        read_guest_word(rdram, actor) != 0x426F7373U ||
+        read_guest_word(rdram, actor + 0x78U) != 0x676C6164U ||
+        read_guest_word(rdram, actor + 0x584U) != 10U)
+        return;
+    san_palace_boss_cue_pending.store(true, std::memory_order_relaxed);
+    std::printf("[sote][san] Palace Gladiator native command 10 actor=%08X VI=%d\n",
         actor, vi_count.load(std::memory_order_relaxed));
     std::fflush(stdout);
 }

@@ -14,6 +14,7 @@ param(
     [switch]$TraceGallBoss,
     [string]$SyntheticGallCueVi = '',
     [string]$NativeGallCommandVi = '',
+    [int]$SyntheticPalaceCueVi = 0,
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
     [string]$Teleport = '',
@@ -71,6 +72,11 @@ if ($NativeGallCommandVi) {
     $info.Environment['SOTE_DIAGNOSTIC_GALL_BOSS_NATIVE_COMMAND_VI'] =
         [string]$NativeGallCommandVi
     Write-Host "Native Gall command 10 at VI $NativeGallCommandVi"
+}
+if ($SyntheticPalaceCueVi -gt 0) {
+    $info.Environment['SOTE_DIAGNOSTIC_PALACE_BOSS_CUE_VI'] =
+        [string]$SyntheticPalaceCueVi
+    Write-Host "Synthetic Palace cue at VI $SyntheticPalaceCueVi"
 }
 if ($InitialSkipVi -gt 0) {
     $info.Environment['SOTE_SAN_TEST_SKIP_VI'] = [string]$InitialSkipVi

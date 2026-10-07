@@ -83,6 +83,9 @@ hook = [
     # Boba command 10 reaches the encounter reveal after the native player
     # check. The PC executable starts L05BOSS.SAN at the equivalent branch.
     { func = "func_8003FDB8", before_vram = 0x80042850, text = "sote_gall_boss_movie_cue(rdram, (uint32_t)MEM_W(ctx->r29, 0x318));" },
+    # The Gladiator Droid's command 10 configures the boss reveal camera.
+    # The PC executable starts L09BOSS.SAN at the equivalent actor branch.
+    { func = "func_8003FDB8", before_vram = 0x80044D1C, text = "sote_palace_boss_movie_cue(rdram, (uint32_t)MEM_W(ctx->r29, 0x318));" },
     { func = "func_800700F0", before_vram = 0x8007148C, text = "if (!sote_allow_life_loss(rdram, 0x8007148CU, (uint32_t)ctx->r17, 0U)) ctx->r12 = ADD32(ctx->r12, 1);" },
     { func = "func_8008BF00", before_vram = 0x8008C638, text = "if (!sote_allow_life_loss(rdram, 0x8008C638U, (uint32_t)ctx->r17, (uint32_t)MEM_W(ctx->r29, 0xB4))) ctx->r9 = ADD32(ctx->r9, 1);" },
     { func = "func_80096E14", before_vram = 0x8009724C, text = "if (!sote_allow_life_loss(rdram, 0x8009724CU, (uint32_t)ctx->r16, (uint32_t)MEM_W(ctx->r16, 0x230))) ctx->r11 = ADD32(ctx->r11, 1);" },
