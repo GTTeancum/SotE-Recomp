@@ -45,8 +45,9 @@ Copy-Item -LiteralPath '.\SotE_Recompiled\saves\sote.us.v1.2.bin' `
 
 # Select Escape from Echo Base through the game's own menus. Bypass only the
 # opening SAN pair so the level movie can be observed at a bounded VI count.
-$inputItems = @('120:5:start', '300:5:start', '660:5:start')
+$inputItems = @('120:5:start', '300:5:start')
 if (-not $DirectEventOnly) {
+    $inputItems += '660:5:start'
     $inputItems += '840:5:stick_down', '900:5:a'
     for ($index = 0; $index -lt $LevelIndex; ++$index) {
         $inputItems += "$(1050 + 60 * $index):8:stick_down"

@@ -79,6 +79,17 @@ to SDL's dummy device, switched back to game audio at event 25, and queued
 `ILB37.WAV` with the on-screen instruction. The voice's first 2.5 seconds
 correlate with the captured game PCM at 0.959919. The process-local event
 entry bypasses the preceding campaign; physical speakers were not checked.
+The matching unmuted Original N64 direct event-24 replay ran through its
+full Part IV crawl and sewer approach without a scripted skip. It displayed
+the native story message about Lando, Chewie, and Dash searching for Leia
+and then a green continue prompt. A process-local Start press at that prompt
+advanced event 24 to 25 at VI 4204. Native captures show the sewer shaft
+and the same entrance instruction as the PC handoff; `ILB37.WAV` queued at
+VI 4546 and its first 2.5 seconds correlate with the captured game PCM at
+0.960094 (`san_sewers_n64_confirmed_continue_20261007/`). This confirms
+the opening communication and mixed voice in both modes. The diagnostic no
+longer inserts an unconditional Start at VI 660 for direct-event replays,
+which had previously skipped the native story before it could be observed.
 An unmuted selected-level Skyhook replay confirmed the full `L10INTRO.SAN`
 handoff with audio enabled. Native captures show the film's ship approach and
 fighters at presents 2000, 3000, and 4000, a black transition at 4300, the

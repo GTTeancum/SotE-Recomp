@@ -230,6 +230,15 @@ communication appear in sequence; `ILB37.WAV` queues at VI 3062. Its first
 outside one second at 0.156535
 (`san_sewers_pc_audio_handoff_20261007/`). This direct event-24 replay does
 not cover entry from the preceding campaign chapter.
+The paired full Original N64 direct event-24 replay now shows the Part IV
+crawl, native sewer approach and story message, and its continue prompt.
+A process-local Start at the visible prompt advances to event 25 at VI 4204.
+The entrance instruction appears at present 4700, with `ILB37.WAV` queued
+at VI 4546. The first 2.5 seconds correlate with the game PCM at
+**0.960094**, with the next peak outside one second at 0.152189
+(`san_sewers_n64_confirmed_continue_20261007/`). This verifies the natural
+N64 story-to-communication sequence and the mixed voice cue in that route;
+the direct event jump still bypasses the prior campaign.
 
 ## Remaining gameplay timing routes
 
