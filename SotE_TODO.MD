@@ -351,6 +351,10 @@ service-panel communication at present 2200 with no `ILB42` voice queued
 (`voice_palace_three_panel_guard_20261007/`). The on-screen message itself
 says "several"; its follow-up ROM line specifies three. The 31 remaining
 mapped clips load and mix in `leebo_voices_harness`.
+Matched Original and PC-mode Palace runs now dismiss that first message,
+show the three-panel follow-up, and queue `ILB43.WAV` at VI 2358 in both
+modes (`voice_palace_ilb43_original_20261007/` and
+`voice_palace_ilb43_pc_20261007/`). Neither run queues the withheld `ILB42`.
 All 18 installed `ILU` clips have now been machine-transcribed for the
 Skyhook radio audit (`build/diagnostics/pc_all_ilu_transcripts_20261007.txt`).
 The five existing Skyhook mappings correspond semantically to their N64

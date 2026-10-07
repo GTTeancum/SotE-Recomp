@@ -23,8 +23,8 @@ delivery.
 Graphics now has a Cutscenes row. Choose **PC FMV** to use the cached SAN
 videos or **Original N64** to let the game present its native cutscenes, then
 choose Apply. The selection is saved in `sote_options.json`. Switching to
-Original N64 stops an active cached video. Placement of PC videos in several
-story sequences still needs correction against the reported examples.
+Original N64 stops an active cached video. Further natural-route placement
+checks remain open.
 The local candidate at `build/candidate-controls-menu` links to the existing
 SAN cache in `SotE_Recompiled` for testing without duplicating it. A native
 capture of `L00LOGO.SAN` confirmed the cached PC frame appears in the running
@@ -69,10 +69,18 @@ captures retain the corresponding story screens. These diagnostics were muted.
 An event-14 diagnostic showed `L05BOSS.SAN` appearing before the Gall mission
 instruction to find Boba Fett. That event-entry trigger is removed, and chapter
 intros now run only on each level's opening event, so the event-14 checkpoint
-does not replay `L05INTRO.SAN`. The Boba encounter trigger remains to be found.
-Event-10 and event-27 probes support the existing IG-88 and Xizor droid boss
-placements; the event-27 PC movie returns to a playable Palace room. These
-were direct, muted event probes, so natural-route and audio verification remain.
+does not replay `L05INTRO.SAN`. The installed PC executable starts the Boba
+movie from his actor's command-10 reveal branch. The matching native branch
+now cues `L05BOSS.SAN` in PC mode; synthetic and mode-gating checks pass, but
+the natural elevator-to-encounter route still needs verification.
+Event 10 opens the IG-88 arena and retains `L04BOSS.SAN`. Palace event 27
+opens before the Gladiator Droid reveal, so its old event-entry trigger for
+`L09BOSS.SAN` was premature. The movie now starts from the droid's native
+command-10 reveal branch in PC mode. A synthetic cue played the full movie,
+queued non-silent PCM, returned to game audio, and resumed the playable
+corridor. Original N64 mode did not play the SAN. Natural boss-route and
+physical speaker checks remain open. Details and capture paths are in
+`SotE_TODO.MD`.
 The final event (31) contains both epilogue scenes and the credits. PC mode
 now plays `L11LOSE.SAN` then `L11WIN.SAN`, holds the last black movie frame
 briefly while advancing the matching native scenes within the game process,

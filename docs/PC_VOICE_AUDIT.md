@@ -18,8 +18,9 @@ palace capture where noted.
 | `ILB43.WAV` | Place pulse bombs on each of them; the palace will explode and the skyhook will be cut off. | Place pulse bombs on each of these **three** service panels. | Keep; the clip gives no conflicting count. |
 
 The first palace message is visible in
-`build/diagnostics/voice_palace_three_panel_guard_20261007/frames/present_2200.png`;
-the diagnostic queues no `ILB42.WAV` speech. The `leebo_voices_harness`
+`build/diagnostics/voice_palace_ilb43_original_20261007/frames/present_2200.png`
+and the matching PC-mode capture; neither run queues `ILB42.WAV` speech.
+The `leebo_voices_harness`
 loads and mixes all 31 retained built-in mappings and rejects the withheld
 message. Full in-game voice/message timing review is still open in
 `SotE_TODO.MD` item 1.
@@ -72,11 +73,12 @@ speaker output or exact synchronization of audible syllables.
 | `ILB33` | `san_freighter_event19_native_story/`: queued VI 1147; present 1400 | `san_freighter_pc_story_skip_music_guard_fixed/`: queued VI 6326; present 6600 | Find the Imperial super computer aboard the ship. |
 | `ILB34` | `voice_freighter_followup_original_20261007/`: queued VI 1108; present 1200 | `voice_freighter_followup_pc_20261007/`: queued VI 1109; present 1200 | The super computer is near the main cargo hangar. The PC line says “scopes” where the visible N64 line says “scanners.” Process-local Start dismissed `ILB33` first in each mode. |
 | `ILB37` | `san_sewers_event24_native_start_skip/`: queued VI 2147; present 2300 | `san_sewers_pc_story_skip_hermetic/`: queued VI 3165; present 3300 | Reach the entrance to Xizor's lair through the sewers. |
+| `ILB43` | `voice_palace_ilb43_original_20261007/`: queued VI 2358; present 2400 | `voice_palace_ilb43_pc_20261007/`: queued VI 2358; present 2400 | Place pulse bombs on each of the three service panels. Start dismissed the preceding “several panels” message, which correctly queued no `ILB42`. The PC line omits the count, so it does not contradict the displayed three. |
 
 All paths in this table are under `build/diagnostics/`; the named `present`
 images are native game captures. Mos Eisley `ILB24` and Skyhook `ILB46` are
 also checked in both modes as described in `SotE_TODO.MD`. Together, these
-are nine of the 31 built-in Leebo pairings. The other 22 still need gameplay
+are ten of the 31 built-in Leebo pairings. The other 21 still need gameplay
 timing checks.
 
 ## Skyhook radio lines
