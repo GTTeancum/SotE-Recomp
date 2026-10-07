@@ -514,6 +514,8 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
         uint16_t record_flags = 0;
         uint16_t object_flags = 0;
         float health = 0.0f;
+        uint32_t actor_tag = 0;
+        uint32_t phase = 0;
     };
     static std::array<BossState, 8> previous{};
     static uint32_t last_base = 0;
@@ -558,7 +560,7 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
     for (int32_t index = 0; index < count; ++index) {
         const uint32_t record = base + index * stride;
         const uint32_t object = read_guest_word(rdram, record + 0x98U);
-        if (object < 0x80000000U || object > 0x807FFF90U ||
+        if (object < 0x80000000U || object > 0x80800000U - 0x5D0U ||
             read_guest_word(rdram, object) != 0x426F7373U)
             continue;
         const BossState current{
@@ -566,6 +568,8 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
             read_guest_half(rdram, record + 0x68U),
             read_guest_half(rdram, object + 6U),
             read_guest_float(rdram, object + 0x60U),
+            read_guest_word(rdram, object + 0x78U),
+            read_guest_word(rdram, object + 0x588U),
         };
         BossState* prior = nullptr;
         for (auto& slot : previous) {
@@ -580,13 +584,18 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
         if (prior->object != current.object ||
             prior->record_flags != current.record_flags ||
             prior->object_flags != current.object_flags ||
+            prior->actor_tag != current.actor_tag ||
+            prior->phase != current.phase ||
             std::fabs(prior->health - current.health) > 0.001f) {
             std::printf(
                 "[sote][gall-boss] VI=%d record=%d object=%08X "
+                "actor=%08X phase=%08X timer=%08X "
                 "record_flags=%04X object_flags=%04X health=%.3f "
                 "pos=%.1f,%.1f,%.1f result=%d stage=%d "
                 "transition=%d->%d\n",
-                vi, index, object, current.record_flags,
+                vi, index, object, current.actor_tag, current.phase,
+                read_guest_word(rdram, object + 0x58CU),
+                current.record_flags,
                 current.object_flags, current.health,
                 read_guest_float(rdram, object + 0x50U),
                 read_guest_float(rdram, object + 0x54U),

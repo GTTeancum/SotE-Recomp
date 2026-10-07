@@ -1,6 +1,6 @@
 # AT A GLANCE
 
-1. **OPEN** - Fix SAN cutscene placement and offer N64/PC cutscene modes.
+1. **OPEN** - Fix SAN cutscene placement and offer N64/PC cutscene modes and confirm mapping of voice over lines with on-screen communications.
 2. **OPEN** - Finish keyboard, mouse, and controller mappings and validate Modern controls.
 3. **COMPLETE** - Revamp Options and Pause, expose configuration options, and preserve the existing UI style.
 4. **DEFERRED** - Original Xbox port.
@@ -186,6 +186,15 @@ The trace now resets its prior boss state on leaving event 15; a controlled
 15 -> 14 -> 15 replay logged fresh stage and all three boss baselines on
 re-entry, with the native corridor still visible afterward
 (`build/diagnostics/gall_stage_trace_reentry/`).
+The installed PC game's `Sdata/Shadows.exe` references `l05Boss.san` from
+its Boba actor state handler, after dispatching the `boba` actor tag and
+examining the nearby `slav` (Slave I) object. This supports an encounter-phase
+trigger rather than an event-entry trigger, but static code alone does not
+identify the exact visible handoff. A process-local event-15 baseline now
+confirms the corresponding runtime `boba` and `slav` actors are both present
+at VI 604 with phase zero and inactive boss flags
+(`build/diagnostics/gall_pc_state_comparison_baseline/`). Keep the film off
+until the natural elevator and reveal sequence establish its cue.
 Two further process-local event-15 routes turned back toward the visible
 doorway, moved Dash from (-628.9, -517.6) to the closed door, and pulsed the
 Modern X interaction. The door stayed closed, the player stopped at its
@@ -251,6 +260,13 @@ campaign route and physical speaker output remain unverified.
 - [ ] Verify the affected sequences in the running game with actual video and
       audio in each mode, including the transition into and out of each movie.
       Record which sequences were checked and any that remain unverified.
+- [ ] Confirm that each mapped voice-over line corresponds to the visible
+      communication and plays at its appearance in both cutscene modes;
+      document wording differences, gaps, and overlaps. The current PC voice
+      tables map 32 Leebo communicator messages and five Skyhook dialogue
+      lines to WAV files. File/replay harnesses do not establish audiovisual
+      timing for every line; compare the visible message and voice content in
+      running-game captures, including movie handoffs.
 
 ### SOTE-OPEN-005 - Configurable controls and Modern-control review (OPEN)
 
@@ -386,6 +402,11 @@ for RB after confirming the bike has no blaster fire action.
 A native RT64 capture shows Ram Right with keyboard E and controller RB on
 the same live Controls screen, with Ram Left and its Q/LB bindings above it
 (`build/diagnostics/modern_bike_ram_right_visible/frames/present_4300.png`).
+A process-local Mos Eisley bike run confirmed Ram Left as well: Z+Q produced
+native `0x8020` (accelerate plus L) versus Z alone `0x8000`, and changed the
+bike's VI-2250 position from (-832.301, -419.308) to (-835.535, -426.851)
+(`build/diagnostics/bike_keyboard_zq_ram_left/`). The short wall-bound route
+checks the mapping and leftward response, not longer-course feel.
 The native bike reads vertical stick input for camera framing without changing
 position: a process-local +80 stick test left the bike at the same coordinates
 as a zero-stick run while visibly changing its camera (`build/diagnostics/
