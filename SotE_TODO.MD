@@ -217,8 +217,11 @@ did not restart `L05BOSS.SAN` (`gall_command10_duplicate_cue_20261007/`).
 Forcing Boba's command field to 10 at the direct event-15 entry left the
 native actor idle; no native command branch or SAN hook ran
 (`gall_native_command10_pc_skip_20261007/`). The command value alone does
-not activate the encounter. The natural elevator/reveal state is still
-needed to verify the hook's placement.
+not activate the encounter. The recompiled actor dispatcher
+`func_8003FDB8` receives a command argument, writes it to that field, and
+then dispatches it; mutating the stored field does not call the dispatcher.
+The natural elevator/reveal state is still needed to verify the hook's
+placement.
 All eight project tests pass with the new hook. The local generated C was
 patched for the candidate build; `sote.toml` carries the hook for a fresh
 recompilation.
