@@ -429,8 +429,14 @@ keys for movement, IJKL for camera, X/Mouse 1 for Fire, and Z/Mouse 2 for
 Jump. The on-foot gameplay translator and binding editor now use those PC
 defaults together. Process-local guest input and a native Controls capture
 verify the playable route and both device columns; a matched Modern route
-retains its existing W movement. The PC's other control sets, vehicle
-sections, joystick mapping, and interactive feel still need comparison.
+retains its existing W movement. The Classic speeder-bike keyboard/mouse
+defaults now also match the PC input table: Z/Mouse 1 throttles, A/Mouse 2
+reverses or brakes, S/D ram left/right, and arrows/numpad steer. A direct
+bike-stage guest-input run and native Controls capture verify these routes
+(`pc_classic_bike_key_probe_20261007/` and
+`pc_classic_bike_binding_final_20261007/`); Modern bike A still steers in
+its matched run. The PC's other control sets, remaining vehicle sections,
+joystick mapping, and interactive feel still need comparison.
 
 Modern on-foot controls now have analog movement/strafe, continuous right-stick
 turning, persistent pitch shared by weapon and view, circular deadzones, and

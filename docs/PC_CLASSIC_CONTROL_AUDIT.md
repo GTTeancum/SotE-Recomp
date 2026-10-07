@@ -56,6 +56,41 @@ to analog forward movement and Up to its previous D-pad bit
 (`pc_classic_modern_isolation_20261007/`). All eight CTest targets pass.
 
 This verifies translation and display for the first PC built-in on-foot set,
-not the entire Classic scheme. PC stage-specific defaults, other built-in
-sets, joystick behavior, and startup selection still need comparison before
-declaring full parity. Interactive feel and physical devices were not tested.
+not the entire Classic scheme. The bike section below is now also mapped;
+the other PC vehicle sections, other built-in sets, joystick behavior, and
+startup selection still need comparison before declaring full parity.
+Interactive feel and physical devices were not tested.
+
+## Speeder bike in the first built-in set
+
+The PC event-17 bike input array is at VA `0x4CB888`. Its action masks and
+keyboard/mouse slots yield the following defaults:
+
+| PC action | Input | Recompilation's native route |
+| --- | --- | --- |
+| Move / steer | Arrow keys or numpad 8/2/4/6 | Analog stick |
+| Throttle | Z or Mouse 1 | N64 A |
+| Reverse | A or Mouse 2 | N64 B, whose native label is Brakes |
+| Left Kick | S | N64 L, Ram Left |
+| Right Kick | D | N64 R, Ram Right |
+| Camera Position | Tab | N64 C-right |
+| Pause | Escape, Enter, numpad Enter or F1 | Native pause/recovery |
+| Camera Up/Down/Left/Right | I/K/J/L | N64 D-pad directions |
+
+The Classic bike gameplay translator and editor now use these defaults. The
+editor labels native B as **Reverse / Brakes** to represent both PC and N64
+wording, and labels the two kick actions **Ram Left** and **Ram Right**.
+A direct event-17 process-local run received Z→`0x8000`, A→`0x4000`,
+S→`0x0020`, D→`0x0010`, Mouse 1→`0x8000`, Mouse 2→`0x4000`, and Left as
+analog X=-80 with no D-pad bit. The native captures show the bike stage
+(`build/diagnostics/pc_classic_bike_key_probe_20261007/`). A Modern bike
+comparison still produced analog left steering from A rather than the new
+Classic reverse mapping (`pc_classic_bike_modern_isolation_20261007/`).
+The final native Controls capture at present 4300 displays both device
+columns with the bike bindings and the combined Reverse / Brakes label
+(`pc_classic_bike_binding_final_20261007/`). All eight CTest targets pass.
+
+The PC game labels the action Reverse, but this short process-local run
+verifies the native B input rather than a sustained reverse trajectory.
+The PC snowspeeder, Outrider and turret mappings and legacy joystick input
+IDs remain open.

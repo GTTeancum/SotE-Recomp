@@ -173,11 +173,13 @@ Layout make_layout(const NativeTable& t) {
             result[g].push_back(std::move(a));
         };
         const bool pc_classic_foot = g == 0 && !mf;
-        add_fixed("move_forward", "Move Forward", key(pc_classic_foot ? up : 'W'), mb ? Token{} : axis(1,-1));
-        add_fixed("move_back", "Move Backward", key(pc_classic_foot ? down : 'S'), mb ? Token{} : axis(1,1));
-        add_fixed("move_left", "Move Left", key(pc_classic_foot ? left : 'A'), axis(0,-1));
-        add_fixed("move_right", "Move Right", key(pc_classic_foot ? right : 'D'), axis(0,1));
-        if (pc_classic_foot) {
+        const bool pc_classic_bike = g == 3 && !mb;
+        const bool pc_classic_arrows = pc_classic_foot || pc_classic_bike;
+        add_fixed("move_forward", "Move Forward", key(pc_classic_arrows ? up : 'W'), mb ? Token{} : axis(1,-1));
+        add_fixed("move_back", "Move Backward", key(pc_classic_arrows ? down : 'S'), mb ? Token{} : axis(1,1));
+        add_fixed("move_left", "Move Left", key(pc_classic_arrows ? left : 'A'), axis(0,-1));
+        add_fixed("move_right", "Move Right", key(pc_classic_arrows ? right : 'D'), axis(0,1));
+        if (pc_classic_arrows) {
             result[g][0].targets[0].push_back(key(104)); // Numpad 8.
             result[g][1].targets[0].push_back(key(98));  // Numpad 2.
             result[g][2].targets[0].push_back(key(100)); // Numpad 4.
@@ -203,6 +205,13 @@ Layout make_layout(const NativeTable& t) {
                 {key('J'),0x0200},{key('L'),0x0100},
                 {key(9),0x21},{key('A'),0x10},{key('W'),8},
                 {key('C'),4},{key('Q'),2}};
+        } else if (pc_classic_bike) {
+            routes[0] = {{key('Z'),0x8000},{key(1),0x8000},
+                {key('A'),0x4000},{key(2),0x4000},
+                {key('S'),0x20},{key('D'),0x10},
+                {key(9),1},{key(13),0x1000},{key(112),0x1000},
+                {key('I'),0x0800},{key('K'),0x0400},
+                {key('J'),0x0200},{key('L'),0x0100}};
         }
         if (mf) routes[0].push_back({key(1), 0x4000}); // Mouse 1 shares Fire with X.
         routes[1] = {{button(0),0x8000},{button(2),0x4000},{button(1),0x4000},{button(3),2},
@@ -245,6 +254,7 @@ Layout make_layout(const NativeTable& t) {
                     if (a >= 8 && a <= 11) name = std::string("Camera ") + std::array<const char*,4>{"Up","Down","Left","Right"}[a-8];
                     if (g == 3 && a == 34) name = "Ram Left";
                     if (g == 3 && a == 35) name = "Ram Right";
+                    if (pc_classic_bike && a == 31) name = "Reverse / Brakes";
                     if (name.empty()) name = "Action " + std::to_string(a);
                     if (used.insert(name).second) { if (!label.empty()) label += " / "; label += name; }
                 }
