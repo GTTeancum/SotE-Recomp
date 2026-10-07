@@ -851,7 +851,9 @@ void poll_input() {
         x = normalize_axis(raw_lx, controls);
         y = -normalize_axis(raw_ly, controls);
 
-        const bool on_foot_modern = !menu && sote::modern_controls::on_foot_active() &&
+        const bool on_foot_modern = !menu &&
+            (sote::modern_controls::on_foot_active() ||
+             control_bindings::context_active(control_bindings::Context::OnFoot)) &&
             sote::controls_menu::current_scheme(
                 sote::controls_menu::SchemeSlot::OnFoot) ==
                 sote::controls_menu::ControlScheme::Modern;
@@ -869,7 +871,9 @@ void poll_input() {
             if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP)) buttons |= n64_l;
             if (mapped_axis(controller,
                 SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 3276) buttons |= n64_b;
-            buttons = sote::modern_controls::map_buttons(buttons);
+            buttons = sote::modern_controls::on_foot_active() ?
+                sote::modern_controls::map_buttons(buttons) :
+                control_bindings::map_on_foot_buttons(buttons);
             const auto movement = sote::modern_controls::shape_stick(
                 {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)},
                 controls.on_foot.movement_deadzone, 1.0f);
@@ -1030,15 +1034,26 @@ void poll_input() {
     }
     // Mouse 1 is the default Modern on-foot Fire alias. It is sampled through
     // the rebinding layer, so assigning the button elsewhere removes this alias.
-    if (!menu && sote::modern_controls::on_foot_active() &&
+    if (!menu && (sote::modern_controls::on_foot_active() ||
+                  control_bindings::context_active(control_bindings::Context::OnFoot)) &&
         sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
             sote::controls_menu::ControlScheme::Modern && key_down(VK_LBUTTON))
         keyboard_buttons |= n64_b;
-    const bool modern_keyboard = !menu && sote::modern_controls::on_foot_active() &&
+    const bool modern_keyboard = !menu &&
+        (sote::modern_controls::on_foot_active() ||
+         control_bindings::context_active(control_bindings::Context::OnFoot)) &&
         sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
             sote::controls_menu::ControlScheme::Modern;
+    // Classic PC keys name actions, not fixed N64 buttons. Preset 6 (used on
+    // the Ord Mantell train) swaps Jump and Fire, so resolve both schemes
+    // through the live on-foot action table.
     buttons |= modern_keyboard ?
-        sote::modern_controls::map_buttons(keyboard_buttons) : keyboard_buttons;
+        (sote::modern_controls::on_foot_active() ?
+            sote::modern_controls::map_buttons(keyboard_buttons) :
+            control_bindings::map_on_foot_buttons(keyboard_buttons)) :
+        classic_foot_keyboard ?
+            control_bindings::map_on_foot_buttons(keyboard_buttons) :
+            keyboard_buttons;
 
     float keyboard_x = 0.0f;
     float keyboard_y = 0.0f;

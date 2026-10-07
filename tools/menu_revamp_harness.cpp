@@ -205,6 +205,30 @@ int main(int argc, char** argv) {
     const std::filesystem::path scratch = argv[1];
     {
         namespace bindings = sote::control_bindings;
+        bindings::NativeTable ord{};
+        ord.masks[12] = 0x8000; // Ord Mantell preset 6: Fire.
+        ord.masks[13] = 0x4000; // Jump.
+        ord.masks[14] = 0x0001; // Aim/Look.
+        ord.labels[12] = "Fire";
+        ord.labels[13] = "Jump";
+        ord.labels[14] = "Aim/Look";
+        const auto ord_layout = bindings::make_layout(ord);
+        const auto& ord_foot = ord_layout[0];
+        auto route_for = [&](bindings::Token token) {
+            return std::find_if(ord_foot.begin(), ord_foot.end(), [&](const auto& row) {
+                return std::find(row.targets[0].begin(), row.targets[0].end(), token) !=
+                    row.targets[0].end();
+            });
+        };
+        const auto jump = route_for(bindings::key('Z'));
+        const auto fire = route_for(bindings::key('X'));
+        check(jump != ord_foot.end() && jump->label.find("Jump") != std::string::npos &&
+            fire != ord_foot.end() && fire->label.find("Fire") != std::string::npos,
+            "Classic PC Jump and Fire rows follow Ord preset 6");
+        check(bindings::translate_on_foot_buttons(ord, 0x8000) == 0x4000 &&
+            bindings::translate_on_foot_buttons(ord, 0x4000) == 0x8000 &&
+            bindings::translate_on_foot_buttons(ord, 0x2000) == 0x0001,
+            "Classic PC actions use Ord preset 6 native buttons");
         bindings::NativeTable asteroid{};
         asteroid.masks[3] = 0x1000;
         asteroid.masks[37] = 0x2016;

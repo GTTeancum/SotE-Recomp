@@ -72,6 +72,7 @@ int main() {
     put(ram,table+0x1A,uint16_t(0x4000));
     put(ram,table+0x18,uint16_t(0x8000));
     put(ram,table+0x24,uint16_t(0x8));
+    put(ram,table+0x1C,uint16_t(0x1));
     double dt = 1.0/60;
     uint64_t bits;
     std::memcpy(&bits,&dt,8);
@@ -80,7 +81,8 @@ int main() {
     publish({{.5f,.5f},{.5f,.5f},true});
     sote_modern_begin(ram.data(),object);
     check(map_buttons(0x8000)==0x4000 && map_buttons(0x4000)==0x8000 &&
-        map_buttons(0x10)==0x8 && map_buttons(0x1000)==0x1000,
+        map_buttons(0x10)==0x8 && map_buttons(0x2000)==0x1 &&
+        map_buttons(0x1000)==0x1000,
         "actions follow saved retail preset and preserve Start");
     check(sote_modern_take_camera_request()==1 && sote_modern_take_camera_request()==0,
         "Modern requests native camera transition exactly once");

@@ -172,6 +172,9 @@ before reaching the next car (`voice_ord_b_jump_1170_20261007/`). A
 left-and-forward B jump also falls (`voice_ord_left_jump_1170_20261007/`).
 No `ILB08/09/10` visible pairing was reached. Future train timing probes
 must use the verified B jump action and land on the next car.
+The Classic PC Z/Mouse 2 and Modern A actions now resolve to that B jump
+through the train's live N64 preset. This fixes the input route but has not
+yet reached the later voice messages.
 An extended process-local Sewer flight used Modern Y to enable the jetpack
 and held A until its displayed fuel fell from 98% to 2%. Thrust then stopped
 and fuel refilled to 85%, without an `ILB31` queue or visible “Jetpack

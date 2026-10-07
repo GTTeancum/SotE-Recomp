@@ -18,9 +18,9 @@ std::atomic<int> mouse_delta_x{0};
 std::atomic<int> mouse_delta_y{0};
 std::atomic<int64_t> last_on_foot_ms{0};
 std::atomic<int64_t> last_aiming_ms{0};
-constexpr uint16_t canonical_buttons[] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20};
-constexpr uint32_t binding_offsets[] = {0x1A,0x18,0x24,0x26,0x28,0x2C,0x2E};
-std::atomic<uint16_t> bindings[7] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20};
+constexpr uint16_t canonical_buttons[] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20,0x2000};
+constexpr uint32_t binding_offsets[] = {0x1A,0x18,0x24,0x26,0x28,0x2C,0x2E,0x1C};
+std::atomic<uint16_t> bindings[8] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20,0x2000};
 Input frame;
 Tuning tuning;
 bool active = false;
@@ -95,8 +95,8 @@ bool reticle_visible() {
     return age >= 0 && age < 150;
 }
 uint16_t map_buttons(uint16_t canonical) {
-    uint16_t result = canonical & ~uint16_t(0xC03E);
-    for (unsigned i=0; i<7; ++i)
+    uint16_t result = canonical & ~uint16_t(0xE03E);
+    for (unsigned i=0; i<8; ++i)
         if (canonical & canonical_buttons[i]) result |= bindings[i].load();
     return result;
 }
@@ -127,7 +127,7 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
     tuning = sote::controls_menu::modern_controls_tuning().on_foot;
     const auto preset = read<int16_t>(ram, 0x800D252C);
     if (preset >= 0 && preset < 8) {
-        for (unsigned i=0; i<7; ++i)
+        for (unsigned i=0; i<8; ++i)
             bindings[i].store(read<uint16_t>(ram,
                 0x800E6808 + preset*96 + binding_offsets[i]));
     }

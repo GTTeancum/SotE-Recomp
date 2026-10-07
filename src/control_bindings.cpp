@@ -202,13 +202,15 @@ Layout make_layout(const NativeTable& t) {
         if (pc_classic_foot) {
             // First built-in PC control set. Keep these target bits in sync
             // with frontend.cpp; grouping still follows the active N64 table.
-            routes[0] = {{key('Z'),0x8000},{key(2),0x8000},
-                {key('X'),0x4000},{key(1),0x4000},{key(32),0x2000},
+            routes[0] = {{key('Z'),t.masks[13]},{key(2),t.masks[13]},
+                {key('X'),t.masks[12]},{key(1),t.masks[12]},
+                {key(32),t.masks[14]},
                 {key(13),0x1000},{key(112),0x1000},
                 {key('I'),0x0800},{key('K'),0x0400},
                 {key('J'),0x0200},{key('L'),0x0100},
-                {key(9),0x21},{key('A'),0x10},{key('W'),8},
-                {key('C'),4},{key('Q'),2}};
+                {key(9),uint16_t(t.masks[23]|1)},
+                {key('A'),t.masks[18]},{key('W'),t.masks[22]},
+                {key('C'),t.masks[19]},{key('Q'),t.masks[20]}};
         } else if (pc_classic_snow) {
             routes[0] = {{key('Z'),0x8000},{key(2),0x8000},
                 {key('X'),0x4000},{key(1),0x4000},
@@ -292,6 +294,15 @@ Layout make_layout(const NativeTable& t) {
             auto& targets = result[g][it->second].targets[d];
             if (std::find(targets.begin(),targets.end(),r.input) == targets.end()) targets.push_back(r.input);
         }
+    }
+    return result;
+}
+uint16_t translate_on_foot_buttons(const NativeTable& table, uint16_t canonical) {
+    constexpr uint16_t source[] = {0x8000,0x4000,0x10,0x4,0x2,0x8,0x20,0x2000};
+    constexpr int action[] = {13,12,18,19,20,22,23,14};
+    uint16_t result = canonical & ~uint16_t(0xE03E);
+    for (size_t i = 0; i < std::size(source); ++i) {
+        if (canonical & source[i]) result |= table.masks[action[i]];
     }
     return result;
 }
@@ -687,6 +698,13 @@ bool context_active(Context context) {
     std::lock_guard lock(state.mutex);
     return state.play_valid && state.context == int(context) &&
         clock_ms() - state.context_time <= 200;
+}
+uint16_t map_on_foot_buttons(uint16_t canonical) {
+    std::lock_guard lock(state.mutex);
+    if (!state.play_valid || state.context != int(Context::OnFoot) ||
+        clock_ms() - state.context_time > 200)
+        return canonical;
+    return translate_on_foot_buttons(state.play_table, canonical);
 }
 bool turret_skyhook_active() {
     std::lock_guard lock(state.mutex);

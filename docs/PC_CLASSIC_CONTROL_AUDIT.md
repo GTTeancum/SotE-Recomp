@@ -61,6 +61,25 @@ the other PC vehicle sections, other built-in sets, joystick behavior, and
 startup selection still need comparison before declaring full parity.
 Interactive feel and physical devices were not tested.
 
+Ord Mantell's playable train event uses N64 control preset 6 rather than the
+Escape opening's preset. A VI-950 RDRAM snapshot of that live event shows
+native action 12 Fire=`0x8000` (A), 13 Jump=`0x4000` (B), and 14
+Aim/Look=`0x0001` (`build/diagnostics/ord_action_table_event8_20261007/`).
+The original fixed Classic mapping therefore made PC Z/Mouse 2 fire and
+PC X/Mouse 1 jump there. Classic keyboard/mouse actions now resolve through
+the current N64 preset table, and the Controls binding rows derive from the
+same masks. A process-local Z key at VI 950 produces guest B and visibly
+lifts Dash from 1.58 to 2.19 units; X produces guest A
+(`ord_classic_z_preset6_live_fix_20261007/` and
+`ord_classic_x_preset6_live_fix_20261007/`). The train's special controller
+does not call the usual Modern camera hook, so the live binding context also
+supplies Modern A/RT action translation there. Its A button produces guest B
+and a visible jump; RT produces guest A
+(`ord_modern_a_preset6_live_fix_20261007/` and
+`ord_modern_rt_preset6_live_fix_20261007/`). The tests and short captures
+verify input routing and Jump, but do not establish a visible Fire effect or
+Modern right-stick aim in this train state.
+
 ## Speeder bike in the first built-in set
 
 The PC event-17 bike input array is at VA `0x4CB888`. Its action masks and

@@ -58,6 +58,8 @@ using Layout = std::array<std::vector<Action>, 5>;
 // Each row contains only routes with identical native effects. Shared native
 // actions (e.g. Jump / Thrust) are shown together rather than falsely separated.
 Layout make_layout(const NativeTable& table);
+// Resolve PC-style on-foot actions through the selected native N64 preset.
+uint16_t translate_on_foot_buttons(const NativeTable& table, uint16_t canonical);
 std::string storage_key(const Action& action, Device device);
 
 class Assignments {
@@ -95,6 +97,7 @@ bool capturing();
 EditorView editor_view();
 PhysicalInput remap(const PhysicalInput& input, bool native_menu_visible);
 bool context_active(Context context);
+uint16_t map_on_foot_buttons(uint16_t canonical);
 bool turret_skyhook_active();
 uint16_t bike_button(bool accelerate);
 // Diagnostics/tests read the same live model used by the menu and remapper.
