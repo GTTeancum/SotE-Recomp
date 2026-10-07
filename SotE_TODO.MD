@@ -421,6 +421,14 @@ speaker output remain unverified.
 
 ### SOTE-OPEN-005 - Configurable controls and Modern-control review (OPEN)
 
+The user requested Classic controls to match the installed PC release after
+SAN validation. `docs/PC_CLASSIC_CONTROL_AUDIT.md` now derives the first
+built-in PC on-foot keyboard/mouse layout directly from `Shadows.exe`. It
+confirms the current N64-style Classic defaults differ: the PC uses arrow
+keys for movement, IJKL for camera, X/Mouse 1 for Fire, and Z/Mouse 2 for
+Jump. The gameplay translator and binding editor still need to adopt this
+mapping together; other PC control sets and vehicle sections need comparison.
+
 Modern on-foot controls now have analog movement/strafe, continuous right-stick
 turning, persistent pitch shared by weapon and view, circular deadzones, and
 independent response/speed tuning. No LT aiming. This replaces the previous
