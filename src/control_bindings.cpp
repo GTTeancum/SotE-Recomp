@@ -247,6 +247,36 @@ Layout make_layout(const NativeTable& t) {
             {button(6),0x1000},{button(9),0x20},{button(10),0x10},
             {button(11),0x0800},{button(12),0x0400},{button(13),0x0200},{button(14),0x0100},
             {axis(4),0x2000},{axis(3,-1),8},{axis(3,1),4},{axis(2,-1),2},{axis(2,1),1}};
+        if (pc_classic_foot || pc_classic_snow || pc_classic_turret ||
+            pc_classic_bike || pc_classic_outrider) {
+            // The PC game's first joystick set assigns buttons 1–4 to
+            // input slots 17/14/8/12 (14/17 for the bike). Keep the editor's
+            // face-button column aligned with frontend.cpp's gameplay path.
+            routes[1].erase(std::remove_if(routes[1].begin(), routes[1].end(),
+                [](const Route& r) {
+                    return r.input.kind == Kind::Button && r.input.code <= 3;
+                }), routes[1].end());
+            if (pc_classic_foot) {
+                routes[1].insert(routes[1].begin(), {
+                    {button(0),t.masks[12]}, {button(1),t.masks[13]},
+                    {button(2),t.masks[19]}, {button(3),t.masks[18]}});
+            } else if (pc_classic_snow) {
+                routes[1].insert(routes[1].begin(), {
+                    {button(0),0x4000}, {button(1),0x8000},
+                    {button(2),0x2000}, {button(3),0x30}});
+            } else if (pc_classic_turret) {
+                routes[1].insert(routes[1].begin(), {
+                    {button(0),0x4000}, {button(1),0x2000},
+                    {button(2),0x2000}});
+            } else if (pc_classic_bike) {
+                routes[1].insert(routes[1].begin(), {
+                    {button(0),0x8000}, {button(1),0x4000}});
+            } else {
+                routes[1].insert(routes[1].begin(), {
+                    {button(0),0x4000}, {button(1),0x8000},
+                    {button(2),0x2000}, {button(3),0x10}});
+            }
+        }
         if (mf) {
             routes[1] = {{button(0),t.masks[13]},{axis(5),t.masks[12]},
                 {button(1),t.masks[19]},{button(2),t.masks[18]},{button(3),t.masks[20]},

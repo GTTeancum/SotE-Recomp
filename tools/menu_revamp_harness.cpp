@@ -209,6 +209,8 @@ int main(int argc, char** argv) {
         ord.masks[12] = 0x8000; // Ord Mantell preset 6: Fire.
         ord.masks[13] = 0x4000; // Jump.
         ord.masks[14] = 0x0001; // Aim/Look.
+        ord.masks[18] = 0x0008; // Strafe/Activate.
+        ord.masks[19] = 0x0004; // Duck.
         ord.labels[12] = "Fire";
         ord.labels[13] = "Jump";
         ord.labels[14] = "Aim/Look";
@@ -229,6 +231,52 @@ int main(int argc, char** argv) {
             bindings::translate_on_foot_buttons(ord, 0x4000) == 0x8000 &&
             bindings::translate_on_foot_buttons(ord, 0x2000) == 0x0001,
             "Classic PC actions use Ord preset 6 native buttons");
+        auto same_row = [](const bindings::Layout& layout, int group,
+                           bindings::Token keyboard, bindings::Token pad) {
+            const auto& rows = layout[group];
+            return std::any_of(rows.begin(), rows.end(), [&](const auto& row) {
+                return std::find(row.targets[0].begin(), row.targets[0].end(), keyboard) !=
+                    row.targets[0].end() &&
+                    std::find(row.targets[1].begin(), row.targets[1].end(), pad) !=
+                    row.targets[1].end();
+            });
+        };
+        check(same_row(ord_layout, 0, bindings::key('X'), bindings::button(0)) &&
+            same_row(ord_layout, 0, bindings::key('Z'), bindings::button(1)) &&
+            same_row(ord_layout, 0, bindings::key('C'), bindings::button(2)) &&
+            same_row(ord_layout, 0, bindings::key('A'), bindings::button(3)),
+            "Classic PC joystick face buttons share their on-foot keyboard actions");
+        bindings::NativeTable pc_vehicles{};
+        pc_vehicles.masks[24] = 0x0030;
+        pc_vehicles.masks[27] = 0x8000;
+        pc_vehicles.masks[28] = 0x2000;
+        pc_vehicles.masks[30] = 0x4000;
+        pc_vehicles.masks[31] = 0x4000;
+        pc_vehicles.masks[32] = 0x8000;
+        pc_vehicles.masks[36] = 0x4000;
+        pc_vehicles.masks[37] = 0x2000;
+        pc_vehicles.masks[39] = 0x0010;
+        pc_vehicles.masks[40] = 0x8000;
+        pc_vehicles.masks[42] = 0x4000;
+        pc_vehicles.masks[43] = 0x2000;
+        const auto pc_layout = bindings::make_layout(pc_vehicles);
+        check(same_row(pc_layout, 1, bindings::key('X'), bindings::button(0)) &&
+            same_row(pc_layout, 1, bindings::key('Z'), bindings::button(1)) &&
+            same_row(pc_layout, 1, bindings::key(32), bindings::button(2)) &&
+            same_row(pc_layout, 1, bindings::key('A'), bindings::button(3)),
+            "Classic PC snowspeeder joystick actions appear beside keyboard routes");
+        check(same_row(pc_layout, 2, bindings::key('X'), bindings::button(0)) &&
+            same_row(pc_layout, 2, bindings::key(32), bindings::button(1)) &&
+            same_row(pc_layout, 2, bindings::key(32), bindings::button(2)),
+            "Classic PC turret joystick fire and missile routes share editor rows");
+        check(same_row(pc_layout, 3, bindings::key('Z'), bindings::button(0)) &&
+            same_row(pc_layout, 3, bindings::key('A'), bindings::button(1)),
+            "Classic PC bike joystick throttle and reverse share editor rows");
+        check(same_row(pc_layout, 4, bindings::key('X'), bindings::button(0)) &&
+            same_row(pc_layout, 4, bindings::key('Z'), bindings::button(1)) &&
+            same_row(pc_layout, 4, bindings::key(32), bindings::button(2)) &&
+            same_row(pc_layout, 4, bindings::key('A'), bindings::button(3)),
+            "Classic PC Outrider joystick actions appear beside keyboard routes");
         bindings::NativeTable asteroid{};
         asteroid.masks[3] = 0x1000;
         asteroid.masks[37] = 0x2016;

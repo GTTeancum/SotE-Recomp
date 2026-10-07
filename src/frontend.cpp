@@ -797,15 +797,60 @@ void poll_input() {
     Sint16 raw_rx = 0;
     Sint16 raw_ry = 0;
     if (raw_input.connected) {
+        const bool classic_foot_pad = !menu &&
+            control_bindings::context_active(control_bindings::Context::OnFoot) &&
+            sote::controls_menu::current_scheme(
+                sote::controls_menu::SchemeSlot::OnFoot) ==
+                sote::controls_menu::ControlScheme::Classic;
+        const bool classic_snow_pad = !menu &&
+            control_bindings::context_active(control_bindings::Context::Snowspeeder);
+        const bool classic_turret_pad = !menu &&
+            control_bindings::context_active(control_bindings::Context::Turret);
+        const bool classic_bike_pad = !menu &&
+            control_bindings::context_active(control_bindings::Context::Bike) &&
+            sote::controls_menu::current_scheme(
+                sote::controls_menu::SchemeSlot::Bike) ==
+                sote::controls_menu::ControlScheme::Classic;
+        const bool classic_outrider_pad = !menu &&
+            control_bindings::context_active(control_bindings::Context::Outrider);
         auto pressed = [](SDL_GameControllerButton button) {
             return mapped_button(controller, button) != 0;
         };
-        if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_a;
-        if (pressed(SDL_CONTROLLER_BUTTON_X) ||
-            pressed(SDL_CONTROLLER_BUTTON_B)) buttons |= n64_b;
-        // C-left toggles Dash's jetpack. Keep the original right-stick
-        // direction and provide an accessible digital Xbox-button alias.
-        if (pressed(SDL_CONTROLLER_BUTTON_Y)) buttons |= n64_cl;
+        if (classic_foot_pad) {
+            // PC joystick buttons 1–4: Fire, Jump, Duck, Strafe/Activate.
+            // Resolve their actions through the active N64 preset; Ord's
+            // Fire/Jump bits differ from the Escape opening's bits.
+            uint16_t face = 0;
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) face |= n64_b;
+            if (pressed(SDL_CONTROLLER_BUTTON_B)) face |= n64_a;
+            if (pressed(SDL_CONTROLLER_BUTTON_X)) face |= n64_cd;
+            if (pressed(SDL_CONTROLLER_BUTTON_Y)) face |= n64_r;
+            buttons |= control_bindings::map_on_foot_buttons(face);
+        } else if (classic_snow_pad) {
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_b;
+            if (pressed(SDL_CONTROLLER_BUTTON_B)) buttons |= n64_a;
+            if (pressed(SDL_CONTROLLER_BUTTON_X)) buttons |= n64_z;
+            if (pressed(SDL_CONTROLLER_BUTTON_Y)) buttons |= n64_l | n64_r;
+        } else if (classic_turret_pad) {
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_b;
+            if (pressed(SDL_CONTROLLER_BUTTON_B) ||
+                pressed(SDL_CONTROLLER_BUTTON_X)) buttons |= n64_z;
+        } else if (classic_bike_pad) {
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_a;
+            if (pressed(SDL_CONTROLLER_BUTTON_B)) buttons |= n64_b;
+        } else if (classic_outrider_pad) {
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_b;
+            if (pressed(SDL_CONTROLLER_BUTTON_B)) buttons |= n64_a;
+            if (pressed(SDL_CONTROLLER_BUTTON_X)) buttons |= n64_z;
+            if (pressed(SDL_CONTROLLER_BUTTON_Y)) buttons |= n64_r;
+        } else {
+            if (pressed(SDL_CONTROLLER_BUTTON_A)) buttons |= n64_a;
+            if (pressed(SDL_CONTROLLER_BUTTON_X) ||
+                pressed(SDL_CONTROLLER_BUTTON_B)) buttons |= n64_b;
+            // C-left toggles Dash's jetpack. Keep the original right-stick
+            // direction and provide an accessible digital Xbox-button alias.
+            if (pressed(SDL_CONTROLLER_BUTTON_Y)) buttons |= n64_cl;
+        }
         if (pressed(SDL_CONTROLLER_BUTTON_START)) buttons |= n64_start;
         if (pressed(SDL_CONTROLLER_BUTTON_LEFTSHOULDER)) buttons |= n64_l;
         if (pressed(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)) buttons |= n64_r;

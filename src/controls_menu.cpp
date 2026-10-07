@@ -708,25 +708,21 @@ int scheme_legend(
     const LegendEntry** entries,
     int max_entries) {
     const ControlScheme scheme = current_scheme(slot);
-    // Classic rows describe the pad-to-N64 mapping this port performs, which
-    // is verifiable from frontend.cpp. The game assigns actions to N64
-    // buttons through its own Controls preset, so those names are only used
-    // where this port defines them (the Modern schemes) or where the action
-    // is fixed by the port itself.
-    // Keyboard bindings are fixed by frontend.cpp's keyboard-to-N64 map, so
-    // they are the same in both schemes; only the pad column changes.
+    // Keep this compact legend consistent with the editable Controls rows.
+    // Classic follows the installed PC game's first keyboard/mouse and
+    // joystick set; Modern has its own on-foot and bike defaults.
     static const LegendEntry on_foot_classic[] = {
-        {"Move", "LS", "WASD"},
-        {"Jump", "A", "Z"},
-        {"Fire", "X/B", "X"},
-        {"Camera", "LB/RS-R", "Q/L"},
-        {"Doors", "RB", "E"},
-        {"Strafe", "RB", "E"},
-        {"Aim", "LT", "C"},
-        {"Jetpack", "Y", "J"},
-        {"Weapons", "RS-Up", "I"},
-        {"Crouch", "RS-Down", "K"},
-        {"Pause", "Start", "Enter"},
+        {"Move", "LS", "Arrows / Numpad"},
+        {"Jump", "B", "Z / Mouse 2"},
+        {"Fire", "A", "X / Mouse 1"},
+        {"Camera", "D-Pad", "I/J/K/L"},
+        {"Doors", "Y", "A"},
+        {"Strafe", "Y", "A"},
+        {"Aim", "LT", "Space"},
+        {"Jetpack", "RS-Left", "Q"},
+        {"Weapons", "RS-Up", "W"},
+        {"Crouch", "X", "C"},
+        {"Pause", "Start", "Esc / Enter"},
     };
     static const LegendEntry on_foot_modern[] = {
         {"Move", "LS", "WASD"},
@@ -743,13 +739,13 @@ int scheme_legend(
     };
     // The bike has left/right ram actions, not a blaster fire action.
     static const LegendEntry bike_classic[] = {
-        {"Steer", "LS", "WASD"},
-        {"Accel", "A", "Z"},
-        {"Brakes", "X", "X"},
-        {"Ram Left", "LB", "C / Q"},
-        {"Ram Right", "RB", "E"},
-        {"Camera", "RS-Right", "L"},
-        {"Pause", "Start", "Enter"},
+        {"Steer", "LS", "Arrows / Numpad"},
+        {"Accel", "A", "Z / Mouse 1"},
+        {"Reverse / Brakes", "B", "A / Mouse 2"},
+        {"Ram Left", "LB", "S"},
+        {"Ram Right", "RB", "D"},
+        {"Camera", "RS-Right", "Tab"},
+        {"Pause", "Start", "Esc / Enter"},
     };
     static const LegendEntry bike_modern[] = {
         {"Accel", "RT", "Z"},

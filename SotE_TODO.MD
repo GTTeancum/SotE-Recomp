@@ -667,8 +667,20 @@ reverses or brakes, S/D ram left/right, and arrows/numpad steer. A direct
 bike-stage guest-input run and native Controls capture verify these routes
 (`pc_classic_bike_key_probe_20261007/` and
 `pc_classic_bike_binding_final_20261007/`); Modern bike A still steers in
-its matched run. The PC's other control sets, joystick mapping, and
-interactive feel still need comparison.
+its matched run. The PC's other control sets, joystick axes, and
+interactive feel still need comparison. The first built-in PC joystick
+buttons 1–4 now drive Classic A/B/X/Y in on-foot, snowspeeder, turret,
+bike, and Outrider contexts; the editable Controller column uses those
+same defaults. Process-local game runs verified the guest button outputs
+in all five contexts, including Ord Mantell's reversed Fire/Jump preset
+(`pc_classic_pad_ord_held_20261007/`,
+`pc_classic_pad_snow_face_20261007/`,
+`pc_classic_pad_turret_face_20261007/`,
+`pc_classic_pad_bike_face_20261007/`, and
+`pc_classic_pad_outrider_face_20261007/`). Native captures show each
+stage; printed face-button labels and physical-controller feel remain
+unverified. See `docs/PC_CLASSIC_CONTROL_AUDIT.md` for the PC executable
+slot evidence and per-context action table.
 The Ord Mantell event-8 train uses N64 preset 6, whose live table assigns
 Fire to A and Jump to B. A native B pulse raised Dash from about 1.58 to
 2.20 units while A did not (`voice_ord_stationary_b_950_20261007/` and
@@ -689,16 +701,16 @@ The Classic snowspeeder keyboard/mouse defaults now match the PC event-3
 input table: arrows/numpad steer, Z/Mouse 2 thrust, X/Mouse 1 fire,
 Space/C harpoon, and A brakes. A process-local Hoth flight received the
 corresponding native inputs and rendered a harpoon response
-(`pc_classic_snow_key_probe_20261007/`). Physical feel and PC joystick
-controls remain open.
+(`pc_classic_snow_key_probe_20261007/`). Physical feel and joystick axes
+remain open.
 The Classic Outrider keyboard/mouse defaults now follow the PC event-30
 input table: Z/Mouse 2 accelerates and rolls, A decelerates, X/Mouse 1 fires,
 Space/C launches missiles, and Q rolls. A direct Skyhook event-30 capture
 shows the Outrider and a missile count falling from five to four after Space;
 the native Controls screen displays the same assignments
 (`pc_classic_outrider_event30_probe_20261007/` and
-`pc_classic_outrider_binding_20261007/`). PC joystick mapping and
-long-flight feel remain open.
+`pc_classic_outrider_binding_20261007/`). Joystick axes and long-flight
+feel remain open.
 The installed PC turret tables differ by scene: Asteroid Field binds Missile
 to Space/C/Mouse 2, while Skyhook binds it to Z/C/Mouse 2. The current single
 Turret editor section now shows that distinction and applies one custom

@@ -21,11 +21,11 @@ scan codes.
 | --- | --- | --- |
 | Move | Arrow keys; numpad 8/2/4/6 also occupy movement slots | Mask `0x4000` uses slots 23–26; `0x8000` uses 27–30. |
 | Camera Up/Down/Left/Right | I/K/J/L | Masks `0x1/2/4/8` use slots 0–3. |
-| Fire | X, Mouse 1 | Mask `0x1000` uses slots 16–18; slot 16 is DIK X, slot 18 is Mouse 1. Slot 17 is another device input. |
-| Jump / Jetpack Thrust | Z, Mouse 2 | Mask `0x800` uses slots 13–15; slot 13 is DIK Z, slot 15 is Mouse 2. Slot 14 is another device input. |
+| Fire | X, Mouse 1, Joystick 1 Button 1 | Mask `0x1000` uses slots 16–18; slot 17 is joystick input ID `0x100`. |
+| Jump / Jetpack Thrust | Z, Mouse 2, Joystick 1 Button 2 | Mask `0x800` uses slots 13–15; slot 14 is joystick input ID `0x101`. |
 | Aim/Look | Space | Mask `0x400` uses slot 11. |
-| Strafe / Activate | A | Mask `0x200` uses slot 10 and another device input in slot 12. These two action labels share the mask in this set. |
-| Duck | C | Mask `0x20` uses slot 5 and another device input in slot 8. |
+| Strafe / Activate | A, Joystick 1 Button 4 | Mask `0x200` uses slots 10 and 12; slot 12 is joystick input ID `0x103`. These two action labels share the mask in this set. |
+| Duck | C, Joystick 1 Button 3 | Mask `0x20` uses slots 5 and 8; slot 8 is joystick input ID `0x102`. |
 | Jetpack On/Off | Q | Mask `0x80` uses slot 7. |
 | Weapon | W | Mask `0x10` uses slot 4. |
 | Camera Position | Tab | Mask `0x40` uses slot 6. |
@@ -35,8 +35,8 @@ The recompilation's Classic **on-foot** keyboard translator and Controls
 editor defaults now use this PC layout. They retain the N64 game's native
 action mechanics and its active preset relationships. The change is gated by
 the binding system's live on-foot context, so the native menu and other
-sections keep their existing navigation. The controller column remains the
-N64 controller layout pending a PC joystick comparison.
+sections keep their existing navigation. The first built-in PC joystick
+button set is compared below.
 
 The first process-local test pressed Up while the communicator was still
 visible and saw the old camera/D-pad bit. This exposed why the Modern camera
@@ -56,10 +56,53 @@ to analog forward movement and Up to its previous D-pad bit
 (`pc_classic_modern_isolation_20261007/`). All eight CTest targets pass.
 
 This verifies translation and display for the first PC built-in on-foot set,
-not the entire Classic scheme. The bike section below is now also mapped;
-the other PC vehicle sections, other built-in sets, joystick behavior, and
-startup selection still need comparison before declaring full parity.
+not the entire Classic scheme. The bike and other vehicle sections below are
+now also mapped; other built-in sets and startup selection still need
+comparison before declaring full parity.
 Interactive feel and physical devices were not tested.
+
+## First built-in PC joystick buttons
+
+The installed executable initializes input IDs `0x100` through `0x103` as
+“Joystick 1 Button 1” through “Joystick 1 Button 4” in the input-name table
+at VA `0x7B5DA0`. Those IDs occupy slots 17, 14, 8, and 12 respectively in
+the first built-in on-foot, snowspeeder, turret, and Outrider input arrays.
+The bike array swaps Buttons 1 and 2 between slots 14 and 17. Combining
+these slots with the PC action masks yields the following face-button routes
+for the recompilation's Classic mode. A/B/X/Y stand for SDL controller
+buttons 0/1/2/3; the PC executable names generic joystick buttons, so this
+is a physical-button numbering convention, not proof of every controller's
+printed labels.
+
+| Context | A / PC Button 1 | B / PC Button 2 | X / PC Button 3 | Y / PC Button 4 |
+| --- | --- | --- | --- | --- |
+| On foot | Fire | Jump / Jetpack Thrust | Duck | Strafe / Activate |
+| Snowspeeder | Fire | Thrust | Harpoon | Brakes |
+| Asteroid/Skyhook turret | Fire | Missile | Missile | Unassigned |
+| Speeder bike | Throttle | Reverse | Unassigned | Unassigned |
+| Outrider | Fire | Accelerate / Roll | Missile | Decelerate |
+
+The game still supplies N64 actions internally. On foot, the four PC
+joystick actions resolve through the active N64 preset: in Ord Mantell's
+preset 6, A produces native Fire=`0x8000`, B Jump=`0x4000`, X Duck=`0x0004`,
+and Y Strafe/Activate=`0x0008`. A process-local held-button run also shows
+Dash rise from 1.58 to 2.14 units after B, with the train scene visible
+(`build/diagnostics/pc_classic_pad_ord_held_20261007/`). Separate bike,
+snowspeeder, Asteroid turret, and Outrider runs show the four guest button
+outputs matching the table, including unassigned X/Y on the bike and Y in
+the turret (`pc_classic_pad_bike_face_20261007/`,
+`pc_classic_pad_snow_face_20261007/`,
+`pc_classic_pad_turret_face_20261007/`, and
+`pc_classic_pad_outrider_face_20261007/`). Native captures show each stage;
+the Outrider missile count fell to four after X. These are process-local
+input snapshots and rendered captures, not physical controller tests or a
+full comparison of PC joystick axes and other built-in sets. Extra Xbox
+shoulder/trigger and right-stick routes remain port conveniences.
+The live Controls capture at
+`build/diagnostics/pc_classic_pad_controls_live_20261007/frames/present_4300.png`
+shows Keyboard / Mouse and Controller together, including Classic Jump=B
+and Fire=A. The menu harness checks that all four face buttons appear in
+the same action rows as their PC keyboard equivalents in each stage.
 
 Ord Mantell's playable train event uses N64 control preset 6 rather than the
 Escape opening's preset. A VI-950 RDRAM snapshot of that live event shows
@@ -112,7 +155,8 @@ columns with the bike bindings and the combined Reverse / Brakes label
 The PC game labels the action Reverse, but this short process-local run
 verifies the native B input rather than a sustained reverse trajectory.
 The PC Outrider and stage-specific turret mappings below are now also
-implemented; legacy joystick input IDs remain open.
+implemented; first-set joystick buttons are mapped above, while axes and
+other PC control sets remain open.
 
 ## Snowspeeder in the first built-in set
 
