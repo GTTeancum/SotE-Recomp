@@ -509,11 +509,21 @@ const char* san_movie_for_event(int16_t event) {
 void trace_gall_boss_objects(uint8_t* rdram, int vi) {
     if (rdram == nullptr || std::getenv("SOTE_TRACE_GALL_BOSS") == nullptr)
         return;
+    struct BossState {
+        uint32_t object = 0;
+        uint16_t record_flags = 0;
+        uint16_t object_flags = 0;
+        float health = 0.0f;
+    };
+    static std::array<BossState, 8> previous{};
+    static uint32_t last_base = 0;
+    static int32_t previous_stage = INT32_MIN;
     const int16_t event = static_cast<int16_t>(
         read_guest_half(rdram, 0x8013CE0EU));
-    static int32_t previous_stage = INT32_MIN;
     if (event != 15) {
         previous_stage = INT32_MIN;
+        previous.fill({});
+        last_base = 0;
         return;
     }
 
@@ -541,14 +551,6 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
             static_cast<uint64_t>(count) * stride > 0x80800000ULL)
         return;
 
-    struct BossState {
-        uint32_t object = 0;
-        uint16_t record_flags = 0;
-        uint16_t object_flags = 0;
-        float health = 0.0f;
-    };
-    static std::array<BossState, 8> previous{};
-    static uint32_t last_base = 0;
     if (base != last_base) {
         previous.fill({});
         last_base = base;

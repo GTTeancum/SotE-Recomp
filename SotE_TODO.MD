@@ -182,6 +182,10 @@ the opening corridor through the captured VI 900 frame
 segment, placement IDs 4 and 5 are the Boba/Slave I objects at those boss
 coordinates. Nearby `Show`/`Hide` script commands target placement ID 94 at
 (-129, 425, 209), not either boss. They cannot justify a Boba movie trigger.
+The trace now resets its prior boss state on leaving event 15; a controlled
+15 -> 14 -> 15 replay logged fresh stage and all three boss baselines on
+re-entry, with the native corridor still visible afterward
+(`build/diagnostics/gall_stage_trace_reentry/`).
 Two further process-local event-15 routes turned back toward the visible
 doorway, moved Dash from (-628.9, -517.6) to the closed door, and pulsed the
 Modern X interaction. The door stayed closed, the player stopped at its
