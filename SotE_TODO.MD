@@ -422,6 +422,10 @@ A matched direct PC-mode event-30 run queued the same `ILB46/ILU13/ILU16`
 files with the same visible communications
 (`voice_skyhook_event30_pc_mode_20261007/`). `ILU17/19/20` and physical
 speaker output remain unverified.
+An extended Original N64 event-30 idle capture retained the playable
+Outrider battle through VI 4200 and showed no `ILU17/19/20` queue, even
+after a life loss (`voice_skyhook_event30_extended_original_20261007/`).
+Those lines require the relevant battle progress to verify their onset.
 
 Acceptance status for item 1: the N64/PC selection is implemented and
 persistent. Placement fixes and rendered handoffs cover the chapter intros,

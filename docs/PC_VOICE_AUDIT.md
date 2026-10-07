@@ -129,6 +129,13 @@ diagnostic PCM files. This still does not verify physical speaker output.
 The 21 retained Leebo clips without a visible in-game pairing fall into these
 mission sections. Their content comparisons above remain valid; the listed
 routes identify what still needs to appear in native captures in both modes.
+An extended Original N64 Skyhook event-30 idle run reached the playable
+Outrider battle, lost one life at VI 2075, and remained in event 30 through
+VI 4200 (`voice_skyhook_event30_extended_original_20261007/`). Rendered
+captures at presents 2600 and 4100 show the ship, targets, and HUD. Only
+`ILU13/16` queued; `ILU17/19/20` did not appear on an idle timer. Their
+remaining timing check needs the relevant battle progress, not a longer idle
+capture.
 
 | Section | Clips | Next visible state to reach |
 | --- | --- | --- |
