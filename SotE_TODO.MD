@@ -214,6 +214,11 @@ elevator/reveal route. Natural encounter timing and its post-film gameplay
 handoff remain to be verified.
 A second synthetic command-10 request after the first film's audio handoff
 did not restart `L05BOSS.SAN` (`gall_command10_duplicate_cue_20261007/`).
+Forcing Boba's command field to 10 at the direct event-15 entry left the
+native actor idle; no native command branch or SAN hook ran
+(`gall_native_command10_pc_skip_20261007/`). The command value alone does
+not activate the encounter. The natural elevator/reveal state is still
+needed to verify the hook's placement.
 All eight project tests pass with the new hook. The local generated C was
 patched for the candidate build; `sote.toml` carries the hook for a fresh
 recompilation.
@@ -307,6 +312,12 @@ The other checked `ILB03/04/10/18/21/31` clips paraphrase their N64 text;
 their wording is recorded in `pc_voice_weak_pairings_20261007.txt` and
 `pc_voice_palace_pairings_20261007.txt`. These machine transcripts still
 need an audible in-game review before all voice mappings can be signed off.
+The complete installed `ILB` clip transcript pass is recorded in
+`docs/PC_VOICE_AUDIT.md`. It flags `ILB24`: the PC line says the swoop gang
+must be stopped before *Kenobi's place*, while the visible N64 message says
+before *Luke*. Both prescribe stopping the gang, but this is not an exact
+voice/text match. Five unused clips are shorter alternate or fragmentary
+takes; the sixth is the withheld `ILB42`.
 An unmuted process-local Original N64 palace entry rendered the first
 service-panel communication at present 2200 with no `ILB42` voice queued
 (`voice_palace_three_panel_guard_20261007/`). The on-screen message itself

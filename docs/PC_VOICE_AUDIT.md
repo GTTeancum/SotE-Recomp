@@ -24,6 +24,38 @@ loads and mixes all 31 retained built-in mappings and rejects the withheld
 message. Full in-game voice/message timing review is still open in
 `SotE_TODO.MD` item 1.
 
+## Complete installed Leebo clip pass
+
+All 37 installed `ILB*.WAV` clips were run through the local transcript
+diagnostic on 7 October 2026. The full output is at
+`build/diagnostics/pc_voice_all_ilb_20261007.txt`; it is generated evidence,
+not a human listening pass. The table compares every enabled built-in
+pairing in `tools/leebo_voice_cases.tsv` with its N64 communication. A
+content match does not prove timing in a natural playthrough.
+
+| Clips | Content comparison |
+| --- | --- |
+| `ILB06`, `08`, `09`, `11`, `14`, `15`, `16`, `27`, `33`, `35`, `36`, `40`, `44`, `46` | Same instruction or response, with only minor wording changes. |
+| `ILB01` | PC says the Bay 3 shield door is *sealed*; N64 says *closed*. |
+| `ILB03`, `04`, `10` | Same immediate task; PC adds six switches, says “find your way,” or phrases the auto-brake action differently. |
+| `ILB17`, `18`, `21` | Same Gall objective or result, but PC names Slave I where N64 names Boba Fett. `ILB18` omits the N64 jetpack hint. |
+| `ILB24` | Both say to stop the swoop gang. PC says before they reach *Kenobi's place*; the visible N64 message says before they reach *Luke*. This is not an exact spoken match. |
+| `ILB26` | PC says the gang is almost upon Luke but omits the N64 “Hurry!” prefix. |
+| `ILB29` | Both indicate the gang is beaten and direct Dash to Kenobi's place. The recognizer's connector before “Kenobi's place” is uncertain; listen before signing off exact wording. |
+| `ILB31` | PC says the jetpack needs repairs; N64 says “Jetpack Malfunction.” |
+| `ILB34` | PC says *scopes* and N64 says *scanners* for the cargo-hangar location. |
+| `ILB37` | PC calls the destination the hidden entrance to Xizor's palace; N64 says the entrance to Xizor's lair. |
+| `ILB38` | PC specifies the main sewage gate; N64 uses a generic security-key prompt. The runtime restricts this pairing to sewer events 24 and 25. |
+| `ILB39`, `41` | PC shortens the N64 key line and names the found force-field deactivator; both describe the same pickup. |
+| `ILB43` | PC says to bomb “each of them” while N64 specifies three panels; no conflicting count. |
+
+The six installed clips without built-in mappings are `ILB02`, `05`, `13`,
+`25`, `30`, and `42`. The first five are shorter alternate or fragmentary
+takes of already covered Bay 3, Gall, swoop-gang, or exit instructions.
+`ILB42` is withheld because its *four* panels conflict with the N64 *three*
+panel objective. An ignored local `Sdata/hd_voice_map.tsv` may override any
+built-in pairing, so a packaged map must be checked separately before release.
+
 ## Skyhook radio lines
 
 All 18 installed `ILU*.WAV` files were transcribed with the same local
@@ -44,6 +76,12 @@ presents 800/1200/1500
 (`build/diagnostics/voice_skyhook_event30_pc_mode_20261007/`). Physical
 speaker output, `ILU17/19/20`, and the natural campaign route remain
 unverified.
+
+A longer process-local Original N64 event-30 replay ran to VI 3600 and still
+queued only `ILU13` and `ILU16`; its late capture shows the playable turret
+phase beside the Skyhook (`build/diagnostics/
+voice_skyhook_late_original_20261007/`). The later three lines depend on
+progressing the battle and cannot be signed off from an idle replay.
 
 That earlier message, “I'll fly us to the skyhook while you fight off
 Xizor's fighters from the gun turret,” is visible at

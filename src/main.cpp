@@ -620,17 +620,24 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
 
 void inject_gall_boss_cue_for_test(uint8_t* rdram, int vi) {
     const char* requested = std::getenv("SOTE_DIAGNOSTIC_GALL_BOSS_CUE_VI");
-    if (requested == nullptr || rdram == nullptr)
+    const char* native_requested =
+        std::getenv("SOTE_DIAGNOSTIC_GALL_BOSS_NATIVE_COMMAND_VI");
+    if ((requested == nullptr && native_requested == nullptr) || rdram == nullptr)
         return;
-    bool selected = false;
-    for (const char* entry = requested; entry != nullptr && *entry != '\0';) {
-        if (std::atoi(entry) == vi) selected = true;
-        const char* comma = std::strchr(entry, ',');
-        entry = comma != nullptr ? comma + 1 : nullptr;
-    }
-    if (!selected) return;
-    std::printf("[sote][san] diagnostic Gall cue requested VI=%d event=%u\n",
-        vi, read_guest_half(rdram, 0x8013CE0EU));
+    const auto vi_selected = [vi](const char* list) {
+        for (const char* entry = list; entry != nullptr && *entry != '\0';) {
+            if (std::atoi(entry) == vi) return true;
+            const char* comma = std::strchr(entry, ',');
+            entry = comma != nullptr ? comma + 1 : nullptr;
+        }
+        return false;
+    };
+    const bool direct_cue = vi_selected(requested);
+    const bool native_command = vi_selected(native_requested);
+    if (!direct_cue && !native_command) return;
+    std::printf("[sote][san] diagnostic Gall %s requested VI=%d event=%u\n",
+        native_command ? "native command" : "cue", vi,
+        read_guest_half(rdram, 0x8013CE0EU));
     if (read_guest_half(rdram, 0x8013CE0EU) != 15U)
         return;
     constexpr uint32_t pool = 0x80112838U;
@@ -653,10 +660,12 @@ void inject_gall_boss_cue_for_test(uint8_t* rdram, int vi) {
             continue;
         const uint32_t original = read_guest_word(rdram, object + 0x584U);
         write_guest_word(rdram, object + 0x584U, 10U);
-        std::printf("[sote][san] diagnostic synthetic Gall command 10 VI=%d\n",
-            vi);
-        sote_gall_boss_movie_cue(rdram, object);
-        write_guest_word(rdram, object + 0x584U, original);
+        std::printf("[sote][san] diagnostic synthetic Gall command 10 VI=%d mode=%s\n",
+            vi, native_command ? "native" : "direct cue");
+        if (!native_command) {
+            sote_gall_boss_movie_cue(rdram, object);
+            write_guest_word(rdram, object + 0x584U, original);
+        }
         return;
     }
 }
