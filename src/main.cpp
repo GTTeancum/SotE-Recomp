@@ -33,6 +33,7 @@
 #include "hd_music.hpp"
 #include "san_movies.hpp"
 #include "rt64_renderer.hpp"
+#include "recomp_hooks.h"
 #include "ultramodern/error_handling.hpp"
 #include "ultramodern/events.hpp"
 #include "ultramodern/input.hpp"
@@ -391,6 +392,8 @@ bool san_ending_sequence_pending = false;
 uint64_t san_ending_first_token = 0;
 int san_ending_advance_start_vi = -1;
 std::atomic<bool> san_ending_handoff_active{false};
+std::atomic<bool> san_gall_boss_cue_pending{false};
+bool san_gall_boss_started = false;
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -515,6 +518,7 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
         uint16_t object_flags = 0;
         float health = 0.0f;
         uint32_t actor_tag = 0;
+        uint32_t command = 0;
         uint32_t phase = 0;
     };
     static std::array<BossState, 8> previous{};
@@ -569,6 +573,7 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
             read_guest_half(rdram, object + 6U),
             read_guest_float(rdram, object + 0x60U),
             read_guest_word(rdram, object + 0x78U),
+            read_guest_word(rdram, object + 0x584U),
             read_guest_word(rdram, object + 0x588U),
         };
         BossState* prior = nullptr;
@@ -585,15 +590,17 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
             prior->record_flags != current.record_flags ||
             prior->object_flags != current.object_flags ||
             prior->actor_tag != current.actor_tag ||
+            prior->command != current.command ||
             prior->phase != current.phase ||
             std::fabs(prior->health - current.health) > 0.001f) {
             std::printf(
                 "[sote][gall-boss] VI=%d record=%d object=%08X "
-                "actor=%08X phase=%08X timer=%08X "
+                "actor=%08X command=%08X phase=%08X timer=%08X "
                 "record_flags=%04X object_flags=%04X health=%.3f "
                 "pos=%.1f,%.1f,%.1f result=%d stage=%d "
                 "transition=%d->%d\n",
-                vi, index, object, current.actor_tag, current.phase,
+                vi, index, object, current.actor_tag, current.command,
+                current.phase,
                 read_guest_word(rdram, object + 0x58CU),
                 current.record_flags,
                 current.object_flags, current.health,
@@ -611,6 +618,49 @@ void trace_gall_boss_objects(uint8_t* rdram, int vi) {
     }
 }
 
+void inject_gall_boss_cue_for_test(uint8_t* rdram, int vi) {
+    const char* requested = std::getenv("SOTE_DIAGNOSTIC_GALL_BOSS_CUE_VI");
+    if (requested == nullptr || rdram == nullptr)
+        return;
+    bool selected = false;
+    for (const char* entry = requested; entry != nullptr && *entry != '\0';) {
+        if (std::atoi(entry) == vi) selected = true;
+        const char* comma = std::strchr(entry, ',');
+        entry = comma != nullptr ? comma + 1 : nullptr;
+    }
+    if (!selected) return;
+    std::printf("[sote][san] diagnostic Gall cue requested VI=%d event=%u\n",
+        vi, read_guest_half(rdram, 0x8013CE0EU));
+    if (read_guest_half(rdram, 0x8013CE0EU) != 15U)
+        return;
+    constexpr uint32_t pool = 0x80112838U;
+    const int32_t count = static_cast<int32_t>(read_guest_word(rdram, pool + 8));
+    const int32_t stride = static_cast<int32_t>(read_guest_word(rdram, pool + 12));
+    const uint32_t base = read_guest_word(rdram, pool + 16);
+    std::printf("[sote][san] diagnostic Gall pool count=%d stride=%d base=%08X\n",
+        count, stride, base);
+    if (count < 0 || count > 4096 || stride < 0x9C || stride > 4096 ||
+        base < 0x80000000U ||
+        static_cast<uint64_t>(base) + static_cast<uint64_t>(count) * stride >
+            0x80800000ULL)
+        return;
+    for (int32_t index = 0; index < count; ++index) {
+        const uint32_t object =
+            read_guest_word(rdram, base + index * stride + 0x98U);
+        if (object < 0x80000000U || object > 0x80800000U - 0x58CU ||
+            read_guest_word(rdram, object) != 0x426F7373U ||
+            read_guest_word(rdram, object + 0x78U) != 0x626F6261U)
+            continue;
+        const uint32_t original = read_guest_word(rdram, object + 0x584U);
+        write_guest_word(rdram, object + 0x584U, 10U);
+        std::printf("[sote][san] diagnostic synthetic Gall command 10 VI=%d\n",
+            vi);
+        sote_gall_boss_movie_cue(rdram, object);
+        write_guest_word(rdram, object + 0x584U, original);
+        return;
+    }
+}
+
 void update_san_movie_triggers(uint8_t* rdram) {
     if (rdram == nullptr ||
         display_list_count.load(std::memory_order_relaxed) == 0) {
@@ -622,6 +672,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ending_sequence_pending = false;
         san_ending_advance_start_vi = -1;
         san_ending_handoff_active.store(false, std::memory_order_relaxed);
+        san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
+        san_gall_boss_started = false;
         sote::san_movies::stop_cached_playback();
         const int16_t current_event = static_cast<int16_t>(
             read_guest_half(rdram, 0x8013CE0EU));
@@ -647,6 +699,10 @@ void update_san_movie_triggers(uint8_t* rdram) {
     }
     const int16_t event = static_cast<int16_t>(
         read_guest_half(rdram, 0x8013CE0EU));
+    if (event != 15) {
+        san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
+        san_gall_boss_started = false;
+    }
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
     if (san_pending_story_skip_event != INT16_MIN) {
@@ -681,6 +737,15 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_game_over_started = false;
     }
     if (result != 2) {
+        return;
+    }
+    if (event == 15 && !san_gall_boss_started &&
+        san_gall_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
+        san_gall_boss_started =
+            sote::san_movies::play_cached_preview("L05BOSS.SAN");
+        std::printf("[sote][san] Gall Boba encounter cue: %s\n",
+            san_gall_boss_started ? "L05BOSS.SAN started" : "movie unavailable");
+        std::fflush(stdout);
         return;
     }
     if (event != san_last_movie_event) {
@@ -2149,6 +2214,7 @@ void on_vi() {
     }
     log_general_failure_telemetry(count);
     trace_gall_boss_objects(game_rdram, count);
+    inject_gall_boss_cue_for_test(game_rdram, count);
     update_san_movie_triggers(game_rdram);
     (void)sote::san_movies::latest_cached_frame();
     uint64_t movie_token = sote::san_movies::playback_token();
@@ -2399,6 +2465,21 @@ void on_vi() {
 }
 
 } // namespace
+
+extern "C" void sote_gall_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
+    if (rdram == nullptr || actor < 0x80000000U ||
+        actor > 0x80800000U - 0x58CU)
+        return;
+    if (read_guest_half(rdram, 0x8013CE0EU) != 15U ||
+        read_guest_word(rdram, actor) != 0x426F7373U ||
+        read_guest_word(rdram, actor + 0x78U) != 0x626F6261U ||
+        read_guest_word(rdram, actor + 0x584U) != 10U)
+        return;
+    san_gall_boss_cue_pending.store(true, std::memory_order_relaxed);
+    std::printf("[sote][san] Gall Boba native command 10 actor=%08X VI=%d\n",
+        actor, vi_count.load(std::memory_order_relaxed));
+    std::fflush(stdout);
+}
 
 extern "C" void sote_wait_for_game_frame() {
     // HLE can finish two complete gameplay iterations within one 60 Hz VI,

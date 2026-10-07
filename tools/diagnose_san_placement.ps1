@@ -12,6 +12,7 @@ param(
     [switch]$TracePlayer,
     [switch]$TraceAim,
     [switch]$TraceGallBoss,
+    [string]$SyntheticGallCueVi = '',
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
     [string]$Teleport = '',
@@ -60,6 +61,11 @@ if ($TraceFinal) { $info.Environment['SOTE_TRACE_FINAL_EVENT'] = '1' }
 if ($TracePlayer) { $info.Environment['SOTE_TRACE_PLAYER_STATE'] = '1' }
 if ($TraceAim) { $info.Environment['SOTE_TRACE_MODERN_AIM'] = '1' }
 if ($TraceGallBoss) { $info.Environment['SOTE_TRACE_GALL_BOSS'] = '1' }
+if ($SyntheticGallCueVi) {
+    $info.Environment['SOTE_DIAGNOSTIC_GALL_BOSS_CUE_VI'] =
+        [string]$SyntheticGallCueVi
+    Write-Host "Synthetic Gall cue at VI $SyntheticGallCueVi"
+}
 if ($InitialSkipVi -gt 0) {
     $info.Environment['SOTE_SAN_TEST_SKIP_VI'] = [string]$InitialSkipVi
 }

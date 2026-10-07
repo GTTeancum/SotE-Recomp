@@ -38,6 +38,7 @@ uint32_t sote_play_hd_sound_request(uint8_t* rdram, int32_t sound_id);
 void sote_pc_voice_frame(uint8_t* rdram);
 void sote_pc_voice_text(uint8_t* rdram, uint32_t pointer);
 void sote_pc_voice_harpoon(uint8_t* rdram, uint32_t source);
+void sote_gall_boss_movie_cue(uint8_t* rdram, uint32_t actor);
 void sote_note_message_lookup(
     uint8_t* rdram,
     uint32_t message_key,

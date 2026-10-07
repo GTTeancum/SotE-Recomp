@@ -120,8 +120,8 @@ the opening instruction to find Boba Fett. That event-entry mapping is removed.
 Chapter intros now trigger only on their opening event rather than any later
 checkpoint event; a repeat event-14 capture shows the native mission start
 without either Gall SAN movie (`build/diagnostics/
-san_gall_event14_checkpoint_fixed/`). Locate the actual Boba encounter trigger
-before re-enabling `L05BOSS.SAN`.
+san_gall_event14_checkpoint_fixed/`). The later actor-command hook below
+replaces that removed event-entry trigger.
 Direct Original N64 probes show event 15 is another playable Gall on-foot
 section, while event 16 starts the next chapter's Part III story
 (`build/diagnostics/san_gall_event15_native_probe/` and
@@ -189,12 +189,34 @@ re-entry, with the native corridor still visible afterward
 The installed PC game's `Sdata/Shadows.exe` references `l05Boss.san` from
 its Boba actor state handler, after dispatching the `boba` actor tag and
 examining the nearby `slav` (Slave I) object. This supports an encounter-phase
-trigger rather than an event-entry trigger, but static code alone does not
-identify the exact visible handoff. A process-local event-15 baseline now
+trigger rather than an event-entry trigger. A process-local event-15 baseline
 confirms the corresponding runtime `boba` and `slav` actors are both present
 at VI 604 with phase zero and inactive boss flags
-(`build/diagnostics/gall_pc_state_comparison_baseline/`). Keep the film off
-until the natural elevator and reveal sequence establish its cue.
+(`build/diagnostics/gall_pc_state_comparison_baseline/`).
+The PC actor dispatch table sends Boba command 10 to the branch containing
+the `l05Boss.san` call (table at `0x456F80`, branch at `0x454C8F`, call at
+`0x4550B1`). The N64 executable has the same Boba command table: index 10
+at `0x800EA67C` leads to `0x80042480`, which finds Slave I, sets the player
+camera, and reaches the native reveal branch after the player check. A hook
+at `0x80042850` now requests `L05BOSS.SAN` only for the event-15 `Boss`/`boba`
+actor whose command field is 10. A direct event-15 entry instead loads that
+actor with command 1 and does not play the film
+(`gall_command10_baseline_20261007/`,
+`gall_command10_entry_guard_final_20261007/`).
+A process-local synthetic command-10 request validates the PC-mode film
+plumbing: native captures show Boba beside Slave I, non-silent movie PCM
+reaches SDL's dummy device, and the overlay returns to gameplay once without
+restarting (`gall_command10_synthetic_full_handoff_20261007/`). The matched
+Original N64 run keeps the corridor visible and does not play the PC film
+(`gall_command10_synthetic_original_20261007/`). This test invokes the cue
+from a diagnostic at event-15 entry; it does **not** reproduce the natural
+elevator/reveal route. Natural encounter timing and its post-film gameplay
+handoff remain to be verified.
+A second synthetic command-10 request after the first film's audio handoff
+did not restart `L05BOSS.SAN` (`gall_command10_duplicate_cue_20261007/`).
+All eight project tests pass with the new hook. The local generated C was
+patched for the candidate build; `sote.toml` carries the hook for a fresh
+recompilation.
 Two further process-local event-15 routes turned back toward the visible
 doorway, moved Dash from (-628.9, -517.6) to the closed door, and pulsed the
 Modern X interaction. The door stayed closed, the player stopped at its
