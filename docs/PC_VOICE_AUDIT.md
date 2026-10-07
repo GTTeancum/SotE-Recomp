@@ -25,6 +25,14 @@ loads and mixes all 31 retained built-in mappings and rejects the withheld
 message. Full in-game voice/message timing review is still open in
 `SotE_TODO.MD` item 1.
 
+`tools/diagnose_san_placement.ps1 -TraceDroidVisual` now records each native
+communicator text draw with a `mapped` flag, the event, and VI. A direct Gall
+event-14 check logged the ship-side instruction as `mapped=1` on the same
+VI that `ILB11.WAV` queued
+(`build/diagnostics/voice_visual_trace_mapped_gall_20261007/`). This helps
+distinguish a missing mapping from a message that has not yet appeared; it
+does not establish the later Gall conversations' gameplay triggers.
+
 A static ROM-corpus audit (`python tools/audit_voice_rom_hashes.py
 SotE_Recompiled/main.bin tools/leebo_voice_cases.tsv`) checked all 31 keys
 against 484 NUL-terminated, control-prefixed message candidates in the

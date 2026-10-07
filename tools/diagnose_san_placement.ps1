@@ -13,6 +13,7 @@ param(
     [string]$PreviewMovie = '',
     [switch]$TraceFinal,
     [switch]$TracePlayer,
+    [switch]$TraceDroidVisual,
     [switch]$TraceAim,
     [switch]$TraceGallBoss,
     [switch]$TracePalaceBoss,
@@ -73,6 +74,7 @@ $info.Environment['SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP'] = '1'
 if ($PreviewMovie) { $info.Environment['SOTE_SAN_PREVIEW'] = $PreviewMovie }
 if ($TraceFinal) { $info.Environment['SOTE_TRACE_FINAL_EVENT'] = '1' }
 if ($TracePlayer) { $info.Environment['SOTE_TRACE_PLAYER_STATE'] = '1' }
+if ($TraceDroidVisual) { $info.Environment['SOTE_TRACE_DROID_VISUAL'] = '1' }
 if ($TraceAim) { $info.Environment['SOTE_TRACE_MODERN_AIM'] = '1' }
 if ($TraceGallBoss) { $info.Environment['SOTE_TRACE_GALL_BOSS'] = '1' }
 if ($TracePalaceBoss) { $info.Environment['SOTE_TRACE_PALACE_BOSS'] = '1' }

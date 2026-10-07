@@ -3865,7 +3865,7 @@ extern "C" void sote_note_droid_text_buffer_draw(
         std::printf(
             "[sote][droid-text-draw] source=%08X slot=%u "
             "text_pointer=%08X pos=%d,%d color=%02X,%02X,%02X,%02X "
-            "VI=%d event=%d text=\"%.160s\"\n",
+            "VI=%d event=%d mapped=%d text=\"%.160s\"\n",
             source,
             slot,
             text_pointer,
@@ -3877,6 +3877,7 @@ extern "C" void sote_note_droid_text_buffer_draw(
             a,
             vi_count.load(std::memory_order_relaxed),
             static_cast<int>(event),
+            sote::hd_audio::has_voice_for_text(text) ? 1 : 0,
             text.c_str());
         std::fflush(stdout);
     }
