@@ -394,6 +394,7 @@ int san_ending_advance_start_vi = -1;
 std::atomic<bool> san_ending_handoff_active{false};
 uint64_t san_ord_boss_movie_token = 0;
 std::atomic<bool> san_ord_boss_handoff_active{false};
+bool san_ord_boss_skip_pending = false;
 std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
 std::atomic<bool> san_palace_boss_cue_pending{false};
@@ -776,6 +777,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_ending_handoff_active.store(false, std::memory_order_relaxed);
         san_ord_boss_movie_token = 0;
         san_ord_boss_handoff_active.store(false, std::memory_order_relaxed);
+        san_ord_boss_skip_pending = false;
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
@@ -2370,11 +2372,32 @@ void on_vi() {
     uint64_t movie_token = sote::san_movies::playback_token();
     if (movie_token != 0 &&
         sote::frontend::movie_skip_pressed(movie_token, count)) {
+        if (movie_token == san_ord_boss_movie_token && game_rdram != nullptr &&
+            read_guest_half(game_rdram, 0x8013CE0EU) == 10)
+            san_ord_boss_skip_pending = true;
         std::printf("[sote][san] cutscene skipped\n");
         std::fflush(stdout);
         sote::san_movies::stop_cached_playback();
         san_ending_sequence_pending = false;
         movie_token = 0;
+    }
+    if (san_ord_boss_skip_pending && game_rdram != nullptr) {
+        const int16_t event = static_cast<int16_t>(
+            read_guest_half(game_rdram, 0x8013CE0EU));
+        if (event != 10) {
+            san_ord_boss_skip_pending = false;
+        } else if (read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
+            // The player explicitly skipped the film. Wait for arena loading
+            // to finish, then skip its redundant reveal before play resumes.
+            const float before = read_guest_float(game_rdram, 0x800DEB78U);
+            if (before > 0.0f) {
+                write_guest_word(game_rdram, 0x800DEB78U, 0);
+                std::printf("[sote][san] Ord boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
+                    before, count);
+                std::fflush(stdout);
+            }
+            san_ord_boss_skip_pending = false;
+        }
     }
     sote::frontend::set_movie_playback(movie_token);
     // Run the native IG-88 reveal behind the final seconds of its PC film.

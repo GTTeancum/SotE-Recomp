@@ -681,8 +681,12 @@ bool movie_skip_pressed(uint64_t token, int vi) {
     // An offscreen diagnostic must not see unrelated host keyboard or pad
     // state. Only its exact, process-local skip VI may advance the movie.
     bool pressed = focused && skip_controls_down();
-    if (test_skip_vi != nullptr && vi == std::atoi(test_skip_vi)) {
-        pressed = true;
+    for (const char* entry = test_skip_vi; entry != nullptr && *entry != '\0';) {
+        char* end = nullptr;
+        const long requested_vi = std::strtol(entry, &end, 10);
+        if (end == entry) break;
+        if (requested_vi == vi) pressed = true;
+        entry = *end == ',' ? end + 1 : nullptr;
     }
     if (!pressed) {
         armed = true;

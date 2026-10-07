@@ -54,8 +54,15 @@ native camera sequence is absent
 run still has no PC movie and reaches the same 100-health arena view at
 present 1300 (`ord_boss_original_after_hidden_reveal_20261007/`). This
 verifies the direct event-10 path and SDL dummy-device queue, not a natural
-train-to-boss route or physical speaker playback. Skipping the boss film
-early still resumes the native reveal; that skip handoff needs separate work.
+train-to-boss route or physical speaker playback.
+An early PC-film skip at VI 1000 previously replayed the flyover through
+present 1500 (`ord_boss_pc_early_skip_baseline_20261007/`). PC mode now waits
+for the arena's native load to finish, then releases its reveal countdown
+for an explicit movie skip. A second process-local skip run reaches the
+playable HUD and 100 health at present 1100, with no flyover replay
+(`ord_boss_pc_early_skip_fixed_20261007/`). Dash remains unharmed through
+present 1500; at present 1600, an unattended IG-88 attack reduces health to
+81. That later damage occurs during active combat, after control has returned.
 
 The table does not prove movie sound, visual handoff, or native story skip.
 Those are checked separately in the running N64 recompilation and listed in

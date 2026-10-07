@@ -437,7 +437,13 @@ without repeating the native camera sequence
 (`ord_boss_pc_hidden_reveal_10s_20261007/`). The paired Original N64 run
 reached the same playable view without a PC movie
 (`ord_boss_original_after_hidden_reveal_20261007/`). The natural train-to-boss
-route, physical speakers, and early movie-skip handoff remain to be checked.
+route and physical speakers remain to be checked.
+An explicit early skip of the boss PC film previously exposed the native
+flyover. A process-local skip at VI 1000 now waits for arena loading, then
+advances directly to the HUD and combat with 100 health by present 1100
+(`ord_boss_pc_early_skip_fixed_20261007/`). Dash retains 100 health through
+present 1500; an unattended later IG-88 hit at present 1600 is active combat.
+The natural train-to-boss route and physical speaker output remain open.
 An exhaustive scan of the ROM's 484 control-prefixed message candidates
 confirms each of the 31 Leebo hashes resolves to one exact fixture string,
 with no hash collision between different normalized messages. This is a
