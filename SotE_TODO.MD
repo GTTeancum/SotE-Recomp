@@ -270,6 +270,12 @@ audio; this checks visible-line/selected-file alignment in Original mode,
 not physical speaker output. The first attempt without the Start skip stayed
 on the story crawl and never reached the communicator
 (`voice_mos_original_comm_20261007/`).
+The matched PC-mode route plays `L06INTRO.SAN`, takes its native event
+16 -> 17 handoff, and queues the same `ILB24.WAV` at VI 2756. The
+present-2750/2780 captures show the same "Stop the swoop gang" message over
+the bike scene (`voice_mos_pc_comm_20261007/`). This verifies the selected
+voice file and visible message across both cutscene modes for this line;
+speaker output and the other mapped messages remain open.
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or
