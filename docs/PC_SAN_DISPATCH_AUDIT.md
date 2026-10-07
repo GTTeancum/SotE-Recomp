@@ -29,6 +29,17 @@ filename references are the separate PC actor branches at `0x4550B2` and
 command-10 branches now cue those movies in PC cutscene mode. Static branch
 matching and synthetic runtime cues support the placement; reaching both
 encounters through normal gameplay remains unverified.
+The installed `L09BOSS.SAN` soundtrack has Xizor addressing Dash and
+introducing his Gladiator Droid (local automated transcript:
+`build/diagnostics/L09BOSS_audio_transcript_20261007.txt`). The native Palace
+command-10 branch calls `func_80006CB0` immediately after the SAN cue and
+sets the global reveal countdown at `0x800DEB78` to 16 seconds. The Boba
+command-10 branch also calls `func_80006CB0` after its cue. Thus the actor
+hook identifies the story moment, but it does not establish that the native
+camera/reveal will finish before either PC film ends. The synthetic cues used
+so far do not execute these native branches. A natural encounter capture must
+check for repeated reveals and hidden combat before either boss handoff can
+be signed off.
 
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
 at arena entry and queues non-silent audio to SDL's dummy device. Its first

@@ -292,6 +292,15 @@ past the two service-panel messages into playable event 26, where the later
 event-27 boss section was not reached (`palace_story_to_event27_20261007/`).
 These checks explain why a direct event jump cannot prove the natural reveal;
 the palace objectives and boss approach still have to be played through.
+The installed `L09BOSS.SAN` audio describes Xizor leaving Dash with his
+Gladiator Droid (`L09BOSS_audio_transcript_20261007.txt`). The hooked native
+Palace command-10 branch still calls `func_80006CB0` after requesting that
+film and sets its reveal countdown to 16 seconds. Boba's command-10 branch
+also calls `func_80006CB0` after its PC film cue. These static branch facts
+make duplicate post-film native reveals a concrete risk; the synthetic movie
+cues bypass the branch and cannot validate those handoffs. Reach each native
+encounter and inspect the rendered film-to-combat transition before signing
+off either boss movie.
 An Original N64 event-31 probe shows the Tatooine epilogue in which Luke and
 Leia believe Dash died (`build/diagnostics/san_ending_event31_native_probe/`).
 Direct previews show `L11LOSE.SAN` depicts that conversation, while
