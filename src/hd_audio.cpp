@@ -428,7 +428,8 @@ constexpr BuiltinVoice builtin_droid_voices[] = {
     { 0x4FDC18CFU, "ILB37.WAV" },  // Find your way through the sewers to get to the entrance of Xizor's
     { 0xACBC4CC8U, "ILB39.WAV" },  // You found the security key that will access the main sewage gate.
     { 0xE9E5E8B4U, "ILB40.WAV" },  // You need to find a force field deactivator.
-    { 0x2E000141U, "ILB42.WAV" },  // Sir, there are several service panels to the space elevator that c
+    // ILB42 says four service panels while this ROM's visible objective says
+    // three. Do not voice a contradictory gameplay instruction.
     { 0xEB5B276BU, "ILB43.WAV" },  // If you place pulse bombs on each of these three service panels, th
     { 0x211F8144U, "ILB44.WAV" },  // The pulse bombs are set and Luke has found Princess Leia. Just fin
     { 0xA6918E63U, "ILB46.WAV" },  // Sir, you'd better take over the ship... We've reached the skyhook!

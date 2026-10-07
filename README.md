@@ -41,7 +41,7 @@ Modern blaster convergence and optional INI magnetism are documented in
 
 ## Leebo's PC voices
 
-0.9.2 maps 32 distinct Leebo communicator messages to PC recordings and starts
+The current build maps 31 distinct Leebo communicator messages to PC recordings and starts
 them when their text appears. Copy `ILB*.WAV` from the `Sdata` folder in your
 own PC installation into `Sdata` beside `Shadows of the Empire.exe`, then
 restart. The path should be `Sdata/ILB01.WAV`; original PCM WAV files need no

@@ -31,7 +31,9 @@ int main(int argc, char** argv) {
  }
  require(!play_visible_voice("~h~oYou need a security key~nof some sort.",++vi,11),"sewage-gate speech leaked to Gall");
  require(!play_visible_voice("~h~oYou need a security key~nof some sort.",++vi,26),"sewage-gate speech leaked to palace");
- require(count==32,"coverage count changed");
+ require(count==31,"coverage count changed");
+ require(!has_voice_for_text("~h~oSir, there are several~nservice panels to the~nspace elevator that~nconnects Xizor's palace~nto his skyhook in orbit."),
+         "contradictory four-panel PC voice was restored");
  require(!has_voice_for_text("~oLet's get out of here!"),"non-Leebo built-in mapping");
  require(!play_visible_voice("unrelated menu text",++vi,11),"unmapped text played");
  require(play_visible_voice(first,++vi,4),"level transition did not rearm");

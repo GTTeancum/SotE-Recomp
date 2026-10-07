@@ -276,6 +276,20 @@ present-2750/2780 captures show the same "Stop the swoop gang" message over
 the bike scene (`voice_mos_pc_comm_20261007/`). This verifies the selected
 voice file and visible message across both cutscene modes for this line;
 speaker output and the other mapped messages remain open.
+An automated local transcription of the installed PC WAVs exposed a
+contradictory palace line: `ILB42.WAV` says **four** service panels while
+the N64 on-screen `0x2E000141` objective says **three**. The built-in
+`ILB42` mapping is withheld so the game does not speak the wrong count.
+`ILB43.WAV` refers to "each of them" without a count and stays mapped.
+The other checked `ILB03/04/10/18/21/31` clips paraphrase their N64 text;
+their wording is recorded in `pc_voice_weak_pairings_20261007.txt` and
+`pc_voice_palace_pairings_20261007.txt`. These machine transcripts still
+need an audible in-game review before all voice mappings can be signed off.
+An unmuted process-local Original N64 palace entry rendered the first
+service-panel communication at present 2200 with no `ILB42` voice queued
+(`voice_palace_three_panel_guard_20261007/`). The on-screen message itself
+says "several"; its follow-up ROM line specifies three. The 31 remaining
+mapped clips load and mix in `leebo_voices_harness`.
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or
@@ -288,7 +302,7 @@ speaker output and the other mapped messages remain open.
 - [ ] Confirm that each mapped voice-over line corresponds to the visible
       communication and plays at its appearance in both cutscene modes;
       document wording differences, gaps, and overlaps. The current PC voice
-      tables map 32 Leebo communicator messages and five Skyhook dialogue
+      tables map 31 Leebo communicator messages and five Skyhook dialogue
       lines to WAV files. File/replay harnesses do not establish audiovisual
       timing for every line; compare the visible message and voice content in
       running-game captures, including movie handoffs.

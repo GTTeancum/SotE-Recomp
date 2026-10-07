@@ -1,13 +1,13 @@
 # Leebo communicator voices
 
-The supplied PC audio contains 37 ILB clips. There are 32 distinct applicable
-messages, now mapped in `src/hd_audio.cpp`. Five clips are shorter portions
+The supplied PC audio contains 37 ILB clips. There are 31 distinct applicable
+messages currently mapped in `src/hd_audio.cpp`. Five clips are shorter portions
 of selected full lines: ILB02 (ILB01), ILB05 (ILB04), ILB13 (ILB11),
 ILB25 (the “Hurry” interjection preceding ILB26), and ILB30 (ILB29).
 These are not separate gameplay events. ILB26 supplies the substantive
 swoop-gang warning; the separate ILB25 interjection is not layered over it.
 
-`tools/leebo_voice_cases.tsv` records all 32 exact ROM strings, normalized
+`tools/leebo_voice_cases.tsv` records all 31 mapped ROM strings, normalized
 hashes and chosen files. This includes the five previously missing matches
 (ILB03/04/10/18/21), jetpack malfunction (ILB31), needing a sewage key (ILB38)
 and finding a deactivator (ILB41). ILB38 and ILB41 are distinct from the
@@ -24,8 +24,14 @@ and duplicate text slots cannot replay a line. More than 60 VI of absence,
 a changed level event or a VI reset permits playback again. The gate also
 remembers unavailable-file attempts for that appearance to avoid frame-by-
 frame retries. It does not suppress native sound effects. Gameplay text
-remains the N64 version: the PC recordings sometimes shorten or rephrase it
-and may use PC-specific counts (notably service panels).
+remains the N64 version: the PC recordings sometimes shorten or rephrase it.
+`ILB42.WAV` is deliberately withheld: an automated transcript of the
+installed PC clip says there are **four** palace service panels, whereas the
+N64 on-screen objective says **three**. Its companion `ILB43.WAV` does not
+state a count and remains mapped. Other clips paraphrase visible objectives,
+especially `ILB03/04/10/18/21/31`; their content still points to the same
+gameplay situation. The transcripts are diagnostic and do not replace an
+audible in-game review.
 
 Validation uses the real supplied WAV files, not an audio stub:
 `leebo_voices_harness` loads and mixes every mapped clip and requires
