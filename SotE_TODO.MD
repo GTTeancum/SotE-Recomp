@@ -300,7 +300,13 @@ execute and `L09BOSS.SAN` did not start
 3850 show Dash still in the corridor before the closed door. This confirms
 that changing the command field alone does not activate the boss actor;
 the normal Palace objective/encounter state remains necessary for a valid
-film-to-reveal test. The first probe in
+film-to-reveal test. A second temporary diagnostic intercepted the native
+actor dispatcher and would have substituted its command argument when
+called for `glad`. A VI 600–3500 run never entered that dispatcher for the
+loaded actor (`palace_dispatch_command10_pc_20261007/`), so this also did
+not start the film. The dispatcher argument, rather than the stored actor
+command field, selects the native command-10 branch. The temporary hook was
+removed after the test. The first probe in
 `palace_native_command10_pc_20261007/` stayed in the Hoth startup film
 because that run did not skip it and provides no Palace evidence.
 The installed `L09BOSS.SAN` audio describes Xizor leaving Dash with his

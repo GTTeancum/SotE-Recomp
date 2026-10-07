@@ -41,6 +41,14 @@ so far do not execute these native branches. A natural encounter capture must
 check for repeated reveals and hidden combat before either boss handoff can
 be signed off.
 
+For Palace event 27, a direct jump loads the `glad` actor but leaves it
+inactive in the corridor. Setting its stored command to 10 does not call the
+dispatcher. A temporary dispatcher-entry probe also saw no `glad` call
+through VI 3500. The encounter's activation path is therefore still needed
+before the Palace boss film handoff can be judged
+(`palace_native_command10_pc_20261007b/`,
+`palace_dispatch_command10_pc_20261007/`).
+
 For `L04BOSS.SAN`, a direct N64 event-10 PC-mode run confirms the film starts
 at arena entry and queues non-silent audio to SDL's dummy device. Its first
 handoff replayed the native IG-88 reveal after the film
