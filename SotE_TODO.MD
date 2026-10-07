@@ -261,6 +261,15 @@ ship, and find the Imperial super computer" (`san_freighter_pc_story_skip_
 music_guard_fixed/`). These pair the selected WAV names with visible ROM
 messages and queue timing, but the captures do not verify audible output or
 every mapped line.
+An unmuted Original N64 Mos Eisley route used the native Start skip from
+event 16's story crawl to event 17. `ILB24.WAV` queued at VI 2336, and the
+present-2400 native capture visibly says "Stop the swoop gang before they
+reach Luke!" over the bike scene (`build/diagnostics/
+voice_mos_original_comm_skip_20261007/`). SDL's dummy device received game
+audio; this checks visible-line/selected-file alignment in Original mode,
+not physical speaker output. The first attempt without the Start skip stayed
+on the story crawl and never reached the communicator
+(`voice_mos_original_comm_20261007/`).
 
 - [ ] Identify each misplaced movie and the expected story/event transition.
 - [ ] Correct the trigger mapping and timing, including prevention of repeat or
