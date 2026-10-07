@@ -267,6 +267,18 @@ The Modern look rows now explicitly show `Mouse Move` beside each assignable
 right-stick direction, with a fixed-mouse hint and a sensitivity pointer. A
 native RT64 capture verifies the text fits the live controls screen
 (`build/diagnostics/modern_binding_mouse_rows_confirmed/frames/present_4300.png`).
+A process-local mouse snapshot found that Mouse 1 had bypassed Modern's native
+action translation: it produced raw B (`0x4000`) while the current preset's
+Fire action is A (`0x8000`). Keyboard and mouse actions now use the same
+translation as the pad. A paired Escape from Echo Base replay injects only
+in-process relative mouse counts and Mouse 1 state; the repaired run turns
+the view, produces native Fire (`0x8000`), launches a blaster shot, and shows
+ammo falling from 100 to 98 in the rendered frame at present 2720
+(`build/diagnostics/physical_mouse_idle_enabled/` and
+`physical_mouse_move_fire_mapped/`). The earlier uncorrected run retained
+`0x4000` and produced no new projectile trace
+(`physical_mouse_move_fire_enabled/`). Physical device delivery and feel
+remain for the user playtest.
 A repeat process-local route in Original N64 mode reached the live Controls
 screen and captured the Keyboard / Mouse and Controller columns together
 (`build/diagnostics/controls_menu_virtual_recheck_original/frames/

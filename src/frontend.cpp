@@ -63,6 +63,67 @@ struct DiagnosticPadPulse {
 std::vector<DiagnosticPadPulse> diagnostic_pad_pulses;
 bool diagnostic_pad_loaded = false;
 
+struct DiagnosticMousePulse {
+    int start_vi = 0;
+    int duration = 0;
+    unsigned buttons = 0;
+    int dx = 0, dy = 0;
+};
+std::vector<DiagnosticMousePulse> diagnostic_mouse_pulses;
+bool diagnostic_mouse_loaded = false;
+
+bool diagnostic_mouse_enabled() {
+    return std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_MOUSE") != nullptr;
+}
+
+void load_diagnostic_mouse_pulses() {
+    diagnostic_mouse_loaded = true;
+    diagnostic_mouse_pulses.clear();
+    const char* specification = std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_MOUSE");
+    if (!diagnostic_mouse_enabled() || specification == nullptr) return;
+    // startVI:duration:mouse-button-mask:relative-X:relative-Y, comma separated.
+    // The snapshots stay inside this game process and never move the host cursor.
+    const std::string script(specification);
+    size_t begin = 0;
+    while (begin < script.size()) {
+        const size_t end = script.find(',', begin);
+        const std::string item = script.substr(begin, end - begin);
+        DiagnosticMousePulse pulse;
+        if (std::sscanf(item.c_str(), "%d:%d:%x:%d:%d",
+                &pulse.start_vi, &pulse.duration, &pulse.buttons,
+                &pulse.dx, &pulse.dy) == 5 &&
+            pulse.start_vi >= 0 && pulse.duration > 0) {
+            diagnostic_mouse_pulses.push_back(pulse);
+        }
+        if (end == std::string::npos) break;
+        begin = end + 1;
+    }
+    std::printf("[sote][diagnostic-mouse] loaded %zu in-process pulses\n",
+        diagnostic_mouse_pulses.size());
+    std::fflush(stdout);
+}
+
+void diagnostic_mouse_at(int vi, control_bindings::PhysicalInput& raw) {
+    static int last_delta_vi = -1;
+    for (const auto& pulse : diagnostic_mouse_pulses) {
+        if (vi < pulse.start_vi || vi >= pulse.start_vi + pulse.duration)
+            continue;
+        if (pulse.buttons & 1U) raw.keys[VK_LBUTTON] = 1;
+        if (pulse.buttons & 2U) raw.keys[VK_RBUTTON] = 1;
+        if (pulse.buttons & 4U) raw.keys[VK_MBUTTON] = 1;
+        if (vi != last_delta_vi) {
+            sote::modern_controls::add_mouse_delta(pulse.dx, pulse.dy);
+            if (vi == pulse.start_vi) {
+                std::printf("[sote][diagnostic-mouse] VI=%d buttons=%X "
+                    "delta=%d,%d\n", vi, pulse.buttons, pulse.dx, pulse.dy);
+                std::fflush(stdout);
+            }
+        }
+    }
+    last_delta_vi = vi;
+}
+
 bool diagnostic_pad_enabled() {
     return std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
         std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_PAD") != nullptr;
@@ -442,7 +503,8 @@ bool initialize() {
     initialized = true;
     SDL_GameControllerEventState(SDL_ENABLE);
     load_diagnostic_pad_pulses();
-    if (!diagnostic_pad_enabled()) find_controller();
+    if (!diagnostic_pad_enabled() && !diagnostic_mouse_enabled())
+        find_controller();
     return true;
 }
 
@@ -590,10 +652,14 @@ void poll_input() {
     const bool input_enabled =
         physical_input_enabled.load(std::memory_order_relaxed);
     const bool diagnostic_pad = diagnostic_pad_enabled();
+    const bool diagnostic_mouse = diagnostic_mouse_enabled();
     if (diagnostic_pad && !diagnostic_pad_loaded)
         load_diagnostic_pad_pulses();
-    const bool focused = !diagnostic_pad && process_owns_foreground_window();
-    if (!input_enabled || (!focused && !diagnostic_pad)) {
+    if (diagnostic_mouse && !diagnostic_mouse_loaded)
+        load_diagnostic_mouse_pulses();
+    const bool focused = !diagnostic_pad && !diagnostic_mouse &&
+        process_owns_foreground_window();
+    if (!input_enabled || (!focused && !diagnostic_pad && !diagnostic_mouse)) {
         // The process-local binding probe has no foreground window. Its
         // scripted pad still exercises the editor through get_input().
         if (std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") == nullptr)
@@ -613,7 +679,7 @@ void poll_input() {
         return;
     }
 
-    if (initialized && !diagnostic_pad) {
+    if (initialized && !diagnostic_pad && !diagnostic_mouse) {
         SDL_GameControllerUpdate();
         find_controller();
     }
@@ -621,7 +687,7 @@ void poll_input() {
     control_bindings::PhysicalInput raw_input;
     if (diagnostic_pad) {
         raw_input = diagnostic_pad_at(diagnostic_vi.load(std::memory_order_relaxed));
-    } else {
+    } else if (!diagnostic_mouse) {
         for (int vk = 1; vk < 256; ++vk)
             raw_input.keys[vk] = (GetAsyncKeyState(vk) & 0x8000) != 0;
         raw_input.connected = controller != nullptr;
@@ -633,6 +699,8 @@ void poll_input() {
                 raw_input.axes[a] = SDL_GameControllerGetAxis(controller, static_cast<SDL_GameControllerAxis>(a));
         }
     }
+    if (diagnostic_mouse)
+        diagnostic_mouse_at(diagnostic_vi.load(std::memory_order_relaxed), raw_input);
     const auto menu = sote::menu_skin::latest();
     const bool page_keys = menu &&
         (menu->screen == sote::menu_skin::Screen::Profiles ||
@@ -800,27 +868,35 @@ void poll_input() {
         }
     }
 
-    // Keyboard fallback: WASD is the N64 stick; Z/X/C are A/B/Z.
-    if (key_down('Z') || key_down(VK_SPACE)) buttons |= n64_a;
-    if (key_down('X')) buttons |= n64_b;
-    if (key_down('C')) buttons |= n64_z;
-    if (key_down(VK_RETURN)) buttons |= n64_start;
-    if (key_down('Q')) buttons |= page_keys ? n64_dl : n64_l;
-    if (key_down('E')) buttons |= page_keys ? n64_dr : n64_r;
-    if (key_down(VK_UP)) buttons |= n64_du;
-    if (key_down(VK_DOWN)) buttons |= n64_dd;
-    if (key_down(VK_LEFT)) buttons |= page_keys ? n64_l : n64_dl;
-    if (key_down(VK_RIGHT)) buttons |= page_keys ? n64_r : n64_dr;
-    if (key_down('I')) buttons |= n64_cu;
-    if (key_down('K')) buttons |= n64_cd;
-    if (key_down('J')) buttons |= n64_cl;
-    if (key_down('L')) buttons |= n64_cr;
+    // Keyboard and mouse use the same canonical Modern action mapping as the
+    // pad. Keep them separate from already-translated pad bits to avoid
+    // translating a native binding twice.
+    uint16_t keyboard_buttons = 0;
+    if (key_down('Z') || key_down(VK_SPACE)) keyboard_buttons |= n64_a;
+    if (key_down('X')) keyboard_buttons |= n64_b;
+    if (key_down('C')) keyboard_buttons |= n64_z;
+    if (key_down(VK_RETURN)) keyboard_buttons |= n64_start;
+    if (key_down('Q')) keyboard_buttons |= page_keys ? n64_dl : n64_l;
+    if (key_down('E')) keyboard_buttons |= page_keys ? n64_dr : n64_r;
+    if (key_down(VK_UP)) keyboard_buttons |= n64_du;
+    if (key_down(VK_DOWN)) keyboard_buttons |= n64_dd;
+    if (key_down(VK_LEFT)) keyboard_buttons |= page_keys ? n64_l : n64_dl;
+    if (key_down(VK_RIGHT)) keyboard_buttons |= page_keys ? n64_r : n64_dr;
+    if (key_down('I')) keyboard_buttons |= n64_cu;
+    if (key_down('K')) keyboard_buttons |= n64_cd;
+    if (key_down('J')) keyboard_buttons |= n64_cl;
+    if (key_down('L')) keyboard_buttons |= n64_cr;
     // Mouse 1 is the default Modern on-foot Fire alias. It is sampled through
     // the rebinding layer, so assigning the button elsewhere removes this alias.
     if (!menu && sote::modern_controls::on_foot_active() &&
         sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
             sote::controls_menu::ControlScheme::Modern && key_down(VK_LBUTTON))
-        buttons |= n64_b;
+        keyboard_buttons |= n64_b;
+    const bool modern_keyboard = !menu && sote::modern_controls::on_foot_active() &&
+        sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
+            sote::controls_menu::ControlScheme::Modern;
+    buttons |= modern_keyboard ?
+        sote::modern_controls::map_buttons(keyboard_buttons) : keyboard_buttons;
 
     float keyboard_x = 0.0f;
     float keyboard_y = 0.0f;
