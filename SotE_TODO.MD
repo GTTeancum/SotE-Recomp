@@ -325,6 +325,10 @@ takes; the sixth is the withheld `ILB42`.
 Existing native captures and voice queue logs now also pair `ILB01`
 (Echo Base), `ILB06` (Asteroid Field), `ILB33` (Imperial Freighter), and
 `ILB37` (Sewers) with their visible communications in both cutscene modes.
+An additional process-local Echo Base pair dismisses the opening `ILB01`
+message with native Start and queues `ILB03` as the generator instruction
+appears in both modes (`voice_escape_ilb03_original_dismiss_20261007/` and
+`voice_escape_ilb03_pc_dismiss_20261007/`).
 The exact queue VIs and captured frames are tabulated in
 `docs/PC_VOICE_AUDIT.md`. They confirm file/message selection at display,
 not physical speaker output or syllable-level sync.

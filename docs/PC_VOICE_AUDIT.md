@@ -66,6 +66,7 @@ speaker output or exact synchronization of audible syllables.
 | Clip | Original N64 mode | PC cutscene mode | Visible message |
 | --- | --- | --- | --- |
 | `ILB01` | `san_escape_original_n64_fixed/`: queued VI 1646; present 1800 | `san_escape_full_transition/`: queued VI 3265; present 3400 | Empire destroyed the generator; Bay 3 shield door closed. A fresh event-4 Original run also queued at VI 842 and displayed it at present 1000 (`voice_escape_event4_20261007/`). |
+| `ILB03` | `voice_escape_ilb03_original_dismiss_20261007/`: queued VI 1108; present 1200 | `voice_escape_ilb03_pc_dismiss_20261007/`: queued VI 3508; present 3550 | Activate the lower-level emergency generators to open the door. Process-local Start dismissed `ILB01` first in each mode. |
 | `ILB06` | `san_asteroid_original_story_audit/`: queued VI 1785; present 1900 | `san_asteroid_pc_intro_audit/`: queued VI 2340; present 2400 | Leebo avoids asteroids while Dash mans the gun turret. |
 | `ILB11` | `san_gall_native_start_skip_probe/`: queued VI 2048; present 2200 | `san_gall_pc_audio_handoff/`: queued VI 3894; present 3900 | Leebo watches the ship and tells Dash to find Boba Fett. |
 | `ILB33` | `san_freighter_event19_native_story/`: queued VI 1147; present 1400 | `san_freighter_pc_story_skip_music_guard_fixed/`: queued VI 6326; present 6600 | Find the Imperial super computer aboard the ship. |
@@ -73,8 +74,9 @@ speaker output or exact synchronization of audible syllables.
 
 All paths in this table are under `build/diagnostics/`; the named `present`
 images are native game captures. Mos Eisley `ILB24` and Skyhook `ILB46` are
-also checked in both modes as described in `SotE_TODO.MD`. The other built-in
-lines still need gameplay timing checks.
+also checked in both modes as described in `SotE_TODO.MD`. Together, these
+are eight of the 31 built-in Leebo pairings. The other 23 still need gameplay
+timing checks.
 
 ## Skyhook radio lines
 
