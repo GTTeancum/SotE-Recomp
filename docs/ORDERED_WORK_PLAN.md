@@ -271,6 +271,154 @@ as Dash entered the gap; he was airborne by VI 6900 and respawned at VI 7080
 sweep leaves only the earlier accepted 6820 jump, which reached the
 rail but missed the adjacent deck. The next probe should change the
 lateral trajectory or its duration before revisiting jump timing.
+The older VI-6900 RDRAM snapshot places Dash at (-398.32, 21.28),
+second-train anchor `0x801A24A8` at (-399.10, 21.19), and neighboring
+`Trai` anchor `0x801A27F0` at (-401.58, 21.52)
+(`ord_train_third_car_memory_20261008/`). This gives a concrete
+roughly three-unit lateral target, though the anchor is not the full
+collision surface. A magnitude-80 diagonal approach from game frame
+6770 crossed too far: present 6900 shows Dash beneath the deck, and
+the B pulse at VI 6871 came just after his trace became airborne at VI
+6870 (`ord_second_car_block_diag80_20261008/`). Moving that B to game
+frame 6800 produced an inconclusive replay because this run had
+already lost a life before the second-car transfer
+(`ord_second_car_block_diag80_earlyjump_20261008/`).
+The base route is itself variable. In two later repeats, Dash was
+already falling by VI 4110, just before the game-frame-4060 B pulse,
+and each lost a life before VI 4800
+(`ord_second_car_block_diag80_earlyjump_20261008/`,
+`ord_second_car_block_diag60_earlyjump_20261008/`). Moving that B to
+game frame 4040 visibly cleared the immediate VI-4110 drop, but with
+the existing lateral duration Dash fell again around VI 4350 and had
+two lives by VI 4800 (`ord_second_car_early_obstacle4040_20261008/`).
+The next base-route trial needs to retain lateral correction farther
+through the transfer before resuming the later deck test.
+Extending the magnitude-20 correction to 300 game frames alone did not
+save that branch: with B still at 4140, Dash fell near VI 4350
+(`ord_second_car_early_jump_right_hold_20261008/`). Keeping the earlier
+4040 B and moving the second B back to game frame 4200 did transfer
+him. Native frames show him standing on the moving deck at present
+4400 and 5000; the life count remained three through VI 4800
+(`ord_second_car_4040_4200_20261008/`). This is the current base route
+for testing the later block, subject to a longer repeat.
+Using that base route with magnitude-60 forward/right input from game
+frame 6770 and B at 6800 cleared the block and transferred Dash to
+the adjacent orange carriage. Presents 6900, 7000, and 7200 show him
+upright on its deck; all three lives remained at VI 7200
+(`ord_second_car_4040_4200_diag60_20261008/`). RDRAM snapshots from
+VI 6900 through 7300 place him about 2.3–2.4 horizontal units from
+`Trai` anchor `0x801A264C`, moving with it as the second-car anchor
+`0x801A24A8` falls more than 3.5 units away. This is the first
+captured third-car landing. Event 8 is still active at VI 7300, so
+the natural boss handoff needs an extended route.
+An extended replay retained three lives through VI 7800, then Dash
+stopped near (-441.6, -156.4, 19.0) and respawned at VI 7920;
+event 8 remained active through VI 9000
+(`ord_third_car_extended_20261008/`). Present 7600 shows him upright
+on the orange carriage as its deck rises beside the rail; the first
+visible life-loss frame is present 8000. The next trial should capture
+the precise VI-7800 edge and nearby carriage geometry before adding
+another input.
+A denser repeat confirms the far edge: at VI 7700 Dash was still
+about 2.3 units from the orange `Trai` anchor `0x801A264C`, but by
+VI 7800 he was stationary at (-441.7, -156.4) while that anchor had
+moved more than 12 units away
+(`ord_third_car_edge_memory_20261008/`). Present 7700 shows an
+overhead hanging structure ahead; present 7750 shows Dash crouched
+beneath it, and present 7800 shows him below the rail. A native
+crouch before the structure is the next contained route trial.
+The first crouch trial was invalidated by an earlier second-to-third
+car miss (`ord_third_car_crouch7600_20261008/`). Its repeat reached
+the hanging structure with three lives and applied native C-down at
+VI 7655. Present 7700 and 7750 show Dash crouching on the orange
+deck, but he still stopped at (-441.7, -156.4) and fell below the
+rail by present 7800, respawning at VI 7920
+(`ord_third_car_crouch7600_repeat_20261008/`). Crouch alone does not
+clear it. The black obstruction occupies the right side of the deck
+in those frames, so a measured leftward approach is the next route
+trial.
+A magnitude-40 left/forward pulse from game frame 7550 instead kept
+Dash clear of the right-side structure. The native frames at presents
+7800, 8000, and 8100 show him upright on the moving orange deck, and
+the life count remained three through VI 7800
+(`ord_third_car_left40_20261008/`). The next gate is how long this
+route survives toward the boss handoff.
+The same route repeated to VI 10200 without losing a life; present
+9000 and 9900 both show Dash upright on the moving carriage, and
+event 8 remains active (`ord_third_car_left40_extended_20261008/`).
+This is still a `-FullHealth` diagnostic route, so an unassisted clear
+and the eventual event 8 -> 9 handoff remain open.
+A VI-16000 replay of the same script was invalidated by a second-to-
+third-car miss at VI 7110; the game then spent its remaining lives on
+repeated train respawns and returned to Hoth by VI 15000
+(`ord_third_car_long_20261008/`). The contained runner now accepts
+`-StopOnLifeLoss`: it exits with diagnostic code 42 on the first
+decrement and preserves the log/captures. An idle Ord check confirmed
+the marker and exit at VI 1500
+(`ord_stop_on_life_loss_check_20261008/`). Long route trials should
+use this gate so a failed early transfer cannot masquerade as later
+event evidence.
+The first `-StopOnLifeLoss` route trial reached VI 14000 with all three
+lives. Captures at presents 11000, 12000, 13000, and 13900 show Dash
+upright on the moving carriage; event 8 remains active
+(`ord_third_car_stoploss_14000_a_20261008/`). This is the longest
+life-preserving contained route so far. The next extension should
+retain early stop and look for the later train-to-boss trigger.
+A later `-StopOnLifeLoss` run returned exit zero at VI 22000, but this
+was not a continuous ride. Position traces show a roughly 190-unit
+checkpoint warp at VI 15870 and repeated warps every ~1,160 VIs while
+the life count stayed three; present 19000 displays "You missed the
+hover train..." (`ord_third_car_stoploss_22000_a_20261008/`). The
+runner now also supports `-StopOnPlayerWarp` for event 8 after VI 1200;
+an isolated diagnostic captured a warp and exited with code 43
+(`ord_stop_on_warp_check_b_20261008/`). Future long claims require
+both gates and a frame showing Dash still aboard.
+A replay with both gates reached the same late section and stopped on the
+first checkpoint reset at VI 15863, from (-108.706, -124.474, 1.538) to
+(-73.529, -313.375, 12.334)
+(`ord_stoploss_warp_18000_a_20261008/`). The native frame at present
+15400 still shows Dash upright on the orange carriage. A closer capture
+shows him there through present 15525, then the camera looks down the
+train without him at present 15550 and displays "You missed the hover
+train..." at 15550–15600 (`ord_final_transfer_probe_20261008/`). The
+corresponding `ILB09.WAV` is queued with the visible message at VI 15560.
+RDRAM snapshots show Dash still within about 0.8 horizontal units of the
+moving `Trai` anchor `0x801A24A8` from VI 15400–15600, so the message is
+a scripted missed-transfer state rather than evidence of a simple fall
+from that carriage. The next route trial should initiate the final transfer
+before VI 15550; the event-8 to IG-88 handoff remains unverified.
+One forward/B trial was invalidated by an earlier checkpoint reset at VI
+7114 (`ord_final_transfer_jump15440_20261008/`). Its repeat did reach the
+late section: forward input began at game frame 15440 and native B at
+15455 (VI 15510). Dash visibly entered a jump (`z` rose from 1.52 at VI
+15510 to 2.14 at 15540), but `ILB09.WAV` and the missed-transfer message
+still appeared at VI 15563, followed by a reset at VI 15871
+(`ord_final_transfer_jump15440_b_20261008/`). A last-moment forward jump
+therefore does not satisfy the train transfer; try approaching farther
+forward before that cue.
+An early-forward run from game frame 15100 to 15550 was first invalidated
+by the mid-train reset at VI 7179
+(`ord_final_transfer_forward15100_20261008/`). Its repeat reached the
+late section but fell from the right side of the deck: present 15200 shows
+Dash at the right edge, presents 15300–15400 show him below the track,
+and the first life loss/reset occurred at VI 15456
+(`ord_final_transfer_forward15100_b_20261008/`). Straight forward motion
+is too far right on this left-curving section. The next trial should
+combine forward with left steering and an earlier jump.
+A longer left/forward approach from game frame 15100 with a B jump at
+15160 also fell: present 15200 shows Dash near the left edge of the
+orange deck, present 15250 shows him on the ground by a wall, and the
+reset occurred at VI 15449
+(`ord_final_transfer_leftjump15160_20261008/`). The jump activated in
+the player trace but did not bridge the transfer. A shorter measured
+leftward adjustment is the next trial; early movement must preserve the
+carriage before any late handoff claim.
+A short left/forward adjustment from game frame 15100 for 60 frames
+preserved the carriage into the late section, but the missed-transfer
+message still appeared with `ILB09.WAV` at VI 15580 and the checkpoint
+reset at VI 15882 (`ord_final_transfer_leftpulse15100_20261008/`).
+This separates a safe steering correction from a successful transfer;
+the final target and timing remain unresolved.
 
 ## 2. Voice with visible communications
 

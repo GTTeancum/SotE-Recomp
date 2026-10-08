@@ -16,6 +16,8 @@ param(
     [switch]$TracePlayer,
     [switch]$FixedDelta,
     [switch]$FullHealth,
+    [switch]$StopOnLifeLoss,
+    [switch]$StopOnPlayerWarp,
     [switch]$TraceDroidVisual,
     [switch]$TraceAim,
     [switch]$TraceGallBoss,
@@ -81,6 +83,8 @@ if ($TraceFinal) { $info.Environment['SOTE_TRACE_FINAL_EVENT'] = '1' }
 if ($TracePlayer) { $info.Environment['SOTE_TRACE_PLAYER_STATE'] = '1' }
 if ($FixedDelta) { $info.Environment['SOTE_DIAGNOSTIC_FIXED_DELTA'] = '1' }
 if ($FullHealth) { $info.Environment['SOTE_DIAGNOSTIC_FULL_HEALTH'] = '1' }
+if ($StopOnLifeLoss) { $info.Environment['SOTE_DIAGNOSTIC_STOP_ON_LIFE_LOSS'] = '1' }
+if ($StopOnPlayerWarp) { $info.Environment['SOTE_DIAGNOSTIC_STOP_ON_PLAYER_WARP'] = '1' }
 if ($TraceDroidVisual) { $info.Environment['SOTE_TRACE_DROID_VISUAL'] = '1' }
 if ($TraceAim) { $info.Environment['SOTE_TRACE_MODERN_AIM'] = '1' }
 if ($TraceGallBoss) { $info.Environment['SOTE_TRACE_GALL_BOSS'] = '1' }

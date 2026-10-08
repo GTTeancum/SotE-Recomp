@@ -1104,6 +1104,11 @@ void log_general_failure_telemetry(int vi) {
                     current.failure_condition,
                     current.event,
                     read_guest_double(game_rdram, 0x8018E998U));
+                if (std::getenv("SOTE_DIAGNOSTIC_STOP_ON_LIFE_LOSS") != nullptr) {
+                    std::printf("[sote][diagnostic] stopped on life loss at VI=%d\n", vi);
+                    std::fflush(nullptr);
+                    std::_Exit(42);
+                }
             }
             if (current.lives < 0 &&
                 previous_general_telemetry.lives >= 0) {
@@ -3078,6 +3083,48 @@ extern "C" void sote_enter_player_controller(
     if (std::getenv("SOTE_DIAGNOSTIC_FULL_HEALTH") != nullptr &&
         object >= 0x80000000U && object < 0x80800000U) {
         write_guest_word(rdram, object + 0xB4U, 0x42C80000U);
+    }
+    // A train checkpoint can reset the player without spending a life.
+    // Stop contained route probes on that discontinuity rather than treating
+    // later frames from the retry as progress along the original route.
+    if (std::getenv("SOTE_DIAGNOSTIC_STOP_ON_PLAYER_WARP") != nullptr &&
+        object >= 0x80000000U && object < 0x80800000U) {
+        static bool have_previous = false;
+        static int previous_vi = -1;
+        static float previous_position[3] = {};
+        const int16_t event = static_cast<int16_t>(
+            read_guest_half(rdram, 0x8013CE0EU));
+        if (event != 8) {
+            have_previous = false;
+        } else if (controller_vi != previous_vi) {
+            float position[3] = {
+                read_guest_float(rdram, object + 0x50U),
+                read_guest_float(rdram, object + 0x54U),
+                read_guest_float(rdram, object + 0x58U)};
+            // The diagnostic event-8 entry can reposition Dash once while
+            // the train initializes; begin measuring after that entry.
+            if (have_previous && controller_vi >= 1200) {
+                const float dx = position[0] - previous_position[0];
+                const float dy = position[1] - previous_position[1];
+                const float dz = position[2] - previous_position[2];
+                if (dx * dx + dy * dy + dz * dz > 50.0f * 50.0f) {
+                    std::printf(
+                        "[sote][diagnostic] stopped on player warp at VI=%d "
+                        "from=%.3f,%.3f,%.3f to=%.3f,%.3f,%.3f\n",
+                        controller_vi,
+                        previous_position[0], previous_position[1],
+                        previous_position[2],
+                        position[0], position[1], position[2]);
+                    std::fflush(nullptr);
+                    std::_Exit(43);
+                }
+            }
+            previous_vi = controller_vi;
+            for (int axis = 0; axis < 3; ++axis) {
+                previous_position[axis] = position[axis];
+            }
+            have_previous = true;
+        }
     }
     // Walk the player through a square spiral of positions around where the
     // current event started, holding each one, so texture captures can reach
