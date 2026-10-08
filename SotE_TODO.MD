@@ -202,6 +202,16 @@ VI 6326 and its first 2.5 seconds correlate with the mixed PCM at
 non-silent in the SDL dummy-device queue and the audio handoff returned to
 the game before that voice. This covers the full film-to-voice path in the
 selected-level route, not physical speaker playback.
+The other Freighter story entry, direct event 18, now has an unskipped
+PC-mode replay with audio enabled (`san_freighter_event18_full_pc_corrected_
+20261007/`). The `L07INTRO.SAN` ship approach is visible at present 4200,
+followed by a black transition at 5100 and the interior supercomputer
+instruction at 5500. The native story skip advanced directly from event 18
+to 20 at VI 5105; the movie did not restart at event 19. `ILB33.WAV` queued
+with the visible instruction at VI 5346, and its first 2.5 seconds correlate
+with the captured game PCM at 0.993807. This confirms the full direct
+event-18 film-to-voice handoff as well as the selected event-19 route. It
+does not prove the preceding campaign transition or physical speakers.
 An offscreen diagnostic could previously pick up unrelated host skip-key state;
 its movie skip is now driven only by the exact process-local test VI.
 An earlier Skyhook direct event jump did not reproduce the intro because it

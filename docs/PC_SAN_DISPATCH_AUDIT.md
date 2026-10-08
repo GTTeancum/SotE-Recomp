@@ -23,6 +23,12 @@ passes its SAN filename to the movie player at `0x464460`.
 | `L08INTRO.SAN` | 25 | 24 | Sewers story before objective/event 25. |
 | `L10INTRO.SAN` | 29 | 28 | Skyhook story before turret/event 29. |
 
+The Freighter's second entry has now been checked through the complete film:
+a direct PC-mode N64 event-18 replay starts `L07INTRO.SAN`, advances straight
+to playable event 20 when it ends, and shows the supercomputer instruction
+with `ILB33.WAV` in the mixed game audio. It does not revisit event 19 or
+replay the movie (`san_freighter_event18_full_pc_corrected_20261007/`).
+
 `L05BOSS.SAN` and `L09BOSS.SAN` are absent from that event table. Their only
 filename references are the separate PC actor branches at `0x4550B2` and
 `0x455C35`, respectively. The corresponding N64 Boba Fett and Gladiator Droid
