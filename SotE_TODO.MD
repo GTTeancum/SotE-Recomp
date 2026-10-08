@@ -21,6 +21,16 @@ An October 2026 idle-startup capture verified `L00LOGO.SAN`, then
 `LONGTIME.SAN`, followed by the native license screen without a premature
 level intro (`build/diagnostics/san_startup_placement/`). This checks only
 startup visuals; that diagnostic was muted and does not settle story placement.
+An unskipped paired startup replay now checks that mode choice with audio
+enabled (`san_startup_pc_audio_20261007/` and
+`san_startup_n64_audio_20261007/`). PC mode rendered the `L00LOGO.SAN`
+LucasArts/Star Wars opening, then `LONGTIME.SAN`, and handed back to the
+native license screen; its movie PCM queue was non-silent and the audio
+handoff returned to game. Original N64 mode rendered the native logo and
+Part I crawl without starting either PC SAN. Captures at presents 500,
+1100, 2000, 2600, 3200, and 3700 show the distinct sequences. This is a
+startup mode check; physical speaker playback and later chapter placement
+remain outside it.
 A process-local level transition then verified `L02INTRO.SAN` starts after the
 Escape from Echo Base event becomes active, displays the Hoth ship approach,
 and returns to the native mission dialogue (`build/diagnostics/

@@ -5,6 +5,7 @@ param(
     [int]$StopVi = 3500,
     [ValidateRange(0, 9)][int]$LevelIndex = 1,
     [switch]$OriginalN64,
+    [switch]$StartupOnly,
     [switch]$ModernOnFoot,
     [switch]$AudioProbe,
     [ValidateRange(0, 20000)][int]$InitialSkipVi = 600,
@@ -45,8 +46,8 @@ Copy-Item -LiteralPath '.\SotE_Recompiled\saves\sote.us.v1.2.bin' `
 
 # Select Escape from Echo Base through the game's own menus. Bypass only the
 # opening SAN pair so the level movie can be observed at a bounded VI count.
-$inputItems = @('120:5:start', '300:5:start')
-if (-not $DirectEventOnly) {
+$inputItems = if ($StartupOnly) { @() } else { @('120:5:start', '300:5:start') }
+if (-not $DirectEventOnly -and -not $StartupOnly) {
     $inputItems += '660:5:start'
     $inputItems += '840:5:stick_down', '900:5:a'
     for ($index = 0; $index -lt $LevelIndex; ++$index) {
@@ -72,7 +73,7 @@ if ($AudioProbe) {
 }
 $info.Environment['SOTE_DIAGNOSTIC_CONFIG_PATH'] = Join-Path $output 'config'
 $info.Environment['SOTE_DIAGNOSTIC_UNLOCK_LEVELS'] = '1'
-$info.Environment['SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP'] = '1'
+if (-not $StartupOnly) { $info.Environment['SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP'] = '1' }
 if ($PreviewMovie) { $info.Environment['SOTE_SAN_PREVIEW'] = $PreviewMovie }
 if ($TraceFinal) { $info.Environment['SOTE_TRACE_FINAL_EVENT'] = '1' }
 if ($TracePlayer) { $info.Environment['SOTE_TRACE_PLAYER_STATE'] = '1' }
