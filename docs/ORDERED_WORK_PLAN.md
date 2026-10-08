@@ -202,6 +202,20 @@ lost a life at VI 4275 before the second-car landing, and again at VI
 (`ord_second_car_6050_jump_20261008/`). Later obstacle trials need a
 state-gated second-car start or an otherwise repeatable approach; timing
 alone has not reproduced the landing reliably.
+The failed replay is already descending by VI 4125. Adding native B at
+game frame 4060 cleared that immediate drop: Dash rose from Z≈1.9 to
+2.7 and was still grounded at VI 4200. The unchanged game-frame-4200 B
+then fired while he was descending from the next edge; he fell below
+the deck by VI 4305 and respawned at VI 4410
+(`ord_second_car_4060_jump_20261008/`). The transfer jump must follow
+actual grounded position after the earlier obstacle, not a fixed 4200
+start in this branch.
+Moving the second B to game frame 4140 did produce a rise at VI 4200,
+but the present-4200 frame shows Dash against the left support, outside
+the deck. He stalled at (-495.5, 287.1), fell below it by VI 4305, and
+respawned at VI 4410 (`ord_second_car_4140_transfer_20261008/`).
+This narrows the attempted jump window and identifies lateral alignment
+as the next route correction; it does not establish a landing.
 
 ## 2. Voice with visible communications
 
