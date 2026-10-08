@@ -139,6 +139,7 @@ struct ScriptedInputPulse {
     int8_t x;
     int8_t y;
     bool game_frame_timed;
+    bool activated;
 };
 
 std::vector<ScriptedInputPulse> scripted_input;
@@ -1506,7 +1507,8 @@ void parse_scripted_input(const char* specification) {
             0,
             0,
             0,
-            game_frame_timed};
+            game_frame_timed,
+            false};
         std::string_view names = entry.substr(second_colon + 1);
         size_t name_cursor = 0;
         while (name_cursor < names.size()) {
@@ -2778,7 +2780,7 @@ void on_vi() {
     int8_t scripted_y = 0;
     const uint64_t current_game_frame =
         game_frame_count.load(std::memory_order_relaxed);
-    for (const ScriptedInputPulse& pulse : scripted_input) {
+    for (ScriptedInputPulse& pulse : scripted_input) {
         const uint64_t clock = pulse.game_frame_timed
             ? current_game_frame : static_cast<uint64_t>(count);
         if (clock >= static_cast<uint64_t>(pulse.start_vi) &&
@@ -2786,16 +2788,17 @@ void on_vi() {
             scripted_buttons |= pulse.buttons;
             if (pulse.x != 0) scripted_x = pulse.x;
             if (pulse.y != 0) scripted_y = pulse.y;
-        }
-        if (clock == static_cast<uint64_t>(pulse.start_vi)) {
-            std::printf(
-                "[sote] scripted input at VI=%d game_frame=%llu: "
-                "buttons=%04X stick=%d,%d\n",
-                count,
-                static_cast<unsigned long long>(current_game_frame),
-                pulse.buttons,
-                pulse.x,
-                pulse.y);
+            if (!pulse.activated) {
+                std::printf(
+                    "[sote] scripted input at VI=%d game_frame=%llu: "
+                    "buttons=%04X stick=%d,%d\n",
+                    count,
+                    static_cast<unsigned long long>(current_game_frame),
+                    pulse.buttons,
+                    pulse.x,
+                    pulse.y);
+                pulse.activated = true;
+            }
         }
     }
     // Process-local route for checking the live binding editor. It follows

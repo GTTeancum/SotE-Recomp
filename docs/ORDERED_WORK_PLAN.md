@@ -78,6 +78,23 @@ car's next gap still killed him around VI 2006
 (`ord_train_first_transfer_forward_20261007/`). A further forward/B pulse at
 game frame 1730 did not produce a jump and Dash died at VI 1878
 (`ord_train_transfer_jump_20261007/`). The boss handoff remains unverified.
+Follow-up rendered frames show the raised carriage ending beside a narrow
+right-side rail. A game-frame-1720 or 1725 forward jump rises normally but
+lands below the deck; a 1730 attempt starts after Dash has left its edge
+(`ord_train_transfer_early_jump_20261007/`,
+`ord_train_transfer_1725_20261007/`, `ord_train_transfer_jump_20261007/`).
+From a later approach, a 1770 or 1785 jump also lands below the rail
+(`ord_train_transfer_late_forward_logged_20261007/`,
+`ord_train_transfer_1785_20261007/`). The next route must align laterally
+with that rail, not only adjust jump timing. The script now logs the first
+active sample for each pulse so a skipped exact game-frame number cannot hide
+whether the input was applied.
+A full right-stick diagonal at game frame 1760 turned Dash off the carriage
+and into the sludge (`ord_train_transfer_right_20261007/`). Reducing the
+horizontal stick to 20 still did not produce a rising jump at the 1770 pulse
+and lost a life at VI 1876 (`ord_train_transfer_x20_20261007/`). The next
+contained route should align before the jump, release horizontal input,
+then cross the narrow rail; no transfer is verified yet.
 
 ## 2. Voice with visible communications
 
