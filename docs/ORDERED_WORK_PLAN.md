@@ -216,6 +216,61 @@ the deck. He stalled at (-495.5, 287.1), fell below it by VI 4305, and
 respawned at VI 4410 (`ord_second_car_4140_transfer_20261008/`).
 This narrows the attempted jump window and identifies lateral alignment
 as the next route correction; it does not establish a landing.
+A right-stick magnitude of 20 from game frame 4010 to 4130 kept Dash
+inside the support at present 4200, but present 4300 shows him on the
+left edge of the deck. He fell into the sludge by present 4400 and
+respawned at VI 4560 (`ord_second_car_right20_20261008/`). The
+correction addresses the support collision but must continue through
+the deck edge or be paired with the actual second-car transfer.
+Holding the same magnitude-20 right correction for 240 game frames
+instead of 120 kept Dash centered on the moving deck at present 4400
+and 5000, with three lives through VI 4800
+(`ord_second_car_right20_hold_20261008/`). This is a second viable
+diagnostic transfer route. Its later obstacles and event handoff still
+need a longer captured run.
+The longer repeat preserved all three lives through VI 6600 and kept
+Dash on the deck at present 6900. A metal block then stopped him near
+(-399.6, 6.8); present 7000 shows him falling under the track, and the
+life count drops to two by present 7100
+(`ord_second_car_right20_extended_20261008/`). The second-car route is
+now long enough to target that specific block. The right-hand adjacent
+deck visible at present 6900 makes lateral transfer worth testing
+before attributing the failure to SAN placement.
+Adding magnitude-20 right input at game frame 6800 did not change the
+stall near (-399.6, 6.8): Dash was grounded through VI 6960, then
+fell and respawned at VI 7125 with two lives
+(`ord_second_car_block_right20_20261008/`). A lateral pulse alone is
+not enough to clear this block; the next trial must test a jump while
+Dash is still alive and approaching it.
+A native B pulse at game frame 6840 did produce a visible rise in the
+player trace (Z≈1.86 at VI 6885 to 2.59 at VI 6915), but he was
+grounded again by VI 6945 and stopped at the same block near VI 6975;
+he respawned around VI 7125 (`ord_second_car_block_jump6840_20261008/`).
+That pulse is early for this obstruction.
+A later B at game frame 6880 rose just as Dash reached the block, but
+present 6950 shows him pressed against its tall vertical face; present
+7000 shows the fall below the track, and he respawned at VI 7125
+(`ord_second_car_block_jump6880_20261008/`). The block cannot be
+cleared by either of these stationary jump timings. The visible open
+deck to the right calls for a forward/lateral transfer trial.
+Forward/right input from game frame 6770 with B at 6820 got Dash past
+the vertical block and onto the blue rail at present 6900, but he
+missed the orange deck to its right and fell by present 7000; the life
+count was two at VI 7200
+(`ord_second_car_block_diagonal_20261008/`). This is a geometric
+advance past the block, not a successful landing. The next jump should
+target the adjacent deck later in that crossing.
+Moving that diagonal jump to game frame 6860 was too late: the player
+trace shows Dash already airborne by VI 6900, before B became active at
+VI 6912. He fell by VI 6975 and respawned at VI 7080
+(`ord_second_car_block_diagonal_latejump_20261008/`). A viable pulse
+must fall between the accepted 6820 jump and this late input.
+The midpoint game-frame-6840 diagonal B likewise started at VI 6891
+as Dash entered the gap; he was airborne by VI 6900 and respawned at VI 7080
+(`ord_second_car_block_diagonal_midjump_20261008/`). This timing
+sweep leaves only the earlier accepted 6820 jump, which reached the
+rail but missed the adjacent deck. The next probe should change the
+lateral trajectory or its duration before revisiting jump timing.
 
 ## 2. Voice with visible communications
 
