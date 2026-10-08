@@ -95,6 +95,11 @@ horizontal stick to 20 still did not produce a rising jump at the 1770 pulse
 and lost a life at VI 1876 (`ord_train_transfer_x20_20261007/`). The next
 contained route should align before the jump, release horizontal input,
 then cross the narrow rail; no transfer is verified yet.
+Holding forward through the apparent lower-rail landing did not carry Dash
+to the next car: that run lost a life at VI 1876
+(`ord_train_rail_forward_20261007/`). The earlier low-Z grounded samples
+therefore do not prove that the rail is a safe walking surface. The next
+route needs the train/car collision state, not visual alignment alone.
 
 ## 2. Voice with visible communications
 
