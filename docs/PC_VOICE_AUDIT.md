@@ -299,6 +299,23 @@ but stopped between its walls at (-255.1, 14.7)
 coordinates establish these as bounded navigation attempts. None restored
 generator power or displayed `ILB04`; the next check needs the level's
 actual lower-floor route, not a longer hold into these walls.
+A firsthand N64 [level walkthrough](https://gamefaqs.gamespot.com/n64/198789-star-wars-shadows-of-the-empire/faqs/48468)
+places the six power switches well beyond the first hangar: past the
+Millennium Falcon room, bridge, ledges, and elevators. That explains why
+the opening-hangar wall probes could not test `ILB04`. A revised process-local
+event-4 route moved through the far opening into the Falcon room, where
+native captures show the Falcon, crates, and approaching snowtroopers;
+Dash's position advanced from (-356.6, 80.5) to (-117.0, 12.2) before
+stopping in a side bay (`voice_echo_far_opening_route_20261007/`). Health
+fell to 53 there, so the unattended route is not a stable path onward.
+Direct event 5 loads the second Hoth Base section at (354, -80, -78) in
+an elevator with a red wall panel. B produced a jump; a brief R pulse and
+a turn/approach followed by R did not visibly operate the panel or display
+`ILB04`
+(`voice_echo_event5_switch_probe_20261007/` and
+`voice_echo_event5_panel_activate_20261007/`). The direct checkpoint may
+bypass earlier objectives. The next timing check must reach the switch
+sequence through valid gameplay or establish its state from the level code.
 
 | Section | Clips | Next visible state to reach |
 | --- | --- | --- |
