@@ -7,7 +7,9 @@ param(
     [string]$PhysicalKeys = '',
     [ValidateRange(0.0, 1.0)][double]$Brake = 0.0,
     [switch]$Straight,
-    [ValidateRange(-127, 127)][int]$StickY = 0
+    [ValidateRange(-127, 127)][int]$StickY = 0,
+    [int]$StopVi = 3050,
+    [string]$CapturePresents = '1900,2300,2700,3000'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,7 +37,7 @@ $inputScript = @(
     '1290:8:stick_down', '1410:8:a',
     '1600:8:a', '1850:8:a', '2100:8:a'
 ) -join ','
-if (-not $Straight) {
+if (-not $Straight -and -not ($PhysicalPad -or $PhysicalKeys)) {
     $inputScript += ',2300:60:stick_x=40,2600:60:stick_x=80,2800:30:a'
 }
 if ($StickY -ne 0) {
@@ -73,9 +75,9 @@ try {
     }
     $info.Environment['SOTE_TRACE_BIKE_STATE'] = '1'
     $info.Environment['SOTE_INPUT_SCRIPT'] = $inputScript
-    $info.Environment['SOTE_SMOKE_VIS'] = '3050'
+    $info.Environment['SOTE_SMOKE_VIS'] = [string]$StopVi
     $info.Environment['SOTE_VISIBLE_CAPTURE_PATH'] = Join-Path $output 'frames'
-    $info.Environment['SOTE_VISIBLE_CAPTURE_PRESENTS'] = '1900,2300,2700,3000'
+    $info.Environment['SOTE_VISIBLE_CAPTURE_PRESENTS'] = $CapturePresents
     $info.Environment['SOTE_DIAGNOSTIC_CAPTURE_SYNC'] = '1'
     $process = [Diagnostics.Process]::new()
     $process.StartInfo = $info

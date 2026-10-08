@@ -1002,6 +1002,15 @@ pass. Both existing playable candidate executables were refreshed with the
 rebuilt game. Legacy bike `fire_button` documentation is also corrected:
 the setting is retained for INI compatibility but does not drive an action;
 RB remains Ram Right.
+A longer process-local Mos Eisley bike probe now runs only the requested
+virtual-pad sequence; the diagnostic no longer mixes its built-in steering
+and jump pulses into custom input. Full right steering for 85 VIs followed
+by RT alone moved the bike from (-826.606, -437.777) at VI 2415 to
+(-775.501, -428.581) at VI 2595. Native captures show Dash riding into a
+building doorway, where position then stayed fixed through VI 3150
+(`modern_bike_timed_opening_turn_20261007/`). This checks the sustained
+steering and throttle path, but the route did not leave the opening area;
+longer-course handling and physical feel remain open.
 
 - [x] Finish configurable keyboard, mouse, and controller mappings beyond the
       current scheme and tuning support.
