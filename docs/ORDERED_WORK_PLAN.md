@@ -546,6 +546,42 @@ supports the lateral direction but shows that jump started too early.
 A later position-triggered jump at world Y > -129 was attempted, but
 that run reset at the earlier VI-7105 obstacle, before the transfer
 input; it remains untested (`ord_diag_jump_y129_20261008/`).
+Its clean repeat triggered B at VI 10094, after Dash had already
+stepped below the adjacent deck (present 10100). At VI 10125 he was
+6.07 horizontal units from its anchor and 2.43 Z units below it,
+then reset at VI 10277 (`ord_diag_jump_y129_b_20261008/`). The
+later jump misses takeoff; advancing toward the car earlier is the
+next trial.
+Starting the diagonal approach at VI 9950 moved Dash closer to the
+adjacent car before the slope. A B pulse at world Y > -139 fired at
+VI 10045, but Dash's Z fell from 1.75 at VI 10050 to 0.62 at VI
+10075; the VI-10075 frame and later warp show he had already stepped
+off the deck (`ord_diag_earlyapproach_20261008/`). The next jump
+must fire before approximately VI 10025 on this earlier route.
+A B pulse at world Y > -145 fired at VI 10014 while Dash was still
+on the approach. His Z rose to 2.28 at VI 10050, but the adjacent car
+was still 5.22 horizontal units away. By VI 10075 the gap narrowed to
+4.50 while Dash had fallen to Z 1.15, below the car anchor at Z 2.68;
+the run reset at VI 10240 (`ord_diag_earlyjump_y145_20261008/`).
+Starting the approach still earlier is needed to make the closest
+crossing coincide with the jump apex.
+Moving the approach to VI 9900 reduced the adjacent-car gap to 5.41
+units at VI 10000, but a Y > -150 B pulse fired at VI 9988 after
+Dash had left the supporting deck. His Z fell from 1.31 at VI 10000
+to -0.31 at VI 10025, and life loss followed at VI 10200
+(`ord_diag_earlierapproach_20261008/`). This narrows takeoff on that
+route to before VI 9988; earlier movement alone is not enough.
+A short B press at world Y > -156 fired at VI 9962 on the VI-9900
+route. Dash was still 4.83 horizontal units from the adjacent car at
+VI 10025 but had fallen to Z 0.16, below its Z 1.58; life loss came
+at VI 10200 (`ord_diag_earlyjump_y156_b_20261008/`). A 60-VI held B
+at the same threshold produced nearly the same height and fell at VI
+10206 (`ord_diag_heldjump_y156_c_20261008/`); holding B does not
+extend this jump enough. Two other held-B runs reset at the earlier
+VI-7105/7121 obstacle and do not inform the transfer. The current
+approach closes the horizontal gap but still crosses it below deck
+height. The next route should examine the deck geometry and available
+movement direction before another timing-only jump variation.
 
 ## 2. Voice with visible communications
 
