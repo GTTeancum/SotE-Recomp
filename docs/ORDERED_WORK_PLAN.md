@@ -504,6 +504,16 @@ are more than 300 units away. The blue rails seen at 8900 are therefore
 not an adjacent active carriage in these snapshots. Future input should
 traverse the solid carriage toward its head and wait for an actual train
 merge, rather than jumping onto that visible rail.
+A short 40-game-frame forward pulse at 8900 was invalidated twice by
+earlier VI-7114 resets (`ord_solid_deck_step8900_20261008/`,
+`ord_solid_deck_step8900_b_20261008/`). A third run reached the pulse
+and fell at VI 9177 (`ord_solid_deck_step8900_c_20261008/`). RDRAM
+comparison against the no-input geometry run shows the player-carriage
+offset moving from roughly (-3.1, +0.1, +0.3) at VI 8950 to
+(-4.9, -0.3, -0.6) by VI 9000, then (-11.5, -3.3, -2.3) at VI 9050.
+Dash stopped while the carriage continued. Even this short straight
+forward step leaves the solid deck on the curve; the next input must
+steer to remain on the carriage before attempting headward travel.
 
 ## 2. Voice with visible communications
 
