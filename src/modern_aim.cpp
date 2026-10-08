@@ -12,6 +12,9 @@ extern "C" void func_800654A0(uint8_t*, recomp_context*);
 
 namespace {
 struct Vec { float x, y, z; };
+struct ShotObservation { uint32_t projectile=0; Vec target{}; };
+ShotObservation observed_shots[256];
+unsigned next_observation=0;
 Vec operator+(Vec a, Vec b) { return {a.x+b.x,a.y+b.y,a.z+b.z}; }
 Vec operator-(Vec a, Vec b) { return {a.x-b.x,a.y-b.y,a.z-b.z}; }
 Vec operator*(Vec a, float b) { return {a.x*b,a.y*b,a.z*b}; }
@@ -33,6 +36,8 @@ struct Hit { float distance; uint32_t object; };
 // a private guest stack and copied registers; never disturb the spawn's ABI.
 Hit trace(uint8_t* ram, const recomp_context& caller, Vec from, Vec to, uint32_t ignore) {
     auto ctx=caller;
+    // The odd-register view must refer to this copy, not the caller's FPRs.
+    ctx.f_odd=ctx.mips3_float_mode ? &ctx.f1.u32l : &ctx.f0.u32h;
     const uint32_t sp=(uint32_t(caller.r29)-0x100U)&~15U;
     ctx.r29=(int32_t)sp;
     write(ram,sp+0x40,to); write(ram,sp+0x50,from);
@@ -60,7 +65,9 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     const uint32_t shooter=read<uint32_t>(ram,sp+0x68);
     if (!sote::modern_controls::owns_player(shooter) || !address(shooter,0x250)) return;
     const auto settings=sote::controls_menu::modern_controls_tuning().on_foot;
-    if (!settings.convergence || read<int16_t>(ram,0x8018DDE8)!=5) return;
+    const int camera_slot=read<int16_t>(ram,0x8018DDE8);
+    const bool train_camera=read<int16_t>(ram,0x8013CE0E)==8 && camera_slot==0;
+    if (!settings.convergence || (camera_slot!=5 && !train_camera)) return;
     if (!address(uint32_t(ctx.r17),4)) return;
     const uint32_t projectile=read<uint32_t>(ram,uint32_t(ctx.r17))+uint32_t(ctx.r16);
     if (!address(projectile,0xb0)) return;
@@ -120,8 +127,27 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     write(ram,projectile+0x30,direction);
     write(ram,projectile+0x40,up);
     if (std::getenv("SOTE_TRACE_MODERN_AIM")) {
+        for (auto& shot : observed_shots)
+            if (shot.projectile==projectile) shot.projectile=0;
+        observed_shots[next_observation++ % 256] = {projectile,target};
         std::printf("[sote][aim] camera=%.3f,%.3f,%.3f forward=%.5f,%.5f,%.5f muzzle=%.3f,%.3f,%.3f target=%.3f,%.3f,%.3f shot=%.5f,%.5f,%.5f range=%.3f muzzle_hit=%.3f assisted=%08X speed=%.3f\n",
             eye.x,eye.y,eye.z,forward.x,forward.y,forward.z,muzzle.x,muzzle.y,muzzle.z,
             target.x,target.y,target.z,direction.x,direction.y,direction.z,distance,obstruction.distance,assisted,speed);
+    }
+}
+
+// Read-only observation after native collision selection and before effects.
+extern "C" void sote_modern_impact(uint8_t* ram, void* context) {
+    if (!std::getenv("SOTE_TRACE_MODERN_AIM")) return;
+    const auto& ctx=*static_cast<recomp_context*>(context);
+    const uint32_t sp=uint32_t(ctx.r29);
+    if (!address(sp,0x254)) return;
+    const uint32_t projectile=read<uint32_t>(ram,sp+0x250);
+    const Vec hit=read<Vec>(ram,sp+0x224);
+    for (auto& shot : observed_shots) {
+        if (!projectile || shot.projectile!=projectile) continue;
+        std::printf("[sote][aim-impact] projectile=%08X target=%.4f,%.4f,%.4f hit=%.4f,%.4f,%.4f error=%.6f\n",
+            projectile,shot.target.x,shot.target.y,shot.target.z,hit.x,hit.y,hit.z,length(hit-shot.target));
+        shot.projectile=0;
     }
 }

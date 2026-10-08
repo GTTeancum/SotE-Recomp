@@ -1,5 +1,107 @@
 # Completion order for TODO items 1–3
 
+## Closed — October 8, 2026
+
+Items 1 and 2 are closed at the user's direction; item 3 was already complete.
+Completed items and their chronological notes have been removed from
+SotE_TODO.MD. Only deferred work and review remain there. The SAN, voice,
+Classic-control audits and this document retain supporting evidence.
+The earlier request for additional SAN examples is no longer an open gate.
+All work-plan status statements below are historical and superseded by this
+closure. Do not restart them as pending work.
+
+## Current scope and next action (October 8)
+
+Controls (#2) and menus (#3) technical checks are complete. The state-only
+resume/persistence result below closes the final regression. The user has
+now been asked for the original SAN misplacement examples, as requested
+after items 2 and 3. Keep the full goal active for that work and the final
+cutscene/voice requirement audit.
+
+Latest user direction: verify controls without screen captures. All further
+controls checks use contained input, native game/menu state, collision
+results, persisted settings and harnesses. Existing captures remain historical
+evidence; do not take or inspect additional screenshots for controls.
+
+The user narrowed the Ord Mantell check to firing the physical region trigger.
+That check passed: contained relocation moved Dash into collision sector 51,
+and native logic set the ending flag to 1. Evidence:
+`build/diagnostics/ord_sector51_crossing_20261008/stdout.log:118`.
+Do not resume the train traversal attempts recorded below or expand this
+completed check into another full playthrough. Event-9 SAN playback has
+separate existing verification. Gall is also confirmed: physical sector 28
+entry starts the lift, which dispatches Boba command 10. Fixed an immediate
+script-keyframe cancellation; PC film and Original N64 reveal were both
+captured. Evidence: `gall_lift_film_confirmed_20261008/` and
+`gall_lift_n64_confirmed_20261008/`. Palace's physical use-switch trigger,
+full PC movie handoff, and N64 mode are now confirmed below. The native ending transition is now verified in both modes. Next: remaining
+controls in the order below. The enabled voice/message families now have
+paired presentation/audio evidence; unmatched alternate/chatter files and
+fixture limitations remain explicitly recorded in PC_VOICE_AUDIT.md.
+
+Gall now follows the user's explicit pause -> SAN -> unpause requirement.
+The native reveal afterward is accepted. Both full playback and early skip
+were verified in `gall_paused_film_full_20261008/` and
+`gall_paused_film_skip_20261008/`; no reveal timer reset or gameplay-running
+exception remains for Gall.
+
+### Cutscene policy applies to every remaining check
+
+Only matching comic-book panels are replaced by SANs. Gameplay reveals must
+remain and run after pause -> SAN -> unpause, including skips. Ord and Palace
+have now had their special reveal-running and countdown-reset paths removed;
+Ord verification passed: ord_panels_replace_reveal_preserve_20261008/ plays L04BOSS once, skips event-9 comic panels, and displays the native event-10 IG-88 reveal. This supersedes earlier overlap/handoff gates.
+
+
+October 8 policy regression: ord_panels_replace_reveal_preserve_20261008
+confirmed one L04BOSS playback, event 9 -> 10 after skip, and native IG-88
+reveal captures with no intervening comic panels. palace_pause_isolated_cue_20261008
+verified L09BOSS presentation, frozen game_frames=857 during playback, and
+resumed gameplay after skip. The Palace cue was synthetic: this does not
+verify its physical trigger or native reveal. The native-command-only probe
+palace_paused_reveal_preserved_20261008 did not fire the cue. That earlier probe left Palace physical
+trigger verification open; the successful native switch test below closes it. Runtime rebuilt successfully and copied
+to candidate-controls-menu/Shadows of the Empire.exe.
+
+### Palace physical switch trigger (October 8)
+
+The active trigger is a hand/use switch, not blaster fire. Sector 95
+(0x801E2974) has interaction flag 0x8 and property 18's polygon at the wall
+button. Native func_8000B804 traces a use ray against that geometry with
+func_8000B788, then sends Mict to property 19's Info 0 (0x801BCEFC).
+The Shot path requires sector flag 0x8000, which this switch does not have.
+A property-20 pointer alone did not prove the earlier shot/ZHit hypothesis.
+
+The contained fixture places Dash beside the switch and redirects one native
+use ray from (33.74,-29.86,82.5) along (0.556,0.832,0), length 10. It never
+writes an activation message, switch state, script state, or boss command.
+The saved preset 6 maps Use to C-Up (binding offset 0x24); the scripted
+1250:5:cu pulse enters the native use code. Native collision activates Info 0;
+Info 2 reaches its 44.5 keyframe, releases Info 3, which releases Info 7;
+Info 7 sends Mst1 to the Gladiator descriptor and enters command 10.
+
+Evidence: palace_switch_native_use_20261008. Switch state becomes 7 by
+VI 1300; native Gladiator command 10 and L09BOSS start at VI 1484. Captures
+1500 and 2300 show the Palace film, and game_frames stays 1140 during it.
+This supersedes the earlier synthetic-only Palace trigger limitation. The
+shot probes and the C-Right probe did not activate the switch.
+
+Full handoff evidence: palace_switch_full_handoff_20261008. Gladiator command,
+phase and XYZ are unchanged in snapshots at VI 1800/2400/3000/3600, while
+the SAN plays; game_frames remains 1140. After the film ends naturally,
+game_frames advances and captures 4000/4200 show the native Gladiator reveal.
+Original N64 evidence: palace_switch_original_n64_20261008 reaches the same
+native command at VI 1483 without any cached movie playback; capture 1900
+shows the Gladiator reveal. Capture 1550 is an early camera view obstructed
+by the pillar, so it alone is not proof of the boss reveal. These runs were
+muted and do not establish audible output.
+
+Reproduce using tools/diagnose_san_placement.ps1 with -DirectEventOnly
+-EventJumps '600:27' -PlacePlayer '27:1000:33.74:-29.86:76.5'
+-PalaceSwitchRay -ExtraInput '1250:5:cu'. Use -StopVi 4300 for full PC playback,
+or -OriginalN64 -StopVi 2150 for the native mode comparison.
+
+
 Work through these gates in order. Record a rendered frame, game-state/event
 trace, and audio evidence for each audiovisual claim. A static mapping or a
 successful frame counter does not close a gameplay timing check. Keep a failed
@@ -17,21 +119,56 @@ Original N64 mode follows its own story route without a PC film. Record
 direct-entry limits separately from natural campaign progression.
 
 The chapter intros, direct boss dispatches, ending direct entry, and Game
-Over have substantial captured coverage in `SotE_TODO.MD` and
-`PC_SAN_DISPATCH_AUDIT.md`. The first unresolved placement gate in story
-order is the **natural Ord Mantell train-to-IG-88 transition**. After that,
-check the **natural Gall Boba encounter**, **natural Palace Gladiator
-encounter**, and **campaign ending**. Do not infer those encounters from a
-direct event jump or an injected actor command.
+Over have captured coverage in `SotE_TODO.MD` and
+`PC_SAN_DISPATCH_AUDIT.md`. Ord Mantell's physical region check is complete
+under the user's explicit scope. Gall's physical trigger and both cutscene modes are confirmed. The known SAN placement gate is complete, including the native ending
+transition. The current gate is **controls validation** after the enabled
+voice/message checks documented below.
+Use direct player placement and native trigger logic for each encounter.
 
-For the active Ord gate, first establish a viable route through the whole
-train. A [recorded speedrun analysis](https://speeddemosarchive.com/StarWarsShadowsOfTheEmpire.html)
-describes it as an approximately 9:30 autoscroller, and the project's
-earlier short input probes lose a life around VI 1431. A 20-second jump or
-idle probe therefore cannot test the train-to-boss handoff. Trace the train
-and player state across its checkpoints, build a repeatable contained-input
-route, then capture event 8 -> 9 -> 10 in both modes with the boss film's
-audio and the first playable arena frame.
+### Native campaign ending verified (October 8)
+
+The contained target-damage/escape fixture now reaches event 31 through native
+completion logic in both modes. In ending_native_escape_fixed_20261008,
+the PC ending film is visible at presents 3400/4100; skipping at VI 4350
+advances the covered native panels and reaches credits at VI 4470. The
+present-4700 capture visibly shows the credits. In
+ending_native_escape_n64_20261008, native event 31 is reached by VI 3300,
+no cached SAN starts, and present 3500 shows the original Tatooine story
+panel and its caption. Earlier full PC ending-pair playback/audio evidence
+remains in san_ending_pc_pair_held_handoff; this new check closes the native
+battle-completion-to-ending transition, not an unassisted campaign run.
+The fixture incurred one life loss; it does not establish combat balance.
+Both new ending runs were muted.
+
+Reproduce with tools/diagnose_san_placement.ps1 -DirectEventOnly
+-EventJumps '600:30' -SkyhookDamage, adding -OriginalN64 for native panels.
+Use the runtime Release executable for the current diagnostic hook.
+
+### Ending transition fixture checkpoint (October 8)
+
+Event 30 has four PRBT targets at 0x8019F6B0 (stride 0x214). Native laser
+shot damage destroys the arm turrets; their update moves each target inward
+and changes it into a core. Native proximity damage destroys those cores.
+func_800822F0 sends Core at 0x80082778; Stft's func_8009C810 decrements
+0x8018E452 and starts the 30-second escape countdown at 0x800E1B24 after
+the fourth. func_8009B0D0 calls func_80092430 when the ship crosses the
+escape boundary; that sequence sets result=3 after 21 seconds.
+
+The gated SOTE_DIAGNOSTIC_SKYHOOK_DAMAGE fixture supplies native damage
+messages and relocates the ship to X=10000 only after the core count is zero.
+It does not write the core count, countdown, result, or event. The first
+laser-only probe established ILU17 with its visible power-core instruction
+(ending_native_damage_20261008/present_1600). The first mixed-damage probe
+was invalidated by a copied-context f_odd pointer alias; rebase that pointer
+before all native calls. ending_native_escape_fixed_20261008 uses the fix.
+This is a contained final-transition test, not an unassisted campaign run.
+
+### Historical Ord traversal attempts (superseded; do not repeat)
+
+The route experiments below are retained as evidence only. They do not
+change the completed Ord check or the current work order above.
+
 Two focused timing checks narrow the opening transfer. Holding forward from
 VI 800 fell from the first car and lost a life at VI 1087, before a VI 1120
 jump could run (`ord_train_early_forward_jump_20261007/`). Waiting until VI
@@ -582,8 +719,58 @@ VI-7105/7121 obstacle and do not inform the transfer. The current
 approach closes the horizontal gap but still crosses it below deck
 height. The next route should examine the deck geometry and available
 movement direction before another timing-only jump variation.
+Native presents 9950–10025 from the short-B run show the route more
+clearly: Dash is still on an orange deck at 9950–9975, then drops into
+the visible space between two orange deck sections by present 10000
+and passes under them at 10025. The `Trai` center distance alone did
+not identify a landable surface. The next controlled probe reverses
+the lateral stick direction while retaining the same approach window.
+
+
+### Controls finding queued from ending fixture
+
+src/modern_aim.cpp copies recomp_context in trace(), retaining f_odd's pointer
+into the original context. Rebase f_odd to the copied f1.u32l (FR=1) or
+f0.u32h (FR=0) before native calls. The ending diagnostic exposed this
+aliasing error in its own copied context; its fix is in main.cpp. Address
+the production trace copy and verify aiming at the controls step.
 
 ## 2. Voice with visible communications
+
+Latest: Return to Battle and cable-loss message/audio pass in both modes.
+Cable loss now follows its visible HUD text, covering native loss paths
+missed by the old caller list. Successful Trip now has a dedicated ILU33
+hook matching PC dispatch; native Trip dispatch, collapse and mixed ILU33
+audio now pass in both modes using the contained completed-cable fixture.
+The missing Fire tow cable prompt now maps to PC's fixed IR108 pilot cue;
+rendered prompt and mixed audio pass in both modes. Remaining command/chatter
+classification and Leebo coverage are next. Six Gall Leebo pairings
+(ILB14/15/16/17/18/21) now pass native communicator rendering and mixed
+audio in both modes using original ROM pointers. Their level-trigger timing
+is not established by this presentation fixture. Echo Base ILB04 and train
+ILB08/09/10 now also pass visible-message and mixed-audio checks in both
+modes with the original-pointer fixture. Bike ILB26/27/29, Freighter
+ILB35/36 and Palace ILB44 now also pass both modes. All 31 retained Leebo
+mappings now have paired visible captures and mixed-PCM evidence. Fresh
+ILB03/ILB46 checks close the older audio gaps; Skyhook ILU13/16 also pass
+paired visible-message and mixed-audio checks. All 97 installed communicator
+files match their staged copies. Native no-target and successful-attachment
+harpoon responses now also pass in both modes. The inventory distinguishes
+unmatched recordings from enabled mappings. Next: controls validation.
+The four Sewer pairings ILB38/39/40/41 now also pass original-pointer
+communicator rendering and mixed audio in both modes; their pickup/door
+triggers remain outside those presentation fixtures.
+
+Hoth stage 1-4 text/file pairings now pass rendered HUD and mixed-audio
+checks in both modes; Stage Four needed its exact ROM wording corrected.
+See PC_VOICE_AUDIT.md for fixture limits. The three friendly-fire warning selections also have paired rendered/text
+and PCM evidence with bank rotation tests. Next: remaining pilot combat
+chatter and non-Leebo command clips, then remaining Leebo mappings.
+
+Scope includes every communicator speaker, including rebel pilots, as
+explicitly requested October 8. Audit the ILB/ILU/IR inventory in
+docs/COMMUNICATOR_VOICE_INVENTORY.tsv for speaker identity as well as
+message, trigger, and audio; do not restrict this gate to Leebo.
 
 Use the native level-command and PC voice maps as the candidate list, then
 reach each remaining message in gameplay in story order. For every line,
@@ -595,15 +782,137 @@ not satisfy this gate.
 
 ## 3. Controls and Modern validation
 
+October 8: fixed copied-context floating-point register aliases in the
+Modern projectile trace and first-person camera request. Each copied
+context now rebases f_odd to its own FPR storage. The aim harness deliberately
+writes an odd native register and verifies caller preservation in both FR
+modes; it passes. Runtime rebuilt and all eight CTest harnesses pass.
+modern_context_pad_fire_20261008 sends contained RT/right-stick and
+diagonal-left-stick snapshots through the production input translator.
+Inspected captures 2800/3000/3100 show the centered reticle, changed view,
+movement and weapon charge consumption/recovery. Native projectile traces
+exercise convergence with finite camera/muzzle/direction values and camera
+slot 5 retained. This is a short Echo Base regression; exact impact accuracy,
+train aiming and physical-device feel remain unverified. The preceding
+native-B probe selected Jump under preset 6, so it is not firing evidence.
+
+### Train Modern aiming gap confirmed (October 8)
+
+modern_train_aim_ready_20261008 directly enters event 8, applies right-stick
+X=15000/Y=-9000 and RT from VI 1040 through 1189, and stops at VI 1220.
+The inspected present-1100 shows the native train view with no Modern
+reticle. Guest input contains Fire=8000, but no Modern begin/aim traces run.
+Do not call the existing Modern train button-translation checks an aim pass.
+The earlier modern_train_aim_baseline_20261008 uses an earlier input window
+and likewise supplies no Modern aiming evidence.
+
+Source confirms a separate controller (800A7D70), movement routine
+(800AAADC), weapon routine (800A9AD8) and camera helpers (800A4570/800A47F8).
+The current Modern hooks target 80074FA4/8006E6B8 and never enter this path.
+The train movement decoder stores its flags at guest SP+1BE/1BC/1BA/1B8/
+1B2/1B0 and magnitudes at SP+19C/1A0 before native stun/script gates at
+800AAFC0. Native angular integration at 800AC9C4 uses the vector at object
++90 with angular velocity at +A8; heading is combined with train rotation
+at 800AC9F4 onward. Train weapon routine 800A9AD8 uses the matrix at +15C,
+copied from the actor transform at 800A76CC onward. The normal on-foot
+layout cannot be reused blindly: train object+1B4 is a pointer, not normal
+on-foot weapon pitch.
+
+Implemented train-specific begin/decode/yaw hooks and the native pose hook
+at 800A70C8. Camera and weapon Euler locals share Modern pitch, while native
+train-relative body integration and script/death gates remain in effect.
+The hook refreshes cached f6/f14 after replacing the locals. Harness checks
+cover diagonal movement, preserved linear velocity and actor pointer,
+matching camera/weapon pitch, script suppression and Classic isolation.
+
+modern_train_pose_20261008 directly enters event 8 and applies the same
+right-stick/RT pulse as the baseline. All three captures (1030/1100/1180)
+were inspected: the reticle is visible, the view turns sideways and tilts
+upward. Snapshots at VI 1100/1200 preserve the +1B4 pointer (801AC514),
+with pitch 15.153/37.755 degrees. Camera and weapon forward vectors both
+gain the expected positive vertical component. This establishes camera
+and pose response, not shot impact accuracy.
+
+The convergence hook now accepts event 8's native camera slot 0 in addition
+to the existing ordinary slot 5. modern_train_convergence_20261008 applies
+three RT pulses and produces three native projectile convergence traces:
+ranges 161.010, 160.211 and 24.764, with finite camera/muzzle/shot vectors.
+Captures 1045/1125/1205 were inspected and show the train view and reticle;
+they do not resolve individual impacts. The aim harness verifies train
+camera convergence and excludes ordinary camera slot 0. All eight CTests
+passed after the pose change and again after the train convergence change.
+Runtime executable is build/runtime/Release;
+the playable candidate was refreshed after these checks, with matching
+executable hashes. Its Sdata folder also received all 97 missing local
+communicator WAV copies from the hash-verified staged folder. Candidate
+control preferences were preserved.
+
+modern_train_mouse_20261008 feeds process-local relative mouse movement and
+three Mouse 1 presses through the production binding path. Captures
+990/1055/1125/1200 were inspected sequentially: the view changes with mouse
+direction, the reticle remains visible, and the native train scene persists.
+Modern pitch rises to 11.52 degrees, reverses, then holds at 6.72 degrees;
+each button press creates a native projectile convergence trace. This checks
+mouse mapping and camera response, not physical-device delivery.
+
+The existing modern_virtual_pad_jetpack_sewers result already resolves
+sustained lift: native Y/A bindings raise Dash from Z=189.520 to 202.200,
+then release permits descent. Reinspection of captures 4150/4300 confirms
+the jetpack, active flame and fuel changing from 98% to 68%. Do not repeat
+the older failed jetpack fixtures or reopen lift as missing evidence.
+
+modern_train_native_impacts_20261008 closes the near/far impact geometry
+check. A read-only hook at native collision dispatch 800338F0 observes the
+selected collision point before impact effects. Three player shots at
+camera ranges 161.010/160.275/25.345 hit within 0.000702/0.000376/0.000000
+game units of their stored reticle targets. The observer changes no guest
+memory or registers and runs only with SOTE_TRACE_MODERN_AIM. Captures
+1002/1006/1082/1086/1162/1166 were inspected in order, showing the train,
+centered reticle and weapon charge recovery; the collision trace supplies
+the precise hit evidence, not a claim that distant impact pixels are resolved.
+
+Next: remaining bike/menu checks below. No train traversal is needed.
+
+modern_bike_final_controls_20261008 rechecks the current runtime with
+contained RT/LT/LB/RB snapshots. All six captures (2200/2300/2440/2550/
+2670/2760) were inspected in order. RT moves the bike into the nearby wall;
+LT sends native 4000 and backs it out into the plaza; LB/RB send 0020/0010
+and change the bike's pose and trajectory. The camera remains rendered
+through those actions, including the large framing change when reversing.
+The 9000 steering pulse rounds to zero under the configured deadzone, so
+this run is not additional steering evidence; earlier stronger-stick
+steering checks remain applicable. This bounded fixture does not claim
+long-course handling or physical-device feel.
+
 After the known SAN checks, finish Classic comparison with the installed PC
 control set and verify the editable keyboard/mouse and controller bindings
 together. Then resolve the remaining Modern cases in gameplay: train aiming,
-close/far shot impact, fine turns and movement while firing, jetpack,
+close/far shot impact, fine turns and movement while firing,
 Pause/Options, and sustained bike steering/braking/ram actions. Use contained
 game input diagnostics and actual rendered output. Keep physical device feel
 open for the user's play session; do not claim it from simulated input.
 
 ## 4. Options/Pause regression
+
+COMPLETE: modern_menu_state_only_20261008 runs with -NoCapture and
+SOTE_TRACE_MENU_REVAMP. Native menu metadata records Pause -> Options ->
+Graphics -> Schemes, returning and reopening Schemes. controls_after.json
+records On Foot Classic and Bike Modern. Resume at VI 5230 restores the
+player controller; a contained left-stick pulse moves Dash from
+(-356.610,80.480) to (-345.618,67.127), then he settles after release.
+No capture directory or visible-capture log entries were produced.
+This closes the controls/menu technical gates; physical-device feel is
+explicitly deferred in TODO. Next: user-reported SAN examples and final
+cutscene/voice audit.
+
+modern_menu_final_regression_20261008 and
+modern_menu_persistence_resume_20261008 verify Pause -> Options -> Graphics
+-> Controls, changing On Foot to Classic, Apply and reopening Controls with
+Classic retained. The latter saves controls_after.json with On Foot Classic
+and Bike Modern before restoring the original file. Its final Start pulse
+left Pause open; it does not establish final resume. The follow-up
+modern_menu_resume_selected_20261008 was stopped to honor the user's new
+no-screen-capture instruction. Finish resume using native state only.
 
 Recheck the completed Options/Pause work after control and cutscene changes:
 entry from live Pause, navigation to both device columns and Graphics,

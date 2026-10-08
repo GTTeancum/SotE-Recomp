@@ -7,7 +7,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+void sote_diagnostic_skyhook_damage(uint8_t* rdram, void* context);
+void sote_diagnostic_hoth_trip(uint8_t* rdram, void* context, int initialize);
+void sote_diagnostic_communicators(uint8_t* rdram, void* context);
+void sote_diagnostic_palace_ray(uint8_t* rdram, uint32_t object);
 void sote_modern_projectile(uint8_t* rdram, void* context);
+void sote_modern_impact(uint8_t* rdram, void* context);
 
 // Native-command music replacement. Keep effects on the original sound path.
 void sote_music_command(uint8_t* rdram, uint32_t name_address);
@@ -25,6 +30,8 @@ void sote_enter_player_controller(
     uint32_t controller,
     uint32_t action);
 void sote_wait_for_game_frame(void);
+void sote_diagnostic_ord_region(uint8_t* rdram, uint32_t object,
+    uint32_t position, uint32_t after_collision);
 double sote_sanitize_frame_delta(double delta);
 void sote_sanitize_global_frame_delta(uint8_t* rdram);
 uint32_t sote_allow_life_loss(
@@ -93,13 +100,15 @@ void sote_note_droid_text_buffer_draw(
     uint32_t text_pointer,
     uint32_t position_pointer,
     uint32_t color_pointer);
-uint32_t sote_normalize_zero_velocity_motion(
-    uint8_t* rdram,
-    uint32_t object);
+
 void sote_note_motion_loop_guard(uint8_t* rdram, uint32_t object);
 void sote_update_graphics_menu(uint8_t* rdram);
 uint32_t sote_is_bike_stage_active(void);
 void sote_modern_begin(uint8_t* rdram, uint32_t object);
+void sote_modern_train_begin(uint8_t* rdram, uint32_t object);
+void sote_modern_train_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
+void sote_modern_train_yaw(uint8_t* rdram, uint32_t object);
+uint32_t sote_modern_train_pose(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_yaw(uint8_t* rdram, uint32_t object);
 uint32_t sote_modern_aim(uint8_t* rdram, uint32_t stack);

@@ -42,4 +42,8 @@ extern "C" {
 void sote_modern_begin(uint8_t* rdram, uint32_t object);
 void sote_modern_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_yaw(uint8_t* rdram, uint32_t object);
+void sote_modern_train_begin(uint8_t* rdram, uint32_t object);
+void sote_modern_train_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
+void sote_modern_train_yaw(uint8_t* rdram, uint32_t object);
+uint32_t sote_modern_train_pose(uint8_t* rdram, uint32_t object, uint32_t stack);
 }

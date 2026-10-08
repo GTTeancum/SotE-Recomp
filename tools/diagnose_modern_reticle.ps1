@@ -10,7 +10,8 @@ param(
     [string]$PhysicalPad = '',
     [int]$StopVi = 3350,
     [string]$CapturePresents = '2800,3000,3100',
-    [switch]$TracePlayer
+    [switch]$TracePlayer,
+    [switch]$NoCapture
 )
 
 $ErrorActionPreference = "Stop"
@@ -65,9 +66,16 @@ if ($TracePlayer) {
 }
 $startInfo.Environment["SOTE_INPUT_SCRIPT"] = $inputScript
 $startInfo.Environment["SOTE_SMOKE_VIS"] = [string]$StopVi
-$startInfo.Environment["SOTE_VISIBLE_CAPTURE_PATH"] = Join-Path $output "frames"
-$startInfo.Environment["SOTE_VISIBLE_CAPTURE_PRESENTS"] = $CapturePresents
-$startInfo.Environment["SOTE_DIAGNOSTIC_CAPTURE_SYNC"] = "1"
+if (-not $NoCapture) {
+    $startInfo.Environment["SOTE_VISIBLE_CAPTURE_PATH"] = Join-Path $output "frames"
+    $startInfo.Environment["SOTE_VISIBLE_CAPTURE_PRESENTS"] = $CapturePresents
+    $startInfo.Environment["SOTE_DIAGNOSTIC_CAPTURE_SYNC"] = "1"
+} else {
+    foreach ($captureVariable in @('SOTE_VISIBLE_CAPTURE_PATH', 'SOTE_VISIBLE_CAPTURE_PRESENTS', 'SOTE_DIAGNOSTIC_CAPTURE_SYNC')) {
+        $startInfo.Environment.Remove($captureVariable) | Out-Null
+    }
+}
+$startInfo.Environment['SOTE_TRACE_MENU_REVAMP'] = '1'
 
 $schemePath = Join-Path (Split-Path -Parent $exe) 'sote_controls.json'
 $hadScheme = Test-Path -LiteralPath $schemePath
@@ -89,6 +97,10 @@ try {
     $process.WaitForExit()
     [IO.File]::WriteAllText((Join-Path $output "stdout.log"), $stdout.GetAwaiter().GetResult())
     [IO.File]::WriteAllText((Join-Path $output "stderr.log"), $stderr.GetAwaiter().GetResult())
+    if (Test-Path -LiteralPath $schemePath) {
+        [IO.File]::WriteAllBytes((Join-Path $output 'controls_after.json'),
+            [IO.File]::ReadAllBytes($schemePath))
+    }
     $exit = $process.ExitCode
     $process.Dispose()
     Write-Host "Modern reticle probe exit: $exit"

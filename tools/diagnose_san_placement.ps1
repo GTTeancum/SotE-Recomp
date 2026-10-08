@@ -16,6 +16,7 @@ param(
     [switch]$TracePlayer,
     [switch]$FixedDelta,
     [switch]$FullHealth,
+    [switch]$TriggerLives,
     [switch]$StopOnLifeLoss,
     [switch]$StopOnPlayerWarp,
     [switch]$TraceDroidVisual,
@@ -32,7 +33,18 @@ param(
     [switch]$DirectEventOnly,
     [string]$EventJumps = '',
     [string]$Teleport = '',
+    [string]$PlacePlayer = '',
+    [switch]$OrdSector51,
+    [switch]$PalaceSwitchRay,
+    [switch]$SkyhookDamage,
+    [switch]$HothTrip,
+    [switch]$HothAttach,
+    [string]$CommunicatorSequence = '',
+    [ValidateSet('', 'warnings', 'stages', 'boundary', 'cable-loss', 'fire-cable')][string]$HothRadio = '',
+    [string]$FollowObject = '',
+    [string]$LoadRdramSnapshot = '',
     [string]$PhysicalPad = '',
+    [string]$PhysicalMouse = '',
     [string]$PhysicalKeys = '',
     [string]$ExtraInput = '',
     [int]$RdramSnapshotStartVi = 0,
@@ -83,10 +95,14 @@ if ($TraceFinal) { $info.Environment['SOTE_TRACE_FINAL_EVENT'] = '1' }
 if ($TracePlayer) { $info.Environment['SOTE_TRACE_PLAYER_STATE'] = '1' }
 if ($FixedDelta) { $info.Environment['SOTE_DIAGNOSTIC_FIXED_DELTA'] = '1' }
 if ($FullHealth) { $info.Environment['SOTE_DIAGNOSTIC_FULL_HEALTH'] = '1' }
+if ($TriggerLives) { $info.Environment['SOTE_DIAGNOSTIC_TRIGGER_LIVES'] = '1' }
 if ($StopOnLifeLoss) { $info.Environment['SOTE_DIAGNOSTIC_STOP_ON_LIFE_LOSS'] = '1' }
 if ($StopOnPlayerWarp) { $info.Environment['SOTE_DIAGNOSTIC_STOP_ON_PLAYER_WARP'] = '1' }
 if ($TraceDroidVisual) { $info.Environment['SOTE_TRACE_DROID_VISUAL'] = '1' }
-if ($TraceAim) { $info.Environment['SOTE_TRACE_MODERN_AIM'] = '1' }
+if ($TraceAim) {
+    $info.Environment['SOTE_TRACE_MODERN_AIM'] = '1'
+    $info.Environment['SOTE_TRACE_MODERN_CONTROLS'] = '1'
+}
 if ($TraceGallBoss) { $info.Environment['SOTE_TRACE_GALL_BOSS'] = '1' }
 if ($TracePalaceBoss) { $info.Environment['SOTE_TRACE_PALACE_BOSS'] = '1' }
 if ($SyntheticGallCueVi) {
@@ -132,6 +148,13 @@ if ($EventJumps) {
 if ($Teleport) {
     $info.Environment['SOTE_DIAGNOSTIC_TELEPORT'] = $Teleport
 }
+if ($FollowObject) {
+    $info.Environment['SOTE_DIAGNOSTIC_FOLLOW_OBJECT'] = $FollowObject
+}
+if ($LoadRdramSnapshot) {
+    $snapshotPath = (Resolve-Path -LiteralPath $LoadRdramSnapshot).Path
+    $info.Environment['SOTE_DIAGNOSTIC_LOAD_RDRAM'] = "1200:$snapshotPath"
+}
 if ($PhysicalPad) {
     $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_PAD'] = $PhysicalPad
     $info.Environment['SOTE_TRACE_INPUT'] = '1'
@@ -147,6 +170,31 @@ if ($RdramSnapshotStartVi -gt 0) {
     New-Item -ItemType Directory -Path $memoryOutput -Force | Out-Null
     $info.Environment['SOTE_DUMP_RDRAM_EVERY'] = "${RdramSnapshotStartVi}:${RdramSnapshotPeriodVi}:${memoryOutput}"
 }
+if ($PlacePlayer) { $info.Environment['SOTE_DIAGNOSTIC_PLACE_PLAYER'] = $PlacePlayer }
+if ($PalaceSwitchRay) {
+    $info.Environment['SOTE_DIAGNOSTIC_PALACE_SWITCH_RAY'] = '1'
+}
+if ($SkyhookDamage) {
+    $info.Environment['SOTE_DIAGNOSTIC_SKYHOOK_DAMAGE'] = '1'
+}
+if ($PhysicalMouse) {
+    $info.Environment['SOTE_DIAGNOSTIC_PHYSICAL_MOUSE'] = $PhysicalMouse
+    $info.Environment['SOTE_TRACE_INPUT'] = '1'
+    $info.Environment['SOTE_TRACE_GUEST_INPUT'] = '1'
+}
+if ($HothTrip) {
+    $info.Environment['SOTE_DIAGNOSTIC_HOTH_TRIP'] = '1'
+}
+if ($HothAttach) {
+    $info.Environment['SOTE_DIAGNOSTIC_HOTH_TRIP'] = 'attach'
+}
+if ($CommunicatorSequence) {
+    $info.Environment['SOTE_DIAGNOSTIC_COMMUNICATORS'] = $CommunicatorSequence
+}
+if ($HothRadio) {
+    $info.Environment['SOTE_DIAGNOSTIC_HOTH_RADIO'] = $HothRadio
+}
+if ($OrdSector51) { $info.Environment['SOTE_DIAGNOSTIC_ORD_SECTOR51'] = '1' }
 $info.Environment['SOTE_INPUT_SCRIPT'] = $inputs
 $info.Environment['SOTE_SMOKE_VIS'] = [string]$StopVi
 $info.Environment['SOTE_VISIBLE_CAPTURE_PATH'] = Join-Path $output 'frames'

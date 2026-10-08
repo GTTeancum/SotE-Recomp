@@ -139,12 +139,42 @@ int main() {
     publish({});
     sote_modern_begin(ram.data(),object);
     check(!aiming_active() && pitch_degrees()==0,"disconnect clears aim");
+    put<int16_t>(ram,0x8013CE0E,8);
+    put<float>(ram,0x800E539C,0); put<uint32_t>(ram,0x800E5838,0);
+    put<float>(ram,0x800E57B8,0);
+    publish({{.7f,.7f},{.8f,-.5f},true});
+    put<float>(ram,object+0xA4,123.0f);
+    sote_modern_train_begin(ram.data(),object);
+    check(sote_modern_take_camera_request()==0,"train keeps its native camera path");
+    sote_modern_train_decode(ram.data(),object,stack);
+    sote_modern_train_yaw(ram.data(),object);
+    check(get<int16_t>(ram,stack+0x1BE)==1 && get<int16_t>(ram,stack+0x1B0)==1,
+        "train translates diagonal movement to forward and strafe");
+    check(get<int16_t>(ram,stack+0x1BA)==0 && get<int16_t>(ram,stack+0x1B8)==0,
+        "train left stick does not add native turning");
+    check(get<float>(ram,object+0xA8)<0 && get<float>(ram,object+0xA4)==123.0f,
+        "train right stick changes angular rate without corrupting linear velocity");
+    put<uint32_t>(ram,object+0x1B4,0x80123450);
+    check(sote_modern_train_pose(ram.data(),object,stack)==1 &&
+        get<float>(ram,stack+0xD4)>0 &&
+        get<float>(ram,stack+0xD4)==get<float>(ram,stack+0xE0) &&
+        get<uint32_t>(ram,object+0x1B4)==0x80123450,
+        "train camera and weapon share pitch without overwriting actor pointer");
+    put<float>(ram,0x800E57B8,1);
+    sote_modern_train_begin(ram.data(),object);
+    auto train_blocked=ram;
+    sote_modern_train_decode(ram.data(),object,stack);
+    sote_modern_train_yaw(ram.data(),object);
+    check(sote_modern_train_pose(ram.data(),object,stack)==0,"train script gate suppresses pose");
+    check(ram==train_blocked && !aiming_active(),"train script gate suppresses Modern input");
+    put<float>(ram,0x800E57B8,0);
     publish({{1,0},{1,1},true});
     sote::controls_menu::cycle_scheme(SchemeSlot::OnFoot,1);
     const auto before_classic = ram;
     sote_modern_begin(ram.data(),object);
     sote_modern_decode(ram.data(),object,stack);
     sote_modern_yaw(ram.data(),object);
+    check(sote_modern_train_pose(ram.data(),object,stack)==0,"Classic suppresses train pose");
     check(ram==before_classic && !aiming_active(),"Classic leaves guest state untouched");
     sote_modern_camera_offset(ram.data(),object,stack);
     check(get<float>(ram,cameras+6*128+0x70)==0,

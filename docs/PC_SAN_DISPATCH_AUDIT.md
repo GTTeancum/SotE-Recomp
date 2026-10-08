@@ -32,9 +32,140 @@ replay the movie (`san_freighter_event18_full_pc_corrected_20261007/`).
 `L05BOSS.SAN` and `L09BOSS.SAN` are absent from that event table. Their only
 filename references are the separate PC actor branches at `0x4550B2` and
 `0x455C35`, respectively. The corresponding N64 Boba Fett and Gladiator Droid
-command-10 branches now cue those movies in PC cutscene mode. Static branch
-matching and synthetic runtime cues support the placement; reaching both
-encounters through normal gameplay remains unverified.
+command-10 branches now cue those movies in PC cutscene mode. Gall now has physical-trigger verification below. Palace now has native use-switch trigger and paired mode verification below;
+earlier synthetic cues established playback only.
+### Native campaign ending verified (October 8)
+
+The contained target-damage/escape fixture now reaches event 31 through native
+completion logic in both modes. In ending_native_escape_fixed_20261008,
+the PC ending film is visible at presents 3400/4100; skipping at VI 4350
+advances the covered native panels and reaches credits at VI 4470. The
+present-4700 capture visibly shows the credits. In
+ending_native_escape_n64_20261008, native event 31 is reached by VI 3300,
+no cached SAN starts, and present 3500 shows the original Tatooine story
+panel and its caption. Earlier full PC ending-pair playback/audio evidence
+remains in san_ending_pc_pair_held_handoff; this new check closes the native
+battle-completion-to-ending transition, not an unassisted campaign run.
+The fixture incurred one life loss; it does not establish combat balance.
+Both new ending runs were muted.
+
+Reproduce with tools/diagnose_san_placement.ps1 -DirectEventOnly
+-EventJumps '600:30' -SkyhookDamage, adding -OriginalN64 for native panels.
+Use the runtime Release executable for the current diagnostic hook.
+
+## Required cutscene behavior (October 8 user clarification)
+
+In PC mode, a SAN replaces matching N64 comic-book panels completely: show
+one version only. Gameplay reveals remain intact: freeze gameplay throughout
+the SAN, then resume the native reveal. This applies to Ord, Gall, and Palace,
+including skipped films. Original N64 mode keeps the native sequences and
+starts no SAN. Historical notes below about hidden/overlapped gameplay reveals
+are superseded by this requirement.
+
+Ord event 9 uses the common story-skip path to event 10 after playback or skip;
+its duplicate-film suppression prevents replay on event 10. Direct event 10
+plays the film once and then resumes its native reveal. Palace and Gall use
+ordinary playback with no special gameplay-unfreeze or reveal-timer reset.
+
+
+October 8 policy regression: ord_panels_replace_reveal_preserve_20261008
+confirmed one L04BOSS playback, event 9 -> 10 after skip, and native IG-88
+reveal captures with no intervening comic panels. palace_pause_isolated_cue_20261008
+verified L09BOSS presentation, frozen game_frames=857 during playback, and
+resumed gameplay after skip. The Palace cue was synthetic: this does not
+verify its physical trigger or native reveal. The native-command-only probe
+palace_paused_reveal_preserved_20261008 did not fire the cue. That earlier probe left Palace physical
+trigger verification open; the successful native switch test below closes it. Runtime rebuilt successfully and copied
+to candidate-controls-menu/Shadows of the Empire.exe.
+
+### Palace physical switch trigger (October 8)
+
+The active trigger is a hand/use switch, not blaster fire. Sector 95
+(0x801E2974) has interaction flag 0x8 and property 18's polygon at the wall
+button. Native func_8000B804 traces a use ray against that geometry with
+func_8000B788, then sends Mict to property 19's Info 0 (0x801BCEFC).
+The Shot path requires sector flag 0x8000, which this switch does not have.
+A property-20 pointer alone did not prove the earlier shot/ZHit hypothesis.
+
+The contained fixture places Dash beside the switch and redirects one native
+use ray from (33.74,-29.86,82.5) along (0.556,0.832,0), length 10. It never
+writes an activation message, switch state, script state, or boss command.
+The saved preset 6 maps Use to C-Up (binding offset 0x24); the scripted
+1250:5:cu pulse enters the native use code. Native collision activates Info 0;
+Info 2 reaches its 44.5 keyframe, releases Info 3, which releases Info 7;
+Info 7 sends Mst1 to the Gladiator descriptor and enters command 10.
+
+Evidence: palace_switch_native_use_20261008. Switch state becomes 7 by
+VI 1300; native Gladiator command 10 and L09BOSS start at VI 1484. Captures
+1500 and 2300 show the Palace film, and game_frames stays 1140 during it.
+This supersedes the earlier synthetic-only Palace trigger limitation. The
+shot probes and the C-Right probe did not activate the switch.
+
+Full handoff evidence: palace_switch_full_handoff_20261008. Gladiator command,
+phase and XYZ are unchanged in snapshots at VI 1800/2400/3000/3600, while
+the SAN plays; game_frames remains 1140. After the film ends naturally,
+game_frames advances and captures 4000/4200 show the native Gladiator reveal.
+Original N64 evidence: palace_switch_original_n64_20261008 reaches the same
+native command at VI 1483 without any cached movie playback; capture 1900
+shows the Gladiator reveal. Capture 1550 is an early camera view obstructed
+by the pillar, so it alone is not proof of the boss reveal. These runs were
+muted and do not establish audible output.
+
+Reproduce using tools/diagnose_san_placement.ps1 with -DirectEventOnly
+-EventJumps '600:27' -PlacePlayer '27:1000:33.74:-29.86:76.5'
+-PalaceSwitchRay -ExtraInput '1250:5:cu'. Use -StopVi 4300 for full PC playback,
+or -OriginalN64 -StopVi 2150 for the native mode comparison.
+
+
+### Gall playback policy (October 8, user correction)
+
+Gall uses ordinary pause -> SAN -> unpause playback. The duplicate native
+reveal after the film is intentional and accepted by the user. Removed the
+Gall gameplay-unfreeze exception, final-frame hold, and skip-time reveal
+countdown reset. Earlier entries describing the reveal advancing beneath
+L05BOSS are historical and superseded. Natural completion and early skip
+must both resume the same untouched native encounter state.
+
+Verified with `gall_paused_film_full_20261008/`: between VI 1800, 2100,
+and 2400, game_frames stays 1350, Boba stays command 10/timer 119 at the
+same coordinates, native reveal countdown stays 15.98 seconds, and Dash's
+health stays 100. After natural film completion, gameplay and the native
+reveal advance again. Captured PC film inspected; audio handoff returns to
+game. `gall_paused_film_skip_20261008/` separately freezes state through
+VI 1950, skips at VI 2000, and resumes the native reveal with its countdown
+still intact (13.97 seconds at VI 2100). Present 2050 shows the native Slave I
+arena reveal. No gameplay is advanced to hide the second reveal.
+
+### Gall physical trigger verified (October 8)
+
+Entering collision sector 28 starts the final lift (Info 43). At its arrival,
+Info 43 sends `GtoS 1` to Info 44, whose next keyframe sends `Mst1` to Boba's
+Dfob descriptor. That forwards the message to the boss and executes native
+command 10. The verified chain is physical entry -> lift -> script -> actor
+cue; the diagnostic writes only Dash's position after direct level entry.
+
+This exposed a runtime defect: `sote_normalize_zero_velocity_motion` canceled
+Info 44 before it could dispatch its immediate keyframe. Native
+`func_8007D3B8` explicitly handles zero velocity as immediate completion at
+0x8007D5CC-0x8007D5E4. Removed that premature cancellation; the loop guard
+still bounds actual repeated cycles after 64 passes, allowing the full
+16-keyframe sequence.
+
+Before fix: `gall_lift_entry_20261008/stdout.log` records Info 44 being
+canceled at VI 1700 and Boba staying at command 1. After fix:
+`gall_lift_film_confirmed_20261008/stdout.log` records native command 10 at
+VI 1700, cached L05BOSS playback, and the encounter cue. Present 1700 was
+visually inspected and shows Boba beside Slave I in the PC film. The probe
+used SDL dummy audio and saved PCM; physical speaker output was not tested.
+Original N64 mode repeats the same physical trigger and native command 10
+at VI 1700, starts no SAN, and renders the native arena/Slave I camera reveal
+at present 1800 (`gall_lift_n64_confirmed_20261008/`).
+Reproduction: `tools/diagnose_san_placement.ps1 -ExePath
+build/runtime/Release/sote_recomp.exe -PlacePlayer '15:1200:-139:268:520'
+-DirectEventOnly -EventJumps '600:15' -TraceGallBoss -AudioProbe -StopVi 2300
+-CapturePresents '1500,1700'` with a fresh output directory and the existing
+SAN cache beside the runtime executable.
+
 The installed `L09BOSS.SAN` soundtrack has Xizor addressing Dash and
 introducing his Gladiator Droid (local automated transcript:
 `build/diagnostics/L09BOSS_audio_transcript_20261007.txt`). The native Palace
@@ -166,7 +297,14 @@ non-silent PCM queued to SDL's dummy device, then the playable arena with
 also reaches the arena at 100 health
 (`ord_event9_pc_early_skip_fixed_20261007/`). The direct event-10 fallback
 remains for level selection. Reaching event 9 by completing the train remains
-unverified. A fresh direct event-10 entry still starts the fallback film
+unverified. On October 8, a contained position relocation passed Dash through
+the actual collision sector 51. The original collision routine returned sector
+51 at (350, -250, -2), and its native entry handler set the ending flag at
+0x800E5838 to 1 (`ord_sector51_crossing_20261008/stdout.log`, line 118).
+The diagnostic did not write the sector pointer, ending flag, or event 9.
+This confirms the region trigger fired; the later train-car-17 X > 540
+completion condition was not reached in this short check.
+A fresh direct event-10 entry still starts the fallback film
 (`ord_event10_pc_direct_fallback_20261007/`).
 
 The table does not prove movie sound, visual handoff, or native story skip.

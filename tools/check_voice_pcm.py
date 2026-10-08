@@ -18,17 +18,27 @@ def main() -> None:
     parser.add_argument("voice_wav", type=Path)
     parser.add_argument("game_pcm", type=Path)
     parser.add_argument("--seconds", type=float, default=2.0)
+    parser.add_argument("--pcm-rate", type=int, default=22050,
+                        help="sample rate of the game PCM dump (check runtime log)")
     args = parser.parse_args()
+    if args.pcm_rate <= 0:
+        parser.error("PCM rate must be positive")
 
     with wave.open(str(args.voice_wav), "rb") as voice:
-        if (voice.getnchannels(), voice.getsampwidth()) != (1, 2):
-            parser.error("voice WAV must be 16-bit mono PCM")
-        sample_rate = voice.getframerate()
-        template = np.frombuffer(
-            voice.readframes(min(voice.getnframes(),
-                                 round(args.seconds * sample_rate))),
-            dtype="<i2",
-        ).astype(np.float64)
+        if voice.getnchannels() != 1 or voice.getsampwidth() not in (1, 2):
+            parser.error("voice WAV must be 8-bit or 16-bit mono PCM")
+        voice_rate = voice.getframerate()
+        raw = voice.readframes(min(voice.getnframes(),
+                                   round(args.seconds * voice_rate)))
+        if voice.getsampwidth() == 1:
+            template = (np.frombuffer(raw, dtype=np.uint8).astype(np.float64) - 128) * 256
+        else:
+            template = np.frombuffer(raw, dtype="<i2").astype(np.float64)
+        sample_rate = args.pcm_rate
+        if voice_rate != sample_rate:
+            # The runtime mixer uses linear interpolation between voice frames.
+            positions = np.arange(round(len(template) * sample_rate / voice_rate)) * voice_rate / sample_rate
+            template = np.interp(positions, np.arange(len(template)), template)
 
     if len(template) < sample_rate // 2:
         parser.error("voice comparison needs at least half a second")

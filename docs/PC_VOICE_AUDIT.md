@@ -1,5 +1,25 @@
 # PC voice and N64 communication audit
 
+## Current coverage (October 8)
+
+The inventory contains 97 installed communicator recordings: 37 ILB, 18
+ILU and 42 IR. All staged files match the PC installation. Current mappings
+use 31 ILB, 14 ILU and seven IR files (52 total). The other 45 remain
+explicitly unmatched, alternate, contradictory or PC combat-chatter clips;
+an audit does not require inventing N64 messages to consume them.
+
+All 31 retained Leebo pairings have native visible-message and mixed-PCM
+evidence in both cutscene modes. All mapped Hoth/Skyhook radio text families
+also have that paired coverage. The pilot rotation harness covers all six
+warning bank variants; the live sequence covers IR103/201/303, plus the
+separate fixed IR108 readiness cue. Native cable loss, no-target and
+successful Trip and attachment responses have paired audio evidence. Exact named pilot identities
+and natural objective timing beyond the documented fixtures are unverified.
+
+The chronological notes below retain failed probes and older open-work
+statements. Later successful evidence supersedes their presentation/audio
+gaps; those statements must not restart completed checks.
+
 The installed PC game's `Sdata` WAV files were transcribed locally with
 `tools/transcribe_pc_voices.py` and the cached `small.en` model. The model
 output is evidence for review, not an ear check. The N64 wording below comes
@@ -484,3 +504,514 @@ Xizor's fighters from the gun turret,” is visible at
 None of the installed `ILU` clips transcribes to this instruction, and the
 runtime has no mapping for it. It remains native text without an added PC
 voice, rather than playing an unrelated recording.
+
+### Skyhook completion communications (October 8)
+
+The native target-damage/escape fixture now reaches all three later radio
+lines without writing a dialogue state, core counter, result, or story event.
+In voice_skyhook_completion_pc_20261008, native captures show the core
+instruction at present 1600, "Let's get out of here!" at 1850/1950, and
+"Wait... Where's Dash?" at 2750/2900. ILU17, ILU19, and ILU20 queue on
+their native text draws at game frames 1156, 1454, and 2326 respectively.
+Their supplied WAVs correlate with the game mix at 0.403840, 0.364482,
+and 0.198515 (next peaks outside one second: 0.061914, 0.183227,
+0.073678). The comparison uses the first two seconds or the entire clip
+when shorter; background effects lower the scores. This verifies the
+selected waveforms in the SDL dummy-device mix, not physical speakers.
+The fixture intentionally supplies native damage messages and moves the
+ship after core destruction; this is a communication mapping check, not
+unassisted combat. Original N64 paired evidence is now in voice_skyhook_completion_n64_20261008:
+the same messages are visible at presents 1600, 1850, and 2750; queue frames
+are 1453, 1751, and 2621. PCM correlations are 0.417454, 0.365619, and
+0.127789 (next peaks 0.055508, 0.127607, and 0.060722). ILU20 has the
+weakest waveform match and substantial background audio. These observations
+establish the text/file pairing; character identity still needs the expanded
+speaker audit below.
+
+## All communicator speakers: expanded audit scope (October 8)
+
+The user explicitly requires rebel-pilot and other communicator files to be
+audited alongside L33B-0. docs/COMMUNICATOR_VOICE_INVENTORY.tsv inventories
+all installed ILB, ILU, and IR recordings, their SHA-256, runtime-copy match,
+existing mapping, and available automated transcript. Prefixes alone are not
+speaker identification. Existing transcription is a review aid, not an ear check.
+
+The user authorized copying missing VO from the installed PC game's Sdata
+folder into the staged Sdata folder. All 97 inventoried communicator files
+currently match the installed copies by SHA-256, so none needed copying.
+
+For every clip, establish the character/voice from the recording and installed
+PC dispatch, then compare the N64 portrait/speaker, displayed wording, and
+trigger. Record mapped, absent counterpart, alternate take, or deliberately
+withheld with evidence; do not mark absent from the current map as audited.
+Check repeat suppression and timing where there is a counterpart, in both
+cutscene modes. IR101-114, IR201-214, and IR301-314 include apparent pilot
+combat chatter (for example friendly-fire warnings and harpoon instructions).
+Their three numbered groups must be checked separately for voice identity.
+The existing Skyhook checks verify message/file pairings but do not by
+themselves establish the named speaker. This expanded gate remains open.
+
+### Pilot friendly-fire dispatcher located (October 8)
+
+Installed Shadows.exe has IR filenames in the sound table: IR101 at
+0x4C553C (sound ID 0x37), IR201 at 0x4C55AC (0x45), and IR301 at
+0x4C561C (0x53). The frnd message branch of function 0x4791E0 begins
+at 0x479277. After cooldown gates, its selected text ID 0x38..0x3C
+chooses one of five friendly-fire recordings. Global 0x738548 selects
+IR1xx, IR2xx, or IR3xx and cycles 0 -> 1 -> 2 -> 0 after dispatch;
+it is not enough evidence to assign a named character to each prefix.
+All cases call the voice function at 0x46FCB0 through 0x479338.
+Disassembly evidence: build/diagnostics/pc_pilot_dispatch_20261008.asm.
+
+N64 has the corresponding frnd branch at 0x800922F0 (dispatch comparison
+0x80091C5C). It checks cooldowns at 0x800E1844 and 0x800E1858, sets a
+two-second timer, and selects a message from 0x800E1860 using index
+0x800E186C, storing the selected ID at 0x800E185C. Its index cycles over
+THREE entries (0x80092358), whereas the PC branch cycles five text IDs.
+Therefore copying the PC numeric mapping directly would be incorrect.
+Next: resolve those three N64 text IDs/portraits and their display path,
+then bind only recordings whose content and speaker match. No new pilot
+mapping has been enabled from this static evidence alone.
+
+### N64 pilot HUD presentation verified (October 8)
+
+The three native friendly-fire IDs are 7, 38, and 39 (ROM globals
+0x800E1860..68). In segment 3 they resolve to "Hey, I'm on your side!",
+"Don't shoot Rebel forces!", and "We're on the same side!". Unlike the
+Skyhook green communicator, these are centered yellow HUD text with no
+speaker portrait. Native presents 1250/1550/1850 in
+voice_hoth_pilot_hud_20261008 show each of the three lines over the Hoth
+battle. The offscreen SOTE_DIAGNOSTIC_HOTH_RADIO fixture writes only the
+selected HUD ID and its two-second display timer at VI 1200/1500/1800.
+It establishes the actual presentation, not a friendly-fire collision.
+
+Candidate semantic matches are IRx03 ("I'm on your side") for IDs 7 and
+39 and IRx01 ("Check your fire") for ID 38. These are candidate mappings;
+no pilot voice was enabled in this muted capture. The PC cycles voice banks
+independently of warning selection, so a fixed named-pilot assignment based
+on a warning ID would be unsupported. Preserve that distinction during
+implementation and audio verification.
+
+The same level segment contains stage 1-4 Rogue Group instructions matching
+ILU01/04/05/07. The PC sound IDs are 0x25/26/27/28, selected by its stage
+branch ending at 0x475087. Existing PC voice code currently gates text
+mapping to events 28-30; these Hoth text lines therefore have no voice map.
+Next implementation work is the Hoth HUD text hook/mapping and contained
+visible-message/audio checks, followed by the remaining pilot chatter.
+
+PC sound table layout is ID then filename pointer (eight-byte entries).
+Using the word after a filename pointer gives the next entry's ID and is
+wrong. The call-site scratch report pc_voice_dispatch_calls_20261008.txt
+was corrected to use the preceding ID; its linear predecessors still need
+branch-by-branch reading and are not proof of every call's selected clip.
+
+### Hoth stage instructions mapped (October 8)
+
+Added exact normalized native stage 1-4 text matches to src/pc_voices.cpp:
+ILU01/04/05/07, gated to Hoth events 2 and 3. Playback begins on the existing
+native text-draw hook; continuous draws do not restart the recording.
+The expanded pc_voices_harness checks all four ROM strings, repeat suppression,
+event changes, and rejection in Skyhook, and passes. Runtime Release rebuilt.
+
+voice_hoth_stage1_20261008 provides the first live check: present 850 shows
+Stage One, the green pilot portrait, and the Rogue Group probe-droid/turret
+instruction. ILU01 queues at game frame 551 on the visible draw. Its first
+three seconds correlate with the captured game mix at 0.910866 (next peak
+outside one second 0.117058). This is native event-3 entry in Original N64
+mode, with SDL dummy audio output. PC mode and stages 2-4 still need their
+runtime presentation/audio checks. The named portrait identity is unverified.
+
+The ILU01 source is 8-bit mono at 11025 Hz; the game dump is 16-bit stereo
+at 22050 Hz. tools/check_voice_pcm.py now handles 8/16-bit mono sources and
+linearly resamples the reference to --pcm-rate (default 22050, checked against
+the runtime log), matching the mixer. Previously it required 16-bit source
+and implicitly treated the source rate as the dump rate.
+
+### Hoth stage fixture correction (October 8)
+
+voice_hoth_all_stages_pc_20261008 rendered all four native instruction
+strings, but only ILU01/04/05 queued. The Stage Four match had erroneously
+included the "Rogue Group:" header used by stages 1-3; the actual string
+starts "Stage Four ... Good Job, Rogue Group." The live check caught the
+mistake that the manually copied unit fixture shared. Both mapping and fixture
+are corrected. A fresh direct extraction from segment 3 at offsets 0x9F510,
+0x9F58C, 0x9F5EC, and 0x9F650 confirms all four normalized production strings
+now match the ROM exactly; the rebuilt pc_voices_harness passes.
+
+The stage fixture uses SOTE_DIAGNOSTIC_HOTH_RADIO=stages: it selects native
+HUD IDs 10/11/12 at VI 1500/2100/2700 and sets an eight-second text timer.
+This is presentation/audio coverage, not actual completion of successive
+waves or the native stage-specific portrait setup. Stage One appears through
+ordinary event-3 entry. The initial PC run's ILU01/04/05 correlations were
+0.932409/0.716346/0.852389. Its ILU07 correlation was weak and at the wrong
+onset, consistent with no queue; it is a failed Stage Four check, not a pass.
+
+The corrected Original N64 run voice_hoth_all_stages_n64_fixed_20261008
+queues all four files at frames 552/1450/2048/2646. Presents
+850/1600/2200/2800 were inspected individually and show the four matching
+instructions. Two-second PCM correlations for ILU01/04/05/07 are
+0.934865/0.719293/0.856976/0.824295, with next peaks outside one second
+0.160959/0.093743/0.116650/0.118588. The new -HothRadio stages option in
+tools/diagnose_san_placement.ps1 reproduces the fixture; use -HothRadio
+warnings for the three friendly-fire HUD texts. Both require event 3 and
+are restricted to offscreen diagnostics.
+
+The corrected PC-mode comparison voice_hoth_all_stages_pc_fixed_20261008
+also passes this presentation/audio check. The four inspected presents
+850/1600/2200/2800 show the correct text; ILU01/04/05/07 queue at frames
+257/1153/1751/2349 and correlate at 0.934157/0.710067/0.858165/0.840369
+(next peaks 0.169395/0.153258/0.115518/0.120888). Each clip queues once.
+This closes the four stage text/file pairings in both modes within the stated
+fixture limits. It does not identify the named pilot or exercise wave wins.
+Next: pilot friendly-fire selections and remaining non-Leebo communicator
+clips, then the remaining Leebo mappings, before controls validation.
+
+### Pilot warning implementation (October 8)
+
+The three native Hoth warning strings now select pilot recordings on their
+visible text draws. "Hey, I'm on your side!" and "We're on the same side!"
+use IRx03; "Don't shoot Rebel forces!" uses IRx01 ("Check your fire!").
+The latter two are semantic, not verbatim, matches. Voice banks rotate
+1 -> 2 -> 3 on new warnings, independently of wording, following the PC
+frnd dispatcher. There is no portrait or named character assignment.
+Continuous redraws do not rotate or replay; leaving/reentering Hoth resets
+the bank. Tests cover all six selected files, repeat suppression, rearming,
+rotation independent of text, and rejection outside Hoth; they pass.
+
+voice_hoth_pilot_warnings_n64_20261008 shows all three warning texts at
+presents 1250/1550/1850. The selected IR103/IR201/IR303 recordings correlate
+with its PCM at 0.877478/0.762102/0.884200 (next peaks
+0.137349/0.149611/0.118201). The PC-mode run queues those same three files
+once each and has correlations 0.876251/0.876878/0.839925, but its last two
+captures occur after the two-second warning expired; those two PC visual
+checks need the fixed-delta replay. The fixture is a native HUD presentation
+check, not friendly projectile collision. SDL dummy output was used.
+
+A separate installed-PC actor combat branch at 0x473123 uses a timer,
+checks nearby ATAT/ATST/PRBT targets, then dispatches a 20-entry voice cycle
+through 0x47323A (table 0x473ED8, index 0x73854C). This includes pilot
+combat chatter and ILU clips, rather than the frnd text-warning dispatcher.
+Evidence: build/diagnostics/pc_pilot_chatter_20261008.asm. Its unimplemented
+clips still require individual classification; don't attach them to an
+unrelated visible communication merely to use every staged file.
+
+The corrected PC fixed-timestep run
+voice_hoth_pilot_warnings_pc_fixedtime_20261008 shows warning 1 at present
+1220 and warning 2 at 1500. IR103/IR201/IR303 correlate at
+0.875717/0.747611/0.860239 (next peaks 0.147500/0.144014/0.118251).
+Its third capture at present 1780 lands at VI 1800 before the next native
+text draw, so warning 3's PC visual check remains for a later capture.
+
+Resolving all 20 jump-table entries at PC 0x473ED8 confirms the combat
+chatter sequence: IR106, IR107, IR110, IR111, IR113, IR114, ILU23,
+IR206, IR207, IR210, IR211, IR213, IR214, ILU26, IR306, IR307,
+IR310, IR311, IR313, IR314. This classifies 18 pilot clips and two
+command clips as PC actor-triggered combat chatter. It does not yet prove
+that N64 has an equivalent text or actor cue. They remain unmapped pending
+that comparison. Other files absent from this particular table are not
+thereby proven unused by the PC game.
+
+The final PC warning capture is now verified:
+voice_hoth_pilot_third_pc_20261008/present_1830 visibly shows "We're on
+the same side!" and IR303 correlates at 0.880349 (next peak 0.114388).
+Together with the prior PC captures and paired N64 run, all three warning
+text/file selections have rendered and mixed-audio evidence in both modes.
+The six bank variants have rotation-harness coverage; this fixture's live
+sequence plays IR103, IR201, and IR303. Natural collision timing remains
+outside this presentation check. Next is classifying the remaining pilot
+chatter and command clips against N64 cues.
+
+### Remaining command/chatter classification (October 8)
+
+ILU22 now maps the exact "Return to Battle!" text in Hoth events 2/3,
+with display-based repeat suppression. Segment 3 stores this at offset
+0x9F7B8, pointer 0x80236108; its pointer-table entry at 0x9F990 identifies
+HUD ID 18 (relative to known ID 7 at 0x9F964). The boundary fixture selects
+ID 18 in the native HUD. voice_hoth_boundary_pc_20261008/present_1230
+shows the warning, and ILU22 correlates with the game mix at 0.788387
+(next peak 0.221223). The expanded voice harness passes outside-Hoth,
+repeat, and rearming checks. This is not a boundary-crossing test.
+
+The remaining friendly-fire takes IRx02/x04/x05 stay unmapped alternatives:
+the three existing N64 warnings already use IRx01/x03 by meaning. No new
+native warning is invented to consume every recording. ILU28 is the short
+"Where's Dash?" take; the complete visible ending message already maps
+ILU20. Its potential other trigger is not assumed from the shared phrase.
+
+A literal phrase scan of decompressed main.bin and all extracted level
+segments found no corresponding text for the 12 combat-chatter phrase
+families in pilot_chatter_n64_corpus_20261008.tsv. This supports leaving
+them off unrelated visible messages; it does not prove no native actor cue
+exists. That remaining distinction stays explicit in the inventory.
+
+The paired N64-mode Return to Battle check also passes:
+voice_hoth_boundary_n64_20261008/present_1230 shows the exact warning and
+ILU22's waveform correlates at 0.791826 (next peak 0.155765). Both modes
+therefore have native text presentation and mixed-audio evidence for this
+mapping. These use the HUD fixture and dummy audio, not physical speakers
+or boundary traversal. Next: remaining harpoon/actor-only clip classification
+and Leebo message coverage.
+
+### Tow-cable audit correction (October 8)
+
+The old ILU31 mapping recognized only cable-clear return addresses
+0x800867C8 and 0x80086A64. Native paths at 0x80087270, 0x80087500,
+0x800875CC, 0x80087610, and 0x800878C8 also select cable status HUD ID 14
+("You lost the tow cable.") with the timer at 0x800E1890. ILU31 now plays
+on that exact visible text in Hoth, covering all message-producing paths.
+Removed the generic func_80086660 entry voice hook. Routine clear calls,
+launch validation, death, and reset no longer select loss speech by themselves.
+The expanded harness verifies this distinction, redraw suppression, rearming,
+and the event gate.
+
+PC function near 0x478E32 sends Trip to the attached target, clears the
+cable, increments the trip count, and unconditionally selects sound 0x36
+through 0x478ED3: ILU33 ("Cable detached!"). Native func_80086690 does
+the equivalent Trip dispatch at 0x800866BC, clears at 0x800866C4, and
+increments its trip counter after 0x800866CC. A dedicated hook at that
+post-clear point now selects ILU33, distinctly from loss. The function's
+own active-cable and target gates precede that point. Live successful-trip
+verification is still pending; the mapping is supported by both native and
+PC dispatch, plus the hook selection test, not by the loss-HUD fixture.
+
+The first loss-HUD fixture used VI 1200 while the initial flyby still hid
+the cable status HUD. ILU31 queued once the HUD appeared at frame 931 in
+PC mode, with waveform correlation 0.719635; its present-1230 capture was
+too early and showed no text. The fixture now waits until VI 1500 before
+setting ID 14/timer, to test visible text/audio together without a flyby.
+
+The revised loss check passes in both modes: native present 1530 shows
+"You lost the tow cable." in voice_cable_loss_pc_visible_20261008 and
+voice_cable_loss_n64_visible_20261008. ILU31 is queued on the visible draw;
+its waveform correlations are 0.609743/0.640418 (PC/N64), with next peaks
+0.137109/0.110521. The fixture writes only native cable-HUD ID 14 and its
+timer after the flyby, using -HothRadio cable-loss -FixedDelta. These checks
+establish display/audio pairing, not an actual snapped cable. The successful
+Trip/ILU33 hook is built and unit-tested but still needs runtime verification.
+
+### Successful Trip runtime check (October 8)
+
+The contained `-HothTrip` fixture loads native Hoth wave 3, supplies an active
+cable and a real AT-AT target, and calls native func_80086690. Native logic
+owns the Trip dispatch, cable release, trip counter and production VO hook.
+It does not simulate flying circles or prove the wrap-completion detector.
+The fixture is gated to offscreen diagnostics and Hoth event 3.
+
+The first run, voice_hoth_trip_pc_20261008, incremented trips 0->1 and queued
+ILU33, but a boundary warning interrupted it. Its early captures and weak
+audio correlation do not count as successful presentation evidence.
+
+The revised fixture relocates the unattended speeder beside the target.
+voice_hoth_trip_pc_inbounds_20261008 and the paired
+voice_hoth_trip_n64_inbounds_20261008 both show native trips 0->1, cable=0,
+and exactly one ILU33 queue. All three native captures per run were viewed:
+presents 2250/2400 show the collapsing, burning AT-AT; 2600 shows resumed
+gameplay with the fallen walker. The full 0.93-second ILU33 recording
+correlates with mixed PCM at 0.333118/0.371812 (PC/N64), versus next peaks
+0.132047/0.136984. The fixture also loses a life after placement; this does
+not establish an unassisted successful flight. No new subtitle is added for
+this actor cue. Physical speaker output and named voice identity remain
+unverified. Runtime build and pc_voices_harness pass.
+
+### Fire-cable readiness prompt (October 8)
+
+ROM segment 3 HUD ID 15 points to 0x80236084, "Fire tow cable!".
+Native func_80086E68 tests cable availability, target selection and cable
+geometry; the HUD path at 0x8008A7A8 additionally excludes player states
+4/5/6 and the post-trip timer before showing ID 15 at 0x8008A804.
+
+The corresponding PC HUD branch positions ID 15 at 0x475A01. When its
+voice latch 0x73855C is clear, the constant -3 at 0x475A12 selects sound
+0x3E through 0x475A28/0x475A32. The installed filename table entry at
+0x4C5570 identifies IR108.WAV ("Fire harpoon now!"). This explicitly uses
+bank 1; the branch does not cycle the friendly-fire bank. The visible N64
+text now maps to that file with redraw suppression and Hoth event gating.
+The harness checks repeat/rearm and independence from warning-bank state.
+Dispatch extract: build/diagnostics/pc_fire_harpoon_dispatch_20261008.asm.
+
+Paired checks voice_fire_cable_pc_20261008 and
+voice_fire_cable_n64_20261008 show the exact prompt in native present 1530
+(both images inspected). IR108 queues on the visible draw and correlates
+with mixed audio at 0.857414/0.790657, versus next peaks 0.108204/0.100199.
+The offscreen `-HothRadio fire-cable` fixture selects the native HUD text;
+it proves text/audio pairing, not actual target acquisition. Runtime build
+and pc_voices_harness pass, including level gating and fixed pilot-bank
+selection. IR208/IR308 are alternate takes; this PC readiness branch does
+not select them, so they remain unmapped here.
+
+### Native communicator sequence fixture (October 8)
+
+`-CommunicatorSequence 'event:startVI:stepVI:index,index,...'` calls native
+func_800078E4 with the same arguments and original table pointer used by
+the LEBO branch at 0x8007A7EC. It is offscreen-only. It never calls the VO
+mixer directly: normal native text drawing selects the recording. The
+copied CPU context uses a private guest stack and rebased odd-FPR pointer.
+Process-local Start inputs dismiss held messages after their audio has time
+to play. This checks the communicator rendering and voice pairing without
+walking levels; native level-command/trigger timing remains a separate check.
+
+The Gall sequence uses event 14, start 1500, step 600 and table indices
+3,5,6,14,15,16 (ILB16/14/15/17/18/21). Original-mode run
+voice_gall_sequence_n64_20261008 queues each voice one VI after selection.
+All six captures at presents 1600/2200/2800/3400/4000/4600 were inspected;
+each shows the intended full message and Leebo portrait. Its first-two-second
+PCM correlations are 0.994370/0.981644/0.905746/0.908456/0.994757/0.960083
+in sequence, with next peaks <=0.168. The post-fight message is deliberately
+presented at the ship for this check; it does not prove a Boba defeat.
+
+The paired PC-mode run voice_gall_sequence_pc_20261008 passes the same six
+rendered messages (each capture inspected), each queued one VI after selection.
+Its PCM correlations in the same order are
+0.993295/0.981995/0.904510/0.904625/0.994808/0.961328; next peaks <=0.172.
+These six pairings now have rendered and mixed-audio evidence in both modes.
+Runtime build, pc_voices_harness and leebo_voices_harness pass.
+
+### Sewer communicator sequence (October 8)
+
+The original-mode run voice_sewer_sequence_n64_20261008 uses event 25,
+sequence `25:1500:600:4,1,8,7`, and process-local Start dismissals at
+2000/2600/3200/3800 after the initial dismissal at 1100. Each original
+ROM pointer displays through func_800078E4; ILB38/39/40/41 queue at
+1501/2101/2701/3301. All four captures at presents 1600/2200/2800/3400
+were inspected and show the matching key-needed, key-found,
+deactivator-needed and deactivator-found communications with Leebo portrait.
+First-two-second audio correlations are 0.989309/0.991517/0.981900/0.973959,
+with next peaks <=0.185. These are presentation fixtures, not key pickups
+or door activations. The ILB38 Sewer-only event guard remains in force;
+the harness separately rejects that generic key text in Gall and Palace.
+
+The paired PC run voice_sewer_sequence_pc_20261008 uses the same sequence.
+All four captures were inspected and show the corresponding text and
+communicator portrait. Queue times are again 1501/2101/2701/3301. PCM
+correlations are 0.989050/0.991489/0.981966/0.974193, with next peaks
+<=0.181. Thus ILB38/39/40/41 have visible-message and mixed-audio evidence
+in both modes. This does not establish their level-script trigger timing
+or physical speaker playback.
+
+### Echo Base power-restored pairing (October 8)
+
+voice_echo_power_n64_20261008 and voice_echo_power_pc_20261008 use
+`-CommunicatorSequence '5:1500:600:22'`. Both queue ILB04 at VI 1501;
+both present-1600 captures were inspected and show the power-restored
+instruction with Leebo portrait. The installed recording correlates with
+mixed audio at 0.958728/0.958051 (N64/PC), with next peaks
+0.104011/0.098082. The native message display and VO pairing pass; the
+fixture does not claim the generator switches were activated.
+
+The communicator fixture now also accepts `@` followed by an original
+main-ROM text address in hexadecimal. This covers train/bike messages
+outside the 30-entry LEBO table, using the same native display function.
+Direct addresses are restricted to main-ROM memory and must begin with
+the game's text-control marker. Train pointers verified against main.bin
+are ILB08=800D1800, ILB09=800D1AF4, ILB10=800D1840; bike pointers are
+ILB26=800D16C0, ILB27=800D1794, ILB29=800D1980.
+
+The first train fixture voice_train_sequence_n64_20261008 selected the three
+messages at VI 1500/2100/2700. Each queued its expected voice, but the
+unattended player's death/reset at 2120 and 2787 cleared the last two
+before captures 2200 and 2800. Only capture 1600 contains its message.
+This run is not accepted as the three-message visual pass. The revised
+sequence starts at 1600, steps by 700 and captures after 40 presents,
+between the observed resets; no train traversal is used.
+
+The revised runs voice_train_sequence_n64_visible_20261008 and
+voice_train_sequence_pc_visible_20261008 pass all three pairings. Each
+capture at 1640/2340/3040 was inspected and displays the intended full
+message with Leebo portrait. ILB08/09/10 queue at VI 1601/2301/3001 in
+both modes. PCM correlations are 0.799721/0.725973/0.848110 (N64) and
+0.789709/0.721202/0.845980 (PC), with next peaks below 0.096. This is
+original-pointer communicator presentation, not a successful train jump,
+missed-jump condition, or auto-brake event. Runtime build and both voice
+harnesses pass after adding the direct-pointer diagnostic.
+
+### Freighter completion messages (October 8)
+
+voice_freighter_sequence_n64_20261008 uses event 22 and original table
+indices 20/17 at VI 1500/2100. ILB35/36 queue at 1501/2101. Both captures
+at presents 1600/2200 were inspected and show the supercomputer-found and
+return-to-control-room messages. PCM correlations are 0.927616/0.925564,
+with next peaks 0.148863/0.138755. As with the other communicator fixtures,
+this verifies native display/audio pairing without claiming the objective
+was completed or the lift traversed.
+
+The paired voice_freighter_sequence_pc_20261008 run passes both inspected
+captures and queues at the same VIs. Its PCM correlations are
+0.919645/0.924736 (next peaks 0.141637/0.140136). ILB35/36 therefore have
+rendered text and mixed-audio pairing evidence in both cutscene modes.
+
+### Palace completion message (October 8)
+
+voice_palace_completion_n64_20261008 and voice_palace_completion_pc_20261008
+use event 27, table index 13 at VI 1800. Both queue ILB44 on the next VI.
+Both present-1900 captures were inspected and show the complete pulse-bombs
+set / Leia-found / find-a-way-out communication with Leebo portrait.
+PCM correlations are 0.887652/0.884451 (N64/PC), with next peaks
+0.120753/0.100201. This checks the message/VO pairing, not bomb placement.
+
+### Bike warning, failure and success messages (October 8)
+
+voice_bike_sequence_n64_20261008 and voice_bike_sequence_pc_20261008 use
+event 17 and `17:1500:600:@800D16C0,@800D1794,@800D1980`. ILB26/27/29
+queue at 1501/2101/2701 in both modes. All six captures at presents
+1540/2140/2740 were inspected: each shows the correct full communication
+and Leebo portrait. PCM correlations are 0.785563/0.880464/0.874837 (N64)
+and 0.781410/0.882127/0.874288 (PC), with next peaks below 0.153.
+The bike remains at the starting area; this checks message/audio selection,
+not chase progress, defeat or victory.
+
+All 31 retained Leebo mappings now have paired visible-message captures
+and mixed-PCM evidence, combining the earlier checks with the communicator
+fixtures and the final checks below. Natural level-trigger timing, the
+broader pilot/command classification, and specifically documented wording
+uncertainties remain separate.
+
+### Final Leebo audio gaps and PC source check (October 8)
+
+Rechecked all 97 installed ILB/ILU/IR WAVs against SotE_Recompiled/Sdata:
+all are present and their SHA-256 hashes match. The user authorized copying
+missing communicator VO from the PC install; no copies were needed.
+
+voice_early_gaps_n64_20261008 and voice_early_gaps_pc_20261008 show the
+generator instruction at present 1600, after a contained Start dismisses
+the opening communication. ILB03 queues at VI 1508 in both modes. Its
+first two seconds correlate with mixed PCM at 0.959969 / 0.971123
+(N64 / PC; next peaks 0.148368 / 0.146229). The later event-30 jump in
+these combined runs did not produce Skyhook dialogue; it supplies no
+Skyhook evidence.
+
+The separate direct event-30 runs voice_skyhook_opening_pcm_n64_20261008
+and voice_skyhook_opening_pcm_pc_20261008 close that gap. All six native
+captures were inspected: presents 800 / 1200 / 1500 show Leebo's take-over
+instruction, the Empire attack communication, and the turret instruction.
+ILB46 queues at VI 632 / 633. ILU13 and ILU16 queue on their visible text.
+First-two-second PCM correlations (N64 / PC) are ILB46 0.585842 / 0.633858,
+ILU13 0.485451 / 0.539803, and ILU16 0.473543 / 0.509081. All secondary
+peaks are below 0.099. This verifies the recordings in the game's mix
+with their displayed messages in both modes, using SDL dummy output.
+It does not establish physical speaker playback or entry from the prior
+campaign chapter.
+
+### Native no-target harpoon response (October 8)
+
+voice_hoth_no_target_n64_20261008 and voice_hoth_no_target_pc_20261008
+enter event 3 directly, then send a process-local native Z pulse at VI 1500.
+The native ammo/cooldown/target branch queues ILU32. Its full 1.48-second
+recording correlates with mixed PCM at 0.667928 / 0.632972 (N64 / PC;
+secondary peaks 0.142685 / 0.153764). Native present-1530 captures in both
+modes were inspected and show the Hoth flight with no attached cable.
+This is an actor response without an on-screen subtitle; none was invented.
+Physical speakers were not tested. The native successful-attachment ILU29
+response remains the outstanding enabled actor-voice runtime check.
+
+The subsequent attachment check closes that runtime gap:
+voice_hoth_attach_n64_ready_20261008 and voice_hoth_attach_pc_ready_20261008
+place the speeder 40 units beside an existing walker, 30 units above its
+origin, and call native launch func_80086F64. Native target acquisition and
+geometry checks set cable=1 and segments=1, selecting walker 801ECB18.
+ILU29 queues at VI 2172 / 2165 (N64 / PC), and its full 1.72-second
+recording correlates at 0.404331 / 0.561374 (next peaks 0.085416 / 0.080419).
+The inspected PC present-2200 shows the speeder with a cable beside the
+walker; N64 present-2250 shows the cable and a subsequent collision
+explosion. This establishes attachment and its voice, not a sustained
+circling maneuver. The first shorter N64 probe ended before the fixture's
+controller callback became active and supplies no attachment evidence.

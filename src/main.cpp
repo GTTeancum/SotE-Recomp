@@ -78,7 +78,6 @@ std::atomic<uint64_t> game_frame_count{0};
 std::atomic<int> bike_controller_last_vi{-10000};
 std::atomic<uint32_t> bike_invalid_delta_count{0};
 std::atomic<uint32_t> player_invalid_delta_count{0};
-std::atomic<uint32_t> motion_zero_velocity_normalization_count{0};
 std::atomic<uint32_t> motion_loop_guard_count{0};
 std::atomic<uint32_t> audio_negative_exponent_count{0};
 std::atomic<uint32_t> invalid_frame_delta_count{0};
@@ -401,20 +400,11 @@ bool san_ending_sequence_pending = false;
 uint64_t san_ending_first_token = 0;
 int san_ending_advance_start_vi = -1;
 std::atomic<bool> san_ending_handoff_active{false};
-uint64_t san_ord_boss_movie_token = 0;
-std::atomic<bool> san_ord_boss_handoff_active{false};
-bool san_ord_boss_skip_pending = false;
 bool san_ord_boss_story_handoff_pending = false;
 std::atomic<bool> san_gall_boss_cue_pending{false};
 bool san_gall_boss_started = false;
-uint64_t san_gall_boss_movie_token = 0;
-std::atomic<bool> san_gall_boss_handoff_active{false};
-bool san_gall_boss_skip_pending = false;
 std::atomic<bool> san_palace_boss_cue_pending{false};
 bool san_palace_boss_started = false;
-uint64_t san_palace_boss_movie_token = 0;
-std::atomic<bool> san_palace_boss_handoff_active{false};
-bool san_palace_boss_skip_pending = false;
 
 int read_current_level_index(uint8_t* rdram) {
     constexpr uint32_t profile_table = 0x8018BBF8U;
@@ -505,6 +495,7 @@ int16_t san_story_skip_destination(int16_t event) {
     // Verified native Start-skip transitions for story sequences whose PC
     // movie narrates the same material. Keep later mission objectives intact.
     switch (event) {
+        case 9: return 10; // IG-88 comic panels -> native arena reveal.
         case 7: return 8;   // Ord Mantell story -> playable hover train.
         case 11: return 14; // Gall story -> ship-side "find Boba Fett" briefing.
         case 16: return 17; // Mos Eisley story -> playable speeder bike.
@@ -802,20 +793,11 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_game_over_movie_token = 0;
         san_game_over_handoff_start_vi = -1;
         san_game_over_handoff_active.store(false, std::memory_order_relaxed);
-        san_ord_boss_movie_token = 0;
-        san_ord_boss_handoff_active.store(false, std::memory_order_relaxed);
-        san_ord_boss_skip_pending = false;
         san_ord_boss_story_handoff_pending = false;
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
-        san_gall_boss_movie_token = 0;
-        san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
-        san_gall_boss_skip_pending = false;
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
-        san_palace_boss_movie_token = 0;
-        san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
-        san_palace_boss_skip_pending = false;
         sote::san_movies::stop_cached_playback();
         const int16_t current_event = static_cast<int16_t>(
             read_guest_half(rdram, 0x8013CE0EU));
@@ -844,16 +826,10 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (event != 15) {
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
-        san_gall_boss_movie_token = 0;
-        san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
-        san_gall_boss_skip_pending = false;
     }
     if (event != 27) {
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
-        san_palace_boss_movie_token = 0;
-        san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
-        san_palace_boss_skip_pending = false;
     }
     const int32_t result = static_cast<int32_t>(
         read_guest_word(rdram, 0x800DD2B0U));
@@ -896,13 +872,8 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_gall_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
         san_gall_boss_started =
             sote::san_movies::play_cached_preview("L05BOSS.SAN");
-        if (san_gall_boss_started) {
-            san_gall_boss_movie_token = sote::san_movies::playback_token();
-            // The native command-10 branch has already started its timed
-            // reveal. Advance it under the PC film so it is not shown twice.
-            san_gall_boss_handoff_active.store(true,
-                std::memory_order_relaxed);
-        }
+        // Use ordinary movie playback: freeze the guest until the film
+        // ends or is skipped, then resume its untouched native reveal.
         std::printf("[sote][san] Gall Boba encounter cue: %s\n",
             san_gall_boss_started ? "L05BOSS.SAN started" : "movie unavailable");
         std::fflush(stdout);
@@ -912,8 +883,6 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_palace_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
         san_palace_boss_started =
             sote::san_movies::play_cached_preview("L09BOSS.SAN");
-        if (san_palace_boss_started)
-            san_palace_boss_movie_token = sote::san_movies::playback_token();
         std::printf("[sote][san] Palace Gladiator encounter cue: %s\n",
             san_palace_boss_started ? "L09BOSS.SAN started" : "movie unavailable");
         std::fflush(stdout);
@@ -937,22 +906,14 @@ void update_san_movie_triggers(uint8_t* rdram) {
             return;
         }
         if (const char* movie = san_movie_for_event(event)) {
-            if (sote::san_movies::play_cached_preview(movie) && event == 10)
-                san_ord_boss_movie_token = sote::san_movies::playback_token();
+            (void)sote::san_movies::play_cached_preview(movie);
             return;
         }
         if (const char* movie = san_intro_for_event(event)) {
             const bool playing = sote::san_movies::play_cached_preview(movie);
-            if (playing && event == 9) {
-                san_ord_boss_movie_token = sote::san_movies::playback_token();
+            if (playing && event == 9)
                 san_ord_boss_story_handoff_pending = true;
-                // The guest is held during the film. Queue its native story
-                // transition now so the arena reveal can run under the end.
-                write_guest_half(rdram, 0x800D255CU, 10U);
-                write_guest_byte(rdram, 0x800D2558U, 2);
-                std::printf("[sote][san] Ord IG-88 story film; native 9 -> 10 queued\n");
-                std::fflush(stdout);
-            } else if (playing && san_story_skip_destination(event) != INT16_MIN)
+            if (playing && san_story_skip_destination(event) != INT16_MIN)
                 san_pending_story_skip_event = event;
         }
     }
@@ -2221,6 +2182,42 @@ void on_vi() {
     const int count = ++vi_count;
     game_frame_cv.notify_all();
     log_bike_telemetry(count);
+    // Resume the native train script at a captured late state, then place
+    // Dash at its physical trigger without replaying the level. Diagnostic
+    // only: the source is an 8 MiB RDRAM image from this same build/ROM.
+    if (const char* load = std::getenv("SOTE_DIAGNOSTIC_LOAD_RDRAM");
+        load != nullptr && game_rdram != nullptr) {
+        const int load_vi = std::atoi(load);
+        const char* separator = std::strchr(load, ':');
+        if (count == load_vi && separator != nullptr && separator[1] != '\0') {
+            constexpr size_t rdram_bytes = 0x800000U;
+            std::vector<uint8_t> bytes(rdram_bytes);
+            FILE* file = std::fopen(separator + 1, "rb");
+            const size_t read = file != nullptr
+                ? std::fread(bytes.data(), 1, bytes.size(), file) : 0;
+            if (file != nullptr) std::fclose(file);
+            if (read != bytes.size()) {
+                std::fprintf(stderr,
+                    "[sote][diagnostic] cannot load complete RDRAM snapshot\n");
+                std::_Exit(EXIT_FAILURE);
+            }
+            std::memcpy(game_rdram, bytes.data(), bytes.size());
+            std::printf("[sote][diagnostic] loaded RDRAM snapshot at VI=%d "
+                "event=%d\n", count,
+                static_cast<int16_t>(read_guest_half(
+                    game_rdram, 0x8013CE0EU)));
+            std::fflush(stdout);
+        }
+    }
+    // Keep a direct trigger probe alive while the train script reaches its
+    // active phase. No movement or story event is injected by this aid.
+    if (count == 1200 && game_rdram != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_TRIGGER_LIVES") != nullptr &&
+        read_guest_half(game_rdram, 0x8013CE0EU) == 8U) {
+        write_guest_word(game_rdram, 0x800E0EB0U, 99U);
+        std::printf("[sote][diagnostic] event-8 trigger probe lives=99\n");
+        std::fflush(stdout);
+    }
     // Within one run: snapshot every float at viA, compare at viB, and
     // report those that moved. Held input starts between the two, so a
     // speed-like value shows up as a large sustained change without the
@@ -2438,6 +2435,37 @@ void on_vi() {
     trace_palace_boss_object(game_rdram, count);
     inject_gall_boss_cue_for_test(game_rdram, count);
     inject_palace_boss_cue_for_test(game_rdram, count);
+    // Audit only: reproduce native HUD selections, without claiming the
+    // corresponding battle completion or projectile collision occurred.
+    if (const char* radio = std::getenv("SOTE_DIAGNOSTIC_HOTH_RADIO");
+        radio != nullptr &&
+        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+        game_rdram != nullptr &&
+        read_guest_half(game_rdram, 0x8013CE0EU) == 3) {
+        const bool stages = std::strcmp(radio, "stages") == 0;
+        const int start = (stages || std::strcmp(radio, "cable-loss") == 0 ||
+            std::strcmp(radio, "fire-cable") == 0) ? 1500 : 1200;
+        const int step = stages ? 600 : 300;
+        if (count >= start && count <= start + 2 * step &&
+            (count - start) % step == 0) {
+            constexpr uint32_t warnings[] = {7, 38, 39};
+            const int index = (count - start) / step;
+            const uint32_t id = std::strcmp(radio, "boundary") == 0 ? 18 :
+                (std::strcmp(radio, "cable-loss") == 0 ? 14 :
+                (std::strcmp(radio, "fire-cable") == 0 ? 15 :
+                (stages ? 10 + index : warnings[index])));
+            if (std::strcmp(radio, "cable-loss") == 0) {
+                write_guest_word(game_rdram, 0x800E1894U, 14);
+                write_guest_word(game_rdram, 0x800E1890U, 0x40000000U);
+            } else {
+                write_guest_word(game_rdram, 0x800E185CU, id);
+                write_guest_word(game_rdram, 0x800E1858U,
+                    stages ? 0x41000000U : 0x40000000U);
+            }
+            std::printf("[sote][voice] diagnostic Hoth radio id=%u VI=%d\n", id, count);
+            std::fflush(stdout);
+        }
+    }
     // The xJet collision branch at 0x8007AB98 sets this exact 10-second
     // status timer. Reproduce only its presentation state in an offscreen
     // process-local run so the visible text/voice pairing can be inspected.
@@ -2480,12 +2508,6 @@ void on_vi() {
         }
     }
     update_san_movie_triggers(game_rdram);
-    if (san_gall_boss_movie_token != 0 &&
-        sote::san_movies::playback_token() == san_gall_boss_movie_token)
-        sote::san_movies::set_hold_last_frame(true);
-    if (san_palace_boss_movie_token != 0 &&
-        sote::san_movies::playback_token() == san_palace_boss_movie_token)
-        sote::san_movies::set_hold_last_frame(true);
     if (san_game_over_movie_token != 0 &&
         sote::san_movies::playback_token() == san_game_over_movie_token)
         sote::san_movies::set_hold_last_frame(true);
@@ -2507,24 +2529,6 @@ void on_vi() {
             std::printf("[sote][san] game-over film skipped to title handoff\n");
             std::fflush(stdout);
         } else {
-            if (movie_token == san_ord_boss_movie_token && game_rdram != nullptr &&
-                (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
-                 read_guest_half(game_rdram, 0x8013CE0EU) == 10))
-                san_ord_boss_skip_pending = true;
-            if (movie_token == san_gall_boss_movie_token) {
-                san_gall_boss_skip_pending = game_rdram != nullptr &&
-                    read_guest_half(game_rdram, 0x8013CE0EU) == 15U;
-                san_gall_boss_movie_token = 0;
-                san_gall_boss_handoff_active.store(false,
-                    std::memory_order_relaxed);
-            }
-            if (movie_token == san_palace_boss_movie_token) {
-                san_palace_boss_skip_pending = game_rdram != nullptr &&
-                    read_guest_half(game_rdram, 0x8013CE0EU) == 27U;
-                san_palace_boss_movie_token = 0;
-                san_palace_boss_handoff_active.store(false,
-                    std::memory_order_relaxed);
-            }
             std::printf("[sote][san] cutscene skipped\n");
             std::fflush(stdout);
             sote::san_movies::stop_cached_playback();
@@ -2532,130 +2536,7 @@ void on_vi() {
             movie_token = 0;
         }
     }
-    if (san_ord_boss_skip_pending && game_rdram != nullptr) {
-        const int16_t event = static_cast<int16_t>(
-            read_guest_half(game_rdram, 0x8013CE0EU));
-        if (event != 9 && event != 10) {
-            san_ord_boss_skip_pending = false;
-        } else if (event == 10 &&
-                   read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
-            // The player explicitly skipped the film. Wait for arena loading
-            // to finish, then skip its redundant reveal before play resumes.
-            const float before = read_guest_float(game_rdram, 0x800DEB78U);
-            if (before > 0.0f) {
-                write_guest_word(game_rdram, 0x800DEB78U, 0);
-                std::printf("[sote][san] Ord boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
-                    before, count);
-                std::fflush(stdout);
-                san_ord_boss_skip_pending = false;
-            }
-        }
-    }
     sote::frontend::set_movie_playback(movie_token);
-    // Run the native IG-88 reveal behind the final seconds of its PC film.
-    // The guest's own countdown still controls when combat and input begin.
-    if (san_ord_boss_movie_token != 0 && movie_token == san_ord_boss_movie_token &&
-        game_rdram != nullptr &&
-        (read_guest_half(game_rdram, 0x8013CE0EU) == 9 ||
-         read_guest_half(game_rdram, 0x8013CE0EU) == 10) &&
-        sote::san_movies::cached_playback_remaining_seconds() <= 10.0) {
-        if (!san_ord_boss_handoff_active.exchange(true,
-                std::memory_order_relaxed)) {
-            std::printf("[sote][san] Ord boss native reveal advances at VI=%d\n",
-                count);
-            std::fflush(stdout);
-        }
-    } else if (san_ord_boss_handoff_active.exchange(false,
-                   std::memory_order_relaxed)) {
-        san_ord_boss_movie_token = 0;
-    }
-    if (san_ord_boss_movie_token != 0 &&
-        movie_token != san_ord_boss_movie_token)
-        san_ord_boss_movie_token = 0;
-    if (san_gall_boss_movie_token != 0 &&
-        movie_token == san_gall_boss_movie_token && game_rdram != nullptr &&
-        sote::san_movies::cached_playback_remaining_seconds() <= 0.0) {
-        // The same native countdown gates the reveal and combat. Keep the
-        // film's final frame until the guest finishes that transition.
-        const float reveal_seconds =
-            read_guest_float(game_rdram, 0x800DEB78U);
-        if (reveal_seconds <= 0.0f) {
-            sote::san_movies::stop_cached_playback();
-            sote::frontend::set_movie_playback(0);
-            movie_token = 0;
-            san_gall_boss_movie_token = 0;
-            san_gall_boss_handoff_active.store(false,
-                std::memory_order_relaxed);
-            std::printf("[sote][san] Gall boss native reveal complete; "
-                        "PC film handoff at VI=%d\n", count);
-            std::fflush(stdout);
-        }
-    }
-    if (san_palace_boss_skip_pending && game_rdram != nullptr) {
-        const int16_t event = static_cast<int16_t>(
-            read_guest_half(game_rdram, 0x8013CE0EU));
-        if (event != 27) {
-            san_palace_boss_skip_pending = false;
-        } else if (read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
-            const float before = read_guest_float(game_rdram, 0x800DEB78U);
-            if (before > 0.0f) {
-                write_guest_word(game_rdram, 0x800DEB78U, 0);
-                std::printf("[sote][san] Palace boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
-                    before, count);
-                std::fflush(stdout);
-            }
-            san_palace_boss_skip_pending = false;
-        }
-    }
-    if (san_gall_boss_skip_pending && game_rdram != nullptr) {
-        const int16_t event = static_cast<int16_t>(
-            read_guest_half(game_rdram, 0x8013CE0EU));
-        if (event != 15) {
-            san_gall_boss_skip_pending = false;
-        } else if (read_guest_word(game_rdram, 0x800DD2B0U) == 2U) {
-            const float before = read_guest_float(game_rdram, 0x800DEB78U);
-            if (before > 0.0f) {
-                write_guest_word(game_rdram, 0x800DEB78U, 0);
-                std::printf("[sote][san] Gall boss film skip: reveal timer %.3f -> 0 at VI=%d\n",
-                    before, count);
-                std::fflush(stdout);
-            }
-            san_gall_boss_skip_pending = false;
-        }
-    }
-    if (san_gall_boss_movie_token != 0 && movie_token == 0) {
-        san_gall_boss_movie_token = 0;
-        san_gall_boss_handoff_active.store(false, std::memory_order_relaxed);
-    }
-    if (san_palace_boss_movie_token != 0 &&
-        movie_token == san_palace_boss_movie_token && game_rdram != nullptr &&
-        read_guest_half(game_rdram, 0x8013CE0EU) == 27U) {
-        const double remaining =
-            sote::san_movies::cached_playback_remaining_seconds();
-        if (remaining <= 16.0 &&
-            !san_palace_boss_handoff_active.exchange(true,
-                std::memory_order_relaxed)) {
-            std::printf("[sote][san] Palace native reveal advances at VI=%d\n",
-                count);
-            std::fflush(stdout);
-        }
-        if (remaining <= 0.0 &&
-            read_guest_float(game_rdram, 0x800DEB78U) <= 0.0f) {
-            sote::san_movies::stop_cached_playback();
-            sote::frontend::set_movie_playback(0);
-            movie_token = 0;
-            san_palace_boss_movie_token = 0;
-            san_palace_boss_handoff_active.store(false,
-                std::memory_order_relaxed);
-            std::printf("[sote][san] Palace boss native reveal complete; "
-                        "PC film handoff at VI=%d\n", count);
-            std::fflush(stdout);
-        }
-    }
-    if (san_palace_boss_movie_token != 0 && movie_token == 0) {
-        san_palace_boss_movie_token = 0;
-        san_palace_boss_handoff_active.store(false, std::memory_order_relaxed);
-    }
     bool game_over_advance = false;
     if (san_game_over_movie_token != 0 &&
         movie_token == san_game_over_movie_token && game_rdram != nullptr) {
@@ -2992,9 +2873,6 @@ extern "C" void sote_wait_for_game_frame() {
     std::unique_lock lock(game_frame_mutex);
     while (sote::san_movies::cached_playback_active() &&
            !san_ending_handoff_active.load(std::memory_order_relaxed) &&
-           !san_ord_boss_handoff_active.load(std::memory_order_relaxed) &&
-           !san_gall_boss_handoff_active.load(std::memory_order_relaxed) &&
-           !san_palace_boss_handoff_active.load(std::memory_order_relaxed) &&
            !san_game_over_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }
@@ -3108,6 +2986,237 @@ extern "C" uint32_t sote_enter_bike_controller(
     return 0;
 }
 
+extern "C" void sote_diagnostic_ord_region(
+    uint8_t* rdram, uint32_t object, uint32_t position,
+    uint32_t after_collision) {
+    if (std::getenv("SOTE_DIAGNOSTIC_ORD_SECTOR51") == nullptr ||
+        read_guest_half(rdram, 0x8013CE0EU) != 8U ||
+        vi_count.load(std::memory_order_relaxed) < 1200) return;
+    static int step = 0;
+    if (after_collision) {
+        if (step > 0 && step <= 2) {
+            const uint32_t sector = read_guest_word(rdram, object + 0x70U);
+            std::printf("[sote][ord-region] step=%d sector=%u ending=%u pos=%.2f,%.2f,%.2f\n",
+                step, sector ? read_guest_word(rdram, sector) : UINT32_MAX,
+                read_guest_word(rdram, 0x800E5838U),
+                read_guest_float(rdram, position),
+                read_guest_float(rdram, position + 4U),
+                read_guest_float(rdram, position + 8U));
+            std::fflush(stdout);
+            if (step == 2) ++step;
+        }
+        return;
+    }
+    if (step >= 2) return;
+    // Move across the world geometry; leave the sector pointer and ending
+    // flag untouched so the original collision and sector-entry code runs.
+    const float destination[3] = {step == 0 ? 350.0f : 450.0f, -250.0f, 8.0f};
+    for (int axis = 0; axis < 3; ++axis) {
+        uint32_t bits;
+        std::memcpy(&bits, &destination[axis], sizeof(bits));
+        write_guest_word(rdram, position + axis * 4U, bits);
+        write_guest_word(rdram, object + 0x08U + axis * 4U, bits);
+        write_guest_word(rdram, object + 0x50U + axis * 4U, bits);
+    }
+    ++step;
+}
+
+extern "C" void func_800078E4(uint8_t*, recomp_context*);
+extern "C" void sote_diagnostic_communicators(uint8_t* rdram, void* context) {
+    const char* sequence = std::getenv("SOTE_DIAGNOSTIC_COMMUNICATORS");
+    if (!sequence || !std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN")) return;
+    int target_event = 0, start = 0, step = 0, consumed = 0;
+    if (std::sscanf(sequence, "%d:%d:%d:%n", &target_event, &start, &step,
+            &consumed) != 3 || consumed == 0 || start < 0 || step < 300 ||
+        read_guest_half(rdram, 0x8013CE0EU) != target_event) return;
+    static unsigned issued = 0;
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    if (vi < start + int(issued) * step) return;
+    const char* item = sequence + consumed;
+    for (unsigned n = 0; n < issued; ++n) {
+        item = std::strchr(item, ',');
+        if (!item) return;
+        ++item;
+    }
+    char* end = nullptr;
+    const bool direct_pointer = *item == '@';
+    const char* number = item + (direct_pointer ? 1 : 0);
+    const auto selector = std::strtoul(number, &end, direct_pointer ? 16 : 10);
+    if (end == number || (*end && *end != ',') ||
+        (!direct_pointer && selector >= 30)) return;
+    const uint32_t text = direct_pointer ? uint32_t(selector) :
+        read_guest_word(rdram, 0x800E138CU + uint32_t(selector) * 4U);
+    // Direct selectors are original main-ROM text pointers, for messages
+    // outside the LEBO table (train and swoop-race communications).
+    if (text < 0x80001EC0U || text >= 0x80100000U ||
+        read_guest_byte(rdram, text) != '~') return;
+    auto& caller = *static_cast<recomp_context*>(context);
+    auto ctx = caller;
+    ctx.f_odd = ctx.mips3_float_mode ? &ctx.f1.u32l : &ctx.f0.u32h;
+    const uint32_t sp = (uint32_t(caller.r29) - 0x100U) & ~15U;
+    if (sp < 0x80002000U || sp > 0x807FFF00U) return;
+    ctx.r29 = int32_t(sp);
+    // Same arguments as the native LEBO command branch; no direct VO calls.
+    ctx.r4 = 30; ctx.r5 = 31; ctx.r6 = 0x40400000; ctx.r7 = 13;
+    write_guest_word(rdram, sp + 0x10, text);
+    func_800078E4(rdram, &ctx);
+    ++issued;
+    std::printf("[sote][communicator-fixture] VI=%d event=%d selector=%08X text=%08X\n",
+        vi, target_event, uint32_t(selector), text);
+    std::fflush(stdout);
+}
+
+extern "C" void func_80086690(uint8_t*, recomp_context*);
+extern "C" void func_80086F64(uint8_t*, recomp_context*);
+extern "C" void sote_diagnostic_hoth_trip(uint8_t* rdram, void* context, int initialize) {
+    if (!std::getenv("SOTE_DIAGNOSTIC_HOTH_TRIP") ||
+        !std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") ||
+        read_guest_half(rdram, 0x8013CE0EU) != 3) return;
+    auto& caller = *static_cast<recomp_context*>(context);
+    if (initialize) {
+        caller.r5 = 2; // Load the native AT-AT wave directly.
+        return;
+    }
+    static bool issued = false;
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    if (issued || vi < 1600) return;
+    const uint32_t types = read_guest_word(rdram, 0x80112830U);
+    uint32_t walker = 0;
+    if (types < 0x80000000U || types > 0x807FFF00U) return;
+    for (unsigned i = 0; i < 64; ++i) {
+        const uint32_t type = read_guest_word(rdram, types + i * 4);
+        if (!type) break;
+        if (type < 0x80000000U || type > 0x807FFFE0U) return;
+        if (read_guest_word(rdram, type) == 0x41544154U &&
+            read_guest_word(rdram, type + 8) > 0) {
+            walker = read_guest_word(rdram, type + 16);
+            break;
+        }
+    }
+    if (walker < 0x80000000U || walker > 0x807FF000U) return;
+    auto ctx = caller;
+    ctx.f_odd = ctx.mips3_float_mode ? &ctx.f1.u32l : &ctx.f0.u32h;
+    const uint32_t sp = (uint32_t(caller.r29) - 0x100U) & ~15U;
+    if (sp < 0x80002000U || sp > 0x807FFF00U) return;
+    ctx.r29 = int32_t(sp);
+    const unsigned before = read_guest_half(rdram, 0x8018DCA0U);
+    // Keep the unattended speeder in the battle area so the boundary warning
+    // does not immediately interrupt the short Trip response.
+    const uint32_t speeder = uint32_t(caller.r4);
+    if (speeder < 0x80000000U || speeder > 0x807FF000U) return;
+    const bool attach = std::strcmp(std::getenv("SOTE_DIAGNOSTIC_HOTH_TRIP"), "attach") == 0;
+    for (unsigned axis = 0; axis < 3; ++axis) {
+        float value = read_guest_float(rdram, walker + 0x50U + axis * 4U);
+        if (attach && axis == 1) value += 40.0F;
+        if (axis == 2) value += 30.0F;
+        uint32_t bits;
+        std::memcpy(&bits, &value, sizeof(bits));
+        write_guest_word(rdram, speeder + 0x08U + axis * 4U, bits);
+        write_guest_word(rdram, speeder + 0x50U + axis * 4U, bits);
+    }
+    if (attach) {
+        // Native launch performs target acquisition and cable geometry checks.
+        // The fixture only positions the speeder beside the existing walker.
+        issued = true;
+        ctx.r4 = int32_t(speeder);
+        func_80086F64(rdram, &ctx);
+        std::printf("[sote][hoth-attach] VI=%d walker=%08X cable=%u target=%08X segments=%u\n",
+            vi, walker, read_guest_word(rdram, 0x800E1A80U),
+            read_guest_word(rdram, 0x800E1A84U), read_guest_half(rdram, 0x800E1A88U));
+        std::fflush(stdout);
+        return;
+    }
+    // Supply the completed-cable condition. The native routine dispatches
+    // Trip, releases the cable, increments the counter and reaches the VO hook.
+    write_guest_word(rdram, 0x800E1A80U, 1);
+    write_guest_word(rdram, 0x800E1A84U, walker);
+    issued = true;
+    func_80086690(rdram, &ctx);
+    std::printf("[sote][hoth-trip] VI=%d walker=%08X trips=%u->%u cable=%u target=%08X\n",
+        vi, walker, before, read_guest_half(rdram, 0x8018DCA0U),
+        read_guest_word(rdram, 0x800E1A80U), read_guest_word(rdram, 0x800E1A84U));
+    std::fflush(stdout);
+}
+
+extern "C" void func_80084528(uint8_t*, recomp_context*);
+extern "C" void sote_diagnostic_skyhook_damage(uint8_t* rdram, void* context) {
+    if (std::getenv("SOTE_DIAGNOSTIC_SKYHOOK_DAMAGE") == nullptr ||
+        read_guest_half(rdram, 0x8013CE0EU) != 30)
+        return;
+    auto& caller = *static_cast<recomp_context*>(context);
+    const uint32_t object = static_cast<uint32_t>(caller.r4);
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    if (vi < 1500 || vi > 2400 || object < 0x80000000U ||
+        object > 0x807FFDECU || read_guest_word(rdram, object) != 0x50524254U)
+        return;
+    static std::unordered_set<uint64_t> issued;
+    const int phase = (vi - 1500) / 300;
+    if (!issued.insert((uint64_t(object) << 32) | uint32_t(phase)).second)
+        return;
+    const uint32_t types = read_guest_word(rdram, 0x80112830U);
+    uint32_t shooter = 0;
+    for (unsigned i = 0; i < 64; ++i) {
+        const uint32_t type = read_guest_word(rdram, types + i * 4);
+        if (!type) break;
+        if (read_guest_word(rdram, type) == 0x53746674U &&
+            read_guest_word(rdram, type + 8) == 1)
+            shooter = read_guest_word(rdram, type + 16);
+    }
+    if (!shooter) return;
+    // Supply native laser damage, then proximity-missile damage on a private
+    // guest stack. Native target logic owns health, destruction and events.
+    auto ctx = caller;
+    ctx.f_odd = ctx.mips3_float_mode ? &ctx.f1.u32l : &ctx.f0.u32h;
+    const uint32_t sp = (uint32_t(caller.r29) - 0x100U) & ~15U;
+    if (sp < 0x80002000U || sp > 0x807FFF00U) return;
+    ctx.r29 = int32_t(sp);
+    for (unsigned off = 0x40; off < 0xA0; off += 4)
+        write_guest_word(rdram, sp + off, 0);
+    write_guest_word(rdram, sp + 0x40, phase == 0 ? 0x73686F74U : 0x70726F78U);
+    write_guest_word(rdram, sp + 0x44, shooter);
+    write_guest_word(rdram, sp + 0x48, 0x40U);
+    write_guest_word(rdram, sp + 0x94, 0x447A0000U); // 1000 damage
+    ctx.r4 = int32_t(object); ctx.r5 = int32_t(sp + 0x40);
+    ctx.r6 = int32_t(sp + 0x80);
+    func_80084528(rdram, &ctx);
+    static bool escaped = false;
+    if (!escaped && read_guest_half(rdram, 0x8018E452U) == 0 &&
+        read_guest_float(rdram, 0x800E1B24U) > 0.0F) {
+        // Cross the native escape boundary after all core messages arrive.
+        write_guest_word(rdram, shooter + 0x50U, 0x461C4000U); // X = 10000
+        write_guest_word(rdram, shooter + 8U, 0x461C4000U);
+        escaped = true;
+        std::printf("[sote][skyhook-escape] VI=%d ship=%08X x=10000\n", vi, shooter);
+    }
+
+    std::printf("[sote][skyhook-damage] VI=%d object=%08X flags=%08X health=%.1f cores=%u countdown=%.2f\n",
+        vi, object, read_guest_word(rdram, object + 0x140U),
+        read_guest_float(rdram, object + 0x1A4U),
+        read_guest_half(rdram, 0x8018E452U),
+        read_guest_float(rdram, 0x800E1B24U));
+    std::fflush(stdout);
+}
+
+extern "C" void sote_diagnostic_palace_ray(uint8_t* rdram, uint32_t object) {
+    static bool placed = false;
+    if (placed || std::getenv("SOTE_DIAGNOSTIC_PALACE_SWITCH_RAY") == nullptr ||
+        vi_count.load(std::memory_order_relaxed) < 1200 ||
+        read_guest_half(rdram, 0x8013CE0EU) != 27 ||
+        object < 0x80000000U || object > 0x807FFF40U)
+        return;
+    // Redirect one native Use ray through the mapped hand-switch surface.
+    // Native polygon collision and Mict dispatch decide whether it activates.
+    const float ray[] = {33.74F, -29.86F, 82.5F, 0.556F, 0.832F, 0.0F, 10.0F};
+    for (unsigned i = 0; i < 7; ++i) {
+        uint32_t bits;
+        std::memcpy(&bits, &ray[i], sizeof(bits));
+        write_guest_word(rdram, object + i * 4U, bits);
+    }
+    placed = true;
+    std::printf("[sote][palace-use-ray] ray=%08X\n", object);
+    std::fflush(stdout);
+}
+
 extern "C" void sote_enter_player_controller(
     uint8_t* rdram,
     uint32_t object,
@@ -3118,6 +3227,28 @@ extern "C" void sote_enter_player_controller(
     // place the first independently plausible respawn death after 1,800 VIs.
     constexpr int minimum_stable_respawn_vis = 1800;
     const int controller_vi = vi_count.load(std::memory_order_relaxed);
+    // Contained placement probe: change only Dash's coordinates, allowing
+    // native collision, sector entry and encounter messages to run normally.
+    if (const char* placement = std::getenv("SOTE_DIAGNOSTIC_PLACE_PLAYER")) {
+        static bool placed = false;
+        int event = 0, start_vi = 0;
+        float xyz[3] = {};
+        if (!placed && std::sscanf(placement, "%d:%d:%f:%f:%f",
+                &event, &start_vi, &xyz[0], &xyz[1], &xyz[2]) == 5 &&
+            controller == 0x800700F0U && controller_vi >= start_vi &&
+            read_guest_half(rdram, 0x8013CE0EU) == event) {
+            for (int axis = 0; axis < 3; ++axis) {
+                uint32_t bits;
+                std::memcpy(&bits, &xyz[axis], sizeof(bits));
+                write_guest_word(rdram, object + 8U + axis * 4U, bits);
+                write_guest_word(rdram, object + 0x50U + axis * 4U, bits);
+            }
+            placed = true;
+            std::printf("[sote][place-player] event=%d VI=%d pos=%.2f,%.2f,%.2f\n",
+                event, controller_vi, xyz[0], xyz[1], xyz[2]);
+            std::fflush(stdout);
+        }
+    }
     // Diagnostic-only aid for following long automatic story transitions.
     // The actual gameplay route still needs a separate unassisted check.
     if (std::getenv("SOTE_DIAGNOSTIC_FULL_HEALTH") != nullptr &&
@@ -3225,6 +3356,56 @@ extern "C" void sote_enter_player_controller(
                         "[sote][teleport] VI=%d event=%d cell=%d pos=%.1f,%.1f,%.1f\n",
                         controller_vi, event, cell,
                         target[0], target[1], target[2]);
+                    std::fflush(stdout);
+                }
+            }
+        }
+    }
+    // Place Dash on a specific moving train object while the game's own
+    // controller and event scripts continue to run. This is a contained
+    // trigger probe; it does not request a story event directly.
+    // startVI:endVI:objectHex:offsetX:offsetY:offsetZ
+    if (const char* target = std::getenv("SOTE_DIAGNOSTIC_FOLLOW_OBJECT");
+        target != nullptr && object >= 0x80000000U &&
+        object < 0x80800000U &&
+        read_guest_half(rdram, 0x8013CE0EU) == 8U) {
+        static bool parsed = false;
+        static int start_vi = 0, end_vi = 0;
+        static uint32_t target_object = 0;
+        static float offset[3] = {};
+        if (!parsed) {
+            unsigned int address = 0;
+            if (std::sscanf(target, "%d:%d:%x:%f:%f:%f",
+                            &start_vi, &end_vi, &address,
+                            &offset[0], &offset[1], &offset[2]) != 6 ||
+                end_vi <= start_vi || address < 0x80000000U ||
+                address >= 0x80800000U) {
+                std::fprintf(stderr,
+                    "[sote][follow-object] invalid diagnostic target\n");
+                std::_Exit(EXIT_FAILURE);
+            }
+            target_object = address;
+            parsed = true;
+        }
+        if (controller_vi >= start_vi && controller_vi < end_vi) {
+            float destination[3] = {};
+            bool valid = true;
+            for (int axis = 0; axis < 3; ++axis) {
+                destination[axis] = read_guest_float(
+                    rdram, target_object + 0x50U + axis * 4U) + offset[axis];
+                valid &= std::isfinite(destination[axis]);
+            }
+            if (valid) {
+                for (int axis = 0; axis < 3; ++axis) {
+                    uint32_t bits;
+                    std::memcpy(&bits, &destination[axis], sizeof(bits));
+                    write_guest_word(rdram, object + 0x50U + axis * 4U, bits);
+                }
+                if (controller_vi == start_vi || controller_vi % 300 == 0) {
+                    std::printf("[sote][follow-object] VI=%d object=%08X "
+                        "pos=%.2f,%.2f,%.2f\n", controller_vi,
+                        target_object, destination[0], destination[1],
+                        destination[2]);
                     std::fflush(stdout);
                 }
             }
@@ -4163,44 +4344,6 @@ extern "C" void sote_note_bike_life_loss(
     std::fflush(stdout);
 }
 
-extern "C" uint32_t sote_normalize_zero_velocity_motion(
-    uint8_t* rdram,
-    uint32_t object) {
-    const int16_t state = static_cast<int16_t>(
-        read_guest_half(rdram, object + 0xA0U));
-    const float velocity = read_guest_float(rdram, object + 0xA8U);
-    if ((state != 2 && state != 3) || velocity != 0.0F) {
-        return 0;
-    }
-
-    // States 2 and 3 only leave the inner transition loop by advancing
-    // toward a keyframe. A zero-velocity transition cannot make progress,
-    // so normalize it before entering the loop rather than relying on the
-    // emergency iteration guard to recover after the fact.
-    write_guest_half(rdram, object + 0xA0U, 0);
-    const uint32_t occurrence =
-        motion_zero_velocity_normalization_count.fetch_add(
-            1, std::memory_order_relaxed) + 1;
-    if (occurrence <= 8 || occurrence % 1000 == 0) {
-        std::printf(
-            "[sote][effects] normalized zero-velocity motion before loop "
-            "at VI=%d occurrence=%u object=%08X type=%d state=%d "
-            "keyframe=%d position=%.6f previous=%.6f\n",
-            vi_count.load(std::memory_order_relaxed),
-            occurrence,
-            object,
-            static_cast<int16_t>(
-                read_guest_half(rdram, object + 0x68U)),
-            state,
-            static_cast<int16_t>(
-                read_guest_half(rdram, object + 0xA2U)),
-            read_guest_float(rdram, object + 0xACU),
-            read_guest_float(rdram, object + 0xB0U));
-        std::fflush(stdout);
-    }
-    return 1;
-}
-
 extern "C" void sote_note_motion_loop_guard(
     uint8_t* rdram,
     uint32_t object) {
@@ -4217,10 +4360,9 @@ extern "C" void sote_note_motion_loop_guard(
     const bool repaired =
         (state == 2 || state == 3) && velocity == 0.0F;
     if (repaired) {
-        // States 2 and 3 only terminate by advancing toward the next
-        // keyframe. With zero velocity the original loop can never change
-        // its comparison result, so return the motion object to its stable
-        // idle state. A later input-driven update can activate it normally.
+        // Zero velocity legitimately dispatches immediate script keyframes.
+        // Only stop after the bounded loop has demonstrated a cycle; a
+        // complete finite sequence has at most 16 keyframes.
         write_guest_half(rdram, object + 0xA0U, 0);
     }
     std::printf(

@@ -35,6 +35,9 @@ extern "C" void func_800654A0(uint8_t* ram,recomp_context* c) {
     put<uint32_t>(ram,uint32_t(c->r7),0);
     // Destroy scratch registers to verify no changes leak into the spawn.
     c->r4=0; c->r16=0; c->f12.fl=999;
+    check(c->f_odd == (c->mips3_float_mode ? &c->f1.u32l : &c->f0.u32h),
+        "native trace owns its odd floating-point register view");
+    if(c->f_odd) c->f_odd[(5-1)*2]=0xDEADBEEF;
 }
 int main(int argc,char** argv) {
     const auto root=std::filesystem::absolute(argc>1?argv[1]:"aim-test-settings");
@@ -53,6 +56,7 @@ int main(int argc,char** argv) {
     put(ram,pos,Vec{0,0,0});put(ram,stack+0x68,player);
     sote::modern_controls::publish({{},{},true});sote_modern_begin(ram,player);
     recomp_context c{}; c.r29=(int32_t)stack;c.r17=(int32_t)0x80112e60;put(ram,0x80112e60,bolt);
+    c.f_odd=&c.f0.u32h;
     const auto original_context=c;
     for(float distance:{2.0f,100.0f,1400.0f}) {
         wall=distance;put(ram,vel,Vec{0,20,0});calls=0;
@@ -64,6 +68,21 @@ int main(int argc,char** argv) {
         check(std::memcmp(&c,&original_context,sizeof(c))==0,"spawn registers preserved");
         check(get<Vec>(ram,pos).x==0,"muzzle never teleports to camera");
     }
+    put<int16_t>(ram,0x8013CE0E,8);put<int16_t>(ram,0x8018DDE8,0);
+    sote_modern_train_begin(ram,player);
+    wall=100;put(ram,vel,Vec{0,20,0});calls=0;sote_modern_projectile(ram,&c);
+    check(calls==2 && std::abs(get<Vec>(ram,vel).x/get<Vec>(ram,vel).y-1.2f/100)<0.00001f,
+        "train native camera converges at reticle");
+    put<int16_t>(ram,0x8013CE0E,4);sote_modern_begin(ram,player);
+    calls=0;sote_modern_projectile(ram,&c);
+    check(calls==0,"ordinary camera zero does not enable convergence");
+    put<int16_t>(ram,0x8018DDE8,5);
+    // FR=1 uses a different backing field for odd registers. Exercise it too.
+    c.mips3_float_mode=true; c.f_odd=&c.f1.u32l;
+    const auto wide_context=c;
+    wall=100;put(ram,vel,Vec{0,20,0});sote_modern_projectile(ram,&c);
+    check(std::memcmp(&c,&wide_context,sizeof(c))==0,"FR=1 spawn registers preserved");
+    c.mips3_float_mode=false; c.f_odd=&c.f0.u32h;
     wall=-4;put(ram,vel,Vec{0,20,0});sote_modern_projectile(ram,&c);
     check(get<Vec>(ram,vel).x==0,"surface behind muzzle cannot reverse shot");
     wall=2000;put(ram,vel,Vec{0,20,0});sote_modern_projectile(ram,&c);

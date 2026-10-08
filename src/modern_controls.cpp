@@ -48,6 +48,12 @@ template<class T> void write(uint8_t* ram, uint32_t address, T value) {
     std::memcpy(ram + offset, &value, sizeof(value));
 }
 bool blocked(uint8_t* ram, uint32_t object) {
+    if (level_event == 8) {
+        return read<float>(ram, 0x800E539C) > 0 ||
+            read<uint32_t>(ram, 0x800E5838) != 0 ||
+            read<float>(ram, 0x800E57B8) > 0 ||
+            (read<uint32_t>(ram, object + 0x74) & 0x400) != 0;
+    }
     // Native input suppression immediately following 800758A8, plus death.
     return read<float>(ram, 0x800E0EA0) > 0 ||
         read<float>(ram, 0x800DEB78) > 0 ||
@@ -216,9 +222,15 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
             frame.move.x, frame.move.y, frame.look.x, frame.look.y,
             -frame.look.x * tuning.yaw_speed, pitch, dt,
             read<float>(ram, object + 0x14));
-        std::printf("[sote][modern-output] weapon_pitch=%.3f body_pitch=%.3f camera=%d preset=%d\n",
-            read<float>(ram,object+0x1B4), read<float>(ram,object+0x1C0),
-            read<int16_t>(ram,0x8018DDE8), preset);
+        if (event == 8) {
+            std::printf("[sote][modern-train-output] local_heading=%.3f angular_rate=%.3f camera=%d preset=%d\n",
+                read<float>(ram,object+0x90), read<float>(ram,object+0xA8),
+                read<int16_t>(ram,0x8018DDE8), preset);
+        } else {
+            std::printf("[sote][modern-output] weapon_pitch=%.3f body_pitch=%.3f camera=%d preset=%d\n",
+                read<float>(ram,object+0x1B4), read<float>(ram,object+0x1C0),
+                read<int16_t>(ram,0x8018DDE8), preset);
+        }
         std::fflush(stdout);
     }
 }
@@ -236,6 +248,49 @@ extern "C" void sote_modern_decode(uint8_t* ram, uint32_t object, uint32_t stack
     write<int16_t>(ram, stack + 0x170, frame.move.x > 0);
     write<float>(ram, stack + 0x160, std::fabs(frame.move.x));
     write<float>(ram, stack + 0x15C, std::fabs(frame.move.y));
+}
+
+extern "C" void sote_modern_train_begin(uint8_t* ram, uint32_t object) {
+    sote_modern_begin(ram, object);
+    // Train cameras have their own native update; never request the ordinary
+    // on-foot camera or use its actor-specific pitch fields here.
+    sote::modern_controls::camera_requested = false;
+}
+
+extern "C" void sote_modern_train_decode(uint8_t* ram, uint32_t object, uint32_t stack) {
+    using namespace sote::modern_controls;
+    if (!active || owner != object || level_event != 8) return;
+    write<int16_t>(ram, stack + 0x1BE, frame.move.y > 0);
+    write<int16_t>(ram, stack + 0x1BC, frame.move.y < 0);
+    write<int16_t>(ram, stack + 0x1BA, 0);
+    write<int16_t>(ram, stack + 0x1B8, 0);
+    write<int16_t>(ram, stack + 0x1B2, frame.move.x < 0);
+    write<int16_t>(ram, stack + 0x1B0, frame.move.x > 0);
+    write<float>(ram, stack + 0x19C, std::fabs(frame.move.y));
+    write<float>(ram, stack + 0x1A0, std::fabs(frame.move.x));
+}
+
+extern "C" void sote_modern_train_yaw(uint8_t* ram, uint32_t object) {
+    using namespace sote::modern_controls;
+    if (!active || owner != object || level_event != 8 || blocked(ram, object)) return;
+    // The train integrates local angular velocity at +A8 into +90, then
+    // combines the result with its carriage rotation. +A4 is linear velocity.
+    write<float>(ram, object + 0xA8, -frame.look.x * tuning.yaw_speed - mouse_yaw_rate);
+}
+
+extern "C" uint32_t sote_modern_train_pose(uint8_t* ram, uint32_t object, uint32_t stack) {
+    using namespace sote::modern_controls;
+    if (!active || owner != object || level_event != 8 || blocked(ram, object)) return 0;
+    // 800A6384 builds the train's camera and weapon transforms from these
+    // relative Euler angles. Its +1B4 actor field is a pointer, not pitch.
+    // Body heading already supplies yaw; use identical pitch for both poses.
+    write<float>(ram, stack + 0xD0, 0);
+    write<float>(ram, stack + 0xD4, pitch);
+    write<float>(ram, stack + 0xD8, 0);
+    write<float>(ram, stack + 0xDC, 0);
+    write<float>(ram, stack + 0xE0, pitch);
+    write<float>(ram, stack + 0xE4, 0);
+    return 1;
 }
 
 extern "C" void sote_modern_yaw(uint8_t* ram, uint32_t object) {
