@@ -167,6 +167,14 @@ clip is 3.38 seconds long, so this route has no voice overlap. The PC run
 skipped the startup film before jumping directly to event 20; this verifies
 the two communications in PC mode, not the preceding Freighter SAN handoff.
 The capture used SDL's dummy output and does not verify physical speakers.
+The unskipped Original N64 event-18 story route now strengthens the first
+Freighter cue: the Luke/Dash dialogue advances naturally to event 19 at
+VI 8637 and to playable event 20 at VI 10149. The supercomputer instruction
+is visible at present 11000; `ILB33.WAV` queues at VI 10390, and its first
+2.5 seconds correlate with the mixed PCM at **0.993307** (next peak outside
+one second 0.106900; `san_freighter_n64_unskipped_final_20261007/`). This
+confirms the voice onset after the complete native story, while direct entry
+still bypasses the preceding campaign stage.
 
 A complete Gall Spaceport PC intro now also has a mixed-audio handoff check.
 The selected-level route displays `L05INTRO.SAN` at present 1500, reaches its

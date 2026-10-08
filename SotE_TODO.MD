@@ -170,6 +170,15 @@ dummy device, and a handoff to the ship interior and its supercomputer
 objective without repeating the story (`build/diagnostics/
 san_freighter_pc_story_skip_music_guard_fixed/`). Physical speaker output is
 still unverified.
+An unmuted Original N64 direct event-18 replay now follows the complete
+Luke/Dash dialogue without a scripted story skip. Native event 18 advances
+to the ship approach at event 19 (VI 8637), then to playable event 20
+(VI 10149). Captures show the Luke conversation, ship approach, and
+supercomputer instruction in the interior (`san_freighter_n64_unskipped_
+final_20261007/`). `ILB33.WAV` queues at VI 10390 with that instruction;
+its first 2.5 seconds correlate with the game's mixed PCM at 0.993307.
+This verifies the full N64 story-to-mission handoff and voice timing. The
+direct event jump bypasses the previous campaign stage.
 An offscreen diagnostic could previously pick up unrelated host skip-key state;
 its movie skip is now driven only by the exact process-local test VI.
 An earlier Skyhook direct event jump did not reproduce the intro because it
