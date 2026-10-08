@@ -3073,6 +3073,12 @@ extern "C" void sote_enter_player_controller(
     // place the first independently plausible respawn death after 1,800 VIs.
     constexpr int minimum_stable_respawn_vis = 1800;
     const int controller_vi = vi_count.load(std::memory_order_relaxed);
+    // Diagnostic-only aid for following long automatic story transitions.
+    // The actual gameplay route still needs a separate unassisted check.
+    if (std::getenv("SOTE_DIAGNOSTIC_FULL_HEALTH") != nullptr &&
+        object >= 0x80000000U && object < 0x80800000U) {
+        write_guest_word(rdram, object + 0xB4U, 0x42C80000U);
+    }
     // Walk the player through a square spiral of positions around where the
     // current event started, holding each one, so texture captures can reach
     // parts of a level the scripted input never plays to.

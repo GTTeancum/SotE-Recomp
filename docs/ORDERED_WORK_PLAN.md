@@ -126,6 +126,24 @@ well before the intended transfer (`ord_train_health_trace_20261007/`).
 This confirms that the same scripted route has at least two distinct
 outcomes, so the next probe must first keep Dash alive through the early
 barriers and only evaluate a later jump in a surviving run.
+An opt-in, process-local `-FullHealth` diagnostic now restores the player
+object's health before each native controller call. It is an aid for
+locating train obstacles, not unassisted placement evidence. An idle run
+still fell and respawned about every 700 VIs despite 100 health
+(`ord_train_full_health_idle_20261007/`), confirming that the route needs
+actual transfers. With the earlier scripted route, a native B pulse at
+game frame 1760 visibly lifted a living Dash over the first front-edge
+barrier and kept him moving on the car through VI 2055
+(`ord_train_full_health_jump_20261007/`). At the next obstruction, a
+game-frame-1980 crouch failed, but a game-frame-2010 B jump cleared it
+and reached a narrow rail beneath the next raised deck at VI 2200
+(`ord_train_second_beam_duck_20261007/`,
+`ord_train_second_gap_jump_20261007/`). Dash then fell around VI 2220
+and respawned by VI 2385. An earlier forward run and B at game frame
+2100 produced a visible rise over the rail but landed at Z≈0.91 below
+the deck by VI 2205 (`ord_train_third_deck_jump_20261007/`). The next
+route needs the raised deck's landing position, not another assumption
+that a height rise crossed it. The boss handoff is still unverified.
 
 ## 2. Voice with visible communications
 
