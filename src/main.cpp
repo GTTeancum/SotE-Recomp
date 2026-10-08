@@ -140,6 +140,10 @@ struct ScriptedInputPulse {
     int8_t y;
     bool game_frame_timed;
     bool activated;
+    char position_axis = 0;
+    float position_threshold = 0.0f;
+    int trigger_after_vi = 0;
+    int triggered_at_vi = -1;
 };
 
 std::vector<ScriptedInputPulse> scripted_input;
@@ -1503,9 +1507,24 @@ void parse_scripted_input(const char* specification) {
         const std::string_view start_spec = entry.substr(0, first_colon);
         const bool game_frame_timed =
             !start_spec.empty() && start_spec.front() == 'g';
+        // A world-position trigger keeps a narrow obstacle input tied to
+        // the train's actual position when VI and game-frame clocks drift.
+        // Syntax: y>-322.5@1200:8:b (axis, threshold, earliest VI).
+        const bool position_triggered = start_spec.size() > 3 &&
+            (start_spec.front() == 'x' || start_spec.front() == 'y' ||
+             start_spec.front() == 'z') && start_spec[1] == '>';
+        const size_t position_at = position_triggered
+            ? start_spec.find('@') : std::string_view::npos;
+        if (position_triggered && position_at == std::string_view::npos) {
+            std::fprintf(stderr, "[sote] position input needs @earliestVI\n");
+            std::_Exit(EXIT_FAILURE);
+        }
+        const int start_vi = position_triggered
+            ? std::atoi(std::string(start_spec.substr(position_at + 1)).c_str())
+            : std::atoi(std::string(start_spec.substr(
+                game_frame_timed ? 1 : 0)).c_str());
         ScriptedInputPulse pulse{
-            std::atoi(std::string(start_spec.substr(
-                game_frame_timed ? 1 : 0)).c_str()),
+            start_vi,
             std::atoi(std::string(entry.substr(
                 first_colon + 1,
                 second_colon - first_colon - 1)).c_str()),
@@ -1514,6 +1533,13 @@ void parse_scripted_input(const char* specification) {
             0,
             game_frame_timed,
             false};
+        if (position_triggered) {
+            pulse.position_axis = start_spec.front();
+            pulse.position_threshold = std::strtof(
+                std::string(start_spec.substr(2, position_at - 2)).c_str(),
+                nullptr);
+            pulse.trigger_after_vi = start_vi;
+        }
         std::string_view names = entry.substr(second_colon + 1);
         size_t name_cursor = 0;
         while (name_cursor < names.size()) {
@@ -2788,8 +2814,22 @@ void on_vi() {
     for (ScriptedInputPulse& pulse : scripted_input) {
         const uint64_t clock = pulse.game_frame_timed
             ? current_game_frame : static_cast<uint64_t>(count);
-        if (clock >= static_cast<uint64_t>(pulse.start_vi) &&
-            clock < static_cast<uint64_t>(pulse.start_vi + pulse.duration)) {
+        if (pulse.position_axis != 0 && pulse.triggered_at_vi < 0 &&
+            count >= pulse.trigger_after_vi && game_rdram != nullptr &&
+            read_guest_half(game_rdram, 0x8013CE0EU) == 8U) {
+            const uint32_t offset = pulse.position_axis == 'x' ? 0x50U :
+                pulse.position_axis == 'y' ? 0x54U : 0x58U;
+            const float position = read_guest_float(
+                game_rdram, 0x801A7AF4U + offset);
+            if (std::isfinite(position) && position > pulse.position_threshold)
+                pulse.triggered_at_vi = count;
+        }
+        const bool active = pulse.position_axis != 0
+            ? pulse.triggered_at_vi >= 0 &&
+                count < pulse.triggered_at_vi + pulse.duration
+            : clock >= static_cast<uint64_t>(pulse.start_vi) &&
+                clock < static_cast<uint64_t>(pulse.start_vi + pulse.duration);
+        if (active) {
             scripted_buttons |= pulse.buttons;
             if (pulse.x != 0) scripted_x = pulse.x;
             if (pulse.y != 0) scripted_y = pulse.y;

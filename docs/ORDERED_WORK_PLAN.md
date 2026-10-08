@@ -499,11 +499,12 @@ A position-only geometry probe first reset at VI 7113
 (`ord_rail_geometry_20261008/`), then a repeat reached VI 9300 with
 three lives and no warp (`ord_rail_geometry_b_20261008/`). Its RDRAM
 snapshots at VI 8800–9200 keep Dash about 3.08–3.09 horizontal units
-from moving `Trai` object `0x801A24A8`; the other two `Trai` objects
-are more than 300 units away. The blue rails seen at 8900 are therefore
-not an adjacent active carriage in these snapshots. Future input should
-traverse the solid carriage toward its head and wait for an actual train
-merge, rather than jumping onto that visible rail.
+from moving `Trai` object `0x801A24A8`. That scan covered only the first
+few `Trai` objects and cannot rule out nearby cars. A wider object scan
+at VI 12000 identified the adjacent boxcar `0x801A2994`, about 9.2
+units ahead of `0x801A24A8`, and another car `0x801A2B38` about 19
+units ahead. The next route must reach those solid decks; the blue rail
+alone has not supported a landing.
 A short 40-game-frame forward pulse at 8900 was invalidated twice by
 earlier VI-7114 resets (`ord_solid_deck_step8900_20261008/`,
 `ord_solid_deck_step8900_b_20261008/`). A third run reached the pulse
@@ -514,6 +515,28 @@ offset moving from roughly (-3.1, +0.1, +0.3) at VI 8950 to
 Dash stopped while the carriage continued. Even this short straight
 forward step leaves the solid deck on the curve; the next input must
 steer to remain on the carriage before attempting headward travel.
+A position-triggered B input now keys the opening barrier jump to the
+player's world Y coordinate instead of game-frame timing. Two short
+diagnostics reached VI 2100 with all three lives, and a longer run reached
+VI 15870 before the known checkpoint reset (`ord_position_trigger_first_jump_a_20261008/`,
+`ord_position_trigger_first_jump_b_20261008/`, and
+`ord_train_proximity_position_trigger_20261008/`). At VI 10000, a
+100-VI `stick_up` pulse increased Dash's distance from adjacent boxcar
+`0x801A2994` from 8.66 to 13.47 units, then he fell
+(`ord_forward_10000_20261008/`). The opposite `stick_down` pulse closed
+that distance to 4.91 units at VI 10100, but Dash left the deck and
+fell by VI 10125 (`ord_back_10000_20261008/`). A jump during that
+approach is the current transfer trial. Camera direction alone did not
+identify the right stick direction on this curve.
+A B jump at VI 10075 during `stick_down` reached the adjacent car's
+side but not its deck. At VI 10125 Dash was below the car despite
+remaining only 4.61 horizontal units from its center, and he warped
+back at VI 10294 (`ord_back_jump10075_20261008/`). The adjacent car
+was roughly 2.7 world-X units to Dash's left at the approach; the
+next trial adds lateral steering and starts the jump earlier.
+The first diagonal-jump run reset on an earlier obstacle at VI 7106,
+before the new input could fire (`ord_diag_jump10055_20261008/`), so it
+provides no evidence about the transfer and needs a clean repeat.
 
 ## 2. Voice with visible communications
 
