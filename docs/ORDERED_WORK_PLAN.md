@@ -46,10 +46,25 @@ Dash stays within about 0.02 units of its horizontal position through VI
 1290, but differs by (1.88, -3.43) at VI 1320 and (3.99, -6.89) at VI
 1350 (`ord_train_car_separation_20261007/`). Rendered frames show a low
 striped obstacle at VI 1230–1290. Holding native C-down from VI 1230 shows
-Dash visibly ducking under it with 100 health at present 1280, but he is
-falling with zero health by present 1350
-(`ord_train_first_beam_duck_20261007/`). The first obstacle and the
-subsequent loss of train attachment must be solved as separate steps.
+Dash visibly ducking at present 1280, then taking damage. One short run
+remained attached through VI 1410 with 40 health
+(`ord_train_duck_interval_20261007/`); a longer run fell by VI 1350 and lost
+a life at VI 1453 (`ord_train_duck_extended_20261007/`). The traces differ
+by several game frames at the collision despite the same VI-based input.
+The short survival is not a repeatable route. A VI 1260 native B jump also
+crossed that obstacle with 40 health and remained on the car through VI 1440
+(`ord_train_beam_jump_20261007/`). A second forward jump at VI 1395 struck
+the underside of the next striped overhead barrier and died
+(`ord_train_two_jumps_20261007/`). The contained input harness now supports
+game-frame starts (`g1217:8:b`) so input can follow gameplay progress despite
+VI scheduling drift. A first jump at game frame 1217 and a crouch from game
+frame 1345 visibly passed both barriers with 60 health through VI 1620 in one
+run (`ord_train_second_duck_20261007/`). A longer run on the same inputs
+lost its first life at VI 1617, while a denser captured run still showed Dash
+aboard at VI 1620 with 20 health
+(`ord_train_second_duck_extended_20261007/`,
+`ord_train_transfer_window_20261007/`). This route remains sensitive to
+collision timing and cannot yet establish the first car transfer.
 
 ## 2. Voice with visible communications
 

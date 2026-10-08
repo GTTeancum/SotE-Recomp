@@ -138,6 +138,7 @@ struct ScriptedInputPulse {
     uint16_t buttons;
     int8_t x;
     int8_t y;
+    bool game_frame_timed;
 };
 
 std::vector<ScriptedInputPulse> scripted_input;
@@ -1490,14 +1491,22 @@ void parse_scripted_input(const char* specification) {
                 entry.data());
             std::_Exit(EXIT_FAILURE);
         }
+        // Prefix a start with 'g' to count rendered game frames instead of
+        // video interrupts. This keeps contained gameplay probes aligned when
+        // capture scheduling changes the VI-to-game-frame ratio.
+        const std::string_view start_spec = entry.substr(0, first_colon);
+        const bool game_frame_timed =
+            !start_spec.empty() && start_spec.front() == 'g';
         ScriptedInputPulse pulse{
-            std::atoi(std::string(entry.substr(0, first_colon)).c_str()),
+            std::atoi(std::string(start_spec.substr(
+                game_frame_timed ? 1 : 0)).c_str()),
             std::atoi(std::string(entry.substr(
                 first_colon + 1,
                 second_colon - first_colon - 1)).c_str()),
             0,
             0,
-            0};
+            0,
+            game_frame_timed};
         std::string_view names = entry.substr(second_colon + 1);
         size_t name_cursor = 0;
         while (name_cursor < names.size()) {
@@ -1519,7 +1528,7 @@ void parse_scripted_input(const char* specification) {
             name_cursor = name_end + 1;
         }
         if (pulse.start_vi <= 0 || pulse.duration <= 0) {
-            std::fprintf(stderr, "[sote] scripted VI and duration must be positive\n");
+            std::fprintf(stderr, "[sote] scripted start and duration must be positive\n");
             std::_Exit(EXIT_FAILURE);
         }
         scripted_input.push_back(pulse);
@@ -2767,17 +2776,23 @@ void on_vi() {
     uint16_t scripted_buttons = 0;
     int8_t scripted_x = 0;
     int8_t scripted_y = 0;
+    const uint64_t current_game_frame =
+        game_frame_count.load(std::memory_order_relaxed);
     for (const ScriptedInputPulse& pulse : scripted_input) {
-        if (count >= pulse.start_vi &&
-            count < pulse.start_vi + pulse.duration) {
+        const uint64_t clock = pulse.game_frame_timed
+            ? current_game_frame : static_cast<uint64_t>(count);
+        if (clock >= static_cast<uint64_t>(pulse.start_vi) &&
+            clock < static_cast<uint64_t>(pulse.start_vi + pulse.duration)) {
             scripted_buttons |= pulse.buttons;
             if (pulse.x != 0) scripted_x = pulse.x;
             if (pulse.y != 0) scripted_y = pulse.y;
         }
-        if (count == pulse.start_vi) {
+        if (clock == static_cast<uint64_t>(pulse.start_vi)) {
             std::printf(
-                "[sote] scripted input at VI=%d: buttons=%04X stick=%d,%d\n",
+                "[sote] scripted input at VI=%d game_frame=%llu: "
+                "buttons=%04X stick=%d,%d\n",
                 count,
+                static_cast<unsigned long long>(current_game_frame),
                 pulse.buttons,
                 pulse.x,
                 pulse.y);
