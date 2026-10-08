@@ -1,5 +1,10 @@
 # AT A GLANCE
 
+Follow `docs/ORDERED_WORK_PLAN.md` for the completion sequence and evidence
+gates. The active gate is the natural Ord Mantell train-to-IG-88 SAN
+transition; later voice and controls checks stay queued behind the known SAN
+placement pass.
+
 1. **OPEN** - Fix SAN cutscene placement and offer N64/PC cutscene modes and confirm mapping of voice over lines with on-screen communications.
 2. **OPEN** - Finish keyboard, mouse, and controller mappings and validate Modern controls.
 3. **COMPLETE** - Revamp Options and Pause, expose configuration options, and preserve the existing UI style.
