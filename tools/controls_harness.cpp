@@ -294,6 +294,10 @@ void test_defaults_without_ini(const std::filesystem::path& scratch) {
     const ModernControlsTuning written =
         sote::controls_menu::modern_controls_tuning();
     const ModernControlsTuning defaults{};
+    check_near(written.on_foot.movement_deadzone, 0.18f, 1e-4f,
+               "ini: first-run on-foot movement deadzone is 18 percent");
+    check_near(written.on_foot.aim_deadzone, 0.18f, 1e-4f,
+               "ini: first-run on-foot aim deadzone is 18 percent");
     check_near(written.movement_deadzone,
                defaults.movement_deadzone, 1e-4f,
                "ini: template round-trips movement_deadzone");
@@ -393,8 +397,7 @@ void test_ini_parsing(const std::filesystem::path& scratch) {
     } fire_buttons[] = {
         {"A", 0x8000}, {"B", 0x4000}, {"Z", 0x2000},
         {"L", 0x0020}, {"R", 0x0010},
-        // Unknown tokens fall back to the documented default rather than
-        // producing a button mask of zero, which would make RB do nothing.
+        // Retain the legacy parser's stable fallback for old INI files.
         {"nonsense", 0x8000},
     };
     for (const auto& entry : fire_buttons) {
@@ -418,6 +421,16 @@ void test_ini_parsing(const std::filesystem::path& scratch) {
                "ini: partial file resets unset keys to defaults");
     check(tuning.fire_button_bit == defaults.fire_button_bit,
           "ini: partial file resets fire_button to the default");
+
+    write_file(ini,
+        "on_foot_movement_deadzone = invalid\n"
+        "on_foot_aim_deadzone = invalid\n");
+    sote::controls_menu::initialize(directory);
+    controls = sote::controls_menu::modern_controls_tuning();
+    check_near(controls.on_foot.movement_deadzone, 0.18f, 1e-5f,
+               "ini: invalid on-foot movement deadzone uses first-run default");
+    check_near(controls.on_foot.aim_deadzone, 0.18f, 1e-5f,
+               "ini: invalid on-foot aim deadzone uses first-run default");
 }
 
 void test_ini_hot_reload(const std::filesystem::path& scratch) {

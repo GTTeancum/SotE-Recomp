@@ -993,6 +993,15 @@ afterwards, so longer-course steering and camera feel remain unverified.
 User playtest (Gall and Hoth): controls feel substantially better, but need
 more deadzone. The playable folder's Modern on-foot movement and aim deadzones
 are now 18% (up from 12%) for the next feel check.
+The source's first-run defaults and invalid-INI fallbacks now use that same
+18% value for Modern on-foot movement and aim. Previously a missing or
+malformed `CONTROLS_MODERN.INI` regenerated 12% even though the packaged
+INI and playable candidates used 18%. The controls harness checks both
+first-run generation and malformed-value fallback; all eight project tests
+pass. Both existing playable candidate executables were refreshed with the
+rebuilt game. Legacy bike `fire_button` documentation is also corrected:
+the setting is retained for INI compatibility but does not drive an action;
+RB remains Ram Right.
 
 - [x] Finish configurable keyboard, mouse, and controller mappings beyond the
       current scheme and tuning support.

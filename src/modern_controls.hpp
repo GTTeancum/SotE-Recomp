@@ -9,8 +9,8 @@ struct Input {
     bool connected = false;
 };
 struct Tuning {
-    float movement_deadzone = 0.12f;
-    float aim_deadzone = 0.12f;
+    float movement_deadzone = 0.18f;
+    float aim_deadzone = 0.18f;
     float aim_curve = 1.7f;
     float yaw_speed = 180.0f;
     float pitch_speed = 90.0f;

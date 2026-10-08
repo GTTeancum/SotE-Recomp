@@ -38,10 +38,8 @@ struct BikeTuning {
     // right-stick output derived from throttle changes, to avoid abrupt
     // camera snaps under Modern's trigger-driven throttle.
     float camera_smoothing = 0.25f;
-    // Which native N64 button the recompiled bike controller reads as
-    // "fire". UNVERIFIED — defaulted to A. If the original bike sequence
-    // actually reads a different button for firing, override this in the
-    // INI (fire_button = A|B|Z|L|R) rather than trusting this default.
+    // Retained only for legacy INI compatibility. The bike has left and
+    // right ram actions, not a blaster; this field does not drive input.
     uint16_t fire_button_bit = 0x8000; // n64_a
 };
 

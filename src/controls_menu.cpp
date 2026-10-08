@@ -219,9 +219,11 @@ void apply_tuning_value(
     const std::string& value) {
     const ModernControlsTuning defaults{};
     if (key == "on_foot_movement_deadzone") {
-        tuning.on_foot.movement_deadzone = parse_float_clamped(value, 0.12f, 0.0f, 0.95f);
+        tuning.on_foot.movement_deadzone = parse_float_clamped(
+            value, defaults.on_foot.movement_deadzone, 0.0f, 0.95f);
     } else if (key == "on_foot_aim_deadzone") {
-        tuning.on_foot.aim_deadzone = parse_float_clamped(value, 0.12f, 0.0f, 0.95f);
+        tuning.on_foot.aim_deadzone = parse_float_clamped(
+            value, defaults.on_foot.aim_deadzone, 0.0f, 0.95f);
     } else if (key == "on_foot_aim_curve") {
         tuning.on_foot.aim_curve = parse_float_clamped(value, 1.7f, 0.25f, 4.0f);
     } else if (key == "on_foot_yaw_speed") {
