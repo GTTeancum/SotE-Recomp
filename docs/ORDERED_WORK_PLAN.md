@@ -180,8 +180,28 @@ landing left him below the track by VI 4950
 tether at both deck height and above the car still respawned every
 ~700 VIs, so it was removed from source; it does not validate a boss
 event (`ord_train_tether_5000_20261007/`,
-`ord_train_tether_above_20261007/`). The active gate is a viable second
-car landing, then the actual train-to-boss event in both cutscene modes.
+`ord_train_tether_above_20261007/`).
+An earlier forward approach does make that landing: holding forward from
+game frame 4010 and pressing native B at 4200 put Dash visibly on the
+second hover train by VI 4350 (`ord_train_hover_transfer_shift10_20261007/`).
+He remained near its `Trai` object at `0x801A24A8` through VI 4700.
+Extended captures show him upright on that train at present 5000 and 6000
+(`ord_train_hover_transfer_shift10_extended_20261007/`). This is a
+process-local route with `-FullHealth`, not an unassisted clear. The same
+input sequence varies later: one run fell around VI 6150 and respawned
+at VI 6360 (`ord_train_second_car_block_jump_20261008/`), so its
+game-frame-6900 jump happened after the respawn and cannot validate the
+second train obstacle. A different run stayed aboard until a hanging
+barrier near VI 6975, then fell below the track at present 7000
+(`ord_train_hover_transfer_shift10_extended_20261007/`). The next probe
+must preserve a living second-car route through both points before
+interpreting a later jump or claiming event 8 -> 9.
+A follow-up game-frame-6050 B trial cannot settle that fall: this replay
+lost a life at VI 4275 before the second-car landing, and again at VI
+6030. Its B pulse at VI 6105 occurred after the second respawn
+(`ord_second_car_6050_jump_20261008/`). Later obstacle trials need a
+state-gated second-car start or an otherwise repeatable approach; timing
+alone has not reproduced the landing reliably.
 
 ## 2. Voice with visible communications
 
