@@ -3312,7 +3312,11 @@ extern "C" void sote_sanitize_global_frame_delta(uint8_t* rdram) {
     constexpr uint32_t frame_delta_address = 0x8018E998U;
     const double frame_delta =
         read_guest_double(rdram, frame_delta_address);
-    const double sanitized = sote_sanitize_frame_delta(frame_delta);
+    const double sanitized =
+        std::getenv("SOTE_DIAGNOSTIC_FIXED_DELTA") != nullptr &&
+        std::isfinite(frame_delta) && frame_delta >= 0.0 &&
+        frame_delta <= 0.1
+            ? 0.02 : sote_sanitize_frame_delta(frame_delta);
     if (sanitized == frame_delta) {
         return;
     }

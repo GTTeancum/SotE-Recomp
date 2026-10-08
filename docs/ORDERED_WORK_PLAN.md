@@ -65,6 +65,19 @@ aboard at VI 1620 with 20 health
 (`ord_train_second_duck_extended_20261007/`,
 `ord_train_transfer_window_20261007/`). This route remains sensitive to
 collision timing and cannot yet establish the first car transfer.
+The diagnostic runner now also has `-FixedDelta`, which forces a nominal 0.02
+simulation step only inside that process. Two identical fixed-step runs of
+the jump/crouch route reached VI 1750 without losing a life
+(`ord_train_fixed_delta_a_20261007/`,
+`ord_train_fixed_delta_b_20261007/`). The next striped structure is a raised
+carriage: crouching at game frame 1640 fell below it, and jumping in place
+hit it (`ord_train_third_barrier_20261007/`,
+`ord_train_third_jump_20261007/`). Moving forward from game frame 1600 and
+jumping at 1640 visibly landed Dash on its raised deck with 30 health; the
+car's next gap still killed him around VI 2006
+(`ord_train_first_transfer_forward_20261007/`). A further forward/B pulse at
+game frame 1730 did not produce a jump and Dash died at VI 1878
+(`ord_train_transfer_jump_20261007/`). The boss handoff remains unverified.
 
 ## 2. Voice with visible communications
 
