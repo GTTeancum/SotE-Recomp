@@ -119,6 +119,13 @@ respawned before its game-frame-1720 pulse
 route variability even with fixed simulation delta. Gate each later
 transfer trial on a living, visibly upright Dash and log health or an
 equivalent death-state field before interpreting input acceptance.
+The player object stores HUD health as a float at offset `0xB4`; the
+diagnostic player-state trace now records it. A repeat run logged health
+falling to zero by VI 1410 and returning to 100 on respawn at VI 1470,
+well before the intended transfer (`ord_train_health_trace_20261007/`).
+This confirms that the same scripted route has at least two distinct
+outcomes, so the next probe must first keep Dash alive through the early
+barriers and only evaluate a later jump in a surviving run.
 
 ## 2. Voice with visible communications
 

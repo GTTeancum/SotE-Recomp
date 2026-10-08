@@ -3146,7 +3146,7 @@ extern "C" void sote_enter_player_controller(
             std::printf(
                 "[sote][player-state] VI=%d controller=%08X object=%08X "
                 "buttons=%04X stick=%d,%d action=%u pos=%.3f,%.3f,%.3f "
-                "velocity=%.3f flags=%08X event=%d\n",
+                "velocity=%.3f health=%.1f flags=%08X event=%d\n",
                 controller_vi,
                 controller,
                 object,
@@ -3160,6 +3160,7 @@ extern "C" void sote_enter_player_controller(
                 read_guest_float(rdram, object + 0x54U),
                 read_guest_float(rdram, object + 0x58U),
                 read_guest_float(rdram, object + 0x60U),
+                read_guest_float(rdram, object + 0xB4U),
                 read_guest_word(rdram, object + 0x74U),
                 static_cast<int16_t>(
                     read_guest_half(rdram, 0x8013CE0EU)));
