@@ -317,6 +317,26 @@ a turn/approach followed by R did not visibly operate the panel or display
 bypass earlier objectives. The next timing check must reach the switch
 sequence through valid gameplay or establish its state from the level code.
 
+The native level-command audit (`python tools/audit_lebo_commands.py`) now
+establishes the static message-to-voice mapping for this checkpoint. The
+second Hoth Base segment (`seg05.bin`) contains `LEBO` command index 22 at
+offset `0x2d330`. The native communicator table maps index 22 to the exact
+power-restored text, whose voice hash `C01B4784` selects `ILB04.WAV`. The
+same segment has two index-23 commands for the still-locked generator door
+(`0x2ce60`, `0x2ce80`) and index 24 for the cockpit instruction
+(`0x2d0e0`); neither has a mapped PC voice. This confirms the correct clip
+for the displayed power-restored line and locates its native command in the
+second Hoth section. It does not show when gameplay executes the command or
+whether the player can reach it after a direct event jump.
+
+The audit also finds native `LEBO` commands for 13 other voice clips still
+awaiting gameplay captures: `ILB14/15/16/17/18/21` in Gall,
+`ILB35/36` in the Freighter, `ILB38/39/40/41` in the Sewers, and `ILB44`
+in the Palace. Each command's index resolves through the same 30-entry
+communicator table to the exact text hashed by its PC voice mapping. These
+are static level/text/voice links, not confirmation of display timing or
+audible playback in either mode.
+
 | Section | Clips | Next visible state to reach |
 | --- | --- | --- |
 | Echo Base | `ILB04` | Restore generator power and display the ship-return message. |
