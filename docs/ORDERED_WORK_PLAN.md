@@ -100,6 +100,25 @@ to the next car: that run lost a life at VI 1876
 (`ord_train_rail_forward_20261007/`). The earlier low-Z grounded samples
 therefore do not prove that the rail is a safe walking surface. The next
 route needs the train/car collision state, not visual alignment alone.
+RDRAM captures now give that collision context
+(`ord_train_transfer_memory_20261007/`). Dash and the `Trai` object at
+`0x801A2304` move together from VI 1650 through 1825. Their horizontal
+offset stays near (2.1, 3.0) at VI 1800, then reverses to (-1.0, -1.7)
+by VI 1875 while Dash stops at approximately (-509.7, -208.1) and the
+car continues. The present-1800 image shows Dash on a deck facing a
+striped platform with two uprights; present-1850 shows zero health in
+the orange death overlay. This is a front-edge obstacle on the same
+moving car, not evidence of a safe lower rail or a SAN transition.
+Two apparent rejected B pulses are invalid jump tests: inspection of the
+actual present-1800 images shows **zero health and Dash in his death pose**
+before the game-frame-1765 and 1760 pulses respectively
+(`ord_train_front_barrier_jump_20261007/`,
+`ord_train_front_moving_jump_20261007/`). A third repeat had already
+respawned before its game-frame-1720 pulse
+(`ord_train_jump_gate_1720_20261007/`). These runs demonstrate residual
+route variability even with fixed simulation delta. Gate each later
+transfer trial on a living, visibly upright Dash and log health or an
+equivalent death-state field before interpreting input acceptance.
 
 ## 2. Voice with visible communications
 
