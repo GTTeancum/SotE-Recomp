@@ -41,6 +41,15 @@ frame already shows zero health below the train
 checks are listed in `PC_VOICE_AUDIT.md`. The next route must use actual car
 position and turn state to time the first transfer, not another unbounded
 hold or a jump after Dash has fallen.
+Native RDRAM snapshots identify the moving `Trai` object at `0x801A2304`.
+Dash stays within about 0.02 units of its horizontal position through VI
+1290, but differs by (1.88, -3.43) at VI 1320 and (3.99, -6.89) at VI
+1350 (`ord_train_car_separation_20261007/`). Rendered frames show a low
+striped obstacle at VI 1230–1290. Holding native C-down from VI 1230 shows
+Dash visibly ducking under it with 100 health at present 1280, but he is
+falling with zero health by present 1350
+(`ord_train_first_beam_duck_20261007/`). The first obstacle and the
+subsequent loss of train attachment must be solved as separate steps.
 
 ## 2. Voice with visible communications
 
