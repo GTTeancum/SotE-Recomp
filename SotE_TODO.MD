@@ -179,6 +179,15 @@ final_20261007/`). `ILB33.WAV` queues at VI 10390 with that instruction;
 its first 2.5 seconds correlate with the game's mixed PCM at 0.993307.
 This verifies the full N64 story-to-mission handoff and voice timing. The
 direct event jump bypasses the previous campaign stage.
+A matched unmuted PC-mode selected-level replay shows the full
+`L07INTRO.SAN` Luke conversation and freighter approach, then event 19 ->
+20 at VI 6085 without native story repetition. The visible interior
+supercomputer instruction appears at present 6400; `ILB33.WAV` queues at
+VI 6326 and its first 2.5 seconds correlate with the mixed PCM at
+0.993684 (`san_freighter_pc_full_voice_handoff_20261007/`). Movie PCM was
+non-silent in the SDL dummy-device queue and the audio handoff returned to
+the game before that voice. This covers the full film-to-voice path in the
+selected-level route, not physical speaker playback.
 An offscreen diagnostic could previously pick up unrelated host skip-key state;
 its movie skip is now driven only by the exact process-local test VI.
 An earlier Skyhook direct event jump did not reproduce the intro because it

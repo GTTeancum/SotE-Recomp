@@ -175,6 +175,14 @@ is visible at present 11000; `ILB33.WAV` queues at VI 10390, and its first
 one second 0.106900; `san_freighter_n64_unskipped_final_20261007/`). This
 confirms the voice onset after the complete native story, while direct entry
 still bypasses the preceding campaign stage.
+A full PC-mode selected-level replay now supplies the corresponding film
+handoff: `L07INTRO.SAN` runs through Luke and the freighter approach,
+returns game audio at event 20 (VI 6085), and shows the supercomputer
+instruction at present 6400. `ILB33.WAV` queues at VI 6326, with its first
+2.5 seconds correlated against the mixed PCM at **0.993684** (next peak
+outside one second 0.106650; `san_freighter_pc_full_voice_handoff_20261007/`).
+This checks the voice after the full PC film, rather than only after a
+direct event-20 entry; physical speaker output remains unchecked.
 
 A complete Gall Spaceport PC intro now also has a mixed-audio handoff check.
 The selected-level route displays `L05INTRO.SAN` at present 1500, reaches its
