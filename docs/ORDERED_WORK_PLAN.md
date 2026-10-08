@@ -419,6 +419,82 @@ message still appeared with `ILB09.WAV` at VI 15580 and the checkpoint
 reset at VI 15882 (`ord_final_transfer_leftpulse15100_20261008/`).
 This separates a safe steering correction from a successful transfer;
 the final target and timing remain unresolved.
+A [contemporary player-written level guide](https://www.cheatcodes.com/guide/strategy-guide-star-wars-shadows-of-the-empire-n64-11751/)
+describes the train objective as reaching the head of the main train to
+release its autobrake, with a many-boxcar train merging from the left.
+Another [challenge-point guide](https://www.oocities.org/Area51/Cavern/5738/shadows.html)
+places a jump to the next train where the tracks merge. These are route
+leads, not validation of this build. The next contained trial targets a
+leftward jump at the visible late merge instead of straight forward.
+A pure left-stick/B attempt at game frames 15350/15355 turned Dash
+visibly inside the orange carriage but changed his world position only
+slightly. `ILB09.WAV` still queued at VI 15564 and the reset occurred at
+VI 15870 (`ord_merge_leftjump15350_20261008/`). The input needs a
+forward component to move across the merge. The first diagonal/B repeat
+was invalidated by an earlier reset at VI 7114
+(`ord_merge_diagjump15350_20261008/`); a second repeat is needed before
+assessing that late input.
+The diagonal left/forward B repeat did reach the late merge, but the
+same missed-transfer cue queued at VI 15572 and the reset followed at
+VI 15877 (`ord_merge_diagjump15350_b_20261008/`). The last-minute
+transfer trials change Dash's position only modestly and never reach
+event 9. The guide's objective implies that Dash may need to advance
+toward the head of the main train much earlier, rather than waiting on
+one carriage until the VI-15550 deadline. The next gate is a controlled
+forward traversal starting just after the verified VI-8100 carriage
+position, with the first obstacle/fall captured before adding inputs.
+The first traversal trial held forward from game frame 8100. Dash was
+upright on the orange deck at present 8100 but already falling below
+the raised track at present 8300; life loss/reset occurred at VI 8447
+(`ord_advance_after8100_20261008/`). A black center/right post is visible
+ahead at 8100, so the next trial adds a jump before that post and captures
+the 8150–8300 interval. The current early route remains stochastic at the
+second-to-third-car transfer, and every run keeps both stop gates enabled.
+A forward pulse from game frame 8100 for 120 frames plus native B at
+8120 passed that post. Captures show Dash jumping past the red barrier
+at presents 8175–8250, landing upright by 8300, and remaining upright
+at 8500 and 8900. The run reached VI 9000 with three lives, event 8,
+and no reset (`ord_advance_jump8120_20261008/`). This is a concrete
+early forward step toward the head train, although the right-edge
+position at 8900 still needs care. The next trial advances from that
+position in a short measured pulse.
+The first continuation with a forward pulse at game frame 8900 was
+invalidated by the earlier VI-7184 transfer reset
+(`ord_advance_second_pulse8900_20261008/`). A repeat reached VI 8900,
+then showed Dash running along the black deck beneath blue rails at
+present 9000 and falling below it by 9100; the first life loss/reset
+was VI 9172 (`ord_advance_second_pulse8900_b_20261008/`). The next
+trial adds a jump shortly after that second forward pulse, as with the
+successful VI-8120 barrier crossing.
+The first B-at-8920 run reset much earlier at VI 5877 and cannot assess
+that jump (`ord_advance_second_jump8920_20261008/`). Its repeat reached
+the second pulse: Dash jumped at VI 8972, peaked near `z=21.26` at VI
+9000, then stopped at (-312.470, -331.463, 18.000) and lost a life at
+VI 9208 (`ord_advance_second_jump8920_b_20261008/`). Captures at 9050
+and 9100 show him falling beneath the blue rail. The jump was real but
+too early to land beyond this gap; the next trial shifts B about 40
+game frames later while retaining the same forward pulse.
+That later B at game frame 8960/VI 9012 was too late: player `z` was
+already descending at VI 9000, the B did not start a new jump, and
+life loss/reset followed at VI 9179
+(`ord_advance_second_jump8960_20261008/`). The viable takeoff window
+lies between the earlier game-frame 8920 jump and this 8960 attempt;
+the next trial uses 8940.
+The game-frame-8940 B trial actually started at VI 9028 because this
+run had 88 VIs of lead-in rather than the earlier ~50; Dash was already
+descending by VI 9015 and lost a life at VI 9217
+(`ord_advance_second_jump8940_20261008/`). Game-frame timing alone is
+not a stable world-position trigger at this gap. The rendered track
+also veers left; a left/forward jump is the next route trial before
+adding a position-triggered input mechanism.
+A left/forward B jump at game frames 8900/8920 reached the blue rail
+but then fell through/alongside it: presents 9000 and 9050 show Dash
+above and then below that rail, and the reset occurred at VI 9191
+(`ord_advance_second_diagonal8920_20261008/`). The rail is visible
+geometry but is not evidence of a landable carriage surface. The next
+route trial must identify the adjacent solid deck in native frames and
+measure its position before steering across; more timing variants on
+the rail would not establish the handoff.
 
 ## 2. Voice with visible communications
 
