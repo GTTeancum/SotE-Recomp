@@ -537,6 +537,15 @@ next trial adds lateral steering and starts the jump earlier.
 The first diagonal-jump run reset on an earlier obstacle at VI 7106,
 before the new input could fire (`ord_diag_jump10055_20261008/`), so it
 provides no evidence about the transfer and needs a clean repeat.
+The clean diagonal repeat fired B at VI 10055 and moved Dash laterally
+into line with car `0x801A2994`: at VI 10125 his X differed by only
+0.37 world units. He was still 5.35 horizontal units behind its center,
+and his Z was 2.79 while the car anchor's Z had climbed to 4.36; he
+fell and reset at VI 10290 (`ord_diag_jump10055_b_20261008/`). This
+supports the lateral direction but shows that jump started too early.
+A later position-triggered jump at world Y > -129 was attempted, but
+that run reset at the earlier VI-7105 obstacle, before the transfer
+input; it remains untested (`ord_diag_jump_y129_20261008/`).
 
 ## 2. Voice with visible communications
 
