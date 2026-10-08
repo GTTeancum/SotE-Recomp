@@ -348,6 +348,18 @@ audible playback in either mode.
 | Palace | `ILB44` | Set the pulse bombs and display the escape instruction. |
 | Jetpack status | `ILB31` | Reach an actual `xJet` collision and check the status/voice onset; the timer-driven presentation has been reproduced in both modes. |
 
+A bounded process-local Sewer event-25 search tested whether simple player
+proximity on the upper level would surface the key-gate communication
+(`voice_sewer_gate_grid_20261007/`). After dismissing the opening `ILB37`
+message, it moved Dash through 120 short grid positions at the height of a
+level-data `Door` record, including about (-333, 24, -14), near that record's
+(-316, 24, -9) coordinates. Native captures at presents 2400 and 2600 show
+Dash in sewer geometry with his normal HUD; no `ILB38/39/40/41` voice queued.
+The grid did not perform a gate interaction, collect a key, or follow the
+mission route. The `Door` record's coordinates alone therefore cannot be
+used as a playback or trigger point; the next check needs the gate's actual
+interaction/objective state.
+
 Entry or idle shortcuts did not surface these later messages: a direct Gall
 event-12 jump returned to Hoth (`voice_gall_event12_entry_20261007/`); a
 direct Ord event-8 entry showed no mapped voice through VI 2000
