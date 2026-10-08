@@ -517,6 +517,26 @@ shaft, objective communication, and event 25
 ship interior and supercomputer communication at event 20
 (`san_freighter_story_early_skip_20261007/`). Natural campaign transitions,
 boss encounters, and untested non-story movie skips remain open.
+Two more early-skip routes now cover chapter films without a native story
+skip. A process-local PC-mode Escape run shows `L02INTRO.SAN`'s Hoth ship
+approach at presents 1050/1150, skips at VI 1200, then shows the hangar and
+Bay 3 communicator by present 1450. `ILB01.WAV` queued at VI 1341 and its
+first 2.5 seconds correlate with the mixed game PCM at 0.987945
+(`san_escape_intro_early_skip_corrected_20261007/`). A matched Asteroid
+Field route shows `L03INTRO.SAN`'s ship approach, skips at VI 1200, then
+shows the TIE/asteroid briefing and live turret. `ILB06.WAV` queued when
+its own communication appeared at VI 1551; its first 1.5 seconds correlate
+with mixed PCM at 0.581938, above the next unrelated peak of 0.076542
+(`san_asteroid_intro_early_skip_20261007/`). Both films returned game audio
+after the skip. These direct event jumps bypass the preceding campaign;
+they verify the local early-skip handoffs, not natural chapter progression
+or physical speaker output.
+The Hoth boot film also has a verified early skip. PC mode displayed
+`L01INTRO.SAN`'s starfield and Hoth approach at presents 500/800; a
+process-local skip at VI 900 returned game audio and the native title
+animation reached its visible Start prompt by present 1400
+(`san_hoth_intro_early_skip_20261007/`). No chapter mission began
+prematurely in this bounded run; physical speakers were not checked.
 The Game Over film had another duplicate: after `GAMEOVER.SAN`, PC mode
 displayed the native Xizor Game Over screen again. A process-local Ord
 Mantell run set the remaining lives to zero, then let IG-88 cause the final
