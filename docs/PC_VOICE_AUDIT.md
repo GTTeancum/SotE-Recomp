@@ -285,6 +285,20 @@ This direct entry bypasses the generator switches and cannot establish that
 `ILB04` is late or missing during the natural objective. Its timing check still
 requires restoring power through gameplay and capturing the resulting message
 and game-audio mix in each cutscene mode.
+After dismissing both opening communications in event 4, process-local
+Original N64 movement now reaches the live Echo Base hangar. A straight route
+from (-356.6, 80.5) crossed the hangar to (-232.7, -63.7) and stopped at a
+wall (`voice_echo_generator_forward_route_20261007/`). A sustained left arc
+returned toward the starting bays, and a 70-VI right turn faced a nearby
+wall (`voice_echo_generator_left_route_20261007/` and
+`voice_echo_generator_right_passage_20261007/`). Turning right for 55 VIs
+mid-hangar reversed direction; a shorter 25-VI left turn entered a side bay
+but stopped between its walls at (-255.1, 14.7)
+(`voice_echo_generator_mid_right_20261007/` and
+`voice_echo_generator_mid_left_20261007/`). Native frames and player
+coordinates establish these as bounded navigation attempts. None restored
+generator power or displayed `ILB04`; the next check needs the level's
+actual lower-floor route, not a longer hold into these walls.
 
 | Section | Clips | Next visible state to reach |
 | --- | --- | --- |
