@@ -495,6 +495,15 @@ geometry but is not evidence of a landable carriage surface. The next
 route trial must identify the adjacent solid deck in native frames and
 measure its position before steering across; more timing variants on
 the rail would not establish the handoff.
+A position-only geometry probe first reset at VI 7113
+(`ord_rail_geometry_20261008/`), then a repeat reached VI 9300 with
+three lives and no warp (`ord_rail_geometry_b_20261008/`). Its RDRAM
+snapshots at VI 8800–9200 keep Dash about 3.08–3.09 horizontal units
+from moving `Trai` object `0x801A24A8`; the other two `Trai` objects
+are more than 300 units away. The blue rails seen at 8900 are therefore
+not an adjacent active carriage in these snapshots. Future input should
+traverse the solid carriage toward its head and wait for an actual train
+merge, rather than jumping onto that visible rail.
 
 ## 2. Voice with visible communications
 
