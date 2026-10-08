@@ -144,6 +144,44 @@ and respawned by VI 2385. An earlier forward run and B at game frame
 the deck by VI 2205 (`ord_train_third_deck_jump_20261007/`). The next
 route needs the raised deck's landing position, not another assumption
 that a height rise crossed it. The boss handoff is still unverified.
+Memory at VI 2100–2220 shows only one nearby moving `Trai` object. The
+forward pulse pushed Dash more than five world units ahead of that car's
+anchor before he dropped to Z≈0.91 (`ord_train_third_deck_memory_20261007/`).
+Removing the forward pulse while retaining the game-frame-2100 B jump
+returned Dash to the moving deck at Z≈1.55, carrying him to the next
+obstruction near VI 2310 (`ord_train_third_jump_no_forward_20261007/`).
+A fourth B at game frame 2245 crossed that obstruction, and a fifth at
+2325 kept Dash aboard through VI 2900; native frames show him standing
+on the car with 100 aided health (`ord_train_fourth_jump_20261007/`,
+`ord_train_fifth_jump_20261007/`). He later fell beneath the rail near
+VI 3100. This establishes a longer diagnostic route, but not the natural
+event 8 -> 9 handoff or an unassisted route.
+A sixth B at game frame 2940 cleared the obstruction near VI 3000,
+and a seventh at 3290 kept Dash upright on the same moving car through
+VI 4200 (`ord_train_sixth_jump_20261007/`,
+`ord_train_seventh_jump_20261007/`). An extended run with no later input
+respawned at VI 5370 and 7140, without event 8 changing
+(`ord_train_seventh_jump_extended_20261007/`). A small left correction
+at game frame 4000 did not change the first respawn
+(`ord_train_left_align_20261007/`).
+RDRAM snapshots at VI 4900–5300 identify the next transfer: car
+`0x801A24A8` is roughly 11 units ahead of Dash's car `0x801A2304`
+at VI 4900, then pulls away as Dash's car slows
+(`ord_train_final_car_memory_20261007/`). A forward jump beginning at
+game frame 4840 moved Dash off the first car but left him below both
+decks by VI 5000 (`ord_train_second_car_transfer_20261007/`). Starting
+forward plus right earlier moved him off the wrong side
+(`ord_train_second_car_early_diagonal_20261007/`). Forward plus left
+at game frame 4740 brought him within about 6.9 units of the second
+car at VI 4900, above its deck, but even holding that direction through
+landing left him below the track by VI 4950
+(`ord_train_second_car_early_left_20261007/`,
+`ord_train_second_car_left_hold_20261007/`). An exploratory position
+tether at both deck height and above the car still respawned every
+~700 VIs, so it was removed from source; it does not validate a boss
+event (`ord_train_tether_5000_20261007/`,
+`ord_train_tether_above_20261007/`). The active gate is a viable second
+car landing, then the actual train-to-boss event in both cutscene modes.
 
 ## 2. Voice with visible communications
 
