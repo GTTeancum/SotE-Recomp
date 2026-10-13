@@ -24,7 +24,7 @@ When upgrading, preserve your `saves`, settings and optional `Sdata` assets. Rep
 
 ## Included texture pack
 
-`textures/SotE_V1_HD` contains the V1 HD artwork. `textures/SotE_AI_Upscale` fills uncovered static textures. Both load automatically. Fonts and changing textures retain native behavior. Remove either folder to disable that pack.
+`textures/SotE_V1_HD` contains the V1 HD texture pack by **interceptor427**. `textures/SotE_AI_Upscale` fills uncovered static textures. Both load automatically. Fonts and changing textures retain native behavior. Remove either folder to disable that pack.
 
 The staged build was checked in Echo Base: replacement logs and a native render capture confirmed Dash and environment replacements. This is not an every-texture or full-playthrough certification.
 
