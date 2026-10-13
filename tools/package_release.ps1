@@ -1,8 +1,9 @@
 [CmdletBinding()]
 param(
-    [string]$Version = "0.9.2",
+    [string]$Version = "0.9.5",
     [string]$OutputDirectory = ".\build\release",
     [string]$TextureSourceRoot = ".\build\diagnostics\texture_goal",
+    [string]$TexturePackRoot = ".\SotE_Recompiled\textures",
     [string]$CrtDirectory = ""
 )
 $ErrorActionPreference = 'Stop'
@@ -37,7 +38,7 @@ foreach ($pair in @(@('rom_source_v2','rom'),@('captured_source','runtime_static
     Copy-Item -LiteralPath "$TextureSourceRoot\$($pair[0])" -Destination "$textureRoot\$($pair[1])" -Recurse
 }
 Copy-Item -LiteralPath "$repoRoot\tools\Build-HD-Pack.ps1" -Destination $staging
-foreach ($pair in @(@('RELEASE_0.9.2.md','README.md'),@('TEXTURE_PACKS_USER.md','TEXTURE_PACKS.md'),@('MODERN_AIM.md','MODERN_AIM.md'),@('LEEBO_VOICES_USER.md','LEEBO_VOICES.md'))) {
+foreach ($pair in @(@("RELEASE_$Version.md",'README.md'),@('TEXTURE_PACKS_USER.md','TEXTURE_PACKS.md'),@('MODERN_AIM.md','MODERN_AIM.md'),@('LEEBO_VOICES_USER.md','LEEBO_VOICES.md'))) {
     Copy-Item -LiteralPath "$repoRoot\docs\$($pair[0])" -Destination "$staging\$($pair[1])"
 }
 $toolsDir = New-Item -ItemType Directory -Path "$staging\texture_tools"
@@ -64,10 +65,21 @@ Copy-Item -LiteralPath "$repoRoot\third_party\rt64\LICENSE" -Destination "$licen
 Copy-Item -LiteralPath "$repoRoot\third_party\N64ModernRuntime\COPYING" -Destination "$licenses\N64ModernRuntime-COPYING.txt"
 Copy-Item -LiteralPath "$repoRoot\third_party\N64Recomp\LICENSE" -Destination "$licenses\N64Recomp-LICENSE.txt"
 Copy-Item -LiteralPath "$repoRoot\third_party\rt64\src\contrib\mupen64plus-win32-deps\SDL2-2.26.3\COPYING.txt" -Destination "$licenses\SDL2-COPYING.txt"
-foreach ($item in Get-ChildItem -LiteralPath $staging -Recurse -File) {
-    if ($item.Name -eq 'main.bin' -or $item.Extension -in @('.z64','.n64','.v64','.wav','.ogg','.tmem','.log')) { throw "Unexpected release file: $($item.FullName)" }
+# Bundle the tested active packs, separately from editable stock sources.
+$activeTextures = New-Item -ItemType Directory -Path "$staging\textures"
+foreach ($pack in @('SotE_V1_HD','SotE_AI_Upscale')) {
+    $packSource = Join-Path $TexturePackRoot $pack
+    if (-not (Test-Path -LiteralPath "$packSource\rt64.json")) { throw "Missing texture pack: $pack" }
+    Copy-Item -LiteralPath $packSource -Destination $activeTextures -Recurse
 }
-if (Test-Path -LiteralPath "$staging\textures") { throw 'Source textures must not be installed as active replacements.' }
+New-Item -ItemType Directory -Path "$staging\Sdata\UI" -Force | Out-Null
+Copy-Item -LiteralPath "$repoRoot\Sdata\UI\fonts.ini" -Destination "$staging\Sdata\UI"
+foreach ($doc in @('CONTROL_REBINDING.md','PC_VOICES.md','EXTERNAL_MUSIC.md')) {
+    Copy-Item -LiteralPath "$repoRoot\docs\$doc" -Destination $staging
+}
+foreach ($item in Get-ChildItem -LiteralPath $staging -Recurse -File) {
+    if ($item.Name -eq 'main.bin' -or $item.Extension -in @('.z64','.n64','.v64','.wav','.ogg','.san','.pcm','.tmem','.log')) { throw "Unexpected release file: $($item.FullName)" }
+}
 Compress-Archive -Path "$staging\*" -DestinationPath $zipPath -CompressionLevel Optimal
 $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText("$zipPath.sha256", "$hash  $([IO.Path]::GetFileName($zipPath))`n")
