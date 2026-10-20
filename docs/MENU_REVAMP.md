@@ -6,14 +6,15 @@ Pause now has a translucent overlay with native Resume, Options, and Quit
 focus over the live paused level. The game's player, difficulty, time, and
 challenge-point header remains visible. The capture path distinguishes Pause
 from the profile picker even though both use the same native menu flag.
-Modern font now applies to all host menu roles and both shared native font
-atlases, including glyph-based HUD, level-select, and communicator text. Native
-text retains its original positions, spacing, colors and atlas resolution.
-Original restores the retail atlas pixels. Lettering inside artwork or video is
-unchanged. If the configured modern font is unavailable, original glyphs remain
-available. See [the logging and font update](OPTIONS_DIAGNOSTICS_AND_FONTS.md).
+Modern text uses the same UI font rasterizer for host menus and native string
+output. The shared native parser still resolves wrapping, inline colors and
+formatting; the host draws glyphs at presentation resolution with UI advances.
+Both native font selections use this path. Retail atlas pixels are no longer
+rewritten. Decorative-only strings and lettering baked into artwork remain
+native. Original mode and unavailable UI fonts use the retail glyph renderer.
+See [the logging and font update](OPTIONS_DIAGNOSTICS_AND_FONTS.md).
 
-The Windows Release build and all eight CTest harnesses pass. Native RT64
+Earlier validation: the Windows Release build and all eight CTest harnesses passed. Native RT64
 captures in `build/diagnostics/pause_menu_modern_font/frames` show the Pause
 header, styled action focus, paused gameplay background, and Options page
 after choosing Options. Captures in

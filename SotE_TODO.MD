@@ -4,6 +4,21 @@ Active goal: #11, #14, #16, #17 and #18. Implementation and verification
 status is recorded in [the issue goal checkpoint](docs/ISSUES_11_14_16_17_18.md).
 These issues remain open until their remaining checks are resolved.
 
+## Current local regressions (October 20)
+
+- [ ] Pause/Options recurring freeze: fixed the observed Return transition
+  that injected B and toggled the selected option. Native Return now activates
+  its own row and recognizes Pause. Three normal Echo Base menu cycles / 18
+  toggles passed without timeout. Keep this report open for recurrence; its
+  relationship to GitHub #14 remains unconfirmed. Evidence:
+  `.local/options-freeze/return-natural/`.
+- [x] Replace atlas rewriting with the shared UI font renderer for native text.
+  Native parser supplies colors, opacity, wrapping and styles; UI fonts supply
+  high-resolution glyphs and spacing. Decorative borders remain native.
+  Communicator, HUD, summary and Pause output inspected; all 78 shared-string
+  call sites covered in source. Not every game screen visually exercised.
+  Details: [font and menu diagnostics](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
+
 ## Open GitHub bugs
 
 Synced from open GitHub issues on October 20, 2026. These are reported

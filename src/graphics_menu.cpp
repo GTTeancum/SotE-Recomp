@@ -65,6 +65,7 @@ enum class MenuTransition {
     ReturnToMain,
     WaitMain,
     RestoreProfileFocus,
+    ActivateReturn,
 };
 
 constexpr int graphics_submenu_item_count = 11;
@@ -1170,7 +1171,17 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 }
                 return;
             case MenuTransition::ReturnToMain:
-                *buttons |= n64_b;
+                // B adjusts the highlighted native option. Move to Return,
+                // then activate that row instead of changing a setting.
+                if (state.original_selection == 52) {
+                    set_transition_locked(MenuTransition::ActivateReturn);
+                } else if ((std::chrono::duration_cast<std::chrono::milliseconds>(
+                    now - state.phase_started).count() % 200) < 100) {
+                    *buttons |= n64_du;
+                }
+                return;
+            case MenuTransition::ActivateReturn:
+                *buttons |= n64_a;
                 if (now - state.phase_started > std::chrono::milliseconds{80}) {
                     set_transition_locked(MenuTransition::WaitMain);
                 }
@@ -1321,6 +1332,11 @@ void observe_other_screen() {
     state.main_visible = false;
     state.options_visible = false;
     state.submenu_active = false;
+    if (state.transition == MenuTransition::ReturnToMain ||
+        state.transition == MenuTransition::ActivateReturn ||
+        state.transition == MenuTransition::WaitMain) {
+        set_transition_locked(MenuTransition::None);
+    }
 }
 
 void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {

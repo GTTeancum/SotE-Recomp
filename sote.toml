@@ -12,7 +12,10 @@ ignored = []
 renamed = []
 hook = [
     # All native text uses these two font atlases, including HUD and communications.
-    { func = "func_80024A98", before_vram = 0x80024A98, text = "sote_update_native_fonts(rdram);" },
+    # Preserve native parsing/layout/color changes, replace only text glyph draws.
+    { func = "func_80025228", before_vram = 0x80025228, text = "sote_native_text_begin(rdram, (uint32_t)ctx->r5);" },
+    { func = "func_80025228", before_vram = 0x800257A0, text = "sote_native_text_glyph(rdram, (uint32_t)ctx->r29, (uint32_t)ctx->r16, (int16_t)ctx->r23, MEM_H(ctx->r29, 0xCC));" },
+    { func = "func_80024B1C", before_vram = 0x80024B1C, text = "if (sote_native_text_suppress()) return;" },
     { func = "func_800330F0", before_vram = 0x800338F0, text = "sote_modern_impact(rdram, ctx);" },
     { func = "func_800A6384", before_vram = 0x800A70C8, text = "if (sote_modern_train_pose(rdram, (uint32_t)ctx->r16, (uint32_t)ctx->r29)) { ctx->f6.fl = 0.0f; ctx->f14.fl = 0.0f; }" },
     { func = "func_800AAADC", before_vram = 0x800AAFC0, text = "sote_modern_train_decode(rdram, (uint32_t)ctx->r16, (uint32_t)ctx->r29);" },

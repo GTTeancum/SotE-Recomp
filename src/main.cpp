@@ -2809,6 +2809,35 @@ void on_vi() {
             }
         }
     }
+    // Repeat the reported pause/options path entirely inside this process.
+    if (std::getenv("SOTE_DIAGNOSTIC_OPTIONS_RETURN_ROUTE") && count>=3100) {
+        static int next_vi=3100, pulse_end=0, phase=0, toggles=0, cycles=0;
+        static uint16_t buttons=0;static int8_t stick=0;
+        if(count>=pulse_end) { buttons=0;stick=0; }
+        if(count>=next_vi && cycles<3) {
+            const auto view=sote::menu_skin::latest();
+            const auto screen=view ? view->screen : sote::menu_skin::Screen::Native;
+            if(screen==sote::menu_skin::Screen::Pause) {
+                if(phase==2) {
+                    ++cycles;phase=0;toggles=0;
+                    std::printf("[sote][options-return-test] returned-to-pause cycle=%d VI=%d\n",cycles,count);
+                }
+                if(cycles<3) {
+                    if(view->focused_setting==1) buttons=0x8000;
+                    else stick=-80;
+                }
+            } else if(screen==sote::menu_skin::Screen::Options) {
+                if(phase==2) { /* wait for native return */ }
+                else if(view->focused_setting!=1) stick=-80;
+                else if(toggles++<6) { buttons=0x8000;phase=1; }
+                else { buttons=0x0020;phase=2; }
+            } else if(screen==sote::menu_skin::Screen::Native) buttons=0x1000;
+            std::printf("[sote][options-return-test] VI=%d screen=%s phase=%d focus=%d buttons=%04X stick=%d\n",
+                count,sote::menu_skin::screen_name(screen),phase,view?view->focused_setting:-1,buttons,stick);
+            std::fflush(stdout);pulse_end=count+12;next_vi=count+90;
+        }
+        scripted_buttons=buttons;scripted_x=0;scripted_y=stick;
+    }
     // Process-local route for checking the live binding editor. It follows
     // observed menu state instead of guessing fixed VI timings, and never
     // sends input to a host window or device.
@@ -3072,6 +3101,7 @@ extern "C" void sote_palace_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
 
 
 extern "C" void sote_wait_for_game_frame() {
+    sote_publish_native_text();
     sote::diagnostics::Phase phase(sote::diagnostics::frame_phase);
     // HLE can finish two complete gameplay iterations within one 60 Hz VI,
     // which made movement and timers run far too quickly. Conversely, holding

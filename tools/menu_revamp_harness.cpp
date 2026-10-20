@@ -12,7 +12,9 @@
 #include <thread>
 #include <vector>
 
-extern "C" void sote_update_native_fonts(uint8_t* rdram);
+extern "C" void sote_native_text_begin(uint8_t*,uint32_t);
+extern "C" int sote_native_text_glyph(uint8_t*,uint32_t,uint32_t,int,int);
+extern "C" void sote_publish_native_text();
 
 extern "C" int sote_is_bike_stage_active() {
     return 0;
@@ -169,6 +171,10 @@ void pump_transition(Memory& memory, bool& options_focused,
         if ((rising & 0x2000) != 0) {
             options_focused = !options_focused;
             memory.profiles(options_focused);
+        } else if ((rising & 0x8000) != 0 && native_options) {
+            memory.profiles(true);
+            options_focused = true;
+            native_options = false;
         } else if ((rising & 0x8000) != 0 && options_focused) {
             memory.native_options();
             native_options = true;
@@ -667,18 +673,43 @@ int main(int argc, char** argv) {
         sote::menu_skin::set_menu_font_original(false);
         check(!sote::menu_skin::menu_font_original(),"font switches to modern");
         Memory font_memory;
+        sote::menu_skin::set_renderer_available(true);
+        font_memory.word(0x800db290,0x800da818);
+        font_memory.word(0x80200000,0x80200010);
+        font_memory.word(0x80200008,0xfa000000);
+        font_memory.word(0x8020000c,0x40c08080);
+        font_memory.word(0x800db288,0x40c08080);
+        const auto native_string=font_memory.text("~oGreen");
         const auto original_bytes=font_memory.bytes;
-        sote_update_native_fonts(font_memory.bytes.data());
-        check(font_memory.bytes!=original_bytes,"Modern replaces native glyph atlas pixels");
-        const auto modern_bytes=font_memory.bytes;
-        sote_update_native_fonts(font_memory.bytes.data());
-        check(font_memory.bytes==modern_bytes,"unchanged native atlas is stable across draws");
-        font_memory.bytes=original_bytes;
-        sote_update_native_fonts(font_memory.bytes.data());
-        check(font_memory.bytes==modern_bytes,"Modern survives native atlas reload at the same address");
+        sote_native_text_begin(font_memory.bytes.data(),native_string);
+        check(sote_native_text_glyph(font_memory.bytes.data(),0x80200000,'G',20,30)==1,"Modern routes native letters through UI font");
+        sote_publish_native_text();
+        const auto captured=sote::menu_skin::latest_native_text();
+        check(captured && captured->glyphs.size()==1 && captured->glyphs[0].color==0x40c08080,"native draw preserves exact RGBA including opacity");
+        sote::menu_skin::Image image{1280,720,std::vector<uint8_t>(1280*720*4)};
+        sote::menu_skin::composite_native_text(image,*captured);
+        unsigned pixels=0;bool colors=true;
+        for(size_t i=0;i<image.rgba.size();i+=4) if(image.rgba[i+3]) {
+            ++pixels;colors &= image.rgba[i]==0x40 && image.rgba[i+1]==0xc0 && image.rgba[i+2]==0x80 && image.rgba[i+3]<=0x80;
+        }
+        check(pixels>50 && colors,"UI glyph pixels preserve requested color and antialiased alpha");
+        check(font_memory.bytes==original_bytes,"Modern does not rewrite retail font pixels or guest data");
+        font_memory.half(0x800da818+12,0xffff);
+        check(sote_native_text_glyph(font_memory.bytes.data(),0x80200000,' ',27,30)==1,
+            "space without an atlas rectangle retains UI advance");
+        sote_publish_native_text();
+        check(sote::menu_skin::latest_native_text()->glyphs[0].character==' ',
+            "space is included in the resolved text run");
+        const auto punctuation=font_memory.text("...");
+        sote_native_text_begin(font_memory.bytes.data(),punctuation);
+        check(sote_native_text_glyph(font_memory.bytes.data(),0x80200000,'.',0,0)==1,
+            "punctuation-only text uses UI glyphs");
+        const auto border=font_memory.text("~r######");
+        sote_native_text_begin(font_memory.bytes.data(),border);
+        check(!sote_native_text_glyph(font_memory.bytes.data(),0x80200000,'#',0,0),"decorative border glyphs retain native rendering");
         sote::menu_skin::set_menu_font_original(true);
-        sote_update_native_fonts(font_memory.bytes.data());
-        check(font_memory.bytes==original_bytes,"Original restores native glyph pixels exactly");
+        sote_native_text_begin(font_memory.bytes.data(),native_string);
+        check(!sote_native_text_glyph(font_memory.bytes.data(),0x80200000,'G',20,30),"Original retains native glyph rendering");
         sote::menu_skin::set_menu_font_original(true);
         check(sote::menu_skin::menu_font_original(),"font switches to original");
         std::ifstream in(fonts);const std::string text{std::istreambuf_iterator<char>(in),{}};
@@ -711,6 +742,25 @@ int main(int argc, char** argv) {
         sote::graphics_menu::initialize(scratch);
         check(!sote::graphics_menu::pc_cutscenes_enabled(),"invalid SAN signature does not unlock PC");
         std::filesystem::remove(scratch / "Sdata/L01INTRO.SAN");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        Memory options;
+        options.native_options();
+        options.half(0x800dd5e0,3);
+        sote_capture_native_options(options.bytes.data());
+        press(0x0020);
+        uint16_t buttons=0;float x=0,y=0;
+        sote::graphics_menu::filter_input(&buttons,&x,&y);
+        check((buttons&0x0800) && !(buttons&0xc000),
+            "return navigates toward Return without adjusting an option");
+        sote::graphics_menu::observe_native_options(0);
+        buttons=0;sote::graphics_menu::filter_input(&buttons,&x,&y);
+        buttons=0;sote::graphics_menu::filter_input(&buttons,&x,&y);
+        check(buttons==0x8000,"return activates native Return row with A");
+        sote::graphics_menu::observe_other_screen();
+        buttons=0x1000;sote::graphics_menu::filter_input(&buttons,&x,&y);
+        check(buttons==0x1000,"arrival at Pause releases transition input immediately");
     }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

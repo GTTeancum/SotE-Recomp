@@ -62,6 +62,7 @@ void initialize(const std::filesystem::path& runtime_directory) {
     std::printf("[sote][menu] Live menu revamp %s; default font: original.\n", enabled.load() ? "enabled" : "disabled");
 }
 
+bool native_text_enabled() { return enabled.load() && renderer_available.load(); }
 void set_renderer_available(bool available) { renderer_available.store(available); }
 namespace {
 void publish_snapshot(Snapshot snapshot) {
@@ -195,7 +196,10 @@ void capture_native_pause(const uint8_t* rdram) {
         // HUD rows in the cache.
         if (read_guest(rdram, 0x800000).screen != Screen::Native) return;
         auto snapshot = read_native_pause(rdram, 0x800000);
-        if (snapshot.screen == Screen::Pause) publish_snapshot(std::move(snapshot));
+        if (snapshot.screen == Screen::Pause) {
+            graphics_menu::observe_other_screen();
+            publish_snapshot(std::move(snapshot));
+        }
     } catch (...) { failed_capture(); }
 }
 std::shared_ptr<const Snapshot> latest() {

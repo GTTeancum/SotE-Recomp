@@ -77,6 +77,12 @@ void scroll_controls(int lines);
 bool menu_font_original();
 void set_menu_font_original(bool original);
 bool controls_visible();
+bool native_text_enabled();
+struct NativeGlyph { int x, y, height, advance; uint32_t color; unsigned character; unsigned run = 0, style = 0, align = 0; };
+struct NativeText { std::vector<NativeGlyph> glyphs; uint64_t serial = 0; };
+std::shared_ptr<const NativeText> latest_native_text();
+void composite_native_text(Image& image, const NativeText& text);
+uint64_t font_revision();
 } // namespace sote::menu_skin
 
 extern "C" void sote_capture_menu(uint8_t* rdram);

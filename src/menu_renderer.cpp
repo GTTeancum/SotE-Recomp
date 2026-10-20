@@ -44,7 +44,7 @@ struct Resources {
     std::unique_ptr<RenderTexture> texture;
     std::unique_ptr<RenderBuffer> upload;
     unsigned width = 0, height = 0, pitch = 0;
-    uint64_t serial = 0;
+    uint64_t serial = 0, native_serial = 0, font_serial = 0;
     bool ready = false;
 };
 std::unique_ptr<Resources> resources;
@@ -187,9 +187,10 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
         const auto movie_frame = san_movies::latest_cached_frame();
         phase.set(2);
         const auto snapshot = menu_skin::latest();
+        const auto native = movie_frame.valid() ? nullptr : menu_skin::latest_native_text();
         const bool reticle = !movie_frame.valid() && !snapshot &&
             modern_controls::reticle_visible();
-        if (!movie_frame.valid() && !snapshot && !reticle) return;
+        if (!movie_frame.valid() && !snapshot && !reticle && !native) return;
         auto& r = *resources;
         const unsigned fw = framebuffer->getWidth(), fh = framebuffer->getHeight();
         if (!fw || !fh) return;
@@ -200,14 +201,16 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
         if (w < 320 || h < 180) return;
         const uint64_t serial = movie_frame.valid()
             ? (UINT64_C(1) << 63) | movie_frame.serial
-            : reticle ? UINT64_MAX : snapshot->serial;
+            : reticle ? UINT64_MAX : snapshot ? snapshot->serial : 0;
         const bool resized = r.width != w || r.height != h;
-        if (resized || r.serial != serial || !r.texture) {
+        if (resized || r.serial != serial || r.native_serial != (native ? native->serial : 0) || r.font_serial != menu_skin::font_revision() || !r.texture) {
             phase.set(3);
             auto image = movie_frame.valid()
                 ? letterbox_movie(movie_frame, w, h)
                 : reticle ? centered_aim_marker(w, h)
-                : menu_skin::render(*snapshot, w, h);
+                : snapshot ? menu_skin::render(*snapshot, w, h)
+                : menu_skin::Image{w,h,std::vector<uint8_t>(size_t(w)*h*4)};
+            if (native && (!snapshot || snapshot->screen == menu_skin::Screen::Pause)) menu_skin::composite_native_text(image,*native);
             if (!image.valid()) return;
             if (resized || !r.texture) {
                 // RT64's present queue waits for the previous present worker
@@ -230,10 +233,12 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
                 RenderTextureCopyLocation::PlacedFootprint(r.upload.get(), RenderFormat::R8G8B8A8_UNORM, w, h, 1, r.pitch / 4));
             list->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(r.texture.get(), RenderTextureLayout::SHADER_READ));
             r.serial = serial;
+            r.native_serial = native ? native->serial : 0;
+            r.font_serial = menu_skin::font_revision();
         }
         list->setFramebuffer(framebuffer);
         list->setGraphicsPipelineLayout(r.layout.get());
-        list->setPipeline((reticle || (snapshot && snapshot->screen == menu_skin::Screen::Pause)) && !movie_frame.valid()
+        list->setPipeline((reticle || (!snapshot && native) || (snapshot && snapshot->screen == menu_skin::Screen::Pause)) && !movie_frame.valid()
             ? r.alpha_pipeline.get() : r.pipeline.get());
         list->setGraphicsDescriptorSet(r.descriptor->get(), 0);
         const CopyConstants cb{0, 0, float(w), float(h)};

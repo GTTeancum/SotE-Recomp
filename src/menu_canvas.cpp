@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <array>
-#include <set>
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -27,6 +27,7 @@ using Color = uint32_t; // RRGGBBAA
 constexpr Color gold = 0xA8802EFF, green = 0x79F06AFF, teal = 0x3F8078FF;
 constexpr Color cyan = 0x6FE9FFFF, purple = 0x6A63C9FF;
 std::mutex font_mutex;
+std::atomic<uint64_t> fonts_revision{1};
 std::filesystem::path ui_root;
 std::map<std::string, std::string> font_roles;
 struct RasterGlyph { int w = 0, h = 0, x = 0, y = 0; float advance = 0; std::vector<uint8_t> alpha; };
@@ -502,6 +503,7 @@ void configure_menu_fonts(const std::filesystem::path& root) {
     std::lock_guard lock(font_mutex);
     ui_root = root;
     font_roles.clear(); faces.clear();
+    ++fonts_revision;
     std::ifstream in(root / "fonts.ini");
     std::string line;
     while (std::getline(in, line)) {
@@ -546,69 +548,121 @@ void set_menu_font_original(bool original) {
     }
     configure_menu_fonts(root);
 }
-// Both retail fonts use the same 64x128 I4 atlas format and 95 glyph records.
-// Replacing their pixels keeps native layout, colors, clipping and alignment.
-void update_native_fonts(uint8_t* rdram) {
-    if (!rdram) return;
+
+namespace {
+// The guest thread owns pending glyphs. Presentation sees only immutable copies.
+std::vector<NativeGlyph> pending_native;
+std::mutex native_mutex;
+std::shared_ptr<const NativeText> published_native;
+std::chrono::steady_clock::time_point native_published_at;
+bool capture_native_string = false;
+unsigned native_run = 0, native_align = 0;
+uint8_t guest_byte(const uint8_t* r, uint32_t a) { return r[(a & 0x7fffffU)^3U]; }
+uint16_t guest_half(const uint8_t* r, uint32_t a) { return uint16_t((guest_byte(r,a)<<8)|guest_byte(r,a+1)); }
+uint32_t guest_word(const uint8_t* r, uint32_t a) { return (uint32_t(guest_half(r,a))<<16)|guest_half(r,a+2); }
+bool guest_address(uint32_t a, unsigned n=1) { return a>=0x80000000U && a<=0x80800000U-n; }
+}
+uint64_t font_revision() { return fonts_revision.load(); }
+void begin_native_text(uint8_t* rdram, uint32_t address) {
+    capture_native_string=false;
+    ++native_run; native_align=0;
+    if (!native_text_enabled() || !guest_address(address,512)) return;
+    std::string raw;
+    for(unsigned i=0;i<511;++i) { const char c=char(guest_byte(rdram,address+i)); if(!c) break; raw+=c; }
+    native_align = raw.find("~c")!=std::string::npos ? 1 : raw.find("~r")!=std::string::npos ? 2 : 0;
+    const auto text=plain_text(raw);
+    // The retail font also contains frame/decoration symbols. Keep those
+    // original pixels, rather than replacing a box edge with a modern '#'.
+    const bool letters=std::any_of(text.begin(),text.end(),[](unsigned char c) {
+        return c > 32 && std::string_view("#$%&*+<=>@[\\]^_`{|}").find(char(c)) == std::string_view::npos;
+    });
+    if (!letters) return;
     std::lock_guard lock(font_mutex);
-    auto half = [&](uint32_t a) { return uint16_t((uint16_t(rdram[(a&0x7fffff)^3])<<8) | rdram[((a+1)&0x7fffff)^3]); };
-    auto word = [&](uint32_t a) { return (uint32_t(half(a))<<16) | half(a+2); };
-    struct Atlas { uint32_t address=0; bool modern=false; std::array<uint8_t,4096> original{}, replacement{}; };
-    static std::array<Atlas,2> atlases;
     const auto setting=font_roles.find("options");
-    const bool modern=setting!=font_roles.end() && setting->second!="original";
-    FontFace* face=modern ? face_for("native") : nullptr;
-    for(int font=0;font<2;++font) {
-        const uint32_t table=font==0 ? 0x800da818U : 0x800dad50U;
-        const uint32_t pixels=word(table);
-        const int height=int16_t(half(table+4));
-        if(pixels<0x80000000U || pixels>0x80800000U-4096 || height<4 || height>32) continue;
-        auto& atlas=atlases[font];
-        if(atlas.address!=pixels) {
-            atlas={};atlas.address=pixels;
-            for(size_t i=0;i<4096;++i) atlas.original[i]=rdram[((pixels+uint32_t(i))&0x7fffff)^3];
+    capture_native_string=setting!=font_roles.end() && setting->second!="original" && face_for("native");
+}
+int capture_native_glyph(uint8_t* rdram,uint32_t list,unsigned ch,int x,int y) {
+    ch &= 255;
+    if(!capture_native_string || ch<32 || ch>126 || pending_native.size()>=8192 || !guest_address(list,4)) return 0;
+    const uint32_t font=guest_word(rdram,0x800db290U);
+    if(!guest_address(font,1340)) return 0;
+    const int height=int16_t(guest_half(rdram,font+4));
+    if(height<4 || height>32) return 0;
+    const uint32_t record=font+(ch-32)*14;
+    // Space has no atlas rectangle but still contributes UI-font advance.
+    if(ch!=' ' && int16_t(guest_half(rdram,record+12))<0) return 1;
+    const int advance=int16_t(guest_half(rdram,record+6));
+    const uint32_t color=guest_word(rdram,0x800db288U);
+    unsigned style=0;
+    if (guest_address(list,0xb4)) {
+        if(guest_word(rdram,list+0xac) || guest_word(rdram,list+0xa8)) style=2;
+        else if(guest_word(rdram,list+0xb0)) style=1;
+    }
+    pending_native.push_back({x,y,height,advance,color,ch,native_run,style,native_align});
+    return 1;
+}
+void publish_native_text() {
+    auto next=std::make_shared<NativeText>();
+    next->glyphs.swap(pending_native);
+    uint64_t hash=14695981039346656037ULL;
+    auto mix=[&](uint32_t v) { for(int i=0;i<4;++i) { hash=(hash^(v&255))*1099511628211ULL;v>>=8; } };
+    for(const auto& g:next->glyphs) { mix(g.x);mix(g.y);mix(g.height);mix(g.advance);mix(g.color);mix(g.character);mix(g.style);mix(g.align); }
+    mix(uint32_t(font_revision()));next->serial=hash;
+    std::lock_guard lock(native_mutex);
+    published_native=std::move(next);native_published_at=std::chrono::steady_clock::now();
+}
+std::shared_ptr<const NativeText> latest_native_text() {
+    if (menu_font_original()) return {};
+    std::lock_guard lock(native_mutex);
+    if(!published_native || published_native->glyphs.empty() ||
+       std::chrono::steady_clock::now()-native_published_at>std::chrono::milliseconds(150)) return {};
+    return published_native;
+}
+void composite_native_text(Image& image,const NativeText& text) {
+    if(!image.valid()) return;
+    std::lock_guard lock(font_mutex);
+    FontFace* face=face_for("native");
+    if(!face) return;
+    OriginalFont unused;
+    Canvas c(image.width,image.height,unused,true);
+    const float sy=std::min(float(image.width)/320,float(image.height)/240);
+    const float ox=(image.width-320*sy)/2, oy=(image.height-240*sy)/2;
+    for(size_t first=0;first<text.glyphs.size();) {
+        size_t end=first+1;
+        const auto& start=text.glyphs[first];
+        while(end<text.glyphs.size() && text.glyphs[end].run==start.run &&
+              text.glyphs[end].y==start.y) ++end;
+        float width=0;
+        for(size_t i=first;i<end;++i) width+=glyph(*face,text.glyphs[i].character,
+            std::max(1,int(std::lround(text.glyphs[i].height*sy)))).advance;
+        const auto& last=text.glyphs[end-1];
+        const float original_width=(last.x+last.advance-start.x)*sy;
+        float pen=ox+start.x*sy+(start.align==1 ? (original_width-width)/2 : start.align==2 ? original_width-width : 0);
+        for(size_t i=first;i<end;++i) {
+            const auto& draw=text.glyphs[i];
+            const auto& g=glyph(*face,draw.character,std::max(1,int(std::lround(draw.height*sy))));
+            const int left=int(std::lround(pen))+g.x;
+            const int top=int(std::lround(oy+draw.y*sy))+g.y;
+            const int edge=std::max(1,int(std::lround(sy/2)));
+            auto paint=[&](int dx,int dy,uint32_t color) {
+                for(int yy=0;yy<g.h;++yy) for(int xx=0;xx<g.w && !g.alpha.empty();++xx)
+                    c.pixel(left+xx+dx,top+yy+dy,color,g.alpha[size_t(yy)*g.w+xx]);
+            };
+            if(draw.style==2) for(int dy=-edge;dy<=edge;++dy) for(int dx=-edge;dx<=edge;++dx)
+                if(dx||dy) paint(dx,dy,draw.color&255);
+            if(draw.style==1) paint(edge,edge,draw.color&255);
+            paint(0,0,draw.color);
+            pen+=g.advance;
         }
-        const bool desired=modern && face;
-        if(atlas.modern==desired) {
-            const auto& expected=atlas.modern ? atlas.replacement : atlas.original;
-            bool unchanged=true;
-            for(size_t i=0;i<4096 && unchanged;++i)
-                unchanged=rdram[((pixels+uint32_t(i))&0x7fffff)^3]==expected[i];
-            if(unchanged) continue;
-            // A level/asset reload may reuse the same address.
-            for(size_t i=0;i<4096;++i) atlas.original[i]=rdram[((pixels+uint32_t(i))&0x7fffff)^3];
-            atlas.modern=false;
-            if(!desired) continue;
-        }
-        if(desired) {
-            atlas.replacement=atlas.original;
-            std::set<std::pair<int,int>> written;
-            for(int ch=33;ch<127;++ch) {
-                const uint32_t a=table+uint32_t(ch-32)*14;
-                const int x=int16_t(half(a+12)),y=int16_t(half(a+14));
-                const int w=int16_t(half(a+16)),h=int16_t(half(a+18));
-                if(x<0 || y<0 || w<=0 || h<=0 || x+w>64 || y+h>128 || !written.emplace(x,y).second) continue;
-                const auto& g=glyph(*face,unsigned(ch),height*4);
-                if(g.alpha.empty()) continue;
-                for(int yy=0;yy<h;++yy) for(int xx=0;xx<w;++xx) {
-                    // Area average gives stable antialiasing at the native atlas resolution.
-                    unsigned total=0,count=0;
-                    for(int sy=yy*g.h/h;sy<std::max(yy*g.h/h+1,(yy+1)*g.h/h);++sy)
-                        for(int sx=xx*g.w/w;sx<std::max(xx*g.w/w+1,(xx+1)*g.w/w);++sx) {
-                            total+=g.alpha[size_t(std::min(sy,g.h-1))*g.w+std::min(sx,g.w-1)];++count;
-                        }
-                    const unsigned nibble=(total/count+8)/17;
-                    const int index=(y+yy)*64+x+xx;
-                    auto& packed=atlas.replacement[index/2];
-                    packed=index&1 ? uint8_t((packed&0xf0)|nibble) : uint8_t((packed&0x0f)|(nibble<<4));
-                }
-            }
-        }
-        const auto& bytes=desired ? atlas.replacement : atlas.original;
-        for(size_t i=0;i<4096;++i) rdram[((pixels+uint32_t(i))&0x7fffff)^3]=bytes[i];
-        atlas.modern=desired;
-        std::printf("[sote][font] native atlas=%d address=%08X mode=%s\n",font,pixels,desired ? "Modern" : "Original");
-        std::fflush(stdout);
+        first=end;
+    }
+    // Place native text behind host menus, preserving their panel occlusion.
+    for(size_t i=0;i<image.rgba.size();i+=4) {
+        const unsigned front=image.rgba[i+3],back=c.image.rgba[i+3];
+        const unsigned a=front+(back*(255-front)+127)/255;
+        for(unsigned k=0;k<3;++k)
+            image.rgba[i+k]=a ? uint8_t((image.rgba[i+k]*front+c.image.rgba[i+k]*back*(255-front)/255+a/2)/a) : 0;
+        image.rgba[i+3]=uint8_t(a);
     }
 }
 Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
@@ -630,4 +684,9 @@ Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
 }
 } // namespace sote::menu_skin
 
-extern "C" void sote_update_native_fonts(uint8_t* rdram) { sote::menu_skin::update_native_fonts(rdram); }
+
+extern "C" void sote_native_text_begin(uint8_t* r,uint32_t a) { sote::menu_skin::begin_native_text(r,a); }
+extern "C" int sote_native_text_glyph(uint8_t* r,uint32_t list,uint32_t c,int x,int y) { return sote::menu_skin::capture_native_glyph(r,list,c,x,y); }
+extern "C" void sote_publish_native_text() { sote::menu_skin::publish_native_text(); }
+
+extern "C" int sote_native_text_suppress() { return sote::menu_skin::capture_native_string; }

@@ -31,35 +31,46 @@ movie handling/snapshot lookup/CPU rasterization/upload. Frame phase 2 is the
 normal VI wait. Persistent unchanged counters and phase values across several
 records are diagnostic evidence, not by themselves a deadlock diagnosis.
 
-## Font scope
+## Font scope — revised UI renderer
 
-Modern applies to all standard host menu roles and both shared native glyph
-atlases. The native font initializer refreshes replacement pixels before use.
-Original restores the retained retail pixels. Reloading an atlas at the same
-address reapplies Modern. Invalid or missing font files retain original glyphs.
+The atlas replacement was visually inadequate and has been removed. Modern
+now intercepts the shared native string parser and sends resolved characters
+to the same font rasterizer used by the UI. All 78 shared-string call sites
+(the five audited callers) pass through this hook, including native dialogs,
+HUD numbers, communicator messages, story/credits captions and title prompts.
+The original parser supplies positions, line breaks, font size, RGBA and
+outline/shadow flags. UI glyph advances replace retail character spacing;
+center/right anchors remain based on the native line bounds. A centered 4:3
+coordinate area keeps HUD values aligned with their native boxes in widescreen.
 
-Native text keeps its existing spacing, positions, clipping and atlas resolution.
-Host menu text retains high-resolution rendering. Lettering baked into sprites,
-artwork or SAN video is not font text and is unchanged. Existing installations
-with Modern selected for Options also inherit Modern for default-original host
-roles; staging does not reset the user's font preference.
+Original mode retains the retail glyph renderer. Missing UI fonts also use
+that path. Decorative-only strings retain their native glyphs. Artwork and
+video lettering are not converted. Font changes invalidate presentation caches.
 
-## Verification
+Current checks: Windows Release build; 116 menu harness checks, including
+exact glyph RGB/alpha, unchanged guest pixels, Original mode, and navigation
+back from an adjusted option. Native captures in
+`.local/options-freeze/ui-verified/frames` show communicator text with spaces,
+colors and outlines and HUD values inside their boxes. The summary screen was
+inspected in `.local/options-freeze/return-natural/frames/present_800.png`.
+These captures do not constitute visual verification of every game screen.
+Muted diagnostics do not verify audible output. No desktop input/capture used.
 
-- Release build and all eight CTest suites passed.
-- Added native-atlas checks: Modern changes pixels, repeated refresh is stable,
-  same-address reload reapplies it, and Original restores the exact original bytes.
-- Process-local Modern and Original Echo Base runs exited normally. Both native
-  atlases reported replacement in Modern. Native output captures were inspected:
-  gameplay and HUD artwork remain visible in both. This scene does not visually
-  exercise every glyph-based text surface; global coverage follows the shared
-  font path, rather than a claim of inspecting every screen.
-- Diagnostic runs were muted. Audible audio was not retested.
-- No desktop input or desktop capture was used.
+## Return transition correction
 
-- Process-local menu replay changed Cutscenes N64 to PC, applied it, then toggled Overlay Displays eight times. Each input and alternating ON/OFF value was logged; progress continued and the run exited normally. The reported freeze did not reproduce in this run.
-
-Staged executable SHA-256: f0ca64c56d67544fff634122f202c05c4a487731483b5cc9fbb3d66ddb710623
+The recurrence log showed L on Options injecting B, toggling Overlay Displays,
+then waiting for a return that never occurred. Return now navigates to the
+native Return row and activates A. Observing Pause clears the pending return
+transition. `SOTE_DIAGNOSTIC_OPTIONS_RETURN_ROUTE` exercises repeated cycles
+inside the game process and logs each actual return; it never sends OS input.
+The normal profile/summary entry into Echo Base completed three actual
+Pause -> Options -> Pause cycles, with six Overlay Displays toggles each and
+no transition timeout. Logs and native captures are in
+`.local/options-freeze/return-natural/`; `present_2900.png` shows the final
+Pause header, borders, action panel, gameplay background and HUD. The direct
+event-jump route did not initialize the pause flow and was rejected as evidence.
+The broader recurring freeze stays open for any recurrence; this verifies the
+specific return-transition correction, not every possible freeze cause.
 
 ## October 20 follow-up: actual launcher, Echo entry and title tile
 
