@@ -178,8 +178,6 @@ std::vector<std::filesystem::path> san_search_roots(
     const std::filesystem::path& runtime_directory) {
     return {
         runtime_directory / "Sdata",
-        std::filesystem::current_path() / "Sdata",
-        std::filesystem::current_path() / "SotE_Recompiled" / "Sdata",
     };
 }
 

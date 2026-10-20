@@ -53,6 +53,18 @@ Bindings retain their normal preset-specific persistence.
 font and Segoe UI. It saves in `Sdata/UI/fonts.ini` and preserves unrelated
 custom entries. Existing font settings remain unchanged until toggled.
 
+## Cutscene mode
+
+**Options → Graphics → Cutscenes** offers **N64** and **PC**; use Apply to
+save the selection. PC mode requires recognized `.SAN` cutscene files in
+`Sdata` beside `Shadows of the Empire.exe`.
+
+When those files are absent, the game forces N64 and disables the selector,
+including when the saved setting requested PC. The menu displays
+“PC cutscenes not found in Sdata.” Files elsewhere and cached frames alone
+do not unlock it. Availability refreshes while the game runs; after adding
+the files, select PC and Apply.
+
 ## Integration verification — October 20, 2026
 
 - Regenerated native hooks with `N64Recomp.exe sote.toml`; the Outrider
@@ -77,4 +89,4 @@ controller test. No release has been published by this integration.
 
 Local candidate: `SotE_Recompiled/Shadows of the Empire.exe`
 
-SHA-256: `aaad6cb293810306db0c5593a095908dceb9183b1325322cde06229a04eb44ec`
+SHA-256: `bac91437bac00a8fb1f83b53ab8c948bfdd81bfa287519981e0bf7b17511f812`

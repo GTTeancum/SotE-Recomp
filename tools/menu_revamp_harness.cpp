@@ -311,6 +311,7 @@ int main(int argc, char** argv) {
         }
     }
     std::filesystem::create_directories(scratch / "Sdata" / "UI");
+    { std::ofstream san(scratch / "Sdata/L01INTRO.SAN",std::ios::binary); san.write("ANIM\0\0\0\0",8); }
     std::filesystem::remove(scratch / "sote_options.json");
     std::filesystem::remove(scratch / "SOTE_CHEATS.INI");
     sote::graphics_menu::initialize(scratch);
@@ -341,11 +342,11 @@ int main(int argc, char** argv) {
 
     for (int index = 0; index < 6; ++index) press(0x0400);
     sote_capture_native_options(memory.bytes.data());
-    check(latest_snapshot().rows[65].text == "PC FMV",
+    check(latest_snapshot().rows[65].text == "PC",
         "Graphics starts with PC FMV cutscenes");
     press(0x0100);
     sote_capture_native_options(memory.bytes.data());
-    check(latest_snapshot().rows[65].text == "Original N64",
+    check(latest_snapshot().rows[65].text == "N64",
         "Cutscene mode changes through the menu");
     check(sote::graphics_menu::pc_cutscenes_enabled(),
         "Cutscene mode waits for Apply");
@@ -611,6 +612,33 @@ int main(int argc, char** argv) {
         std::ifstream in(fonts);const std::string text{std::istreambuf_iterator<char>(in),{}};
         check(text.find("custom.widget = myfont.ttf")!=std::string::npos,
             "font toggle preserves custom widget configuration");
+    }
+    {
+        std::filesystem::remove(scratch / "Sdata/L01INTRO.SAN");
+        { std::ofstream options(scratch / "sote_options.json"); options << "{\"pcCutscenes\":true}"; }
+        sote::graphics_menu::initialize(scratch);
+        check(!sote::graphics_menu::pc_cutscenes_enabled(),"missing SAN files override saved PC preference");
+        Memory absent;bool focus=false,native=false;absent.profiles(focus);
+        sote_capture_menu(absent.bytes.data());
+        press(0x0010);pump_transition(absent,focus,native);
+        press(0x0010);sote_capture_native_options(absent.bytes.data());
+        for(int i=0;i<6;++i)press(0x0400);
+        press(0x0100);press(0x8000);
+        sote_capture_native_options(absent.bytes.data());
+        check(latest_snapshot().rows[65].text=="N64" && !latest_snapshot().pc_cutscenes_available,
+            "missing files lock N64 against directional and confirm input");
+        press(0x0400);press(0x0400);press(0x8000);
+        check(!sote::graphics_menu::pc_cutscenes_enabled(),"Apply cannot bypass missing-files gate");
+        press(0x0400);press(0x8000);sote_capture_native_options(absent.bytes.data());
+        check(latest_snapshot().rows[65].text=="N64", "Reset cannot display unavailable PC mode");
+        { std::ofstream san(scratch / "L01INTRO.SAN",std::ios::binary);san.write("ANIM\0\0\0\0",8); }
+        sote::graphics_menu::initialize(scratch);
+        check(!sote::graphics_menu::pc_cutscenes_enabled(),"SAN outside Sdata does not unlock PC");
+        std::filesystem::remove(scratch / "L01INTRO.SAN");
+        { std::ofstream san(scratch / "Sdata/L01INTRO.SAN"); san << "not a SAN file"; }
+        sote::graphics_menu::initialize(scratch);
+        check(!sote::graphics_menu::pc_cutscenes_enabled(),"invalid SAN signature does not unlock PC");
+        std::filesystem::remove(scratch / "Sdata/L01INTRO.SAN");
     }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

@@ -330,12 +330,14 @@ void graphics(Canvas& c, const Snapshot& s) {
         const int row = i == 6 ? 69 : 53 + i * 2;
         const bool focus = selected(s.rows[row]);
         const int value_row = i == 5 ? 65 : row + 1;
-        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 122.0f + i * 42, 27, focus ? cyan : teal, 360);
-        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 122.0f + i * 42, 27, focus ? cyan : teal, 224);
+        const Color row_color = i == 5 && !s.pc_cutscenes_available ? 0x697388FF : focus ? cyan : teal;
+        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 122.0f + i * 42, 27, row_color, 360);
+        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 122.0f + i * 42, 27, row_color, 224);
     }
     for (int row : {67, 68}) if (s.rows[row].visible())
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 423, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
     c.rect(92, 452, 776, 2, purple);
+    if (!s.pc_cutscenes_available) c.text("PC cutscenes not found in Sdata", "graphics.cutscene.hint", 480, 451, 16, 0x98B6D0FF, 740, 1);
     c.text(s.rows[64].text, "graphics.return", 480, 481, 26, selected(s.rows[64]) ? cyan : teal, 740, 1);
 }
 void binding_column(Canvas& c, const std::vector<Binding>& rows, float x, float top, float width, float spacing,
