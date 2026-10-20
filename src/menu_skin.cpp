@@ -197,7 +197,7 @@ void capture_native_pause(const uint8_t* rdram) {
         if (read_guest(rdram, 0x800000).screen != Screen::Native) return;
         auto snapshot = read_native_pause(rdram, 0x800000);
         if (snapshot.screen == Screen::Pause) {
-            graphics_menu::observe_other_screen();
+            graphics_menu::observe_other_screen(true);
             publish_snapshot(std::move(snapshot));
         }
     } catch (...) { failed_capture(); }

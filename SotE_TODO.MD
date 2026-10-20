@@ -18,6 +18,11 @@ These issues remain open until their remaining checks are resolved.
   Communicator, HUD, summary and Pause output inspected; all 78 shared-string
   call sites covered in source. Not every game screen visually exercised.
   Details: [font and menu diagnostics](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
+- [x] Audit communicator font layouts across the full extracted message corpus:
+  75 cases visually reviewed, including pilot radio and four Hoth briefings;
+  225 renderer checks passed. Follow the native dynamic message slot, preserve
+  centered announcements, and reflow portrait paragraphs using UI-font widths.
+  [Scope and verification limits](docs/COMMUNICATOR_FONT_AUDIT.md).
 
 ## Open GitHub bugs
 

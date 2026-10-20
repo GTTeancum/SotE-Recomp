@@ -211,6 +211,81 @@ int main(int argc, char** argv) {
     }
 
     const std::filesystem::path scratch = argv[1];
+    if (argc == 3) {
+        // Render every supplied original message with the production UI font.
+        std::filesystem::create_directories(scratch / "Sdata/UI");
+        sote::menu_skin::initialize(scratch);
+        sote::menu_skin::set_renderer_available(true);
+        sote::menu_skin::set_menu_font_original(false);
+        std::ifstream corpus(argv[2]);
+        if (!corpus) return 2;
+        std::ofstream report(scratch / "layout.tsv");
+        report << "source\tlayout\tleft\ttop\tright\tbottom\tresult\n";
+        std::string line;
+        unsigned count=0;
+        while (std::getline(corpus,line)) {
+            const auto a=line.find('\t'), b=line.find('\t',a+1);
+            if(a==std::string::npos || b==std::string::npos) return 2;
+            const auto source=line.substr(0,a), layout=line.substr(a+1,b-a-1);
+            auto raw=line.substr(b+1);
+            if(!raw.empty() && raw.back()=='\r') raw.pop_back();
+            Memory memory;
+            memory.word(0x800db290,0x800da818);
+            memory.word(0x800db288,0x80ff80ff);
+            memory.word(0x802000ac,1);
+            const auto pointer=memory.text(raw);
+            memory.word(0x8013ce30,0x80300000);
+            // Exercise a non-31 slot, as used by the native message manager.
+            memory.word(0x800d07f8,47);
+            memory.word(0x80300000+47*4,pointer);
+            sote_native_text_begin(memory.bytes.data(),pointer);
+            const auto plain=sote::menu_skin::plain_text(raw);
+            int y=layout=="paragraph" ? 75 : 40;
+            size_t begin=0;
+            do {
+                const auto stop=plain.find('\n',begin);
+                const auto row=plain.substr(begin,stop==std::string::npos ? stop : stop-begin);
+                int width=0;
+                for(auto ch:row) width+=ch=='A'?9:7;
+                int x=layout=="paragraph" ? 124 : 160-width/2;
+                for(unsigned char ch:row) {
+                    sote_native_text_glyph(memory.bytes.data(),0x80200000,ch,x,y);
+                    x+=ch=='A'?9:7;
+                }
+                y+=13;
+                if(stop==std::string::npos) break;
+                begin=stop+1;
+            } while(begin<=plain.size());
+            sote_publish_native_text();
+            const auto captured=sote::menu_skin::latest_native_text();
+            check(captured && !captured->glyphs.empty(),"corpus message captured");
+            if(!captured) continue;
+            check(captured->glyphs.front().layout==(layout=="paragraph"?1U:0U),
+                  "paragraph reflows and centered announcements preserve native layout");
+            sote::menu_skin::Image image{1280,720,std::vector<uint8_t>(1280*720*4)};
+            sote::menu_skin::composite_native_text(image,*captured);
+            int left=1280,top=720,right=0,bottom=0;
+            for(int py=0;py<720;++py) for(int px=0;px<1280;++px)
+                if(image.rgba[(py*1280+px)*4+3]) {
+                    left=std::min(left,px);right=std::max(right,px);
+                    top=std::min(top,py);bottom=std::max(bottom,py);
+                }
+            const bool fits=left>=160 && right<=1064 && top>=0 && bottom<660 &&
+                // Apostrophes/ascenders and the outline extend above cap height.
+                (layout!="paragraph" || (left>=530 && top>=220 && bottom<480));
+            check(fits,"communicator content stays inside safe display area");
+            report<<source<<'\t'<<layout<<'\t'<<left<<'\t'<<top<<'\t'<<right<<'\t'<<bottom<<'\t'<<(fits?"PASS":"FAIL")<<'\n';
+            std::ofstream ppm(scratch / (source+".ppm"),std::ios::binary);
+            ppm<<"P6\n1280 720\n255\n";
+            for(size_t i=0;i<image.rgba.size();i+=4) {
+                const float alpha=image.rgba[i+3]/255.0f;
+                for(unsigned c=0;c<3;++c) ppm.put(char(image.rgba[i+c]*alpha));
+            }
+            ++count;
+        }
+        std::cout<<count<<" communicator renders; "<<checks<<" checks; "<<failures<<" failures\n";
+        return failures?1:0;
+    }
     {
         namespace bindings = sote::control_bindings;
         bindings::NativeTable ord{};
@@ -747,6 +822,14 @@ int main(int argc, char** argv) {
         sote::graphics_menu::initialize(scratch);
         Memory options;
         options.native_options();
+        sote::graphics_menu::observe_other_screen(true);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_snapshot().rows[52].text=="Return to Pause Menu",
+            "in-game Options names its Pause destination");
+        sote::graphics_menu::observe_main_menu(0);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_snapshot().rows[52].text=="Return to Main Menu",
+            "front-end Options names its Main Menu destination");
         options.half(0x800dd5e0,3);
         sote_capture_native_options(options.bytes.data());
         press(0x0020);

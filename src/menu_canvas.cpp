@@ -552,11 +552,12 @@ void set_menu_font_original(bool original) {
 namespace {
 // The guest thread owns pending glyphs. Presentation sees only immutable copies.
 std::vector<NativeGlyph> pending_native;
+std::vector<NativeLabel> pending_labels;
 std::mutex native_mutex;
 std::shared_ptr<const NativeText> published_native;
 std::chrono::steady_clock::time_point native_published_at;
 bool capture_native_string = false;
-unsigned native_run = 0, native_align = 0;
+unsigned native_run = 0, native_align = 0, native_layout = 0;
 uint8_t guest_byte(const uint8_t* r, uint32_t a) { return r[(a & 0x7fffffU)^3U]; }
 uint16_t guest_half(const uint8_t* r, uint32_t a) { return uint16_t((guest_byte(r,a)<<8)|guest_byte(r,a+1)); }
 uint32_t guest_word(const uint8_t* r, uint32_t a) { return (uint32_t(guest_half(r,a))<<16)|guest_half(r,a+2); }
@@ -565,12 +566,25 @@ bool guest_address(uint32_t a, unsigned n=1) { return a>=0x80000000U && a<=0x808
 uint64_t font_revision() { return fonts_revision.load(); }
 void begin_native_text(uint8_t* rdram, uint32_t address) {
     capture_native_string=false;
-    ++native_run; native_align=0;
+    ++native_run; native_align=0; native_layout=0;
     if (!native_text_enabled() || !guest_address(address,512)) return;
     std::string raw;
     for(unsigned i=0;i<511;++i) { const char c=char(guest_byte(rdram,address+i)); if(!c) break; raw+=c; }
     native_align = raw.find("~c")!=std::string::npos ? 1 : raw.find("~r")!=std::string::npos ? 2 : 0;
+    // Cached text is copied out of ROM, so identify legal rows by content.
     const auto text=plain_text(raw);
+    if(text=="Licensed exclusively to Nintendo" ||
+       text=="Star Wars|: Shadows of the Empire{" ||
+       text=="}1996 Lucasfilm Ltd." ||
+       text=="All rights reserved. Used under authorization." ||
+       text=="Star Wars and the LucasArts logo are" ||
+       text=="registered trademarks of Lucasfilm Ltd.") native_layout=2;
+    const uint32_t table=guest_word(rdram,0x8013ce30U);
+    // The message routine chooses its text slot dynamically (not always 31).
+    // Centered pilot warnings and stage briefings retain their native lines.
+    const uint32_t slot=guest_word(rdram,0x800d07f8U);
+    if(slot<80 && guest_address(table,320) &&
+       guest_word(rdram,table+slot*4)==address && native_align==0) native_layout=1;
     // The retail font also contains frame/decoration symbols. Keep those
     // original pixels, rather than replacing a box edge with a modern '#'.
     const bool letters=std::any_of(text.begin(),text.end(),[](unsigned char c) {
@@ -580,6 +594,22 @@ void begin_native_text(uint8_t* rdram, uint32_t address) {
     std::lock_guard lock(font_mutex);
     const auto setting=font_roles.find("options");
     capture_native_string=setting!=font_roles.end() && setting->second!="original" && face_for("native");
+    // Health's actual text draw is the visibility signal for the on-foot HUD.
+    // Read the displayed sprite slot, so weapon cycling needs no guessed enum.
+    if(capture_native_string && pending_labels.empty() && guest_address(table,320) &&
+       guest_word(rdram,table+21*4)==address) {
+        const uint32_t sprites=guest_word(rdram,0x8013ce2cU);
+        constexpr const char* names[]={"Laser","Pulse","Flame","Seeker","Stunner","Disruptor"};
+        if(guest_address(sprites,48)) for(unsigned i: {0U,1U,2U,3U,4U,5U,11U}) {
+            const uint32_t sprite=guest_word(rdram,sprites+i*4);
+            const int x=int16_t(guest_half(rdram,0x80111110U+i*4));
+            const int y=int16_t(guest_half(rdram,0x80111112U+i*4));
+            const uint32_t color=guest_word(rdram,0x80111250U+i*4);
+            if(x<0 || y<0 || !(color&255) || !guest_address(sprite,40) ||
+               guest_half(rdram,sprite+6)!=36 || guest_half(rdram,sprite+4)!=(i==11?64:96)) continue;
+            pending_labels.push_back({x+(i==11?3:20),y+22,i==11?38:48,12,color,i==11?"Health":names[i]});
+        }
+    }
 }
 int capture_native_glyph(uint8_t* rdram,uint32_t list,unsigned ch,int x,int y) {
     ch &= 255;
@@ -598,15 +628,17 @@ int capture_native_glyph(uint8_t* rdram,uint32_t list,unsigned ch,int x,int y) {
         if(guest_word(rdram,list+0xac) || guest_word(rdram,list+0xa8)) style=2;
         else if(guest_word(rdram,list+0xb0)) style=1;
     }
-    pending_native.push_back({x,y,height,advance,color,ch,native_run,style,native_align});
+    pending_native.push_back({x,y,height,advance,color,ch,native_run,style,native_align,native_layout});
     return 1;
 }
 void publish_native_text() {
     auto next=std::make_shared<NativeText>();
     next->glyphs.swap(pending_native);
+    next->labels.swap(pending_labels);
     uint64_t hash=14695981039346656037ULL;
     auto mix=[&](uint32_t v) { for(int i=0;i<4;++i) { hash=(hash^(v&255))*1099511628211ULL;v>>=8; } };
-    for(const auto& g:next->glyphs) { mix(g.x);mix(g.y);mix(g.height);mix(g.advance);mix(g.color);mix(g.character);mix(g.style);mix(g.align); }
+    for(const auto& g:next->glyphs) { mix(g.x);mix(g.y);mix(g.height);mix(g.advance);mix(g.color);mix(g.character);mix(g.style);mix(g.align);mix(g.layout); }
+    for(const auto& label:next->labels) { mix(label.x);mix(label.y);mix(label.width);mix(label.height);mix(label.color);for(auto ch:label.text) mix(ch); }
     mix(uint32_t(font_revision()));next->serial=hash;
     std::lock_guard lock(native_mutex);
     published_native=std::move(next);native_published_at=std::chrono::steady_clock::now();
@@ -627,22 +659,64 @@ void composite_native_text(Image& image,const NativeText& text) {
     Canvas c(image.width,image.height,unused,true);
     const float sy=std::min(float(image.width)/320,float(image.height)/240);
     const float ox=(image.width-320*sy)/2, oy=(image.height-240*sy)/2;
+    for(const auto& label:text.labels) {
+        const int left=int(std::lround(ox+label.x*sy)),top=int(std::lround(oy+label.y*sy));
+        const int w=int(std::lround(label.width*sy)),h=int(std::lround(label.height*sy));
+        // Opaque UI label well covers the old baked letters without repainting
+        // any frame, ammunition icon or gun artwork. Text keeps native tint.
+        for(int yy=0;yy<h;++yy) for(int xx=0;xx<w;++xx) c.pixel(left+xx,top+yy,0x071119ff);
+        int size=int(std::lround(12*sy));
+        float width=0;
+        auto measure=[&] { float n=0;for(unsigned char ch:label.text)n+=glyph(*face,ch,size).advance;return n; };
+        while(size>1 && (width=measure())>w-2*sy) --size;
+        float pen=left+(w-width)/2;
+        const auto& cap=glyph(*face,'H',size);
+        const int baseline=top+(h-cap.h)/2-cap.y;
+        for(unsigned char ch:label.text) {
+            const auto& g=glyph(*face,ch,size);
+            for(int yy=0;yy<g.h;++yy) for(int xx=0;xx<g.w && !g.alpha.empty();++xx)
+                c.pixel(int(std::lround(pen))+g.x+xx,baseline+g.y+yy,label.color,g.alpha[size_t(yy)*g.w+xx]);
+            pen+=g.advance;
+        }
+    }
     for(size_t first=0;first<text.glyphs.size();) {
         size_t end=first+1;
         const auto& start=text.glyphs[first];
         while(end<text.glyphs.size() && text.glyphs[end].run==start.run &&
-              text.glyphs[end].y==start.y) ++end;
+              (start.layout==1 || text.glyphs[end].y==start.y)) ++end;
+        std::vector<NativeGlyph> reflowed;
+        if(start.layout==1) {
+            for(size_t i=first;i<end;++i) {
+                if(i>first && text.glyphs[i].y!=text.glyphs[i-1].y &&
+                   text.glyphs[i-1].character!=' ' && text.glyphs[i].character!=' ') {
+                    auto space=text.glyphs[i];space.character=' ';reflowed.push_back(space);
+                }
+                reflowed.push_back(text.glyphs[i]);
+            }
+        }
+        auto codepoint=[](unsigned c) { return c=='{' ? 0x2122U : c=='|' ? 0xaeU : c=='}' ? 0xa9U : c; };
         float width=0;
-        for(size_t i=first;i<end;++i) width+=glyph(*face,text.glyphs[i].character,
+        for(size_t i=first;i<end;++i) width+=glyph(*face,codepoint(text.glyphs[i].character),
             std::max(1,int(std::lround(text.glyphs[i].height*sy)))).advance;
         const auto& last=text.glyphs[end-1];
         const float original_width=(last.x+last.advance-start.x)*sy;
         float pen=ox+start.x*sy+(start.align==1 ? (original_width-width)/2 : start.align==2 ? original_width-width : 0);
-        for(size_t i=first;i<end;++i) {
-            const auto& draw=text.glyphs[i];
-            const auto& g=glyph(*face,draw.character,std::max(1,int(std::lround(draw.height*sy))));
+        if(start.layout==2) pen=float(image.width)/2-width/2;
+        const float line_left=pen, line_right=ox+300*sy;
+        float line_top=oy+start.y*sy;
+        const size_t count=start.layout==1 ? reflowed.size() : end-first;
+        for(size_t n=0;n<count;++n) {
+            const auto& draw=start.layout==1 ? reflowed[n] : text.glyphs[first+n];
+            if(start.layout==1 && (n==0 || reflowed[n-1].character==' ')) {
+                float word_width=0;
+                for(size_t k=n;k<count && reflowed[k].character!=' ';++k)
+                    word_width+=glyph(*face,codepoint(reflowed[k].character),int(std::lround(start.height*sy))).advance;
+                if(pen>line_left && pen+word_width>line_right) { pen=line_left;line_top+=start.height*sy; }
+            }
+            const auto& g=glyph(*face,codepoint(draw.character),std::max(1,int(std::lround(draw.height*sy))));
             const int left=int(std::lround(pen))+g.x;
-            const int top=int(std::lround(oy+draw.y*sy))+g.y;
+            const int top=start.layout==1 ? int(std::lround(line_top))+g.y-
+                glyph(*face,'A',int(std::lround(start.height*sy))).y : int(std::lround(oy+draw.y*sy))+g.y;
             const int edge=std::max(1,int(std::lround(sy/2)));
             auto paint=[&](int dx,int dy,uint32_t color) {
                 for(int yy=0;yy<g.h;++yy) for(int xx=0;xx<g.w && !g.alpha.empty();++xx)

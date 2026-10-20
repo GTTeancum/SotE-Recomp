@@ -83,6 +83,7 @@ struct MenuState {
     bool options_visible = false;
     bool main_visible = false;
     bool options_focused_in_main = false;
+    bool return_to_pause = false;
     bool restore_profile_focus = false;
     bool graphics_focus = false;
     bool submenu_active = false;
@@ -1315,6 +1316,7 @@ void observe_native_options(int selection) {
 void observe_main_menu(bool options_focused) {
     std::lock_guard lock{state.mutex};
     state.main_visible = true;
+    state.return_to_pause = false;
     state.options_visible = false;
     if (!state.open_controls ||
         (state.transition != MenuTransition::FocusOptions &&
@@ -1327,8 +1329,9 @@ void observe_main_menu(bool options_focused) {
     state.last_main_seen = std::chrono::steady_clock::now();
 }
 
-void observe_other_screen() {
+void observe_other_screen(bool pause) {
     std::lock_guard lock{state.mutex};
+    state.return_to_pause = pause;
     state.main_visible = false;
     state.options_visible = false;
     state.submenu_active = false;
@@ -1350,6 +1353,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         view.rows[row] = {x, y, focus ? selected_color : normal_color, plain_text(text)};
     };
     if (!state.submenu_active) {
+        view.rows[52].text = state.return_to_pause ? "Return to Pause Menu" : "Return to Main Menu";
         constexpr const char* help[] = {"Return to the previous screen.",
             "Show or hide on-screen gameplay information.", "Choose the seeker camera behavior.",
             "Adjust sound effects volume.", "Adjust music volume.",
