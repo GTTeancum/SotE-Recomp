@@ -30,6 +30,7 @@
 #include "control_bindings.hpp"
 #include "frontend.hpp"
 #include "graphics_menu.hpp"
+#include "diagnostic_progress.hpp"
 #include "menu_skin.hpp"
 #include "hd_audio.hpp"
 #include "hd_music.hpp"
@@ -2154,6 +2155,23 @@ ultramodern::renderer::WindowHandle create_window(void*) {
     return {window, GetCurrentThreadId()};
 }
 
+void log_diagnostic_progress() {
+    // Runs independently of the VI, menu, renderer and window message pump.
+    static ULONGLONG next_diagnostic = 0;
+    static int last_vi = -1;
+    const auto now = GetTickCount64();
+    if (now >= next_diagnostic) {
+        using namespace sote::diagnostics;
+        const int vi = vi_count.load();
+        std::fprintf(stderr, "[sote][progress] ms=%llu vi=%d delta=%d game=%llu dl=%d input=%llu/%d capture=%llu/%d present=%llu/%d vi_phase=%d frame_phase=%d\n",
+            now, vi, last_vi < 0 ? 0 : vi-last_vi, game_frame_count.load(), display_list_count.load(),
+            inputs.load(),input_phase.load(),captures.load(),capture_phase.load(),
+            presents.load(),present_phase.load(),vi_phase.load(),frame_phase.load());
+        std::fflush(stderr);
+        last_vi=vi; next_diagnostic=now+2000;
+    }
+}
+
 void update_gfx(void*) {
     if (smoke_test) {
         return;
@@ -2236,6 +2254,7 @@ void on_thread_create(uint8_t*, recomp_context*) {
 }
 
 void on_vi() {
+    sote::diagnostics::Phase phase(sote::diagnostics::vi_phase);
     const int count = ++vi_count;
     game_frame_cv.notify_all();
     log_bike_telemetry(count);
@@ -3047,6 +3066,7 @@ extern "C" void sote_palace_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
 
 
 extern "C" void sote_wait_for_game_frame() {
+    sote::diagnostics::Phase phase(sote::diagnostics::frame_phase);
     // HLE can finish two complete gameplay iterations within one 60 Hz VI,
     // which made movement and timers run far too quickly. Conversely, holding
     // each iteration for two VIs reduced player and jetpack physics to 30 Hz
@@ -3058,6 +3078,7 @@ extern "C" void sote_wait_for_game_frame() {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }
     int current_vi = vi_count.load(std::memory_order_relaxed);
+    phase.set(2);
     if (last_game_frame_vi >= 0) {
         game_frame_cv.wait(lock, [&] {
             return vi_count.load(std::memory_order_relaxed) >=
@@ -4676,6 +4697,12 @@ int main(int argc, char** argv) {
          std::getenv("SOTE_FORCE_FILE_LOG") != nullptr)) {
         initialize_persistent_logging();
     }
+    std::jthread diagnostic_watchdog([](std::stop_token stop) {
+        while (!stop.stop_requested()) {
+            log_diagnostic_progress();
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
+        }
+    });
     if (const char* limit = std::getenv("SOTE_SMOKE_VIS")) {
         const int parsed = std::atoi(limit);
         if (parsed > 0) {

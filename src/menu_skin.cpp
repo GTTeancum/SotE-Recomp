@@ -1,4 +1,5 @@
 #include "menu_skin.hpp"
+#include "diagnostic_progress.hpp"
 #include "controls_menu.hpp"
 #include "graphics_menu.hpp"
 #include "control_bindings.hpp"
@@ -108,6 +109,17 @@ void publish_snapshot(Snapshot snapshot) {
                 std::atoi(rows), 0, std::max(0, total - 10));
         }
     }
+    // Log state changes, not per-frame pulsing colors.
+    static std::string last_options;
+    if (next->screen == Screen::Options || next->screen == Screen::Graphics) {
+        std::string current = std::string(screen_name(next->screen)) + " focus=" + std::to_string(next->focused_setting);
+        for (int row : {54,56,58,60,62,65,72}) current += " r" + std::to_string(row) + "=" + next->rows[row].text;
+        if (current != last_options) {
+            std::printf("[sote][menu-state] %s\n",current.c_str());
+            std::fflush(stdout);
+            last_options = std::move(current);
+        }
+    }
     const uint64_t hash = fingerprint(*next);
     if (hash != previous_hash) { ++sequence; previous_hash = hash; }
     next->serial = sequence;
@@ -121,11 +133,14 @@ void failed_capture() {
 }
 }
 void capture(const uint8_t* rdram) {
+    sote::diagnostics::Phase phase(sote::diagnostics::capture_phase);
+    ++sote::diagnostics::captures;
     if (!enabled.load(std::memory_order_relaxed)) return;
     try {
         // Options/control diagrams are direct-drawn later by func_8001FC90;
         // unrelated cached HUD rows must not clear that frame's host snapshot.
         if (native_options_active(rdram, 0x800000)) return;
+        phase.set(2);
         auto snapshot = read_guest(rdram, 0x800000);
         if (snapshot.screen == Screen::Native && native_pause_active(rdram, 0x800000)) return;
         if (snapshot.screen == Screen::Profiles && renderer_available.load()) {
@@ -138,30 +153,37 @@ void capture(const uint8_t* rdram) {
                     snapshot.screen == Screen::Graphics ||
                     snapshot.screen == Screen::Schemes) &&
                    renderer_available.load()) {
+            phase.set(3);
             graphics_menu::observe_native_options(snapshot.focused_setting);
             graphics_menu::decorate_native_snapshot(snapshot);
         } else if (snapshot.screen == Screen::Summary &&
                    renderer_available.load()) {
             graphics_menu::observe_other_screen();
         }
+        phase.set(4);
         publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }
 }
 void capture_native_pause(const uint8_t* rdram);
 void capture_native_options(const uint8_t* rdram) {
+    sote::diagnostics::Phase phase(sote::diagnostics::capture_phase);
+    ++sote::diagnostics::captures;
     if (!enabled.load(std::memory_order_relaxed)) return;
     if (!native_options_active(rdram, 0x800000)) {
         capture_native_pause(rdram);
         return;
     }
     try {
+        phase.set(2);
         auto snapshot = read_native_options(rdram, 0x800000);
         if (snapshot.screen == Screen::Controls)
             control_bindings::observe_menu(rdram, 0x800000);
         if (snapshot.screen != Screen::Native && renderer_available.load()) {
+            phase.set(3);
             graphics_menu::observe_native_options(snapshot.focused_setting);
             graphics_menu::decorate_native_snapshot(snapshot);
         }
+        phase.set(4);
         publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }
 }

@@ -1,5 +1,6 @@
 #include "cutscene_files.hpp"
 #include "graphics_menu.hpp"
+#include "diagnostic_progress.hpp"
 
 #include "controls_menu.hpp"
 #include "menu_skin.hpp"
@@ -406,6 +407,10 @@ void persist_window_mode_locked() {
 }
 
 void queue_apply_locked() {
+    std::printf("[sote][menu-apply] cutscenes %s -> %s compatibility %d -> %d\n",
+        state.applied.pc_cutscenes ? "PC" : "N64", state.editing.pc_cutscenes ? "PC" : "N64",
+        state.applied.compatibility, state.editing.compatibility);
+    std::fflush(stdout);
     refresh_cutscene_availability_locked(true);
     state.applied = state.editing;
     state.renderer_request = true;
@@ -1078,8 +1083,12 @@ bool take_window_request(Settings& settings) {
 }
 
 void filter_input(uint16_t* buttons, float* x, float* y) {
+    sote::diagnostics::Phase phase(sote::diagnostics::input_phase);
+    ++sote::diagnostics::inputs;
     const auto view = sote::menu_skin::latest();
+    phase.set(2);
     std::lock_guard lock{state.mutex};
+    phase.set(3);
     const auto now = std::chrono::steady_clock::now();
 
     if (state.options_visible &&
@@ -1101,6 +1110,13 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     const uint16_t pressed =
         navigation & static_cast<uint16_t>(~state.previous_navigation);
     state.previous_navigation = navigation;
+    if (pressed && view && (state.options_visible || state.submenu_active)) {
+        std::printf("[sote][menu-input] buttons=%04X screen=%d native_selection=%d category=%d selection=%d submenu=%d transition=%d cutscenes_applied=%s cutscenes_pending=%s\n",
+            pressed, int(view->screen), view->focused_setting, int(state.category),
+            state.submenu_selection, state.submenu_active, int(state.transition),
+            state.applied.pc_cutscenes ? "PC" : "N64", state.editing.pc_cutscenes ? "PC" : "N64");
+        std::fflush(stdout);
+    }
 
     auto consume_menu_input = [&] {
         *buttons &= static_cast<uint16_t>(~menu_buttons);

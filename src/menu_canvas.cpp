@@ -1,6 +1,8 @@
 #include "menu_skin.hpp"
 
 #include <algorithm>
+#include <array>
+#include <set>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -69,6 +71,8 @@ FontFace* face_for(std::string role) {
         else if (role != "default") role = "default";
         else break;
     }
+    const auto global = font_roles.find("options");
+    if (path == "original" && global != font_roles.end() && global->second != "original") path = global->second;
     if (path.empty() || path == "original") return nullptr;
     if (auto it = faces.find(path); it != faces.end()) return it->second->valid ? it->second.get() : nullptr;
     auto f = std::make_unique<FontFace>();
@@ -525,7 +529,7 @@ void set_menu_font_original(bool original) {
     std::string line;
     while (std::getline(input,line)) lines.push_back(line);
     input.close();
-    for (const char* role : {"options", "graphics", "controls", "schemes", "pause"}) {
+    for (const char* role : {"default", "profile", "summary", "native", "options", "graphics", "controls", "schemes", "pause"}) {
         bool found = false;
         for (auto& existing : lines) {
             const auto equals = existing.find('=');
@@ -541,6 +545,71 @@ void set_menu_font_original(bool original) {
         for (const auto& saved : lines) out << saved << "\n";
     }
     configure_menu_fonts(root);
+}
+// Both retail fonts use the same 64x128 I4 atlas format and 95 glyph records.
+// Replacing their pixels keeps native layout, colors, clipping and alignment.
+void update_native_fonts(uint8_t* rdram) {
+    if (!rdram) return;
+    std::lock_guard lock(font_mutex);
+    auto half = [&](uint32_t a) { return uint16_t((uint16_t(rdram[(a&0x7fffff)^3])<<8) | rdram[((a+1)&0x7fffff)^3]); };
+    auto word = [&](uint32_t a) { return (uint32_t(half(a))<<16) | half(a+2); };
+    struct Atlas { uint32_t address=0; bool modern=false; std::array<uint8_t,4096> original{}, replacement{}; };
+    static std::array<Atlas,2> atlases;
+    const auto setting=font_roles.find("options");
+    const bool modern=setting!=font_roles.end() && setting->second!="original";
+    FontFace* face=modern ? face_for("native") : nullptr;
+    for(int font=0;font<2;++font) {
+        const uint32_t table=font==0 ? 0x800da818U : 0x800dad50U;
+        const uint32_t pixels=word(table);
+        const int height=int16_t(half(table+4));
+        if(pixels<0x80000000U || pixels>0x80800000U-4096 || height<4 || height>32) continue;
+        auto& atlas=atlases[font];
+        if(atlas.address!=pixels) {
+            atlas={};atlas.address=pixels;
+            for(size_t i=0;i<4096;++i) atlas.original[i]=rdram[((pixels+uint32_t(i))&0x7fffff)^3];
+        }
+        const bool desired=modern && face;
+        if(atlas.modern==desired) {
+            const auto& expected=atlas.modern ? atlas.replacement : atlas.original;
+            bool unchanged=true;
+            for(size_t i=0;i<4096 && unchanged;++i)
+                unchanged=rdram[((pixels+uint32_t(i))&0x7fffff)^3]==expected[i];
+            if(unchanged) continue;
+            // A level/asset reload may reuse the same address.
+            for(size_t i=0;i<4096;++i) atlas.original[i]=rdram[((pixels+uint32_t(i))&0x7fffff)^3];
+            atlas.modern=false;
+            if(!desired) continue;
+        }
+        if(desired) {
+            atlas.replacement=atlas.original;
+            std::set<std::pair<int,int>> written;
+            for(int ch=33;ch<127;++ch) {
+                const uint32_t a=table+uint32_t(ch-32)*14;
+                const int x=int16_t(half(a+12)),y=int16_t(half(a+14));
+                const int w=int16_t(half(a+16)),h=int16_t(half(a+18));
+                if(x<0 || y<0 || w<=0 || h<=0 || x+w>64 || y+h>128 || !written.emplace(x,y).second) continue;
+                const auto& g=glyph(*face,unsigned(ch),height*4);
+                if(g.alpha.empty()) continue;
+                for(int yy=0;yy<h;++yy) for(int xx=0;xx<w;++xx) {
+                    // Area average gives stable antialiasing at the native atlas resolution.
+                    unsigned total=0,count=0;
+                    for(int sy=yy*g.h/h;sy<std::max(yy*g.h/h+1,(yy+1)*g.h/h);++sy)
+                        for(int sx=xx*g.w/w;sx<std::max(xx*g.w/w+1,(xx+1)*g.w/w);++sx) {
+                            total+=g.alpha[size_t(std::min(sy,g.h-1))*g.w+std::min(sx,g.w-1)];++count;
+                        }
+                    const unsigned nibble=(total/count+8)/17;
+                    const int index=(y+yy)*64+x+xx;
+                    auto& packed=atlas.replacement[index/2];
+                    packed=index&1 ? uint8_t((packed&0xf0)|nibble) : uint8_t((packed&0x0f)|(nibble<<4));
+                }
+            }
+        }
+        const auto& bytes=desired ? atlas.replacement : atlas.original;
+        for(size_t i=0;i<4096;++i) rdram[((pixels+uint32_t(i))&0x7fffff)^3]=bytes[i];
+        atlas.modern=desired;
+        std::printf("[sote][font] native atlas=%d address=%08X mode=%s\n",font,pixels,desired ? "Modern" : "Original");
+        std::fflush(stdout);
+    }
 }
 Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
     if (snapshot.screen == Screen::Native || !snapshot.original || !snapshot.original->valid ||
@@ -560,3 +629,5 @@ Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
     return std::move(c.image);
 }
 } // namespace sote::menu_skin
+
+extern "C" void sote_update_native_fonts(uint8_t* rdram) { sote::menu_skin::update_native_fonts(rdram); }

@@ -31,6 +31,7 @@ void sote_enter_player_controller(
     uint32_t controller,
     uint32_t action);
 void sote_wait_for_game_frame(void);
+void sote_update_native_fonts(uint8_t* rdram);
 void sote_diagnostic_ord_region(uint8_t* rdram, uint32_t object,
     uint32_t position, uint32_t after_collision);
 double sote_sanitize_frame_delta(double delta);

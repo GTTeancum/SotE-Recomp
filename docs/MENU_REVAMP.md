@@ -6,10 +6,12 @@ Pause now has a translucent overlay with native Resume, Options, and Quit
 focus over the live paused level. The game's player, difficulty, time, and
 challenge-point header remains visible. The capture path distinguishes Pause
 from the profile picker even though both use the same native menu flag.
-`Sdata/UI/fonts.ini` uses the installed Windows Segoe UI font for Pause,
-Options, Graphics, Controls, and scheme menus. The default remains the original
-font, preserving native level select and communicator text. If Segoe UI is
-unavailable, these roles fall back to the original glyphs.
+Modern font now applies to all host menu roles and both shared native font
+atlases, including glyph-based HUD, level-select, and communicator text. Native
+text retains its original positions, spacing, colors and atlas resolution.
+Original restores the retail atlas pixels. Lettering inside artwork or video is
+unchanged. If the configured modern font is unavailable, original glyphs remain
+available. See [the logging and font update](OPTIONS_DIAGNOSTICS_AND_FONTS.md).
 
 The Windows Release build and all eight CTest harnesses pass. Native RT64
 captures in `build/diagnostics/pause_menu_modern_font/frames` show the Pause
@@ -141,9 +143,9 @@ with black bars in other window aspects.
 
 ## Original font and per-element replacements
 
-The default is the original game font, decoded from guest memory together with
+The Original choice uses the game font, decoded from guest memory together with
 its actual spacing metrics. No font file or extracted retail font asset is
-shipped. The default configuration does not fetch anything from the internet.
+shipped. Modern uses the installed system font; the configuration fetches nothing from the internet.
 
 To replace only selected elements later, put a locally supplied TTF/OTF beneath
 `Sdata/UI/fonts/` and edit `Sdata/UI/fonts.ini`. For example:

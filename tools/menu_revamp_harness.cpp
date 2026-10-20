@@ -12,6 +12,8 @@
 #include <thread>
 #include <vector>
 
+extern "C" void sote_update_native_fonts(uint8_t* rdram);
+
 extern "C" int sote_is_bike_stage_active() {
     return 0;
 }
@@ -664,6 +666,19 @@ int main(int argc, char** argv) {
         sote::menu_skin::initialize(scratch);
         sote::menu_skin::set_menu_font_original(false);
         check(!sote::menu_skin::menu_font_original(),"font switches to modern");
+        Memory font_memory;
+        const auto original_bytes=font_memory.bytes;
+        sote_update_native_fonts(font_memory.bytes.data());
+        check(font_memory.bytes!=original_bytes,"Modern replaces native glyph atlas pixels");
+        const auto modern_bytes=font_memory.bytes;
+        sote_update_native_fonts(font_memory.bytes.data());
+        check(font_memory.bytes==modern_bytes,"unchanged native atlas is stable across draws");
+        font_memory.bytes=original_bytes;
+        sote_update_native_fonts(font_memory.bytes.data());
+        check(font_memory.bytes==modern_bytes,"Modern survives native atlas reload at the same address");
+        sote::menu_skin::set_menu_font_original(true);
+        sote_update_native_fonts(font_memory.bytes.data());
+        check(font_memory.bytes==original_bytes,"Original restores native glyph pixels exactly");
         sote::menu_skin::set_menu_font_original(true);
         check(sote::menu_skin::menu_font_original(),"font switches to original");
         std::ifstream in(fonts);const std::string text{std::istreambuf_iterator<char>(in),{}};

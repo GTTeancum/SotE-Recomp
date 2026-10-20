@@ -1,4 +1,5 @@
 #include "menu_renderer.hpp"
+#include "diagnostic_progress.hpp"
 #include "menu_skin.hpp"
 #include "san_movies.hpp"
 #include "modern_controls.hpp"
@@ -173,6 +174,8 @@ void initialize(RenderInterface* rhi, RenderDevice* device) {
       catch (...) { disable("initialization failure"); }
 }
 void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
+    sote::diagnostics::Phase phase(sote::diagnostics::present_phase);
+    ++sote::diagnostics::presents;
     if (previous_draw) previous_draw(list, framebuffer);
     if (!resources || !resources->ready || !framebuffer) return;
     try {
@@ -182,6 +185,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
             return;
         }
         const auto movie_frame = san_movies::latest_cached_frame();
+        phase.set(2);
         const auto snapshot = menu_skin::latest();
         const bool reticle = !movie_frame.valid() && !snapshot &&
             modern_controls::reticle_visible();
@@ -199,6 +203,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
             : reticle ? UINT64_MAX : snapshot->serial;
         const bool resized = r.width != w || r.height != h;
         if (resized || r.serial != serial || !r.texture) {
+            phase.set(3);
             auto image = movie_frame.valid()
                 ? letterbox_movie(movie_frame, w, h)
                 : reticle ? centered_aim_marker(w, h)
@@ -215,6 +220,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
                 r.width = w; r.height = h;
                 r.descriptor->setTexture(r.descriptor->input, r.texture.get(), RenderTextureLayout::SHADER_READ);
             }
+            phase.set(4);
             auto* mapped = static_cast<uint8_t*>(r.upload->map());
             if (!mapped) throw std::runtime_error("menu surface mapping");
             for (unsigned y = 0; y < h; ++y) std::memcpy(mapped + size_t(y) * r.pitch, image.rgba.data() + size_t(y) * w * 4, size_t(w) * 4);

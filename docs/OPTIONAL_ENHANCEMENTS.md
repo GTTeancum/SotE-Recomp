@@ -51,7 +51,10 @@ Bindings retain their normal preset-specific persistence.
 
 **Graphics → Menu Font** switches immediately between the original game
 font and Segoe UI. It saves in `Sdata/UI/fonts.ini` and preserves unrelated
-custom entries. Existing font settings remain unchanged until toggled.
+custom entries. Modern now applies to every host menu role and both native
+font atlases, covering text drawn from glyphs in gameplay as well. Native layout
+and spacing remain unchanged; Original restores the retail pixels. Text baked
+into images and SAN video remains part of those assets.
 
 ## Cutscene mode
 
