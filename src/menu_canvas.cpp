@@ -297,14 +297,16 @@ void options(Canvas& c, const Snapshot& s) {
         if (!s.rows[row].visible()) continue;
         const float y = 126.0f + index * 40;
         if (y > 447) break;
-        const bool focus = selected(s.rows[row]);
+        const bool focus = s.focused_setting >= 0 ?
+            s.focused_setting == (row - 51) / 2 : selected(s.rows[row]);
         c.text(s.rows[row].text, "options.label." + std::to_string(row), 200, y, 27, focus ? cyan : teal, 375);
         c.text(s.rows[row + 1].text, "options.value." + std::to_string(row), 660, y, 27, focus ? cyan : teal, 201);
         ++index;
     }
-    c.rect(92, 469, 776, 2, purple);
-    c.text(s.rows[52].text, "options.return", 480, 493, 24,
-        selected(s.rows[52]) ? cyan : teal, 745, 1);
+    c.rect(92, 430, 776, 2, purple);
+    c.text(s.option_help,"options.help",480,450,16,0x98B6D0FF,776,1);
+    c.text(s.rows[52].text, "options.return", 480, 510, 24,
+        (s.focused_setting == 0 || selected(s.rows[52])) ? cyan : teal, 745, 1);
 }
 void pause(Canvas& c, const Snapshot& s) {
     // The retail header carries the live player, difficulty, time, and score.
@@ -326,19 +328,19 @@ void graphics(Canvas& c, const Snapshot& s) {
     c.stars(); c.heading("Graphics", "graphics.heading");
     c.text(s.rows[52].text, "graphics.tabs", 480, 84, 18,
         0x697388FF, 820, 1);
-    for (int i = 0; i < 7; ++i) {
-        const int row = i == 6 ? 69 : 53 + i * 2;
+    for (int i = 0; i < 8; ++i) {
+        const int row = i == 7 ? 71 : i == 6 ? 69 : 53 + i * 2;
         const bool focus = selected(s.rows[row]);
         const int value_row = i == 5 ? 65 : row + 1;
-        const Color row_color = i == 5 && !s.pc_cutscenes_available ? 0x697388FF : focus ? cyan : teal;
-        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 122.0f + i * 42, 27, row_color, 360);
-        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 122.0f + i * 42, 27, row_color, 224);
+        const Color row_color = ((i == 5 && !s.pc_cutscenes_available) || (i == 3 && s.compatibility)) ? 0x697388FF : focus ? cyan : teal;
+        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 116.0f + i * 36, 25, row_color, 420);
+        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 116.0f + i * 36, 25, row_color, 224);
     }
     for (int row : {67, 68}) if (s.rows[row].visible())
-        c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 423, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
-    c.rect(92, 452, 776, 2, purple);
-    if (!s.pc_cutscenes_available) c.text("PC cutscenes not found in Sdata", "graphics.cutscene.hint", 480, 451, 16, 0x98B6D0FF, 740, 1);
-    c.text(s.rows[64].text, "graphics.return", 480, 481, 26, selected(s.rows[64]) ? cyan : teal, 740, 1);
+        c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 411, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
+    c.rect(92, 443, 776, 2, purple);
+    c.text(s.option_help,"graphics.help",480,459,16,0x98B6D0FF,776,1);
+    c.text(s.rows[64].text, "graphics.return", 480, 510, 24, selected(s.rows[64]) ? cyan : teal, 740, 1);
 }
 void binding_column(Canvas& c, const std::vector<Binding>& rows, float x, float top, float width, float spacing,
                     const std::string& prefix, float font_size) {
@@ -483,10 +485,11 @@ void schemes(Canvas& c, const Snapshot& s) {
             520,
             2);
     }
-    c.rect(92, 474, 776, 2, purple);
-    c.text(s.rows[75].text, "schemes.return", 312, 495, 23,
+    c.rect(92, 448, 776, 2, purple);
+    c.text(s.option_help,"schemes.help",480,467,16,0x98B6D0FF,776,1);
+    c.text(s.rows[75].text, "schemes.return", 312, 515, 21,
         selected(s.rows[75]) ? cyan : teal, 380, 1);
-    c.text(s.rows[76].text, "schemes.apply", 652, 495, 23,
+    c.text(s.rows[76].text, "schemes.apply", 652, 515, 21,
         selected(s.rows[76]) ? cyan : teal, 220, 1);
 }
 } // namespace

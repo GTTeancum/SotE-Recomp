@@ -60,8 +60,7 @@ save the selection. PC mode requires recognized `.SAN` cutscene files in
 `Sdata` beside `Shadows of the Empire.exe`.
 
 When those files are absent, the game forces N64 and disables the selector,
-including when the saved setting requested PC. The menu displays
-“PC cutscenes not found in Sdata.” Files elsewhere and cached frames alone
+including when the saved setting requested PC. The selected option’s footer explains that SAN files are required in Sdata. Files elsewhere and cached frames alone
 do not unlock it. Availability refreshes while the game runs; after adding
 the files, select PC and Apply.
 
@@ -89,4 +88,6 @@ controller test. No release has been published by this integration.
 
 Local candidate: `SotE_Recompiled/Shadows of the Empire.exe`
 
-SHA-256: `bac91437bac00a8fb1f83b53ab8c948bfdd81bfa287519981e0bf7b17511f812`
+SHA-256: `8303723961bb893c459994e7d78ab3e999a71ba329354305e2bbc2ec280037e9`
+
+The local candidate also includes [Compatibility Mode and option descriptions](COMPATIBILITY_MODE.md).

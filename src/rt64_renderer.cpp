@@ -26,6 +26,7 @@
 #include "hle/rt64_application.h"
 #include "hle/rt64_state.h"
 #include "render/rt64_texture_cache.h"
+#include "render/rt64_shader_library.h"
 
 #include "ultramodern/config.hpp"
 #include "ultramodern/ultramodern.hpp"
@@ -244,7 +245,16 @@ public:
                 RT64::UserConfiguration::Antialiasing::None;
         }
 
+        // Keep the user's normal settings on disk. Compatibility is an
+        // effective runtime profile, so disabling it can restore those values.
+        app->loadConfiguration();
+        normal_config = app->userConfig;
+        compatibility_active = sote::graphics_menu::compatibility_enabled();
+        apply_compatibility_profile();
+        const bool use_configuration_file = app->appConfig.useConfigurationFile;
+        app->appConfig.useConfigurationFile = false; // Already loaded above.
         setup_result = map_setup_result((sote::menu_renderer::install(), app->setup(window_handle.thread_id)));
+        app->appConfig.useConfigurationFile = use_configuration_file;
         chosen_api = map_graphics_api(app->chosenGraphicsAPI);
         if (setup_result != ultramodern::renderer::SetupResult::Success) {
             std::fprintf(
@@ -256,6 +266,9 @@ public:
             return;
         }
 
+        if (!compatibility_active) normal_config.antialiasing = app->userConfig.antialiasing;
+        save_normal_configuration();
+        log_compatibility();
         // The host supplies context; RT64 itself remains game-independent.
         app->state->textureManager.replacementContext = [rdram]() -> uint32_t {
             uint16_t event;
@@ -343,7 +356,7 @@ public:
         loaded_settings.widescreen =
             app->userConfig.aspectRatio ==
             RT64::UserConfiguration::AspectRatio::Expand;
-        switch (app->userConfig.antialiasing) {
+        switch (normal_config.antialiasing) {
             case RT64::UserConfiguration::Antialiasing::MSAA2X:
                 loaded_settings.antialiasing =
                     sote::graphics_menu::AntialiasingPreset::MSAA2x;
@@ -470,6 +483,7 @@ public:
         const uint32_t status = vi->VI_STATUS_REG;
         sote::graphics_menu::Settings requested{};
         if (sote::graphics_menu::take_renderer_request(requested)) {
+            const auto previous_samples = app->userConfig.msaaSampleCount();
             using Resolution = RT64::UserConfiguration::Resolution;
             using AspectRatio = RT64::UserConfiguration::AspectRatio;
             using Antialiasing =
@@ -522,8 +536,14 @@ public:
                         Antialiasing::None;
                     break;
             }
+            normal_config.antialiasing = app->userConfig.antialiasing;
+            compatibility_active = requested.compatibility;
+            apply_compatibility_profile();
+            // Updating UserConfiguration alone does not rebuild MSAA targets.
+            if (previous_samples != app->userConfig.msaaSampleCount()) app->updateMultisampling();
             app->updateUserConfig(true);
-            app->saveConfiguration();
+            save_normal_configuration();
+            log_compatibility();
             std::printf(
                 "[sote] graphics configuration applied: "
                 "resolution=%d multiplier=%.1f aspect=%d msaa=%u\n",
@@ -599,6 +619,31 @@ public:
     }
 
 private:
+    void apply_compatibility_profile() {
+        using Config = RT64::UserConfiguration;
+        app->userConfig.antialiasing = compatibility_active ? Config::Antialiasing::None : normal_config.antialiasing;
+        app->userConfig.refreshRate = compatibility_active ? Config::RefreshRate::Original : normal_config.refreshRate;
+        app->userConfig.internalColorFormat = compatibility_active ? Config::InternalColorFormat::Standard : normal_config.internalColorFormat;
+    }
+    void save_normal_configuration() {
+        const auto effective = app->userConfig;
+        app->userConfig.antialiasing = normal_config.antialiasing;
+        app->userConfig.refreshRate = normal_config.refreshRate;
+        app->userConfig.internalColorFormat = normal_config.internalColorFormat;
+        app->saveConfiguration();
+        app->userConfig = effective;
+    }
+    void log_compatibility() {
+        const char* api = chosen_api == ultramodern::renderer::GraphicsApi::Vulkan ? "Vulkan" :
+            chosen_api == ultramodern::renderer::GraphicsApi::D3D12 ? "D3D12" : "Other";
+        std::printf("[sote][graphics-profile] api=%s compatibility=%s msaa=%u refresh=%d requested_color=%d active_color=%s presentation=SkipBuffering\n",
+            api, compatibility_active ? "On" : "Off", app->userConfig.msaaSampleCount(),
+            int(app->userConfig.refreshRate), int(app->userConfig.internalColorFormat),
+            app->shaderLibrary->usesHDR ? "High" : "Standard");
+        std::fflush(stdout);
+    }
+    RT64::UserConfiguration normal_config;
+    bool compatibility_active = false;
     std::unique_ptr<RT64::Application> app;
     uint32_t last_ucode = UINT32_MAX;
     uint32_t last_ucode_data = UINT32_MAX;

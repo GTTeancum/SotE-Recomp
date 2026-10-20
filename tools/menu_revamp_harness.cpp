@@ -332,6 +332,25 @@ int main(int argc, char** argv) {
     check(native_options && latest_screen_is(sote::menu_skin::Screen::Options),
         "R shoulder opens real Options from profiles");
 
+    check(!latest_snapshot().option_help.empty(), "native Options has contextual help");
+    {
+        Memory cached;
+        cached.profiles(false);
+        constexpr uint32_t table = 0x80230000;
+        cached.word(table+53*4,cached.text("Overlay Displays"));
+        cached.word(table+55*4,cached.text("Seeker Camera"));
+        cached.word(table+57*4,cached.text("Sound Effects"));
+        cached.word(table+59*4,cached.text("Music"));
+        for(int row : {53,55,57,59}) cached.half(0x80111110+row*4,90);
+        cached.half(0x80111110+76*4,0xfc18); // Hide profile-only rows.
+        cached.half(0x800dd5e0,3);
+        auto view=sote::menu_skin::read_guest(cached.bytes.data(),cached.bytes.size());
+        check(view.screen==sote::menu_skin::Screen::Options && view.focused_setting==3,
+            "cached Options carries the native focused row");
+        sote::graphics_menu::decorate_native_snapshot(view);
+        check(view.option_help=="Adjust sound effects volume.","cached Options describes the selected row");
+    }
+
     press(0x0010);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Graphics),
@@ -352,6 +371,7 @@ int main(int argc, char** argv) {
         "Cutscene mode waits for Apply");
     press(0x0400);
     press(0x0400);
+    press(0x0400);
     press(0x8000);
     check(!sote::graphics_menu::pc_cutscenes_enabled(),
         "Apply activates original N64 cutscenes");
@@ -361,6 +381,43 @@ int main(int argc, char** argv) {
         std::istreambuf_iterator<char>{}};
     check(saved_text.find("\"pcCutscenes\": false") != std::string::npos,
         "Apply persists cutscene mode");
+
+    // Apply is row 9; compatibility is row 8. Keep the normal 4x AA preference.
+    check(!sote::graphics_menu::compatibility_enabled(), "compatibility defaults off");
+    press(0x0800); // Up to compatibility.
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[72].text == "On" && latest_snapshot().rows[60].text == "OFF",
+        "compatibility preview shows On and disables AA");
+    check(latest_snapshot().option_help.find("restart") != std::string::npos,
+        "compatibility footer explains restart");
+    check(!sote::graphics_menu::compatibility_enabled(), "compatibility waits for Apply");
+    for(int i=0;i<4;++i) press(0x0800);
+    press(0x0100); // Attempt to edit AA while compatibility preview is on.
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[60].text == "OFF", "AA is locked while compatibility is on");
+    for(int i=0;i<5;++i) press(0x0400);
+    press(0x8000);
+    sote::graphics_menu::Settings requested;
+    check(sote::graphics_menu::take_renderer_request(requested) && requested.compatibility &&
+        requested.antialiasing == sote::graphics_menu::AntialiasingPreset::MSAA4x,
+        "Apply requests compatibility without losing normal AA");
+    sote::graphics_menu::initialize(scratch);
+    sote::graphics_menu::Settings normal;
+    sote::graphics_menu::sync_from_renderer(normal);
+    check(sote::graphics_menu::compatibility_enabled(), "compatibility survives restart and renderer sync");
+    // Re-enter Graphics after initialize resets navigation state.
+    memory.native_options();sote_capture_native_options(memory.bytes.data());
+    press(0x0010);
+    for(int i=0;i<8;++i)press(0x0400);
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[72].text == "Off" && latest_snapshot().rows[60].text == "4x MSAA",
+        "disabling compatibility restores the normal AA preview");
+    press(0x0400);press(0x8000);
+    check(sote::graphics_menu::take_renderer_request(requested) && !requested.compatibility &&
+        requested.antialiasing == sote::graphics_menu::AntialiasingPreset::MSAA4x,
+        "Apply restores normal graphics request");
 
     press(0x0010);
     sote_capture_native_options(memory.bytes.data());
@@ -627,7 +684,7 @@ int main(int argc, char** argv) {
         sote_capture_native_options(absent.bytes.data());
         check(latest_snapshot().rows[65].text=="N64" && !latest_snapshot().pc_cutscenes_available,
             "missing files lock N64 against directional and confirm input");
-        press(0x0400);press(0x0400);press(0x8000);
+        press(0x0400);press(0x0400);press(0x0400);press(0x8000);
         check(!sote::graphics_menu::pc_cutscenes_enabled(),"Apply cannot bypass missing-files gate");
         press(0x0400);press(0x8000);sote_capture_native_options(absent.bytes.data());
         check(latest_snapshot().rows[65].text=="N64", "Reset cannot display unavailable PC mode");

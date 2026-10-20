@@ -146,6 +146,12 @@ try {
     Ensure-Patch `
         -Submodule 'third_party/rt64/src/contrib/plume' `
         -Patch 'patches/0003-plume-d3d12-copy-sample-positions.patch'
+    Ensure-Patch `
+        -Submodule 'third_party/rt64' `
+        -Patch 'patches/0008-rt64-present-diagnostics.patch'
+    Ensure-Patch `
+        -Submodule 'third_party/rt64/src/contrib/plume' `
+        -Patch 'patches/0009-plume-vulkan-capture.patch'
 
     if ($Clean) {
         foreach ($target in @(

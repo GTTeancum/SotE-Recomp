@@ -1,0 +1,53 @@
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -114,7 +114,8 @@
+             RenderTexture *swapChainTexture,
+             uint64_t presentId,
+             uint32_t width,
+-            uint32_t height) {
++            uint32_t height,
++            bool supportsReadback) {
+             VisibleCapture capture;
+             if ((device == nullptr) || (commandList == nullptr) ||
+                 (swapChainTexture == nullptr) || (width == 0) ||
+@@ -124,6 +125,14 @@
+ 
+             VisibleCaptureState &state = visibleCaptureState();
+             ++state.nextPresentId;
++            if (!supportsReadback) {
++                static bool warned = false;
++                if (!warned) {
++                    std::fprintf(stderr, "[sote][capture] Surface does not support readback; skipping native captures.\n");
++                    warned = true;
++                }
++                return capture;
++            }
+             const uint32_t rowPitch =
+                 ((width * SwapChainBytesPerPixel +
+                     TextureDataPitchAlignment - 1) /
+@@ -372,7 +381,6 @@
+             
+             if ((presentFb != nullptr) && (viFb != nullptr)) {
+                 sotePresentSource = "rt64-framebuffer";
+-                sotePresentFbAddress = presentFb->addressStart;
+                 for (uint32_t colorAddress : ext.sharedResources->colorImageAddressVector) {
+                     Framebuffer *colorFb = fbManager.find(colorAddress);
+                     if (colorFb == nullptr) {
+@@ -413,6 +421,7 @@
+                     ext.sharedResources->workloadMutex.lock();
+                 }
+ 
++                sotePresentFbAddress = presentFb->addressStart;
+                 RenderTargetKey colorTargetKey(presentFb->addressStart, presentFb->width, presentFb->siz, Framebuffer::Type::Color);
+                 colorTarget = &targetManager.get(colorTargetKey, true);
+                 if (!colorTarget->isEmpty()) {
+@@ -587,7 +596,8 @@
+                         swapChainTexture,
+                         present.presentId,
+                         ext.swapChain->getWidth(),
+-                        ext.swapChain->getHeight());
++                        ext.swapChain->getHeight(),
++                        ext.swapChain->supportsReadback());
+                     if (std::getenv("SOTE_TRACE_PRESENT_SOURCE") != nullptr) {
+                         std::printf(
+                             "[sote][present-source] present=%llu frame=%d/%d "

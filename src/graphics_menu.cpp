@@ -66,7 +66,7 @@ enum class MenuTransition {
     RestoreProfileFocus,
 };
 
-constexpr int graphics_submenu_item_count = 10;
+constexpr int graphics_submenu_item_count = 11;
 
 int submenu_item_count(TopCategory category) {
     if (category == TopCategory::Cheats) return cheats_item_count();
@@ -400,6 +400,8 @@ void persist_window_mode_locked() {
            << state.applied.output_width
            << ",\n  \"outputHeight\": "
            << state.applied.output_height
+           << ",\n  \"compatibilityMode\": "
+           << (state.applied.compatibility ? "true" : "false")
            << "\n}\n";
 }
 
@@ -617,6 +619,7 @@ void adjust_selected_setting_locked(int direction) {
                 !state.editing.widescreen;
             break;
         case 4:
+            if (state.editing.compatibility) break;
             state.editing.antialiasing = cycle_enum(
                 state.editing.antialiasing,
                 4,
@@ -630,6 +633,9 @@ void adjust_selected_setting_locked(int direction) {
             refresh_cutscene_availability_locked(true);
             if (pc_movies_available) state.editing.pc_cutscenes =
                 !state.editing.pc_cutscenes;
+            break;
+        case 8:
+            state.editing.compatibility = !state.editing.compatibility;
             break;
         case 7:
             // Applies immediately; it only changes how menus are drawn.
@@ -840,7 +846,7 @@ void draw_graphics_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         60,
-        antialiasing_name(state.editing.antialiasing),
+        antialiasing_name(state.editing.compatibility ? AntialiasingPreset::Off : state.editing.antialiasing),
         160,
         118,
         value_color(4));
@@ -877,32 +883,33 @@ void draw_graphics_submenu(uint8_t* rdram) {
     if (!pc_movies_available) {
         set_row(rdram,63,"~sCutscenes",72,150,0x697388FF);
         set_row(rdram,65,"~sN64",160,150,0x697388FF);
-        set_row(rdram,71,"~s~cPC cutscenes not found in Sdata",160,218,0x697388FF);
     }
     set_row(rdram, 69, "~sMenu Font", 72, 166, label_color(7));
     set_row(rdram, 70,
         sote::menu_skin::menu_font_original() ? "~sOriginal" : "~sModern",
         160, 166, value_color(7));
+    set_row(rdram,71,"~sCompatibility Mode",42,181,label_color(8));
+    set_row(rdram,72,state.editing.compatibility ? "~sOn" : "~sOff",200,181,value_color(8));
     set_row(
         rdram,
         67,
         "~s~cApply",
         110,
-        184,
-        label_color(8));
+        198,
+        label_color(9));
     set_row(
         rdram,
         68,
         "~s~cReset",
         210,
-        184,
-        label_color(9));
+        198,
+        label_color(10));
     set_row(
         rdram,
         64,
         "~s~cReturn to Game Options",
         160,
-        202,
+        220,
         label_color(0));
 }
 
@@ -982,6 +989,7 @@ void initialize(const std::filesystem::path& data_directory) {
             std::istreambuf_iterator<char>{}};
         state.applied.borderless = read_persisted_bool(
             contents, "\"borderless\"", state.applied.borderless);
+        state.applied.compatibility = read_persisted_bool(contents, "\"compatibilityMode\"", false);
         state.applied.pc_cutscenes = read_persisted_bool(
             contents, "\"pcCutscenes\"", state.applied.pc_cutscenes);
         state.applied.output_width = read_persisted_integer(
@@ -997,6 +1005,7 @@ void initialize(const std::filesystem::path& data_directory) {
         state.editing.output_width = state.applied.output_width;
         state.editing.output_height = state.applied.output_height;
     }
+    state.editing.compatibility = state.applied.compatibility;
     refresh_cutscene_availability_locked(true);
     state.window_request = true;
     state.initialized = true;
@@ -1012,11 +1021,13 @@ void sync_display_resolution(int width, int height) {
 
 void sync_from_renderer(const Settings& settings) {
     std::lock_guard lock{state.mutex};
+    const bool saved_compatibility = state.applied.compatibility;
     const bool saved_borderless = state.applied.borderless;
     const bool saved_pc_cutscenes = state.applied.pc_cutscenes;
     const int saved_output_width = state.applied.output_width;
     const int saved_output_height = state.applied.output_height;
     state.applied = settings;
+    state.applied.compatibility = saved_compatibility;
     state.applied.borderless = saved_borderless;
     state.applied.pc_cutscenes = saved_pc_cutscenes;
     state.applied.output_width = saved_output_width;
@@ -1029,6 +1040,11 @@ void sync_window_mode(bool borderless) {
     state.applied.borderless = borderless;
     state.editing.borderless = borderless;
     persist_window_mode_locked();
+}
+
+bool compatibility_enabled() {
+    std::lock_guard lock{state.mutex};
+    return state.applied.compatibility;
 }
 
 bool pc_cutscenes_enabled() {
@@ -1229,9 +1245,9 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 } else {
                     adjust_selected_setting_locked(1);
                 }
-            } else if (state.submenu_selection <= 7) {
+            } else if (state.submenu_selection <= 8) {
                 adjust_selected_setting_locked(1);
-            } else if (state.submenu_selection == 8) {
+            } else if (state.submenu_selection == 9) {
                 queue_apply_locked();
             } else {
                 state.editing = Settings{};
@@ -1289,16 +1305,30 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
     std::lock_guard lock{state.mutex};
     refresh_cutscene_availability_locked();
     view.pc_cutscenes_available = pc_movies_available;
+    view.compatibility = state.editing.compatibility;
     auto put = [&](int row, std::string text, int x, int y, int selection = -1) {
         const bool focus = selection >= 0 && selection == state.submenu_selection;
         view.rows[row] = {x, y, focus ? selected_color : normal_color, plain_text(text)};
     };
     if (!state.submenu_active) {
+        constexpr const char* help[] = {"Return to the previous screen.",
+            "Show or hide on-screen gameplay information.", "Choose the seeker camera behavior.",
+            "Adjust sound effects volume.", "Adjust music volume.",
+            "Choose the sound channel arrangement.", "Choose a control preset. Enter / A opens bindings."};
+        if (view.focused_setting>=0 && view.focused_setting<7) view.option_help=help[view.focused_setting];
         return;
     }
     view.rows = {};
     if (state.category == TopCategory::Cheats) {
         view.screen = Screen::Schemes;
+        constexpr const char* help[] = {"Return to Game Options.",
+            "Restore nonlethal damage. Lethal damage still allows respawn.",
+            "Prevent life loss and maintain at least three spare lives.",
+            "Keep acquired ammunition from decreasing.", "Keep acquired vehicle missiles from decreasing.",
+            "Replenish Hoth, train and Outrider health after nonlethal damage.",
+            "Pulse held fire in Modern on-foot controls.", "Choose fire pulses per second. Weapon cooldowns still apply.",
+            "Adjust how strongly Modern aim follows nearby targets.", "Adjust the angle in which aim assistance finds targets."};
+        view.option_help=help[std::clamp(state.submenu_selection,0,9)];
         put(52, std::string{"Main   "} + cheats_header, 160, 50);
         for (int selection = 1; selection < cheats_item_count(); ++selection) {
             const int text_row = 53 + (selection - 1) * 2;
@@ -1311,6 +1341,24 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
     }
     if (state.category == TopCategory::Controls) {
         view.screen = Screen::Schemes;
+        if(state.submenu_selection==0) view.option_help="Return to Game Options.";
+        else if(state.submenu_selection==1) view.option_help="Choose Modern aiming or Classic PC controls on foot.";
+        else if(state.submenu_selection==2) view.option_help="Choose Modern triggers or Classic controls for the speeder bike.";
+        else {
+            constexpr const char* tuning_help[] = {
+                "Ignore small movement-stick input to prevent drift.",
+                "Scale movement-stick input. Higher values reach full speed sooner.",
+                "Ignore small aiming-stick input to prevent camera drift.",
+                "Scale aiming-stick input. Higher values increase aiming response.",
+                "Choose how far a trigger must move before it responds.",
+                "Scale trigger input. Higher values reach full input sooner.",
+                "Set Modern horizontal aiming speed in degrees per second.",
+                "Set Modern vertical aiming speed in degrees per second.",
+                "Adjust mouse movement sensitivity for Modern aiming."};
+            const int index = state.submenu_selection - 3;
+            view.option_help = index >= 0 && index < 9 ? tuning_help[index] :
+                "Save control schemes and tuning settings.";
+        }
         put(52, "Main   Options   Graphics   < Controls >   Cheats", 160, 50);
         put(53, "On Foot", 52, 66, 1);
         put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 166, 66, 1);
@@ -1330,16 +1378,30 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(76, "Apply", 220, 220, 3 + tuning_count);
     } else {
         view.screen = Screen::Graphics;
+        constexpr const char* help[] = {"Return to Game Options without applying pending changes.",
+            "Choose the game window's output resolution.", "Higher render scales sharpen 3D graphics and use more GPU power.",
+            "Choose original 4:3 proportions or a widescreen view.", "Smooth jagged edges. Higher settings use more GPU power.",
+            "Choose a bordered window or borderless display.", "Choose original N64 scenes or PC video cutscenes.",
+            "Choose the original game font or modern text. Changes save immediately.",
+            "Conservative graphics settings that may reduce flickering.\nApply, then restart to finish changing color precision.",
+            "Save and apply graphics settings. Compatibility color changes need a restart.",
+            "Restore default graphics settings. Select Apply to save."};
+        view.option_help=help[std::clamp(state.submenu_selection,0,10)];
+        if(state.submenu_selection==6 && !pc_movies_available)
+            view.option_help="PC cutscenes require SAN files in Sdata beside the executable.";
+        if(state.submenu_selection==4 && state.editing.compatibility)
+            view.option_help="Compatibility Mode disables antialiasing. Turn it off to restore your setting.";
         put(52, "Main   Options   < Graphics >   Controls   Cheats", 160, 50);
         put(53, "Resolution", 72, 70, 1); put(54, output_resolution_name(state.editing), 160, 70, 1);
         put(55, "Render Scale", 72, 86, 2); put(56, resolution_name(state.editing.resolution), 160, 86, 2);
         put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);
-        put(59, "Antialiasing", 72, 118, 4); put(60, antialiasing_name(state.editing.antialiasing), 160, 118, 4);
+        put(59, "Antialiasing", 72, 118, 4); put(60, antialiasing_name(state.editing.compatibility ? AntialiasingPreset::Off : state.editing.antialiasing), 160, 118, 4);
         put(61, "Display Mode", 72, 134, 5); put(62, state.editing.borderless ? "Borderless" : "Windowed", 160, 134, 5);
         put(63, "Cutscenes", 72, 150, 6); put(65, state.editing.pc_cutscenes ? "PC" : "N64", 160, 150, 6);
         put(69, "Menu Font", 72, 166, 7);
         put(70, sote::menu_skin::menu_font_original() ? "Original" : "Modern", 160, 166, 7);
-        put(67, "Apply", 110, 184, 8); put(68, "Reset", 210, 184, 9);
+        put(71,"Compatibility Mode",42,181,8); put(72,state.editing.compatibility ? "On" : "Off",200,181,8);
+        put(67, "Apply", 110, 198, 9); put(68, "Reset", 210, 198, 10);
         put(64, "Return to Game Options", 160, 202, 0);
     }
 }

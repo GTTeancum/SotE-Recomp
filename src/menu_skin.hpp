@@ -44,6 +44,8 @@ struct Snapshot {
     std::string preset;
     bool rebinding = false, binding_editing = false;
     bool pc_cutscenes_available = true;
+    bool compatibility = false;
+    std::string option_help;
     int binding_group = 0, binding_row = 0, binding_column = 0, binding_phase = 0;
     std::string binding_title, binding_detail, binding_hint, binding_status;
     int focused_setting = -1;

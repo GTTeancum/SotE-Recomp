@@ -175,6 +175,11 @@ Snapshot read_guest(const uint8_t* rdram, size_t size) {
         if (row.x != -1000) row.text = plain_text(g.string(g.word(table + i * 4)));
     }
     out.screen = classify(out.rows);
+    if (out.screen == Screen::Options) {
+        // The cached title-menu rows share the native Options selection.
+        const int selection = g.signed_half(0x800DD5E0U);
+        if (selection >= 0 && selection <= 6) out.focused_setting = selection;
+    }
     if (out.screen != Screen::Native) {
         out.original = read_original_font(rdram, size);
         if (!out.original || !out.original->valid) out.screen = Screen::Native;

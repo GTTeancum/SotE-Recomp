@@ -35,6 +35,9 @@ uint64_t fingerprint(const Snapshot& s) {
     for (const auto& b : s.bike) { string(b.action); string(b.pad); string(b.keyboard); }
     for (uint8_t v : s.thumbnail.rgba) byte(v);
     string(s.preset);
+    string(s.option_help);
+    byte(s.compatibility); byte(s.pc_cutscenes_available);
+    byte(unsigned(s.focused_setting));
     byte(s.rebinding); byte(s.binding_editing); byte(unsigned(s.binding_group)); byte(unsigned(s.binding_row));
     byte(unsigned(s.binding_column)); byte(unsigned(s.binding_phase));
     string(s.binding_title); string(s.binding_detail); string(s.binding_hint); string(s.binding_status);
