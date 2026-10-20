@@ -53,8 +53,9 @@ problems awaiting investigation; listing them does not confirm their causes.
 
 ### [#15 - Optional controls, cheats and menu enhancements](https://github.com/GTTeancum/SotE-Recomp/issues/15)
 
-- [ ] Review the attached 0.9.5 patch before deciding which features to adopt: cheats and vehicle health, rapid fire, menu controls for aim assist, Center Camera, Quick Turn variants, and a menu-font toggle.
-- [ ] Check compatibility with the current controls/menu code and required hook regeneration. The Traditional-preset freeze is tracked separately under #14.
+- [x] Integrate CtrlP1's full patch: cheats and vehicle health, rapid fire, aim-assist settings, Center Camera, Quick Turn variants, and menu-font toggle. New actions support keyboard/mouse and controller bindings.
+- [x] Reconcile current controls fixes, regenerate hooks, and verify the Windows build, targeted harnesses, live turn/recenter behavior, font rendering, and Cheats page persistence.
+  See [features and verification](docs/OPTIONAL_ENHANCEMENTS.md). Local integration is complete; GitHub delivery remains pending. The Traditional-preset freeze remains separate under #14.
 
 ### [#10 - Project discovery metadata](https://github.com/GTTeancum/SotE-Recomp/issues/10)
 

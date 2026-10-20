@@ -20,7 +20,7 @@ hook = [
     { func = "func_8008F6E4", before_vram = 0x8008F6E4, text = "sote_bindings_context(rdram, 1); sote_diagnostic_vehicle(rdram, (uint32_t)ctx->r4, 1);" },
     { func = "func_80059294", before_vram = 0x80059294, text = "sote_bindings_context(rdram, 2); sote_diagnostic_vehicle(rdram, (uint32_t)ctx->r4, 2);" },
     { func = "func_8002B34C", before_vram = 0x8002B34C, text = "sote_bindings_context(rdram, 3);" },
-    { func = "func_80097A40", before_vram = 0x80097A40, text = "sote_bindings_context(rdram, 4); sote_diagnostic_vehicle(rdram, (uint32_t)ctx->r4, 4);" },
+    { func = "func_80097A40", before_vram = 0x80097A40, text = "sote_bindings_context(rdram, 4); sote_diagnostic_vehicle(rdram, (uint32_t)ctx->r4, 4); sote_outrider_object(rdram, (uint32_t)ctx->r4);" },
     { func = "func_8009A30C", before_vram = 0x8009A30C, text = "sote_bindings_context(rdram, 4); sote_diagnostic_vehicle(rdram, (uint32_t)ctx->r4, 4);" },
     { func = "func_8009B0D0", before_vram = 0x8009B0D0, text = "sote_bindings_context(rdram, 4); sote_diagnostic_vehicle(rdram, (uint32_t)ctx->r4, 4);" },
     # Native background/stinger requests: replace before sound allocation.

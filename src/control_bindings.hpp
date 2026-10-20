@@ -56,7 +56,20 @@ struct Action {
     std::string id, label;
     Context context = Context::OnFoot;
     std::array<std::vector<Token>, 2> targets;
+    // Inputs that drive the row when it has no saved override. Empty means
+    // the targets drive themselves (every native row).
+    std::array<std::vector<Token>, 2> defaults;
+    // Combination rows (hold the left stick back + button) share their button
+    // with a normal action by design, so they never count as conflicts.
+    bool combo = false;
+    // Optional rows that start with no input (shown as Unbound).
+    bool unbound_default = false;
 };
+// Virtual controller buttons for the Modern on-foot extras. SDL never reports
+// these indices, so they only ever carry a binding.
+constexpr int virtual_quick_turn_single = 29;
+constexpr int virtual_center_camera = 30;
+constexpr int virtual_quick_turn = 31;
 using Layout = std::array<std::vector<Action>, 5>;
 // Each row contains only routes with identical native effects. Shared native
 // actions (e.g. Jump / Thrust) are shown together rather than falsely separated.

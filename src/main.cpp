@@ -1,7 +1,9 @@
+#include "cheats.hpp"
 #include <atomic>
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <cctype>
 #include <condition_variable>
 #include <cstdint>
 #include <cstdio>
@@ -2866,6 +2868,130 @@ void on_vi() {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Cheats. Toggled in SOTE_CHEATS.INI beside the executable; the file is
+// created with everything off on first launch and re-read when it changes.
+// Addresses verified against the USA Rev 1.2 recompiled code:
+//   player+0xB4 float   on-foot health (100 = full)
+//   0x800E0EA0  float   death countdown (not touched)
+//   0x800E0EB0  int32   extra lives (3 = four shown)
+//   0x800E1B54  int16   vehicle missiles
+//   0x80112B30  ptr     on-foot player object; float ammo[6] at +0xC0
+// ---------------------------------------------------------------------------
+// Outrider ship object, reported each frame by the func_80097A40 hook
+// (asteroid field and Skyhook). Its health is an int32 at +0x240: 500 when
+// full, refilled to 500 on respawn, and the ship is destroyed at <= 0.
+std::atomic<uint32_t> outrider_object{0};
+std::atomic<int> outrider_object_vi{-100000};
+
+using CheatSettings = sote::cheats::Settings;
+CheatSettings cheat_settings;
+sote::cheats::State cheat_state;
+std::filesystem::file_time_type cheat_ini_time{};
+bool cheat_ini_seen = false;
+int cheat_last_check_vi = -100000;
+
+bool cheat_parse_bool(std::string value) {
+    for (char& c : value) {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    return value == "1" || value == "true" || value == "on" || value == "yes";
+}
+
+std::string cheat_trim(const std::string& text) {
+    const size_t first = text.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        return {};
+    }
+    const size_t last = text.find_last_not_of(" \t\r\n");
+    return text.substr(first, last - first + 1);
+}
+
+void cheat_reload_settings() {
+    const std::filesystem::path path = runtime_directory / "SOTE_CHEATS.INI";
+    std::error_code error;
+    if (!std::filesystem::exists(path, error)) {
+        std::ofstream output{path};
+        output <<
+            "; Shadows of the Empire: Recompiled - cheats\n"
+            "; 1 = on, 0 = off. Saved changes apply within a second;\n"
+            "; no restart needed.\n"
+            "\n"
+            "; Keeps on-foot health topped up after every hit.\n"
+            "infinite_health = 0\n"
+            "; Deaths never cost a life (all modes, including bikes).\n"
+            "infinite_lives = 0\n"
+            "; Weapon ammo never drops below its highest value this level.\n"
+            "infinite_ammo = 0\n"
+            "; Vehicle missiles never run out.\n"
+            "infinite_missiles = 0\n"
+            "; Ship health: Hoth snowspeeder, Asteroid Field / Skyhook Outrider, Ord Mantell.\n"
+            "infinite_vehicle_health = 0\n"
+            "; Hold Fire to shoot continuously (Modern on foot). Shots per second 1-10, 4 = default.\n"
+            "rapid_fire = 0\n"
+            "rapid_fire_rate = 4\n";
+        cheat_ini_seen = false;
+        cheat_settings = {};
+        return;
+    }
+    const auto time = std::filesystem::last_write_time(path, error);
+    if (error || (cheat_ini_seen && time == cheat_ini_time)) {
+        return;
+    }
+    cheat_ini_seen = true;
+    cheat_ini_time = time;
+
+    CheatSettings settings{};
+    std::ifstream input{path};
+    std::string line;
+    while (std::getline(input, line)) {
+        line = cheat_trim(line);
+        if (line.empty() || line[0] == ';' || line[0] == '#' || line[0] == '[') {
+            continue;
+        }
+        const size_t equals = line.find('=');
+        if (equals == std::string::npos) {
+            continue;
+        }
+        std::string key = cheat_trim(line.substr(0, equals));
+        for (char& c : key) {
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        }
+        const bool value = cheat_parse_bool(cheat_trim(line.substr(equals + 1)));
+        if (key == "infinite_health") settings.infinite_health = value;
+        else if (key == "infinite_lives") settings.infinite_lives = value;
+        else if (key == "infinite_ammo") settings.infinite_ammo = value;
+        else if (key == "infinite_missiles") settings.infinite_missiles = value;
+        else if (key == "infinite_vehicle_health") settings.infinite_vehicle_health = value;
+    }
+    cheat_settings = settings;
+    std::printf(
+        "[sote][cheats] loaded SOTE_CHEATS.INI (health=%d lives=%d ammo=%d "
+        "missiles=%d vehicle=%d)\n",
+        settings.infinite_health ? 1 : 0,
+        settings.infinite_lives ? 1 : 0,
+        settings.infinite_ammo ? 1 : 0,
+        settings.infinite_missiles ? 1 : 0,
+        settings.infinite_vehicle_health ? 1 : 0);
+    std::fflush(stdout);
+}
+
+
+void sote_cheats_frame(uint8_t* rdram) {
+    if (!rdram) return;
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    if (vi - cheat_last_check_vi >= 60 || vi < cheat_last_check_vi) {
+        cheat_last_check_vi = vi;
+        cheat_reload_settings();
+    }
+    const int16_t event = static_cast<int16_t>(read_guest_half(rdram,0x8013CE0EU));
+    cheat_state.apply(rdram,cheat_settings,level_index_for_event(event),
+        sote::control_bindings::context_active(sote::control_bindings::Context::OnFoot),
+        outrider_object.load(std::memory_order_relaxed),
+        vi - outrider_object_vi.load(std::memory_order_relaxed) < 30);
+}
+
+
 } // namespace
 
 extern "C" void sote_gall_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
@@ -3662,6 +3788,7 @@ extern "C" double sote_sanitize_frame_delta(double delta) {
 }
 
 extern "C" void sote_sanitize_global_frame_delta(uint8_t* rdram) {
+    sote_cheats_frame(rdram);
     constexpr uint32_t frame_delta_address = 0x8018E998U;
     const double frame_delta =
         read_guest_double(rdram, frame_delta_address);
@@ -3692,6 +3819,9 @@ extern "C" uint32_t sote_allow_life_loss(
     uint32_t source,
     uint32_t object,
     uint32_t action) {
+    if (cheat_settings.infinite_lives) {
+        return 0U;
+    }
     constexpr int minimum_respawn_vis = 1800;
     const int vi = vi_count.load(std::memory_order_relaxed);
     const int16_t event = static_cast<int16_t>(
@@ -4689,4 +4819,10 @@ int main(int argc, char** argv) {
     recomp::start(config);
     sote::frontend::shutdown();
     return EXIT_SUCCESS;
+}
+
+extern "C" void sote_outrider_object(uint8_t*, uint32_t object) {
+    outrider_object.store(object, std::memory_order_relaxed);
+    outrider_object_vi.store(vi_count.load(std::memory_order_relaxed),
+        std::memory_order_relaxed);
 }

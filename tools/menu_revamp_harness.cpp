@@ -312,6 +312,7 @@ int main(int argc, char** argv) {
     }
     std::filesystem::create_directories(scratch / "Sdata" / "UI");
     std::filesystem::remove(scratch / "sote_options.json");
+    std::filesystem::remove(scratch / "SOTE_CHEATS.INI");
     sote::graphics_menu::initialize(scratch);
     sote::controls_menu::initialize(scratch);
     sote::menu_skin::initialize(scratch);
@@ -348,6 +349,7 @@ int main(int argc, char** argv) {
         "Cutscene mode changes through the menu");
     check(sote::graphics_menu::pc_cutscenes_enabled(),
         "Cutscene mode waits for Apply");
+    press(0x0400);
     press(0x0400);
     press(0x8000);
     check(!sote::graphics_menu::pc_cutscenes_enabled(),
@@ -386,16 +388,35 @@ int main(int argc, char** argv) {
         "Controls tuning row is presented as a slider");
 
     press(0x0010);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[52].text.find("< Cheats >") != std::string::npos,
+        "Controls advances to Cheats");
+    for (int row=1;row<=9;++row) {
+        press(0x0400);
+        press(0x0100);
+        sote_capture_native_options(memory.bytes.data());
+        check(!latest_snapshot().rows[53+(row-1)*2].text.empty(),"cheat row has a label");
+    }
+    std::ifstream cheats_file(scratch / "SOTE_CHEATS.INI");
+    const std::string cheats_text{std::istreambuf_iterator<char>(cheats_file),{}};
+    check(cheats_text.find("infinite_health = 1")!=std::string::npos &&
+        cheats_text.find("rapid_fire_rate = 5")!=std::string::npos,
+        "Cheats page persists toggles and rate");
+    press(0x0010);
     pump_transition(memory, options_focused, native_options);
     check(!native_options && latest_screen_is(sote::menu_skin::Screen::Profiles),
-        "R shoulder wraps Controls back to profiles");
+        "R shoulder wraps Cheats back to profiles");
     check(!options_focused,
         "return restores focus to the original profile item");
 
     press(0x0020);
     pump_transition(memory, options_focused, native_options);
     check(native_options && latest_screen_is(sote::menu_skin::Screen::Schemes),
-        "L shoulder wraps profiles back to Controls");
+        "L shoulder wraps profiles back to Cheats");
+    check(latest_snapshot().rows[52].text.find("< Cheats >")!=std::string::npos,"reverse entry selects Cheats");
+    press(0x0020);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[52].text.find("< Controls >")!=std::string::npos,"Cheats returns to Controls");
     press(0x0020);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Graphics),
@@ -538,6 +559,59 @@ int main(int argc, char** argv) {
             "mouse button assignment survives editor restart");
     }
 
+    {
+        namespace b=sote::control_bindings;
+        b::NativeTable table; table.modern_foot=true;
+        const auto layout=b::make_layout(table);
+        for (const auto& row:layout[0]) if(row.id.ends_with("center_camera") ||
+            row.id.ends_with("quick_turn") || row.id.ends_with("quick_turn_single")) {
+            b::Assignments bindings;
+            bindings.overrides[b::storage_key(row,b::Device::Keyboard)]=b::key(6);
+            b::PhysicalInput raw;raw.keys[6]=1;
+            check(b::value(bindings.apply(raw,layout[0]),row.targets[0].front())>0,
+                "each extra action supports a mouse binding without a controller");
+            raw={}; raw.connected=true; raw.buttons[7]=1;
+            if(row.id.ends_with("center_camera")) check(
+                b::value(b::Assignments{}.apply(raw,layout[0]),row.targets[1].front())>0,
+                "Center Camera defaults to LS click");
+        }
+        std::filesystem::remove(scratch / "Sdata/controls_bindings.ini");
+        b::initialize(scratch);
+        Memory combo_memory;
+        combo_memory.native_options();
+        combo_memory.half(0x800e6808+6,0x1000);
+        combo_memory.half(0x800e6808+18*2,0x10);
+        if(sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot)!=
+            sote::controls_menu::ControlScheme::Modern)
+            sote::controls_menu::cycle_scheme(sote::controls_menu::SchemeSlot::OnFoot,1);
+        b::observe_context(combo_memory.bytes.data(),combo_memory.bytes.size(),b::Context::OnFoot);
+        b::PhysicalInput combo;combo.connected=true;
+        b::remap(combo,false);
+        combo.buttons[2]=1;
+        auto out=b::remap(combo,false);
+        check(out.buttons[2] && !out.buttons[b::virtual_quick_turn],"X alone keeps its normal action");
+        combo.axes[1]=25000;
+        out=b::remap(combo,false);
+        check(!out.buttons[b::virtual_quick_turn],"adding Back after holding X does not start a turn");
+        combo.buttons[2]=0;b::remap(combo,false);
+        combo.buttons[2]=1;out=b::remap(combo,false);
+        check(!out.buttons[2] && out.buttons[b::virtual_quick_turn],"Back then X consumes normal action for turn");
+        combo.axes[1]=0;out=b::remap(combo,false);
+        check(!out.buttons[2],"turn consumes X until release even when Back is released");
+        combo.buttons[2]=0;b::remap(combo,false);
+        combo.buttons[2]=1;out=b::remap(combo,false);
+        check(out.buttons[2],"X normal action returns after release");
+        const auto fonts=scratch / "Sdata/UI/fonts.ini";
+        { std::ofstream out(fonts);out << "# custom\ndefault = original\ncustom.widget = myfont.ttf\noptions = original\n"; }
+        sote::menu_skin::initialize(scratch);
+        sote::menu_skin::set_menu_font_original(false);
+        check(!sote::menu_skin::menu_font_original(),"font switches to modern");
+        sote::menu_skin::set_menu_font_original(true);
+        check(sote::menu_skin::menu_font_original(),"font switches to original");
+        std::ifstream in(fonts);const std::string text{std::istreambuf_iterator<char>(in),{}};
+        check(text.find("custom.widget = myfont.ttf")!=std::string::npos,
+            "font toggle preserves custom widget configuration");
+    }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";
     return failures == 0 ? 0 : 1;

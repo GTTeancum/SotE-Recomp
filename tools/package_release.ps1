@@ -75,7 +75,7 @@ foreach ($pack in @('SotE_V1_HD','SotE_AI_Upscale')) {
 & "$PSScriptRoot\repair_v1_texture_bindings.ps1" -PackDirectory "$activeTextures\SotE_V1_HD"
 New-Item -ItemType Directory -Path "$staging\Sdata\UI" -Force | Out-Null
 Copy-Item -LiteralPath "$repoRoot\Sdata\UI\fonts.ini" -Destination "$staging\Sdata\UI"
-foreach ($doc in @('CONTROL_REBINDING.md','PC_VOICES.md','EXTERNAL_MUSIC.md')) {
+foreach ($doc in @('CONTROL_REBINDING.md','PC_VOICES.md','EXTERNAL_MUSIC.md','OPTIONAL_ENHANCEMENTS.md')) {
     Copy-Item -LiteralPath "$repoRoot\docs\$doc" -Destination $staging
 }
 foreach ($item in Get-ChildItem -LiteralPath $staging -Recurse -File) {

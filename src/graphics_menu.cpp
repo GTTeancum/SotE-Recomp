@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <mutex>
 #include <string>
@@ -48,7 +49,10 @@ constexpr uint32_t selected_value_color = 0xD060E8FFU;
 enum class TopCategory : int {
     Graphics,
     Controls,
+    Cheats,
 };
+
+int cheats_item_count();
 
 enum class MenuTransition {
     None,
@@ -61,9 +65,10 @@ enum class MenuTransition {
     RestoreProfileFocus,
 };
 
-constexpr int graphics_submenu_item_count = 9;
+constexpr int graphics_submenu_item_count = 10;
 
 int submenu_item_count(TopCategory category) {
+    if (category == TopCategory::Cheats) return cheats_item_count();
     return category == TopCategory::Controls
         ? 4 + sote::controls_menu::tuning_menu_row_count()
         : graphics_submenu_item_count;
@@ -405,7 +410,168 @@ void queue_apply_locked() {
     std::fflush(stdout);
 }
 
+
+// ---------------------------------------------------------------------------
+// Cheats page (after Controls). Each row edits an INI the runtime already
+// re-reads about once a second: SOTE_CHEATS.INI for cheats and rapid fire,
+// CONTROLS_MODERN.INI for aim assist. No Apply step is needed.
+// ---------------------------------------------------------------------------
+std::filesystem::path menu_data_directory;
+
+std::string ini_trim(const std::string& text) {
+    const size_t first = text.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return {};
+    const size_t last = text.find_last_not_of(" \t\r\n");
+    return text.substr(first, last - first + 1);
+}
+
+std::vector<std::string> ini_read_lines(const std::filesystem::path& path) {
+    std::vector<std::string> lines;
+    std::ifstream input{path};
+    std::string line;
+    while (std::getline(input, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        lines.push_back(line);
+    }
+    return lines;
+}
+
+std::string ini_get(const std::filesystem::path& path, const std::string& key,
+                    const std::string& fallback) {
+    for (const std::string& line : ini_read_lines(path)) {
+        const std::string trimmed = ini_trim(line);
+        if (trimmed.empty() || trimmed[0] == ';' || trimmed[0] == '#') continue;
+        const size_t equals = trimmed.find('=');
+        if (equals == std::string::npos) continue;
+        if (ini_trim(trimmed.substr(0, equals)) == key) {
+            std::string value = trimmed.substr(equals + 1);
+            const size_t comment = value.find(';');
+            if (comment != std::string::npos) value.resize(comment);
+            return ini_trim(value);
+        }
+    }
+    return fallback;
+}
+
+void ini_set(const std::filesystem::path& path, const std::string& key,
+             const std::string& value) {
+    std::vector<std::string> lines = ini_read_lines(path);
+    bool replaced = false;
+    for (std::string& line : lines) {
+        const std::string trimmed = ini_trim(line);
+        if (trimmed.empty() || trimmed[0] == ';' || trimmed[0] == '#') continue;
+        const size_t equals = trimmed.find('=');
+        if (equals != std::string::npos &&
+            ini_trim(trimmed.substr(0, equals)) == key) {
+            line = key + " = " + value;
+            replaced = true;
+            break;
+        }
+    }
+    if (!replaced) lines.push_back(key + " = " + value);
+    std::ofstream output{path, std::ios::trunc};
+    for (const std::string& line : lines) output << line << "\n";
+}
+
+struct CheatToggle { const char* key; const char* label; };
+constexpr CheatToggle cheat_toggles[] = {
+    {"infinite_health", "Infinite Health"},
+    {"infinite_lives", "Infinite Lives"},
+    {"infinite_ammo", "Infinite Ammo"},
+    {"infinite_missiles", "Infinite Missiles"},
+    {"infinite_vehicle_health", "Vehicle Health"},
+    {"rapid_fire", "Rapid Fire"},
+};
+constexpr int cheat_toggle_count =
+    static_cast<int>(sizeof(cheat_toggles) / sizeof(cheat_toggles[0]));
+// Rows: 0 Return, 1..toggles, then Fire Rate, Aim Assist, Assist Width.
+constexpr int fire_rate_row = cheat_toggle_count + 1;
+constexpr int aim_assist_row = cheat_toggle_count + 2;
+constexpr int assist_width_row = cheat_toggle_count + 3;
+constexpr int fire_rate_default = 4;
+
+int cheats_item_count() { return assist_width_row + 1; }
+
+struct CheatsCache {
+    bool toggles[cheat_toggle_count] = {};
+    int fire_rate = fire_rate_default;
+    int assist_level = 0;   // 0-10, tenths of on_foot_magnetism_strength
+    int assist_width = 2;   // degrees, 1-8
+};
+CheatsCache cheats_cache;
+
+std::filesystem::path cheats_ini() { return menu_data_directory / "SOTE_CHEATS.INI"; }
+std::filesystem::path controls_ini() { return menu_data_directory / "CONTROLS_MODERN.INI"; }
+
+void load_cheats_cache() {
+    for (int i = 0; i < cheat_toggle_count; ++i) {
+        const std::string value = ini_get(cheats_ini(), cheat_toggles[i].key, "0");
+        cheats_cache.toggles[i] = value == "1" || value == "true" || value == "on";
+    }
+    cheats_cache.fire_rate = std::clamp(std::atoi(ini_get(cheats_ini(), "rapid_fire_rate",
+        std::to_string(fire_rate_default)).c_str()), 1, 10);
+    const float strength = static_cast<float>(std::atof(
+        ini_get(controls_ini(), "on_foot_magnetism_strength", "0").c_str()));
+    cheats_cache.assist_level = std::clamp(static_cast<int>(strength * 10.0f + 0.5f), 0, 10);
+    cheats_cache.assist_width = std::clamp(std::atoi(
+        ini_get(controls_ini(), "on_foot_magnetism_cone_degrees", "2").c_str()), 1, 8);
+}
+
+int wrap(int value, int low, int high) {
+    if (value > high) return low;
+    if (value < low) return high;
+    return value;
+}
+
+void adjust_cheat_row(int selection, int direction) {
+    if (selection >= 1 && selection <= cheat_toggle_count) {
+        bool& toggle = cheats_cache.toggles[selection - 1];
+        toggle = !toggle;
+        ini_set(cheats_ini(), cheat_toggles[selection - 1].key, toggle ? "1" : "0");
+    } else if (selection == fire_rate_row) {
+        cheats_cache.fire_rate = wrap(cheats_cache.fire_rate + direction, 1, 10);
+        ini_set(cheats_ini(), "rapid_fire_rate", std::to_string(cheats_cache.fire_rate));
+    } else if (selection == aim_assist_row) {
+        cheats_cache.assist_level = std::clamp(cheats_cache.assist_level + direction, 0, 10);
+        char text[16];
+        std::snprintf(text, sizeof(text), "%.1f", cheats_cache.assist_level / 10.0);
+        ini_set(controls_ini(), "on_foot_magnetism_strength", text);
+    } else if (selection == assist_width_row) {
+        cheats_cache.assist_width = std::clamp(cheats_cache.assist_width + direction, 1, 8);
+        ini_set(controls_ini(), "on_foot_magnetism_cone_degrees",
+                std::to_string(cheats_cache.assist_width));
+    }
+}
+
+std::string cheat_row_label(int selection) {
+    if (selection >= 1 && selection <= cheat_toggle_count) return cheat_toggles[selection - 1].label;
+    if (selection == fire_rate_row) return "Fire Rate";
+    if (selection == aim_assist_row) return "Aim Assist";
+    return "Assist Width";
+}
+
+std::string cheat_row_value(int selection) {
+    if (selection >= 1 && selection <= cheat_toggle_count) {
+        return cheats_cache.toggles[selection - 1] ? "On" : "Off";
+    }
+    if (selection == fire_rate_row) {
+        return std::to_string(cheats_cache.fire_rate) + " per sec" +
+            (cheats_cache.fire_rate == fire_rate_default ? " (Default)" : "");
+    }
+    if (selection == aim_assist_row) {
+        return cheats_cache.assist_level == 0
+            ? std::string{"Off"} : std::to_string(cheats_cache.assist_level) + " / 10";
+    }
+    return std::to_string(cheats_cache.assist_width) + " deg";
+}
+
+constexpr const char* cheats_header = "Options   Graphics   Controls   < Cheats >";
+
 void adjust_selected_setting_locked(int direction) {
+    if (state.category == TopCategory::Cheats) {
+        adjust_cheat_row(state.submenu_selection, direction);
+        return;
+    }
     if (state.category == TopCategory::Controls) {
         if (state.submenu_selection == 1) {
             sote::controls_menu::cycle_scheme(
@@ -452,6 +618,11 @@ void adjust_selected_setting_locked(int direction) {
             state.editing.pc_cutscenes =
                 !state.editing.pc_cutscenes;
             break;
+        case 7:
+            // Applies immediately; it only changes how menus are drawn.
+            sote::menu_skin::set_menu_font_original(
+                !sote::menu_skin::menu_font_original());
+            break;
         default:
             break;
     }
@@ -476,7 +647,7 @@ void draw_controls_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         52,
-        "~s~cOptions   Graphics   < Controls >",
+        "~s~cOptions   Graphics   < Controls >   Cheats",
         160,
         50,
         normal_color);
@@ -560,6 +731,24 @@ void draw_controls_submenu(uint8_t* rdram) {
         label_color(apply_selection));
 }
 
+void draw_cheats_submenu(uint8_t* rdram) {
+    for (int row = 52; row < 80; ++row) {
+        hide_row(rdram, row);
+    }
+    auto color = [](int selection, bool value) {
+        if (state.submenu_selection != selection) return normal_color;
+        return value ? selected_value_color : selected_color;
+    };
+    set_row(rdram, 52, std::string{"~s~c"} + cheats_header, 160, 50, normal_color);
+    for (int selection = 1; selection < cheats_item_count(); ++selection) {
+        const int text_row = 53 + (selection - 1) * 2;
+        const int y = 66 + (selection - 1) * 14;
+        set_row(rdram, text_row, "~s" + cheat_row_label(selection), 60, y, color(selection, false));
+        set_row(rdram, text_row + 1, "~s" + cheat_row_value(selection), 176, y, color(selection, true));
+    }
+    set_row(rdram, 75, "~s~cReturn to Game Options", 160, 220, color(0, false));
+}
+
 void draw_graphics_submenu(uint8_t* rdram) {
     for (int row = 52; row < 80; ++row) {
         hide_row(rdram, row);
@@ -579,7 +768,7 @@ void draw_graphics_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         52,
-        "~s~cOptions   < Graphics >   Controls",
+        "~s~cOptions   < Graphics >   Controls   Cheats",
         160,
         50,
         normal_color);
@@ -671,26 +860,30 @@ void draw_graphics_submenu(uint8_t* rdram) {
         160,
         150,
         value_color(6));
+    set_row(rdram, 69, "~sMenu Font", 72, 166, label_color(7));
+    set_row(rdram, 70,
+        sote::menu_skin::menu_font_original() ? "~sOriginal" : "~sModern",
+        160, 166, value_color(7));
     set_row(
         rdram,
         67,
         "~s~cApply",
         110,
-        170,
-        label_color(7));
+        184,
+        label_color(8));
     set_row(
         rdram,
         68,
         "~s~cReset",
         210,
-        170,
-        label_color(8));
+        184,
+        label_color(9));
     set_row(
         rdram,
         64,
         "~s~cReturn to Game Options",
         160,
-        190,
+        202,
         label_color(0));
 }
 
@@ -731,10 +924,21 @@ void switch_page_locked(int direction) {
         }
         return;
     }
+    if (state.category == TopCategory::Controls) {
+        if (direction > 0) {
+            load_cheats_cache();
+            state.category = TopCategory::Cheats;
+        } else {
+            state.category = TopCategory::Graphics;
+        }
+        state.submenu_selection = 0;
+        return;
+    }
+    // Cheats page.
     if (direction > 0) {
         return_to_main_locked();
     } else {
-        state.category = TopCategory::Graphics;
+        state.category = TopCategory::Controls;
         state.submenu_selection = 0;
     }
 }
@@ -743,6 +947,7 @@ void switch_page_locked(int direction) {
 
 void initialize(const std::filesystem::path& data_directory) {
     std::lock_guard lock{state.mutex};
+    menu_data_directory = data_directory;
     state.applied = Settings{};
     state.editing = state.applied;
     state.options_visible = false;
@@ -896,7 +1101,8 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 if (state.options_visible) {
                     if (state.open_controls) {
                         state.submenu_active = true;
-                        state.category = TopCategory::Controls;
+                        load_cheats_cache();
+                        state.category = TopCategory::Cheats;
                         state.submenu_selection = 0;
                         state.editing = state.applied;
                     }
@@ -937,7 +1143,8 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         state.open_controls = (pressed & n64_l) != 0;
         state.submenu_active = state.open_controls;
         if (state.open_controls) {
-            state.category = TopCategory::Controls;
+            load_cheats_cache();
+            state.category = TopCategory::Cheats;
             state.submenu_selection = 0;
             state.editing = state.applied;
         }
@@ -985,6 +1192,8 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
             if (state.submenu_selection == 0) {
                 state.submenu_active = false;
                 state.editing = state.applied;
+            } else if (state.category == TopCategory::Cheats) {
+                adjust_cheat_row(state.submenu_selection, 1);
             } else if (state.category == TopCategory::Controls) {
                 if (state.submenu_selection == 1) {
                     sote::controls_menu::cycle_scheme(
@@ -999,9 +1208,9 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 } else {
                     adjust_selected_setting_locked(1);
                 }
-            } else if (state.submenu_selection <= 6) {
+            } else if (state.submenu_selection <= 7) {
                 adjust_selected_setting_locked(1);
-            } else if (state.submenu_selection == 7) {
+            } else if (state.submenu_selection == 8) {
                 queue_apply_locked();
             } else {
                 state.editing = Settings{};
@@ -1065,9 +1274,21 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         return;
     }
     view.rows = {};
+    if (state.category == TopCategory::Cheats) {
+        view.screen = Screen::Schemes;
+        put(52, std::string{"Main   "} + cheats_header, 160, 50);
+        for (int selection = 1; selection < cheats_item_count(); ++selection) {
+            const int text_row = 53 + (selection - 1) * 2;
+            const int y = 66 + (selection - 1) * 14;
+            put(text_row, cheat_row_label(selection), 60, y, selection);
+            put(text_row + 1, cheat_row_value(selection), 176, y, selection);
+        }
+        put(75, "Return to Game Options", 160, 220, 0);
+        return;
+    }
     if (state.category == TopCategory::Controls) {
         view.screen = Screen::Schemes;
-        put(52, "Main   Options   Graphics   < Controls >", 160, 50);
+        put(52, "Main   Options   Graphics   < Controls >   Cheats", 160, 50);
         put(53, "On Foot", 52, 66, 1);
         put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 166, 66, 1);
         put(55, "Speeder Bike", 52, 78, 2);
@@ -1086,15 +1307,17 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(76, "Apply", 220, 220, 3 + tuning_count);
     } else {
         view.screen = Screen::Graphics;
-        put(52, "Main   Options   < Graphics >   Controls", 160, 50);
+        put(52, "Main   Options   < Graphics >   Controls   Cheats", 160, 50);
         put(53, "Resolution", 72, 70, 1); put(54, output_resolution_name(state.editing), 160, 70, 1);
         put(55, "Render Scale", 72, 86, 2); put(56, resolution_name(state.editing.resolution), 160, 86, 2);
         put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);
         put(59, "Antialiasing", 72, 118, 4); put(60, antialiasing_name(state.editing.antialiasing), 160, 118, 4);
         put(61, "Display Mode", 72, 134, 5); put(62, state.editing.borderless ? "Borderless" : "Windowed", 160, 134, 5);
         put(63, "Cutscenes", 72, 150, 6); put(65, state.editing.pc_cutscenes ? "PC FMV" : "Original N64", 160, 150, 6);
-        put(67, "Apply", 110, 170, 7); put(68, "Reset", 210, 170, 8);
-        put(64, "Return to Game Options", 160, 190, 0);
+        put(69, "Menu Font", 72, 166, 7);
+        put(70, sote::menu_skin::menu_font_original() ? "Original" : "Modern", 160, 166, 7);
+        put(67, "Apply", 110, 184, 8); put(68, "Reset", 210, 184, 9);
+        put(64, "Return to Game Options", 160, 202, 0);
     }
 }
 
@@ -1161,7 +1384,9 @@ void update_guest_menu(uint8_t* rdram) {
             detect_original_selection(rdram);
     }
     if (state.submenu_active) {
-        if (state.category == TopCategory::Controls) {
+        if (state.category == TopCategory::Cheats) {
+            draw_cheats_submenu(rdram);
+        } else if (state.category == TopCategory::Controls) {
             draw_controls_submenu(rdram);
         } else {
             draw_graphics_submenu(rdram);

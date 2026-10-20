@@ -86,6 +86,8 @@ Token axis(int a, int sign) { return {Kind::Axis, a, sign}; }
 float value(const PhysicalInput& i, Token t) {
     if (!valid(t)) return 0;
     if (t.kind == Kind::Key) return i.keys[t.code] ? 1.0f : 0.0f;
+    if (t.kind == Kind::Button && t.code >= virtual_quick_turn_single)
+        return i.buttons[t.code] ? 1.0f : 0.0f;
     if (!i.connected) return 0;
     if (t.kind == Kind::Button) return i.buttons[t.code] ? 1.0f : 0.0f;
     if (t.kind == Kind::Axis) return std::max(0.0f,
@@ -204,6 +206,27 @@ Layout make_layout(const NativeTable& t) {
             result[g][3].targets[0].push_back(key(102)); // Numpad 6.
         }
         if (mf) {
+            // Modern extras. Their controller targets are virtual buttons that
+            // frontend.cpp reads; the defaults are the physical inputs.
+            Action center{prefix + "center_camera", "Center Camera", static_cast<Context>(g), {}};
+            center.targets[1].push_back(button(virtual_center_camera));
+            center.targets[0].push_back(button(virtual_center_camera));
+            center.defaults[0].push_back(Token{});
+            center.defaults[1].push_back(button(7)); // LS Click.
+            result[g].push_back(std::move(center));
+            Action turn{prefix + "quick_turn", "Quick Turn (Hold Back)", static_cast<Context>(g), {}};
+            turn.targets[1].push_back(button(virtual_quick_turn));
+            turn.targets[0].push_back(button(virtual_quick_turn));
+            turn.defaults[0].push_back(Token{});
+            turn.defaults[1].push_back(button(2)); // X.
+            turn.combo = true;
+            result[g].push_back(std::move(turn));
+            Action single{prefix + "quick_turn_single", "Quick Turn", static_cast<Context>(g), {}};
+            single.targets[1].push_back(button(virtual_quick_turn_single));
+            single.targets[0].push_back(button(virtual_quick_turn_single));
+            single.defaults[0].push_back(Token{});
+            single.unbound_default = true;
+            result[g].push_back(std::move(single));
             add_fixed("look_up", "Look Up", {}, axis(3,-1));
             add_fixed("look_down", "Look Down", {}, axis(3,1));
             add_fixed("look_left", "Look Left", {}, axis(2,-1));
@@ -363,15 +386,18 @@ std::string storage_key(const Action& a, Device d) {
 }
 std::vector<Token> Assignments::sources(const Action& a, Device d) const {
     const auto it = overrides.find(storage_key(a,d));
-    if (it == overrides.end()) return a.targets[int(d)];
+    if (it == overrides.end()) {
+        if (a.unbound_default) return {};
+        return a.defaults[int(d)].empty() ? a.targets[int(d)] : a.defaults[int(d)];
+    }
     if (it->second.kind == Kind::None) return {};
     return {it->second};
 }
 std::vector<std::string> Assignments::conflicts(const std::vector<Action>& rows, const Action& a, Device d, Token p) const {
     std::vector<std::string> result;
-    if (p.kind == Kind::None) return result;
+    if (p.kind == Kind::None || a.combo) return result;
     for (const auto& row : rows) {
-        if (row.id == a.id || row.targets[int(d)].empty()) continue;
+        if (row.id == a.id || row.combo || row.targets[int(d)].empty()) continue;
         const auto list = sources(row,d);
         if (std::find(list.begin(),list.end(),p) != list.end()) result.push_back(row.id);
     }
@@ -382,19 +408,18 @@ PhysicalInput Assignments::apply(const PhysicalInput& raw, const std::vector<Act
     // Read ONLY raw throughout; sequential/chained rebinds must not feed back.
     for (const auto& row : rows) for (int d=0; d<2; ++d) {
         for (auto t : row.targets[d]) clear_value(out,t);
-        const auto it=overrides.find(storage_key(row,static_cast<Device>(d)));
-        if (it!=overrides.end()) clear_value(out,it->second);
+        for (auto t : sources(row, static_cast<Device>(d))) clear_value(out,t);
     }
     for (const auto& row : rows) for (int d=0; d<2; ++d) {
         if (row.targets[d].empty()) continue;
-        const auto it=overrides.find(storage_key(row,static_cast<Device>(d)));
-        if (it==overrides.end()) {
+        if (!row.unbound_default && row.defaults[d].empty() &&
+            !overrides.contains(storage_key(row,static_cast<Device>(d)))) {
             for (auto t : row.targets[d]) write_value(out,t,value(raw,t));
-        } else {
-            // Every target in this row has the same native effect signature.
-            // Emit one representative, never every alias at once.
-            write_value(out,row.targets[d].front(),value(raw,it->second));
+            continue;
         }
+        float v = 0;
+        for (auto t : sources(row, static_cast<Device>(d))) v = std::max(v,value(raw,t));
+        write_value(out,row.targets[d].front(),std::max(value(out,row.targets[d].front()),v));
     }
     return out;
 }
@@ -465,6 +490,7 @@ struct Runtime {
     uint64_t repeat_at=0;
     Token proposed;
     std::vector<std::string> conflicts;
+    bool combo_was_down=false, combo_consumes=false;
 } state;
 std::vector<std::pair<int,int>> positions(const Layout& layout) {
     std::vector<std::pair<int,int>> out;
@@ -558,6 +584,7 @@ void initialize(const std::filesystem::path& root) {
     std::lock_guard lock(state.mutex);
     state.path=root/"Sdata"/"controls_bindings.ini";
     std::string error;state.assignments.load(state.path,error);
+    state.combo_was_down=state.combo_consumes=false;
     state.menu_valid=false;state.play_valid=false;state.editor={};state.previous={};
     state.entrance_release=true;state.exit_pending=false;state.external_block=false;state.context_time=0;
     if(!error.empty())std::fprintf(stderr,"[sote][bindings] %s\n",error.c_str());
@@ -585,6 +612,7 @@ void observe_context(const uint8_t* ram,size_t size,Context context) {
     if(table.event==30 && context==Context::Turret)return;
     std::lock_guard lock(state.mutex);
     if(!state.play_valid||!same_table(state.play_table,table)) {
+        state.combo_was_down=state.combo_consumes=false;
         state.play_table=table;state.play_layout=make_layout(table);state.play_valid=true;
     }
     state.context=int(context);state.context_time=clock_ms();
@@ -750,8 +778,35 @@ bool capturing() {std::lock_guard lock(state.mutex);return state.editor.editing&
 EditorView editor_view(){std::lock_guard lock(state.mutex);return state.editor;}
 PhysicalInput remap(const PhysicalInput& raw,bool native_menu_visible) {
     std::lock_guard lock(state.mutex);
-    if(native_menu_visible||!state.play_valid||clock_ms()-state.context_time>200)return raw;
-    return state.assignments.apply(raw,state.play_layout[state.context]);
+    if(native_menu_visible||!state.play_valid||clock_ms()-state.context_time>200) {
+        state.combo_was_down=state.combo_consumes=false; return raw;
+    }
+    const auto& rows=state.play_layout[state.context];
+    PhysicalInput out=state.assignments.apply(raw,rows);
+    for(const auto& row:rows) {
+        if(!row.combo||row.targets[1].empty())continue;
+        // Quick turn: on the press that starts with the left stick held back,
+        // the button belongs to the turn alone, so its normal action is muted
+        // until it is released. Pressed without the stick, it acts normally.
+        auto sources=state.assignments.sources(row,Device::Controller);
+        const auto keys=state.assignments.sources(row,Device::Keyboard);
+        sources.insert(sources.end(),keys.begin(),keys.end());
+        bool down=false;
+        for(auto t:sources) down=down||value(raw,t)>.5f;
+        const bool stick_back=out.axes[1]>19660 || out.keys['S'];
+        if(down&&!state.combo_was_down&&stick_back)state.combo_consumes=true;
+        if(!down)state.combo_consumes=false;
+        state.combo_was_down=down;
+        write_value(out,row.targets[1].front(),0);
+        if(state.combo_consumes) {
+            PhysicalInput muted=raw;
+            for(auto t:sources) clear_value(muted,t);
+            out=state.assignments.apply(muted,rows);
+            write_value(out,row.targets[1].front(),1.0f);
+        }
+        break;
+    }
+    return out;
 }
 bool context_active(Context context) {
     std::lock_guard lock(state.mutex);

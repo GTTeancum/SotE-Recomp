@@ -1,3 +1,4 @@
+#include "rapid_fire.hpp"
 #define SDL_MAIN_HANDLED
 
 #include "frontend.hpp"
@@ -11,6 +12,8 @@
 
 #include <algorithm>
 #include <atomic>
+#include <fstream>
+#include <filesystem>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
@@ -40,6 +43,79 @@ constexpr uint16_t n64_cu = 0x0008;
 constexpr uint16_t n64_cd = 0x0004;
 constexpr uint16_t n64_cl = 0x0002;
 constexpr uint16_t n64_cr = 0x0001;
+
+// ---------------------------------------------------------------------------
+// Rapid fire (SOTE_CHEATS.INI rapid_fire / rapid_fire_rate): holding Fire in
+// Modern on-foot pulses the fire bit at a hand-tapping pace. The settings are
+// re-read about once a second so the Cheats page applies immediately.
+// ---------------------------------------------------------------------------
+struct RapidFireSettings {
+    bool enabled = false;
+    float rate = 4.0f;
+};
+RapidFireSettings rapid_fire_settings;
+std::chrono::steady_clock::time_point rapid_fire_checked{};
+std::filesystem::file_time_type rapid_fire_mtime{};
+
+std::filesystem::path rapid_fire_ini_path() {
+    wchar_t buffer[MAX_PATH]{};
+    const DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+    return std::filesystem::path{std::wstring{buffer, length}}.parent_path() /
+        "SOTE_CHEATS.INI";
+}
+
+void refresh_rapid_fire_settings() {
+    const auto now = std::chrono::steady_clock::now();
+    if (now - rapid_fire_checked < std::chrono::seconds{1}) return;
+    rapid_fire_checked = now;
+    const auto path = rapid_fire_ini_path();
+    std::error_code error;
+    const auto mtime = std::filesystem::last_write_time(path, error);
+    if (error) {
+        rapid_fire_settings = {};
+        return;
+    }
+    if (mtime == rapid_fire_mtime) return;
+    rapid_fire_mtime = mtime;
+    RapidFireSettings settings{};
+    std::ifstream input{path};
+    std::string line;
+    while (std::getline(input, line)) {
+        const size_t comment = line.find(';');
+        if (comment != std::string::npos) line.resize(comment);
+        const size_t equals = line.find('=');
+        if (equals == std::string::npos) continue;
+        auto trim = [](std::string text) {
+            const size_t first = text.find_first_not_of(" \t\r\n");
+            if (first == std::string::npos) return std::string{};
+            return text.substr(first, text.find_last_not_of(" \t\r\n") - first + 1);
+        };
+        const std::string key = trim(line.substr(0, equals));
+        const std::string value = trim(line.substr(equals + 1));
+        if (key == "rapid_fire") settings.enabled = value == "1" || value == "true" || value == "on";
+        if (key == "rapid_fire_rate") {
+            settings.rate = std::clamp(static_cast<float>(std::atof(value.c_str())), 1.0f, 10.0f);
+        }
+    }
+    rapid_fire_settings = settings;
+}
+
+using RapidFireGate = sote::cheats::RapidFireGate;
+uint16_t apply_rapid_fire(RapidFireGate& gate, uint16_t buttons, uint16_t fire_bit) {
+    refresh_rapid_fire_settings();
+    const double now = std::chrono::duration<double>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+    if (!gate.fire(rapid_fire_settings.enabled, rapid_fire_settings.rate,
+        (buttons & fire_bit) != 0, now)) buttons &= static_cast<uint16_t>(~fire_bit);
+    return buttons;
+}
+
+RapidFireGate pad_rapid_fire;
+RapidFireGate keyboard_rapid_fire;
+bool quick_turn_was_down = false;
+bool center_camera_was_down = false;
+bool quick_turn_single_was_down = false;
+
 
 constexpr float n64_stick_scale = 80.0f / 127.0f;
 
@@ -923,6 +999,7 @@ void poll_input() {
             if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP)) buttons |= n64_l;
             if (mapped_axis(controller,
                 SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 3276) buttons |= n64_b;
+            buttons = apply_rapid_fire(pad_rapid_fire, buttons, n64_b);
             buttons = sote::modern_controls::on_foot_active() ?
                 sote::modern_controls::map_buttons(buttons) :
                 control_bindings::map_on_foot_buttons(buttons);
@@ -1105,6 +1182,21 @@ void poll_input() {
     // Classic PC keys name actions, not fixed N64 buttons. Preset 6 (used on
     // the Ord Mantell train) swaps Jump and Fire, so resolve both schemes
     // through the live on-foot action table.
+    const bool extras_active = modern_keyboard && movie_playback_token.load(std::memory_order_relaxed) == 0;
+    const bool center_down = extras_active && mapped_input.buttons[control_bindings::virtual_center_camera];
+    // The remapper already validated Back at the initial button press and
+    // latches this action until release. Moving the stick must not retrigger it.
+    const bool turn_down = extras_active && mapped_input.buttons[control_bindings::virtual_quick_turn];
+    const bool single_down = extras_active && mapped_input.buttons[control_bindings::virtual_quick_turn_single];
+    if (center_down && !center_camera_was_down) modern_controls::request_recenter();
+    if ((turn_down && !quick_turn_was_down) || (single_down && !quick_turn_single_was_down))
+        modern_controls::request_quick_turn();
+    center_camera_was_down = center_down;
+    quick_turn_was_down = turn_down;
+    quick_turn_single_was_down = single_down;
+    if (modern_keyboard) {
+        keyboard_buttons = apply_rapid_fire(keyboard_rapid_fire, keyboard_buttons, n64_b);
+    }
     buttons |= modern_keyboard ?
         (sote::modern_controls::on_foot_active() ?
             sote::modern_controls::map_buttons(keyboard_buttons) :

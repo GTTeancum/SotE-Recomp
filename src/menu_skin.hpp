@@ -69,6 +69,10 @@ std::shared_ptr<const Snapshot> latest();
 // All fonts default to original. Optional per-widget/role TTFs are user supplied.
 Image render(const Snapshot& snapshot, unsigned width = 1280, unsigned height = 720);
 void scroll_controls(int lines);
+// Menu font toggle (Graphics page): original game font or Windows Segoe UI.
+// Rewrites Sdata/UI/fonts.ini and reloads it.
+bool menu_font_original();
+void set_menu_font_original(bool original);
 bool controls_visible();
 } // namespace sote::menu_skin
 

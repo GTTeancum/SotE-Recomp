@@ -1,3 +1,5 @@
+#include "rapid_fire.hpp"
+#include "cheats.hpp"
 #include "modern_controls.hpp"
 #include "controls_menu.hpp"
 
@@ -163,6 +165,22 @@ int main() {
     publish({});
     sote_modern_begin(ram.data(),object);
     check(!aiming_active() && pitch_degrees()==0,"disconnect clears aim");
+    publish({{},{},true});
+    sote_modern_begin(ram.data(),object);
+    add_mouse_delta(0,20);
+    sote_modern_begin(ram.data(),object);
+    check(pitch_degrees()!=0,"recenter fixture starts tilted");
+    request_recenter();
+    sote_modern_begin(ram.data(),object);
+    check(pitch_degrees()==0,"Center Camera levels pitch");
+    request_quick_turn();
+    float total_turn=0;
+    for(int i=0;i<60;++i) {
+        sote_modern_begin(ram.data(),object);
+        sote_modern_yaw(ram.data(),object);
+        total_turn+=get<float>(ram,object+0xA4)/60;
+    }
+    check(std::fabs(total_turn-180)<.01f,"quick turn integrates exactly 180 degrees");
     put<int16_t>(ram,0x8013CE0E,8);
     put<float>(ram,0x800E539C,0); put<uint32_t>(ram,0x800E5838,0);
     put<float>(ram,0x800E57B8,0);
@@ -203,6 +221,72 @@ int main() {
     sote_modern_camera_offset(ram.data(),object,stack);
     check(get<float>(ram,cameras+6*128+0x70)==0,
         "Classic restores native camera target offset");
+    {
+        std::vector<uint8_t> memory(8*1024*1024);
+        auto* data=memory.data();
+        sote::cheats::State cheats;
+        sote::cheats::Settings flags;
+        put(memory,0x800DD2B0,uint32_t(2));
+        put(memory,0x8013CE0E,int16_t(4));
+        put(memory,0x80112B30,object);
+        put(memory,object+0xB4,100.0f);
+        put(memory,object+0xC0,50.0f);
+        put(memory,0x800E1B54,int16_t(10));
+        auto original=memory;
+        cheats.apply(data,flags,1,true,0,false);
+        check(memory==original,"disabled cheats leave memory unchanged");
+        flags={true,true,true,true,true};
+        cheats.apply(data,flags,1,true,0,false);
+        put(memory,object+0xB4,25.0f);put(memory,object+0xC0,2.0f);
+        put(memory,0x800E1B54,int16_t(1));put(memory,0x800E0EB0,uint32_t(1));
+        cheats.apply(data,flags,1,true,0,false);
+        check(get<float>(memory,object+0xB4)==100 && get<float>(memory,object+0xC0)==50 &&
+            get<int16_t>(memory,0x800E1B54)==10 && get<uint32_t>(memory,0x800E0EB0)==3,
+            "cheats replenish health, ammo, missiles and lives");
+        put(memory,object+0xB4,0.0f);
+        cheats.apply(data,flags,1,true,0,false);
+        check(get<float>(memory,object+0xB4)==0,"lethal health permits native respawn");
+        put(memory,object+0xB4,25.0f);
+        cheats.apply(data,flags,2,false,0,false);
+        check(get<float>(memory,object+0xB4)==25,"vehicle contexts do not write stale on-foot health");
+        put(memory,0x8013CE0E,int16_t(3));put(memory,0x801EBC40,110.0f);
+        cheats.apply(data,flags,0,false,0,false);
+        put(memory,0x801EBC40,20.0f);
+        cheats.apply(data,flags,0,false,0,false);
+        check(get<float>(memory,0x801EBC40)==110,"Hoth vehicle health replenishes");
+        put(memory,0x8013CE0E,int16_t(8));put(memory,0x801A7BA8,100.0f);
+        cheats.apply(data,flags,3,true,0,false);put(memory,0x801A7BA8,10.0f);
+        cheats.apply(data,flags,3,true,0,false);
+        check(get<float>(memory,0x801A7BA8)==100,"Ord vehicle health replenishes");
+        put(memory,0x8013CE0E,int16_t(10));put(memory,0x801A7BA8,20.0f);
+        cheats.apply(data,flags,3,true,0,false);
+        check(get<float>(memory,0x801A7BA8)==20,"Ord fixed address is never written in IG-88 stage");
+        put(memory,object+0x240,uint32_t(40));
+        cheats.apply(data,flags,2,false,object,false);
+        check(get<uint32_t>(memory,object+0x240)==40,"stale Outrider pointer is ignored");
+        cheats.apply(data,flags,2,false,object,true);
+        check(get<uint32_t>(memory,object+0x240)==500,"live Outrider health replenishes");
+        put(memory,0x800DD2B0,uint32_t(0));original=memory;
+        cheats.apply(data,flags,2,false,object,true);
+        check(memory==original,"non-gameplay state is untouched");
+    }
+    {
+        sote::cheats::RapidFireGate gate;
+        check(gate.fire(false,5,true,10),"rapid fire disabled preserves held fire");
+        check(gate.fire(true,5,true,10),"rapid fire starts with a shot");
+        check(!gate.fire(true,5,true,10.15),"rapid fire releases between pulses");
+        check(gate.fire(true,5,true,10.21),"rapid fire repeats at configured rate");
+        check(!gate.fire(true,5,false,10.22),"releasing fire stops rapid fire");
+        check(gate.fire(true,5,true,10.23),"new press fires immediately");
+        for(int rate=1;rate<=10;++rate) {
+            gate={};int edges=0;bool before=false;
+            for(int tick=0;tick<10000;++tick) {
+                const bool firing=gate.fire(true,float(rate),true,tick/10000.0);
+                edges+=firing&&!before; before=firing;
+            }
+            check(edges==rate,"rapid fire produces requested 1-10 pulse rate");
+        }
+    }
     std::cout << "Modern controls: " << failures << " failures\n";
     return failures ? 1 : 0;
 }

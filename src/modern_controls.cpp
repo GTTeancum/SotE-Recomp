@@ -26,6 +26,15 @@ Tuning tuning;
 bool active = false;
 uint32_t mouse_probe_frames = 0;
 float pitch = 0;
+std::atomic<bool> recenter_requested{false};
+// Quick turn: a 180-degree spin spread over quick_turn_seconds so it reads
+// as a fast turn rather than a cut. quick_turn_yaw_rate is added to the
+// native yaw rate (degrees/second) while degrees remain.
+constexpr float quick_turn_degrees = 180.0f;
+constexpr float quick_turn_seconds = 0.4f;
+std::atomic<bool> quick_turn_requested{false};
+float quick_turn_remaining = 0.0f;
+float quick_turn_yaw_rate = 0.0f;
 float mouse_yaw_rate = 0;
 uint32_t owner = 0;
 int16_t level_event = -1;
@@ -126,6 +135,8 @@ uint16_t map_buttons(uint16_t canonical) {
     return result;
 }
 float pitch_degrees() { return pitch; }
+void request_recenter() { recenter_requested.store(true); }
+void request_quick_turn() { quick_turn_requested.store(true); }
 bool owns_player(uint32_t object) { return active && owner == object; }
 }
 
@@ -137,6 +148,8 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
     if (owner != object || level_event != event) {
         pitch = 0;
         frame_number = 0;
+        quick_turn_remaining = quick_turn_yaw_rate = 0;
+        quick_turn_requested = false; recenter_requested = false;
         mouse_probe_frames = 0;
         camera_initialized = false;
     }
@@ -196,6 +209,8 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
             read<uint32_t>(ram,object+0x74),read<float>(ram,0x800DEB78),read<int16_t>(ram,object+0xB8));
     }
     if (!active) {
+        quick_turn_remaining = quick_turn_yaw_rate = 0;
+        quick_turn_requested = false; recenter_requested = false;
         // Menus, movies and focus loss temporarily disconnect input. Preserve
         // the player's selected camera and pitch across those interruptions;
         // only leaving Modern mode or resetting the actor needs a new camera.
@@ -210,6 +225,8 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
     frame.move = shape_stick(frame.move, tuning.movement_deadzone, 1.0f);
     frame.look = shape_stick(frame.look, tuning.aim_deadzone, tuning.aim_curve);
     if (blocked(ram, object)) {
+        quick_turn_remaining = quick_turn_yaw_rate = 0;
+        quick_turn_requested = false; recenter_requested = false;
         if (dead(ram, object)) {
             pitch = 0;
             camera_initialized = false;
@@ -233,6 +250,17 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
         read<uint32_t>(ram, 0x8018E99C);
     double dt;
     std::memcpy(&dt, &bits, sizeof(dt));
+    if (recenter_requested.exchange(false)) pitch = 0;
+    if (quick_turn_requested.exchange(false) && quick_turn_remaining <= 0.0f) {
+        quick_turn_remaining = quick_turn_degrees;
+    }
+    quick_turn_yaw_rate = 0.0f;
+    if (quick_turn_remaining > 0.0f && std::isfinite(dt) && dt > 0.0) {
+        const float rate = quick_turn_degrees / quick_turn_seconds;
+        const float step = std::min(rate * static_cast<float>(dt), quick_turn_remaining);
+        quick_turn_yaw_rate = step / static_cast<float>(dt);
+        quick_turn_remaining -= step;
+    }
     pitch = advance_pitch(pitch, frame.look.y * (tuning.invert_y ? 1 : -1),
         tuning.pitch_speed, dt);
     if (std::isfinite(dt) && dt > 0) {
@@ -305,7 +333,8 @@ extern "C" void sote_modern_train_yaw(uint8_t* ram, uint32_t object) {
     if (!active || owner != object || level_event != 8 || blocked(ram, object)) return;
     // The train integrates local angular velocity at +A8 into +90, then
     // combines the result with its carriage rotation. +A4 is linear velocity.
-    write<float>(ram, object + 0xA8, -frame.look.x * tuning.yaw_speed - mouse_yaw_rate);
+    write<float>(ram, object + 0xA8,
+        -frame.look.x * tuning.yaw_speed - mouse_yaw_rate + quick_turn_yaw_rate);
 }
 
 extern "C" uint32_t sote_modern_train_pose(uint8_t* ram, uint32_t object, uint32_t stack) {
@@ -329,7 +358,7 @@ extern "C" void sote_modern_yaw(uint8_t* ram, uint32_t object) {
     // Native ground/air integration consumes degrees/sec at object+A4, then
     // wraps heading and rebuilds its own transforms. No per-poll acceleration.
     write<float>(ram, object + 0xA4,
-        -frame.look.x * tuning.yaw_speed - mouse_yaw_rate);
+        -frame.look.x * tuning.yaw_speed - mouse_yaw_rate + quick_turn_yaw_rate);
 }
 
 extern "C" uint32_t sote_modern_aim(uint8_t* ram, uint32_t stack) {

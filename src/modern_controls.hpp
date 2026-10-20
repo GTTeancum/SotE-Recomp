@@ -32,6 +32,8 @@ void publish(Input input);
 void add_mouse_delta(int x, int y);
 Stick consume_mouse_stick(float sensitivity, bool invert_y, double seconds);
 bool on_foot_active();
+void request_recenter();
+void request_quick_turn();
 uint16_t map_buttons(uint16_t canonical);
 bool aiming_active();
 bool reticle_visible();

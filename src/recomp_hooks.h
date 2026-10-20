@@ -120,6 +120,7 @@ void sote_modern_camera_offset(uint8_t* rdram, uint32_t object, uint32_t stack);
 // Live menu capture: host copies only; never retains guest pointers.
 void sote_capture_menu(uint8_t* rdram);
 void sote_bindings_context(uint8_t* rdram, int context);
+void sote_outrider_object(uint8_t* rdram, uint32_t object);
 void sote_diagnostic_vehicle(uint8_t* rdram, uint32_t object, int context);
 void sote_capture_native_options(uint8_t* rdram);
 #ifdef __cplusplus

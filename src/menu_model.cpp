@@ -112,6 +112,8 @@ Screen classify(const std::array<Row, 80>& r) {
         is(r[53], "On Foot") && is(r[55], "Speeder Bike"))
         return Screen::Schemes;
     if (has(r[52], "Graphics") && is(r[53], "Resolution")) return Screen::Graphics;
+    // The added Cheats page shares the Controls page layout.
+    if (has(r[52], "< Cheats >") && is(r[53], "Infinite Health")) return Screen::Schemes;
     if (has(r[52], "Player:") && has(r[55], "Difficulty Setting:") &&
         has(r[56], "Lives") && has(r[60], "Challenge Pts")) return Screen::Summary;
     if (is(r[76], "Options") && is(r[77], "Rename") && is(r[78], "Clear") &&

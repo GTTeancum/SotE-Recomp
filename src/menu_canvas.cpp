@@ -290,7 +290,7 @@ void summary(Canvas& c, const Snapshot& s) {
 void options(Canvas& c, const Snapshot& s) {
     c.stars();
     c.heading("Options", "options.heading");
-    c.text("Main   < Options >   Graphics   Controls", "options.tabs",
+    c.text("Main   < Options >   Graphics   Controls   Cheats", "options.tabs",
         480, 84, 18, 0x697388FF, 820, 1);
     int index = 0;
     for (int row = 53; row <= 67; row += 2) {
@@ -326,12 +326,12 @@ void graphics(Canvas& c, const Snapshot& s) {
     c.stars(); c.heading("Graphics", "graphics.heading");
     c.text(s.rows[52].text, "graphics.tabs", 480, 84, 18,
         0x697388FF, 820, 1);
-    for (int i = 0; i < 6; ++i) {
-        const int row = 53 + i * 2;
+    for (int i = 0; i < 7; ++i) {
+        const int row = i == 6 ? 69 : 53 + i * 2;
         const bool focus = selected(s.rows[row]);
         const int value_row = i == 5 ? 65 : row + 1;
-        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 122.0f + i * 48, 27, focus ? cyan : teal, 360);
-        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 122.0f + i * 48, 27, focus ? cyan : teal, 224);
+        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 122.0f + i * 42, 27, focus ? cyan : teal, 360);
+        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 122.0f + i * 42, 27, focus ? cyan : teal, 224);
     }
     for (int row : {67, 68}) if (s.rows[row].visible())
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 423, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
@@ -451,7 +451,9 @@ void controls(Canvas& c, const Snapshot& s) {
     c.text(s.binding_hint, "controls.rebind.dialog.hint", 480, 393, 16, 0x98B6D0FF, 674, 1);
 }
 void schemes(Canvas& c, const Snapshot& s) {
-    c.stars(); c.heading("Controls", "schemes.heading");
+    c.stars();
+    c.heading(s.rows[52].text.find("< Cheats >") != std::string::npos ? "Cheats" : "Controls",
+        "schemes.heading");
     c.text(s.rows[52].text, "schemes.tabs", 480, 84, 18, 0x697388FF, 820, 1);
     c.rect(92, 104, 776, 1, purple);
     for (int index = 0; index < 11; ++index) {
@@ -501,6 +503,39 @@ void configure_menu_fonts(const std::filesystem::path& root) {
             if (!key.empty() && !value.empty()) font_roles[key] = value;
         }
     }
+}
+bool menu_font_original() {
+    std::lock_guard lock(font_mutex);
+    const auto it = font_roles.find("options");
+    return it == font_roles.end() || it->second == "original";
+}
+void set_menu_font_original(bool original) {
+    std::filesystem::path root;
+    { std::lock_guard lock(font_mutex); root = ui_root; }
+    if (root.empty()) return;
+    const char* face = original ? "original" : "system:segoeui.ttf";
+    std::filesystem::create_directories(root);
+    std::vector<std::string> lines;
+    std::ifstream input(root / "fonts.ini");
+    std::string line;
+    while (std::getline(input,line)) lines.push_back(line);
+    input.close();
+    for (const char* role : {"options", "graphics", "controls", "schemes", "pause"}) {
+        bool found = false;
+        for (auto& existing : lines) {
+            const auto equals = existing.find('=');
+            if (equals != std::string::npos && trim(existing.substr(0,equals)) == role) {
+                existing = std::string(role) + " = " + face;
+                found = true;
+            }
+        }
+        if (!found) lines.push_back(std::string(role) + " = " + face);
+    }
+    {
+        std::ofstream out(root / "fonts.ini",std::ios::trunc);
+        for (const auto& saved : lines) out << saved << "\n";
+    }
+    configure_menu_fonts(root);
 }
 Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
     if (snapshot.screen == Screen::Native || !snapshot.original || !snapshot.original->valid ||
