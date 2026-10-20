@@ -4,6 +4,7 @@
 #include "modern_controls.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdio>
 #include <cstdint>
@@ -46,6 +47,7 @@ struct Resources {
     bool ready = false;
 };
 std::unique_ptr<Resources> resources;
+std::atomic<bool> game_ready{false};
 RT64::RenderHookInit* previous_init = nullptr;
 RT64::RenderHookDraw* previous_draw = nullptr;
 RT64::RenderHookDeinit* previous_deinit = nullptr;
@@ -174,6 +176,11 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
     if (previous_draw) previous_draw(list, framebuffer);
     if (!resources || !resources->ready || !framebuffer) return;
     try {
+        if (!game_ready.load(std::memory_order_acquire)) {
+            list->setFramebuffer(framebuffer);
+            list->clearColor(0, RenderColor(0.0f, 0.0f, 0.0f, 1.0f));
+            return;
+        }
         const auto movie_frame = san_movies::latest_cached_frame();
         const auto snapshot = menu_skin::latest();
         const bool reticle = !movie_frame.valid() && !snapshot &&
@@ -238,6 +245,7 @@ void deinitialize() {
     if (previous_deinit) previous_deinit();
 }
 }
+void game_display_list_ready() { game_ready.store(true, std::memory_order_release); }
 void install() {
     if (RT64::GetRenderHookInit() == initialize) return;
     previous_init = RT64::GetRenderHookInit();

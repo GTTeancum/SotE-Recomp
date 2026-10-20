@@ -100,6 +100,11 @@ else()
 endif()
 
 add_executable(sote_recomp ${SOTE_RUNTIME_SOURCES})
+if(MSVC)
+    # Explorer launches a GUI process, without a transient console. Keep main's
+    # argument parsing for process-local tests and redirected diagnostics.
+    target_link_options(sote_recomp PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
+endif()
 # Menu presentation reuses RT64's generated fullscreen/texture-copy shaders.
 # RT64's build_shader() writes to CMAKE_BINARY_DIR/src/shaders, NOT to the
 # rt64 subdirectory's binary tree. Its include path is PRIVATE to rt64, so the

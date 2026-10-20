@@ -278,6 +278,13 @@ void initialize_persistent_logging() {
         return;
     }
 
+    for (const auto& name : {"sote-latest.log", "sote-latest-errors.log"}) {
+        auto previous = log_directory / (std::string{name} + ".previous");
+        std::filesystem::copy_file(log_directory / name, previous,
+            std::filesystem::copy_options::overwrite_existing, error);
+        error.clear();
+    }
+
     FILE* stdout_file = nullptr;
     FILE* stderr_file = nullptr;
     const std::string stdout_path =
@@ -1984,7 +1991,21 @@ LRESULT CALLBACK window_proc(
     WPARAM wparam,
     LPARAM lparam) {
     switch (message) {
+        case WM_PAINT: {
+            PAINTSTRUCT paint{};
+            HDC dc = BeginPaint(window, &paint);
+            if (display_list_count.load(std::memory_order_relaxed) == 0)
+                FillRect(dc, &paint.rcPaint, static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+            EndPaint(window, &paint);
+            return 0;
+        }
         case WM_ERASEBKGND:
+            if (display_list_count.load(std::memory_order_relaxed) == 0) {
+                RECT client{};
+                GetClientRect(window, &client);
+                FillRect(reinterpret_cast<HDC>(wparam), &client,
+                    static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)));
+            }
             // RT64 owns every pixel in the client area. Letting DefWindowProc
             // paint the class brush between swap-chain presents causes visible
             // black flashes, especially on the game's static intro screens.
@@ -2077,7 +2098,7 @@ ultramodern::renderer::WindowHandle create_window(void*) {
     window_class.lpfnWndProc = window_proc;
     window_class.hInstance = instance;
     window_class.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));
-    window_class.hbrBackground = nullptr;
+    window_class.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH));
     window_class.lpszClassName = class_name;
     if (RegisterClassExW(&window_class) == 0 &&
         GetLastError() != ERROR_CLASS_ALREADY_EXISTS) {

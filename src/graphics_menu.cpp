@@ -914,6 +914,10 @@ void draw_graphics_submenu(uint8_t* rdram) {
 }
 
 void set_transition_locked(MenuTransition next) {
+    std::printf("[sote][menu] transition %d -> %d category=%d selection=%d main=%d options=%d\n",
+        int(state.transition), int(next), int(state.category), state.submenu_selection,
+        state.main_visible, state.options_visible);
+    std::fflush(stdout);
     state.transition = next;
     state.phase_started = std::chrono::steady_clock::now();
 }
@@ -1107,7 +1111,10 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if (state.transition != MenuTransition::None) {
         consume_menu_input();
         if (now - state.transition_started > std::chrono::seconds{5}) {
-            std::fprintf(stderr, "[sote][menu] Page transition timed out.\n");
+            std::fprintf(stderr, "[sote][menu] Page transition timed out: phase=%d category=%d selection=%d main=%d options=%d submenu=%d view=%d. Releasing menu input.\n",
+                int(state.transition), int(state.category), state.submenu_selection,
+                state.main_visible, state.options_visible, state.submenu_active,
+                view ? int(view->screen) : -1);
             state.transition = MenuTransition::None;
             state.submenu_active = false;
             return;

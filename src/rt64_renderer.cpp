@@ -471,6 +471,7 @@ public:
             task->t.data_ptr & 0x03FFFFFF,
             0,
             true);
+        sote::menu_renderer::game_display_list_ready();
     }
 
     void update_screen() override {
