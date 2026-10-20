@@ -47,17 +47,25 @@ template<class T> void write(uint8_t* ram, uint32_t address, T value) {
     const uint32_t offset = (address & 0x7FFFFF) ^ (sizeof(T) == 2 ? 2 : 0);
     std::memcpy(ram + offset, &value, sizeof(value));
 }
+bool dead(uint8_t* ram, uint32_t object) {
+    if (level_event == 8)
+        return (read<uint32_t>(ram, object + 0x74) & 0x400) != 0;
+    // Ordinary on-foot bit 0x400 is also set while submerged. The sewer
+    // controller keeps health at +B4; use that instead of disabling live
+    // swimming input. The train has a separate actor layout.
+    return read<float>(ram, object + 0xB4) <= 0;
+}
 bool blocked(uint8_t* ram, uint32_t object) {
     if (level_event == 8) {
         return read<float>(ram, 0x800E539C) > 0 ||
             read<uint32_t>(ram, 0x800E5838) != 0 ||
             read<float>(ram, 0x800E57B8) > 0 ||
-            (read<uint32_t>(ram, object + 0x74) & 0x400) != 0;
+            dead(ram, object);
     }
     // Native input suppression immediately following 800758A8, plus death.
     return read<float>(ram, 0x800E0EA0) > 0 ||
         read<float>(ram, 0x800DEB78) > 0 ||
-        (read<uint32_t>(ram, object + 0x74) & 0x400) != 0;
+        dead(ram, object);
 }
 }
 
@@ -90,6 +98,17 @@ void publish(Input input) {
 void add_mouse_delta(int x, int y) {
     mouse_delta_x.fetch_add(x, std::memory_order_relaxed);
     mouse_delta_y.fetch_add(y, std::memory_order_relaxed);
+}
+Stick consume_mouse_stick(float sensitivity, bool invert_y, double seconds) {
+    const int x = mouse_delta_x.exchange(0, std::memory_order_relaxed);
+    const int y = mouse_delta_y.exchange(0, std::memory_order_relaxed);
+    if (!std::isfinite(seconds) || seconds <= 0 || !std::isfinite(sensitivity)) return {};
+    // Native vehicles steer through the analog stick. Convert relative counts
+    // to a rate, without the gamepad response curve or a persistent held turn.
+    const float scale = std::clamp(sensitivity, 0.01f, 1.0f) /
+        (180.0f * static_cast<float>(std::clamp(seconds, 1.0/240.0, 0.1)));
+    return {std::clamp(x * scale, -1.0f, 1.0f),
+        std::clamp(y * scale * (invert_y ? 1.0f : -1.0f), -1.0f, 1.0f)};
 }
 bool on_foot_active() {
     const auto age = milliseconds() - last_on_foot_ms.load();
@@ -176,11 +195,22 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
             active, bindings[1].load(), read<uint32_t>(ram,0x801130AC),
             read<uint32_t>(ram,object+0x74),read<float>(ram,0x800DEB78),read<int16_t>(ram,object+0xB8));
     }
-    if (!active) { pitch = 0; camera_initialized = false; return; }
+    if (!active) {
+        // Menus, movies and focus loss temporarily disconnect input. Preserve
+        // the player's selected camera and pitch across those interruptions;
+        // only leaving Modern mode or resetting the actor needs a new camera.
+        if (sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) !=
+            sote::controls_menu::ControlScheme::Modern) {
+            pitch = 0;
+            camera_initialized = false;
+            camera_requested = false;
+        }
+        return;
+    }
     frame.move = shape_stick(frame.move, tuning.movement_deadzone, 1.0f);
     frame.look = shape_stick(frame.look, tuning.aim_deadzone, tuning.aim_curve);
     if (blocked(ram, object)) {
-        if ((read<uint32_t>(ram, object + 0x74) & 0x400) != 0) {
+        if (dead(ram, object)) {
             pitch = 0;
             camera_initialized = false;
         }

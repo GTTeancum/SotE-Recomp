@@ -15,11 +15,14 @@ native-command replacement hooks, music maps, saves, and Modern tuning remain.
 
 ## Using Controls
 
-The native game automatically expands the Controls reference page when its
-Options row is selected. In this reference mode, Left/Right still changes the
-native preset, and Up/Down still navigates Options, including the existing
+Selecting the Controls row keeps the Options list visible. Left/Right changes
+the native preset, and Up/Down navigates Options, including the existing
 Graphics / Controls-scheme extension. Press Enter or controller A to open the
-binding editor. This extra step preserves access to native settings.
+binding editor.
+
+WASD uses the same digital menu navigation as the arrow keys. Controller X
+does not confirm native menu choices; inside the editor it still clears the
+selected binding.
 
 Inside the editor:
 
@@ -62,6 +65,15 @@ wheel direction are not assignable to button actions. In Modern mode the Look
 rows show `Mouse Move` next to the assignable right-stick directions. Mouse
 movement itself is fixed; trying to edit that column points to the Mouse Aim
 sensitivity control in Options.
+
+Modern Snowspeeder, Turret and Outrider sections use WASD movement and Mouse 1
+fire. Relative mouse motion feeds their native analog aiming/steering input.
+These sections use the On Foot scheme selection and mouse sensitivity.
+Classic retains its PC keyboard defaults.
+
+During focused gameplay the mouse is confined to the game client area. Opening
+a menu, playing a movie, switching focus or closing the window releases it.
+Offscreen diagnostics never confine the host cursor.
 
 ## Shared actions and schemes
 

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "bindings": [
+    {
+      "path": "maps/echo base/sote_DA35E49F_2_0_ED4A029A_ciByRGBA",
+      "rt64": "517fa9ea59e79696",
+      "evidence": "Echo Base event 5, Wampa actor class (flags & 15) == 2. Native upload: CI4 64x32, RGBA16 palette, source 3444816, palette 3445848."
+    }
+  ]
+}

@@ -17,6 +17,7 @@ void queue_movie_audio(const int16_t* samples, size_t sample_count);
 bool movie_skip_pressed(uint64_t token, int vi);
 
 void poll_input();
+bool mouse_capture_requested();
 // Called only from the game window's WM_INPUT handler.
 void add_mouse_delta(int x, int y);
 bool get_input(int controller, uint16_t* buttons, float* x, float* y);

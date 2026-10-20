@@ -67,6 +67,7 @@ int main() {
         sote::controls_menu::cycle_scheme(SchemeSlot::OnFoot,1);
     std::vector<uint8_t> ram(8*1024*1024);
     const uint32_t object=0x80200000, stack=0x80300000;
+    put(ram,object+0xB4,100.0f);
     put(ram,0x800D252C,int16_t(6));
     const uint32_t table = 0x800E6808 + 6*96;
     put(ram,table+0x1A,uint16_t(0x4000));
@@ -100,8 +101,9 @@ int main() {
     check(get<int16_t>(ram,stack+0x178)==0 && get<int16_t>(ram,stack+0x17A)==0,
         "left stick cannot turn body");
     sote_modern_yaw(ram.data(),object);
+    const auto live_tuning = sote::controls_menu::modern_controls_tuning().on_foot;
     check(std::fabs(get<float>(ram,object+0xA4)+
-        shape_stick({.5f,.5f},.12f,1.7f).x*180)<.001f,
+        shape_stick({.5f,.5f},live_tuning.aim_deadzone,live_tuning.aim_curve).x*live_tuning.yaw_speed)<.001f,
         "diagonal aim uses radial magnitude");
     check(sote_modern_aim(ram.data(),stack)==1 && get<float>(ram,stack+0x108)<0,
         "downward stick produces downward native pitch");
@@ -126,7 +128,28 @@ int main() {
     sote_modern_yaw(ram.data(), object);
     check(get<float>(ram, object + 0xA4) == 0 && pitch_degrees() == mouse_pitch,
         "mouse deltas are consumed once and neutral motion holds pitch");
+    add_mouse_delta(10, -5);
+    const auto vehicle_mouse = consume_mouse_stick(.12f, false, 1.0/60.0);
+    check(std::abs(vehicle_mouse.x-.4f)<.0001f && std::abs(vehicle_mouse.y-.2f)<.0001f,
+        "vehicle mouse motion becomes native analog steering and pitch");
+    const auto vehicle_neutral = consume_mouse_stick(.12f, false, 1.0/60.0);
+    check(vehicle_neutral.x==0 && vehicle_neutral.y==0,
+        "vehicle mouse deltas are consumed once without a lingering turn");
+    const float before_suspend = pitch_degrees();
+    publish({});
+    sote_modern_begin(ram.data(), object);
+    publish({{},{},true});
+    sote_modern_begin(ram.data(), object);
+    check(!sote_modern_take_camera_request() && pitch_degrees()==before_suspend,
+        "menu/movie input suspension does not force shoulder camera or reset pitch");
     put(ram,object+0x74,uint32_t(0x400));
+    publish({{},{.5f,-.5f},true});
+    sote_modern_begin(ram.data(),object);
+    sote_modern_yaw(ram.data(),object);
+    check(aiming_active() && get<float>(ram,object+0xA4)<0,
+        "live underwater flag retains right-stick aiming");
+    publish({{},{},true});
+    put(ram,object+0xB4,0.0f);
     sote_modern_begin(ram.data(),object);
     const auto before_death = ram;
     sote_modern_decode(ram.data(),object,stack);
@@ -134,6 +157,7 @@ int main() {
     check(ram==before_death && !aiming_active(),"death suppresses hooks");
     check(pitch_degrees()==0,"death clears pitch before respawn");
     put(ram,object+0x74,uint32_t(0));
+    put(ram,object+0xB4,100.0f);
     sote_modern_begin(ram.data(),object);
     check(sote_modern_take_camera_request()==1,"respawn reinitializes native camera");
     publish({});

@@ -66,8 +66,11 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     if (!sote::modern_controls::owns_player(shooter) || !address(shooter,0x250)) return;
     const auto settings=sote::controls_menu::modern_controls_tuning().on_foot;
     const int camera_slot=read<int16_t>(ram,0x8018DDE8);
-    const bool train_camera=read<int16_t>(ram,0x8013CE0E)==8 && camera_slot==0;
-    if (!settings.convergence || (camera_slot!=5 && !train_camera)) return;
+    // Native death, camera switching and terrain transitions can select a
+    // different camera without changing the player object. The visible
+    // reticle still belongs to the live view, so converge against that view
+    // rather than silently disabling alignment outside shoulder slot 5.
+    if (!settings.convergence || camera_slot < 0 || camera_slot > 5) return;
     if (!address(uint32_t(ctx.r17),4)) return;
     const uint32_t projectile=read<uint32_t>(ram,uint32_t(ctx.r17))+uint32_t(ctx.r16);
     if (!address(projectile,0xb0)) return;
@@ -127,6 +130,44 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     write(ram,projectile+0x30,direction);
     write(ram,projectile+0x40,up);
     if (std::getenv("SOTE_TRACE_MODERN_AIM")) {
+        if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN")) {
+            static bool scanned_slopes=false;
+            if (!scanned_slopes && std::getenv("SOTE_DIAGNOSTIC_FIND_SLOPE")) {
+                scanned_slopes=true;
+                uint32_t sector=read<uint32_t>(ram,0x800D2400);
+                int found=0;
+                for (int n=0;n<1024 && address(sector,0xBC) && found<12;++n) {
+                    const Vec center=read<Vec>(ram,sector+4);
+                    if (!finite(center)) break;
+                    const auto sample=[&](float dx,float dy) {
+                        const Vec from{center.x+dx,center.y+dy,center.z+32};
+                        const Hit h=trace(ram,ctx,from,{from.x,from.y,center.z-64},ignore);
+                        return h.distance>=0 && h.distance<=96 ? from.z-h.distance : NAN;
+                    };
+                    const float z=sample(0,0), gx=(sample(.5f,0)-z)*2,
+                        gy=(sample(0,.5f)-z)*2, grade=std::hypot(gx,gy);
+                    if (std::isfinite(grade) && grade>.1f && grade<1.5f) {
+                        std::printf("[sote][slope-candidate] sector=%u pos=%.3f,%.3f,%.3f grade=%.4f,%.4f\n",
+                            read<uint32_t>(ram,sector),center.x,center.y,z,gx,gy);
+                        ++found;
+                    }
+                    const uint32_t next=read<uint32_t>(ram,sector+0xB8);
+                    if (next==sector) break;
+                    sector=next;
+                }
+            }
+            const Vec feet=read<Vec>(ram,shooter+0x50);
+            const auto floor_height=[&](float dx,float dy) {
+                const Vec from{feet.x+dx,feet.y+dy,feet.z+4};
+                const Hit hit=trace(ram,ctx,from,{from.x,from.y,feet.z-8},ignore);
+                return hit.distance>=0 && hit.distance<=12 ? from.z-hit.distance : NAN;
+            };
+            const float center_z=floor_height(0,0);
+            std::printf("[sote][aim-ground] feet=%.3f,%.3f,%.3f floor=%.4f grade=%.4f,%.4f\n",
+                feet.x,feet.y,feet.z,center_z,
+                (floor_height(.5f,0)-center_z)*2,
+                (floor_height(0,.5f)-center_z)*2);
+        }
         for (auto& shot : observed_shots)
             if (shot.projectile==projectile) shot.projectile=0;
         observed_shots[next_observation++ % 256] = {projectile,target};

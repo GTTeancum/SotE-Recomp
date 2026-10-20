@@ -51,6 +51,7 @@ int main(int argc,char** argv) {
     };
     configure(0);
     std::vector<uint8_t> memory(8*1024*1024); auto* ram=memory.data();
+    put(ram,player+0xB4,100.0f);
     put(ram,player+0x70,collision);put(ram,0x800D08A4,camera);put<int16_t>(ram,0x8018DDE8,5);
     put(ram,camera+0x44,Vec{1.2f,-8,1.2f});put(ram,camera+0x24,Vec{0,1,0});
     put(ram,pos,Vec{0,0,0});put(ram,stack+0x68,player);
@@ -75,7 +76,18 @@ int main(int argc,char** argv) {
         "train native camera converges at reticle");
     put<int16_t>(ram,0x8013CE0E,4);sote_modern_begin(ram,player);
     calls=0;sote_modern_projectile(ram,&c);
-    check(calls==0,"ordinary camera zero does not enable convergence");
+    check(calls==2,"native camera reset keeps Modern convergence enabled");
+    for (int slot=0; slot<=5; ++slot) {
+        put<int16_t>(ram,0x8018DDE8,slot);
+        put(ram,camera+0x24,Vec{0.2f,1.0f,0.3f});
+        wall=100; put(ram,vel,Vec{0,20,0}); calls=0;
+        sote_modern_projectile(ram,&c);
+        const auto v=get<Vec>(ram,vel);
+        check(calls==2 && std::abs(v.x*100/v.y-22.8f)<0.001f &&
+            std::abs(v.z*100/v.y-33.6f)<0.001f,
+            "each live camera converges on its tilted center ray on uneven terrain");
+    }
+    put(ram,camera+0x24,Vec{0,1,0});
     put<int16_t>(ram,0x8018DDE8,5);
     // FR=1 uses a different backing field for odd registers. Exercise it too.
     c.mips3_float_mode=true; c.f_odd=&c.f1.u32l;

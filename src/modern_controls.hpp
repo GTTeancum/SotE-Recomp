@@ -30,6 +30,7 @@ Stick shape_stick(Stick raw, float deadzone, float exponent);
 float advance_pitch(float pitch, float input, float speed, double seconds);
 void publish(Input input);
 void add_mouse_delta(int x, int y);
+Stick consume_mouse_stick(float sensitivity, bool invert_y, double seconds);
 bool on_foot_active();
 uint16_t map_buttons(uint16_t canonical);
 bool aiming_active();

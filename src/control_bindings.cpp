@@ -99,6 +99,19 @@ bool neutral(const PhysicalInput& i, Device d) {
     return std::none_of(i.buttons.begin(), i.buttons.end(), [](uint8_t b) { return b != 0; }) &&
         std::none_of(i.axes.begin(), i.axes.end(), [](int16_t a) { return std::abs(int(a)) > 8192; });
 }
+bool should_capture_mouse(bool gameplay, bool focused, bool menu, bool movie, bool diagnostic) {
+    return gameplay && focused && !menu && !movie && !diagnostic;
+}
+PhysicalInput menu_navigation(PhysicalInput input) {
+    for (const auto [source, target] : {std::pair{'W', 38}, {'S', 40}, {'A', 37}, {'D', 39}}) {
+        input.keys[target] |= input.keys[source];
+        input.keys[source] = 0;
+    }
+    // X is a gameplay action, not a second menu confirm/cancel button.
+    // Binding capture receives the unmodified input before this conversion.
+    input.buttons[2] = 0;
+    return input;
+}
 std::string token_text(Token t) {
     switch (t.kind) {
         case Kind::None: return "none";
@@ -164,8 +177,9 @@ Layout make_layout(const NativeTable& t) {
     struct Route { Token input; uint16_t mask; };
     for (int g = 0; g < 5; ++g) {
         const bool mf = g == 0 && t.modern_foot, mb = g == 3 && t.modern_bike;
+        const bool modern_vehicle_keys = t.modern_foot && (g == 1 || g == 2 || g == 4);
         const std::string prefix = "p" + std::to_string(t.preset) + "." +
-            (mf || mb ? "modern." : "classic.") + context_ids[g] + ".";
+            (mf || mb || modern_vehicle_keys ? "modern." : "classic.") + context_ids[g] + ".";
         auto add_fixed = [&](const std::string& id, const std::string& label, Token k, Token p) {
             Action a{prefix + id, label, static_cast<Context>(g), {}};
             if (k.kind != Kind::None) a.targets[0].push_back(k);
@@ -177,8 +191,8 @@ Layout make_layout(const NativeTable& t) {
         const bool pc_classic_turret = g == 2;
         const bool pc_classic_bike = g == 3 && !mb;
         const bool pc_classic_outrider = g == 4;
-        const bool pc_classic_arrows = pc_classic_foot || pc_classic_snow ||
-            pc_classic_turret || pc_classic_bike || pc_classic_outrider;
+        const bool pc_classic_arrows = !modern_vehicle_keys && (pc_classic_foot || pc_classic_snow ||
+            pc_classic_turret || pc_classic_bike || pc_classic_outrider);
         add_fixed("move_forward", "Move Forward", key(pc_classic_arrows ? up : 'W'), mb ? Token{} : axis(1,-1));
         add_fixed("move_back", "Move Backward", key(pc_classic_arrows ? down : 'S'), mb ? Token{} : axis(1,1));
         add_fixed("move_left", "Move Left", key(pc_classic_arrows ? left : 'A'), axis(0,-1));
@@ -211,7 +225,7 @@ Layout make_layout(const NativeTable& t) {
                 {key(9),uint16_t(t.masks[23]|1)},
                 {key('A'),t.masks[18]},{key('W'),t.masks[22]},
                 {key('C'),t.masks[19]},{key('Q'),t.masks[20]}};
-        } else if (pc_classic_snow) {
+        } else if (pc_classic_snow && !modern_vehicle_keys) {
             routes[0] = {{key('Z'),0x8000},{key(2),0x8000},
                 {key('X'),0x4000},{key(1),0x4000},
                 {key(32),0x2000},{key('C'),0x2000},
@@ -219,7 +233,7 @@ Layout make_layout(const NativeTable& t) {
                 {key(13),0x1000},{key(112),0x1000},
                 {key('I'),0x0800},{key('K'),0x0400},
                 {key('J'),0x0200},{key('L'),0x0100}};
-        } else if (pc_classic_turret) {
+        } else if (pc_classic_turret && !modern_vehicle_keys) {
             routes[0] = {{key('X'),0x4000},{key(1),0x4000},
                 {key(t.turret_skyhook ? 'Z' : 32),0x2000},
                 {key('C'),0x2000},{key(2),0x2000},
@@ -233,7 +247,7 @@ Layout make_layout(const NativeTable& t) {
                 {key(9),1},{key(13),0x1000},{key(112),0x1000},
                 {key('I'),0x0800},{key('K'),0x0400},
                 {key('J'),0x0200},{key('L'),0x0100}};
-        } else if (pc_classic_outrider) {
+        } else if (pc_classic_outrider && !modern_vehicle_keys) {
             routes[0] = {{key('Z'),0x8000},{key(2),0x8000},
                 {key('X'),0x4000},{key(1),0x4000},
                 {key(32),0x2000},{key('C'),0x2000},
@@ -242,7 +256,7 @@ Layout make_layout(const NativeTable& t) {
                 {key('I'),0x0800},{key('K'),0x0400},
                 {key('J'),0x0200},{key('L'),0x0100}};
         }
-        if (mf) routes[0].push_back({key(1), 0x4000}); // Mouse 1 shares Fire with X.
+        if (mf || modern_vehicle_keys) routes[0].push_back({key(1), 0x4000}); // Mouse 1 shares Fire with X.
         routes[1] = {{button(0),0x8000},{button(2),0x4000},{button(1),0x4000},{button(3),2},
             {button(6),0x1000},{button(9),0x20},{button(10),0x10},
             {button(11),0x0800},{button(12),0x0400},{button(13),0x0200},{button(14),0x0100},
@@ -336,7 +350,17 @@ uint16_t translate_on_foot_buttons(const NativeTable& table, uint16_t canonical)
     }
     return result;
 }
-std::string storage_key(const Action& a, Device d) { return a.id + (d == Device::Keyboard ? ".key" : ".pad"); }
+std::string storage_key(const Action& a, Device d) {
+    std::string id = a.id;
+    // Vehicle pad defaults did not change with the new Modern keyboard
+    // layouts. Keep their existing saved assignments under the original key.
+    if (d == Device::Controller && (a.context == Context::Snowspeeder ||
+        a.context == Context::Turret || a.context == Context::Outrider)) {
+        if (const auto scheme = id.find(".modern."); scheme != std::string::npos)
+            id.replace(scheme, 8, ".classic.");
+    }
+    return id + (d == Device::Keyboard ? ".key" : ".pad");
+}
 std::vector<Token> Assignments::sources(const Action& a, Device d) const {
     const auto it = overrides.find(storage_key(a,d));
     if (it == overrides.end()) return a.targets[int(d)];
@@ -545,6 +569,11 @@ void observe_menu(const uint8_t* ram,size_t size) {
     if(!state.menu_valid||!same_table(state.menu_table,table)) {
         if(state.menu_valid)settle("Preset or scheme changed; using its saved bindings.");
         state.menu_table=table;state.menu_layout=make_layout(table);state.menu_valid=true;ensure_selection();
+        if (std::getenv("SOTE_TRACE_MENU_REVAMP")) {
+            std::printf("[sote][bindings] menu preset=%d modern_foot=%d modern_bike=%d\n",
+                table.preset, table.modern_foot, table.modern_bike);
+            std::fflush(stdout);
+        }
     }
 }
 void observe_context(const uint8_t* ram,size_t size,Context context) {

@@ -354,6 +354,14 @@ void binding_column(Canvas& c, const std::vector<Binding>& rows, float x, float 
     }
 }
 void controls(Canvas& c, const Snapshot& s) {
+    if (s.rebinding && !s.binding_editing) {
+        // The native options camera zooms as soon as this row is focused.
+        // Keep the options list visible until the binding editor is opened.
+        options(c, s);
+        c.text("Enter / A: edit bindings   Left / Right: preset",
+            "options.controls.hint", 480, 449, 18, teal, 770, 1);
+        return;
+    }
     c.stars(); c.heading("Controls", "controls.heading");
     c.text("Action", "controls.columns.action", 115, 108, 19, teal, 250);
     c.text("Keyboard / Mouse", "controls.columns.keyboard", 546, 108, 19, teal, 200, 1);

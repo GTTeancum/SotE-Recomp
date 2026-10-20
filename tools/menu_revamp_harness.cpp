@@ -437,6 +437,107 @@ int main(int argc, char** argv) {
     check(sote::graphics_menu::pc_cutscenes_enabled(),
         "compact persisted true re-enables PC movies on restart");
 
+    {
+        sote::control_bindings::PhysicalInput raw;
+        raw.keys['W'] = raw.keys['A'] = 1;
+        raw.buttons[2] = 1;
+        const auto mapped = sote::control_bindings::menu_navigation(raw);
+        check(mapped.keys[38] && mapped.keys[37] && !mapped.keys['W'] && !mapped.keys['A'],
+            "WASD menus use the same digital path as arrow keys without analog duplication");
+        check(!mapped.buttons[2] && raw.buttons[2],
+            "X is excluded from native menu actions without altering binding-capture input");
+    }
+
+    check(sote::control_bindings::should_capture_mouse(true, true, false, false, false),
+        "foreground gameplay requests mouse capture");
+    for (int gate = 0; gate < 5; ++gate)
+        check(!sote::control_bindings::should_capture_mouse(gate != 0, gate != 1,
+            gate == 2, gate == 3, gate == 4),
+            "capture releases outside gameplay, on focus loss, menus, movies and diagnostics");
+
+    {
+        namespace bindings = sote::control_bindings;
+        bindings::NativeTable table;
+        table.modern_foot = true;
+        const auto modern_layout = bindings::make_layout(table);
+        for (int group : {1, 2, 4}) {
+            check(modern_layout[group][0].targets[0].front() == bindings::key('W') &&
+                modern_layout[group][2].targets[0].front() == bindings::key('A'),
+                "Modern flying sections expose WASD movement bindings");
+            bindings::Assignments edited;
+            edited.overrides[bindings::storage_key(modern_layout[group][0], bindings::Device::Keyboard)] = bindings::key('T');
+            bindings::PhysicalInput raw;
+            raw.keys['T'] = 1;
+            check(edited.apply(raw, modern_layout[group]).keys['W'],
+                "flying movement overrides reach the canonical WASD input path");
+        }
+        table.modern_foot = false;
+        const auto classic_layout = bindings::make_layout(table);
+        check(classic_layout[1][0].targets[0].front() == bindings::key(38),
+            "Classic flying controls preserve the PC arrow-key defaults");
+        for (int group : {1, 2, 4})
+            check(bindings::storage_key(classic_layout[group][0], bindings::Device::Keyboard) !=
+                bindings::storage_key(modern_layout[group][0], bindings::Device::Keyboard),
+                "Classic and Modern flying bindings persist independently");
+        for (int group : {1, 2, 4}) {
+            bindings::Assignments previous_version;
+            previous_version.overrides[bindings::storage_key(
+                classic_layout[group][0], bindings::Device::Controller)] = bindings::axis(2,1);
+            bindings::PhysicalInput raw{};
+            raw.connected = true;
+            raw.axes[2] = 24000;
+            check(previous_version.apply(raw, modern_layout[group]).axes[1] < 0,
+                "existing vehicle controller bindings survive Modern keyboard layout changes");
+        }
+    }
+
+    {
+        namespace bindings = sote::control_bindings;
+        Memory binding_memory;
+        binding_memory.native_options();
+        binding_memory.half(0x800e6808 + 6, 0x1000);
+        std::filesystem::remove(scratch / "Sdata" / "controls_bindings.ini");
+        bindings::initialize(scratch);
+        bindings::observe_menu(binding_memory.bytes.data(), binding_memory.bytes.size());
+        uint64_t time = 10000;
+        auto input = [&](int vk) {
+            bindings::PhysicalInput raw{};
+            if (vk) raw.keys[vk] = 1;
+            return bindings::handle_menu(raw, true, time += 100, true);
+        };
+        input(0);
+        check(!bindings::editor_view().editing, "Controls reference does not open editor on focus");
+        input(13);
+        input(0);
+        check(bindings::editor_view().editing, "Enter opens keyboard binding editor");
+        input(13);
+        input(0);
+        check(bindings::editor_view().phase == bindings::Phase::Capture,
+            "Enter and release arm keyboard capture");
+        input('T');
+        input(0);
+        const auto saved = bindings::saved_assignments();
+        check(saved.size() == 1 && saved.begin()->second == bindings::key('T'),
+            "keyboard editor saves reassigned movement key");
+        bindings::initialize(scratch);
+        check(bindings::saved_assignments() == saved,
+            "keyboard assignment survives editor restart");
+        bindings::observe_menu(binding_memory.bytes.data(), binding_memory.bytes.size());
+        input(0);
+        input(13);
+        input(0);
+        input(13);
+        input(0);
+        input(6); // VK_XBUTTON2, through the same keyboard/mouse capture column.
+        input(0);
+        const auto mouse_saved = bindings::saved_assignments();
+        check(mouse_saved.size() == 1 && mouse_saved.begin()->second == bindings::key(6),
+            "mouse button can replace a keyboard-column binding");
+        bindings::initialize(scratch);
+        check(bindings::saved_assignments() == mouse_saved,
+            "mouse button assignment survives editor restart");
+    }
+
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";
     return failures == 0 ? 0 : 1;

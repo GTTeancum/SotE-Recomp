@@ -39,6 +39,9 @@ struct PhysicalInput {
 };
 float value(const PhysicalInput& input, Token token);
 bool neutral(const PhysicalInput& input, Device device);
+// Native menus receive identical digital navigation from WASD and arrows.
+PhysicalInput menu_navigation(PhysicalInput input);
+bool should_capture_mouse(bool gameplay, bool focused, bool menu, bool movie, bool diagnostic);
 
 struct NativeTable {
     int preset = 0;

@@ -561,7 +561,8 @@ bool initialize() {
     initialized = true;
     SDL_GameControllerEventState(SDL_ENABLE);
     load_diagnostic_pad_pulses();
-    if (!diagnostic_pad_enabled() && !diagnostic_mouse_enabled() &&
+    if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr &&
+        !diagnostic_pad_enabled() && !diagnostic_mouse_enabled() &&
         !diagnostic_keys_enabled())
         find_controller();
     return true;
@@ -786,7 +787,8 @@ void poll_input() {
         input_snapshot.store(menu_action == 2 ? n64_b : menu_action == 3 ? n64_start : 0, std::memory_order_relaxed);
         return;
     }
-    mapped_input = control_bindings::remap(raw_input, bool(menu));
+    mapped_input = menu ? control_bindings::menu_navigation(raw_input) :
+        control_bindings::remap(raw_input, false);
     const sote::controls_menu::ModernControlsTuning controls =
         sote::controls_menu::modern_controls_tuning();
     uint16_t buttons = 0;
@@ -991,19 +993,25 @@ void poll_input() {
     // pad. Keep them separate from already-translated pad bits to avoid
     // translating a native binding twice.
     uint16_t keyboard_buttons = 0;
+    const bool modern_vehicle_keys = !menu &&
+        sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
+            sote::controls_menu::ControlScheme::Modern &&
+        (control_bindings::context_active(control_bindings::Context::Snowspeeder) ||
+         control_bindings::context_active(control_bindings::Context::Turret) ||
+         control_bindings::context_active(control_bindings::Context::Outrider));
     const bool classic_foot_keyboard = !menu &&
         control_bindings::context_active(control_bindings::Context::OnFoot) &&
         sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
             sote::controls_menu::ControlScheme::Classic;
-    const bool classic_snow_keyboard = !menu &&
+    const bool classic_snow_keyboard = !menu && !modern_vehicle_keys &&
         control_bindings::context_active(control_bindings::Context::Snowspeeder);
-    const bool classic_turret_keyboard = !menu &&
+    const bool classic_turret_keyboard = !menu && !modern_vehicle_keys &&
         control_bindings::context_active(control_bindings::Context::Turret);
     const bool classic_bike_keyboard = !menu &&
         control_bindings::context_active(control_bindings::Context::Bike) &&
         sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::Bike) ==
             sote::controls_menu::ControlScheme::Classic;
-    const bool classic_outrider_keyboard = !menu &&
+    const bool classic_outrider_keyboard = !menu && !modern_vehicle_keys &&
         control_bindings::context_active(control_bindings::Context::Outrider);
     if (classic_foot_keyboard) {
         // Installed PC release, first built-in control set. Movement uses
@@ -1068,7 +1076,7 @@ void poll_input() {
         if (key_down('L')) keyboard_buttons |= n64_dr;
     } else {
         if (key_down('Z') || key_down(VK_SPACE)) keyboard_buttons |= n64_a;
-        if (key_down('X')) keyboard_buttons |= n64_b;
+        if (key_down('X') || (!menu && modern_vehicle_keys && key_down(VK_LBUTTON))) keyboard_buttons |= n64_b;
         if (key_down('C')) keyboard_buttons |= n64_z;
         if (key_down(VK_RETURN)) keyboard_buttons |= n64_start;
         if (key_down('Q')) keyboard_buttons |= page_keys ? n64_dl : n64_l;
@@ -1160,6 +1168,16 @@ void poll_input() {
         std::memory_order_relaxed);
 }
 
+bool mouse_capture_requested() {
+    bool gameplay = false;
+    for (int i = 0; i < int(control_bindings::Context::Count); ++i)
+        gameplay |= control_bindings::context_active(static_cast<control_bindings::Context>(i));
+    return physical_input_enabled.load(std::memory_order_relaxed) &&
+        control_bindings::should_capture_mouse(gameplay, process_owns_foreground_window(),
+            bool(sote::menu_skin::latest()), movie_playback_token.load(std::memory_order_relaxed) != 0,
+            std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr);
+}
+
 void add_mouse_delta(int x, int y) {
     sote::modern_controls::add_mouse_delta(x, y);
 }
@@ -1195,9 +1213,21 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
     // normal SDL poll is intentionally inactive without window focus.
     if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
         std::getenv("SOTE_DIAGNOSTIC_BINDING_ROUTE") != nullptr) {
+        static uint16_t previous_scripted_menu_buttons = 0;
+        const uint16_t scripted_menu_buttons = scripted &
+            (n64_a | n64_b | n64_du | n64_dd | n64_dl | n64_dr);
+        const bool scripted_press =
+            (scripted_menu_buttons & ~previous_scripted_menu_buttons) != 0;
+        previous_scripted_menu_buttons = scripted_menu_buttons;
         const auto menu = sote::menu_skin::latest();
         if (menu && menu->screen == sote::menu_skin::Screen::Controls &&
-            menu->rebinding) {
+            menu->rebinding && scripted_menu_buttons != 0) {
+            // A held diagnostic pulse is one press. Neutral virtual polls
+            // must not overwrite the real keyboard/mouse edge history.
+            if (!scripted_press) {
+                *buttons = 0; *x = 0; *y = 0;
+                return true;
+            }
             control_bindings::PhysicalInput virtual_pad{};
             virtual_pad.connected = true;
             virtual_pad.instance = 1;
@@ -1283,6 +1313,21 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
                 *buttons |= n64_b;
             }
         }
+    }
+    const bool native_mouse_aim =
+        control_bindings::context_active(control_bindings::Context::Snowspeeder) ||
+        control_bindings::context_active(control_bindings::Context::Turret) ||
+        control_bindings::context_active(control_bindings::Context::Outrider);
+    if (native_mouse_aim && !sote::menu_skin::latest()) {
+        static auto previous_mouse_poll = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
+        const double seconds = std::chrono::duration<double>(now - previous_mouse_poll).count();
+        previous_mouse_poll = now;
+        const auto tuning = sote::controls_menu::modern_controls_tuning().on_foot;
+        const auto mouse = sote::modern_controls::consume_mouse_stick(
+            tuning.mouse_sensitivity, tuning.invert_y, seconds);
+        *x = std::clamp(*x + mouse.x * n64_stick_scale, -n64_stick_scale, n64_stick_scale);
+        *y = std::clamp(*y + mouse.y * n64_stick_scale, -n64_stick_scale, n64_stick_scale);
     }
     sote::graphics_menu::filter_input(buttons, x, y);
     return true;

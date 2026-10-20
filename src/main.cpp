@@ -1953,6 +1953,29 @@ void resize_graphics_window(
     std::fflush(stdout);
 }
 
+// The game owns capture only while its own foreground client is playable.
+// Offscreen diagnostics never call ClipCursor or change cursor visibility.
+bool mouse_captured = false;
+void release_game_mouse() {
+    if (!mouse_captured) return;
+    ClipCursor(nullptr);
+    mouse_captured = false;
+}
+void update_game_mouse(HWND window) {
+    if (window == nullptr || GetForegroundWindow() != window || IsIconic(window) ||
+        !sote::frontend::mouse_capture_requested()) {
+        release_game_mouse();
+        return;
+    }
+    RECT bounds{};
+    if (!GetClientRect(window, &bounds) || bounds.right <= 0 || bounds.bottom <= 0) {
+        release_game_mouse();
+        return;
+    }
+    MapWindowPoints(window, nullptr, reinterpret_cast<POINT*>(&bounds), 2);
+    if (ClipCursor(&bounds)) mouse_captured = true;
+}
+
 LRESULT CALLBACK window_proc(
     HWND window,
     UINT message,
@@ -1971,7 +1994,15 @@ LRESULT CALLBACK window_proc(
                 return 0;
             }
             break;
+        case WM_ACTIVATEAPP:
+            if (!wparam) release_game_mouse();
+            break;
+        case WM_KILLFOCUS:
+        case WM_ENTERSIZEMOVE:
+            release_game_mouse();
+            break;
         case WM_INPUT: {
+            if (!mouse_captured) break;
             RAWINPUT input{};
             UINT bytes = sizeof(input);
             if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam),
@@ -2001,10 +2032,12 @@ LRESULT CALLBACK window_proc(
             }
             break;
         case WM_CLOSE:
+            release_game_mouse();
             ultramodern::quit();
             DestroyWindow(window);
             return 0;
         case WM_DESTROY:
+            release_game_mouse();
             if (window == graphics_window) {
                 graphics_window = nullptr;
             }
@@ -2141,6 +2174,7 @@ void update_gfx(void*) {
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
+    update_game_mouse(graphics_window);
 }
 
 RspUcodeFunc* get_rsp_microcode(const OSTask* task) {
@@ -3217,6 +3251,69 @@ extern "C" void sote_diagnostic_palace_ray(uint8_t* rdram, uint32_t object) {
     std::fflush(stdout);
 }
 
+extern "C" void sote_diagnostic_vehicle(uint8_t* rdram, uint32_t object, int context) {
+    if (!std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") ||
+        !std::getenv("SOTE_TRACE_VEHICLE_STATE") || !rdram ||
+        object < 0x80000000U || object > 0x807FFF80U) return;
+    const int vi = vi_count.load(std::memory_order_relaxed);
+    if (vi % 15) return;
+    std::printf("[sote][vehicle-state] VI=%d event=%d context=%d object=%08X "
+        "rotation=%.4f,%.4f,%.4f pos=%.3f,%.3f,%.3f\n",
+        vi, static_cast<int16_t>(read_guest_half(rdram, 0x8013CE0E)),
+        context, object,
+        read_guest_float(rdram, object+0x14), read_guest_float(rdram, object+0x18),
+        read_guest_float(rdram, object+0x1C), read_guest_float(rdram, object+0x50),
+        read_guest_float(rdram, object+0x54), read_guest_float(rdram, object+0x58));
+    static int last_camera_vi = -1;
+    const uint32_t camera = read_guest_word(rdram, 0x800D08A4);
+    if (last_camera_vi != vi && camera >= 0x80000000U && camera <= 0x807FFF80U) {
+        last_camera_vi = vi;
+        std::printf("[sote][vehicle-camera] VI=%d event=%d forward=%.5f,%.5f,%.5f\n",
+            vi, static_cast<int16_t>(read_guest_half(rdram, 0x8013CE0E)),
+            read_guest_float(rdram, camera+0x24), read_guest_float(rdram, camera+0x28),
+            read_guest_float(rdram, camera+0x2C));
+    }
+}
+
+extern "C" void sote_diagnostic_active_player(uint8_t* rdram, uint32_t object) {
+    if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr ||
+        rdram == nullptr || object < 0x80000000U || object > 0x807FFD80U) return;
+    const int controller_vi = vi_count.load(std::memory_order_relaxed);
+    // Contained placement probe: change only Dash's coordinates, allowing
+    // native collision, sector entry and encounter messages to run normally.
+    if (const char* placement = std::getenv("SOTE_DIAGNOSTIC_PLACE_PLAYER")) {
+        static bool placed = false;
+        int event = 0, start_vi = 0;
+        float xyz[3] = {};
+        if (!placed && std::sscanf(placement, "%d:%d:%f:%f:%f",
+                &event, &start_vi, &xyz[0], &xyz[1], &xyz[2]) == 5 &&
+            controller_vi >= start_vi &&
+            read_guest_half(rdram, 0x8013CE0EU) == event) {
+            for (int axis = 0; axis < 3; ++axis) {
+                uint32_t bits;
+                std::memcpy(&bits, &xyz[axis], sizeof(bits));
+                write_guest_word(rdram, object + 8U + axis * 4U, bits);
+                write_guest_word(rdram, object + 0x50U + axis * 4U, bits);
+                write_guest_word(rdram, object + 0x98U + axis * 4U, 0);
+            }
+            placed = true;
+            std::printf("[sote][place-player] event=%d VI=%d pos=%.2f,%.2f,%.2f\n",
+                event, controller_vi, xyz[0], xyz[1], xyz[2]);
+            std::fflush(stdout);
+        }
+    }
+    if (std::getenv("SOTE_TRACE_PLAYER_STATE") && controller_vi % 30 == 0 &&
+        object >= 0x80000000U && object < 0x80800000U) {
+        std::printf("[sote][active-player] VI=%d event=%d object=%08X camera=%d pos=%.3f,%.3f,%.3f health=%.1f flags=%08X\n",
+            controller_vi, static_cast<int16_t>(read_guest_half(rdram, 0x8013CE0E)), object,
+            static_cast<int16_t>(read_guest_half(rdram, 0x8018DDE8)),
+            read_guest_float(rdram, object+0x50), read_guest_float(rdram, object+0x54),
+            read_guest_float(rdram, object+0x58), read_guest_float(rdram, object+0xB4),
+            read_guest_word(rdram, object+0x74));
+        std::fflush(stdout);
+    }
+}
+
 extern "C" void sote_enter_player_controller(
     uint8_t* rdram,
     uint32_t object,
@@ -3227,28 +3324,6 @@ extern "C" void sote_enter_player_controller(
     // place the first independently plausible respawn death after 1,800 VIs.
     constexpr int minimum_stable_respawn_vis = 1800;
     const int controller_vi = vi_count.load(std::memory_order_relaxed);
-    // Contained placement probe: change only Dash's coordinates, allowing
-    // native collision, sector entry and encounter messages to run normally.
-    if (const char* placement = std::getenv("SOTE_DIAGNOSTIC_PLACE_PLAYER")) {
-        static bool placed = false;
-        int event = 0, start_vi = 0;
-        float xyz[3] = {};
-        if (!placed && std::sscanf(placement, "%d:%d:%f:%f:%f",
-                &event, &start_vi, &xyz[0], &xyz[1], &xyz[2]) == 5 &&
-            controller == 0x800700F0U && controller_vi >= start_vi &&
-            read_guest_half(rdram, 0x8013CE0EU) == event) {
-            for (int axis = 0; axis < 3; ++axis) {
-                uint32_t bits;
-                std::memcpy(&bits, &xyz[axis], sizeof(bits));
-                write_guest_word(rdram, object + 8U + axis * 4U, bits);
-                write_guest_word(rdram, object + 0x50U + axis * 4U, bits);
-            }
-            placed = true;
-            std::printf("[sote][place-player] event=%d VI=%d pos=%.2f,%.2f,%.2f\n",
-                event, controller_vi, xyz[0], xyz[1], xyz[2]);
-            std::fflush(stdout);
-        }
-    }
     // Diagnostic-only aid for following long automatic story transitions.
     // The actual gameplay route still needs a separate unassisted check.
     if (std::getenv("SOTE_DIAGNOSTIC_FULL_HEALTH") != nullptr &&
