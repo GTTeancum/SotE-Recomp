@@ -106,3 +106,54 @@ text, not part of that texture. Evidence: `.local/options-freeze/title-audit`,
 `title-view`, `title-fixed`.
 
 Follow-up staged executable SHA-256 (both names): B9D005D13935429BCD4EF1ADEF8CCC1291FBB033064B3363203E8FF60A0639E2
+
+
+## Follow-up goal: reported toggle sequence and both font modes
+
+The preserved SotE_Recompiled/logs/sote-latest.log.previous records the
+reported Options lock as a Return transition trapped in phase 6. Game,
+rendering and input counters continued. Its paired error log records the
+transition timeout. This supports the Return-navigation correction above;
+it does not establish a renderer deadlock or a cause for GitHub issue #14.
+
+SOTE_DIAGNOSTIC_OPTIONS_RETURN_ROUTE=stress exercises the full sequence
+inside the game process, guarded by SOTE_DIAGNOSTIC_OFFSCREEN: enter Pause,
+open Options, change and apply N64/PC cutscenes on Graphics, return to Options,
+toggle Overlay Displays twelve times, return to Pause, and repeat three times.
+It follows observed menu state and never sends host input. Graphics focus
+comes from the selected row because the snapshot's native selection still
+belongs to the underlying Options page.
+
+Modern and Original runs each completed three actual returns, three applied
+cutscene changes and 36 toggles, continued through VI 8190, and exited normally
+without a page-transition timeout. Evidence directories:
+.local/options-freeze/menu-stress-modern/ and menu-stress-original/.
+Check a run with `python tools/check_options_stress_log.py <run-directory>`.
+This validates logged behavior, not image content.
+
+Native captures were inspected: Modern Options correctly says Return to
+Pause Menu. Modern legal text is centered with correct copyright/trademark
+glyphs; Original retains its native aligned rows and symbols. Modern
+communicator paragraphs use UI-font word widths and align with the portrait;
+Original retains native glyphs and fixed line breaks. Evidence:
+
+- Modern legal: .local/options-freeze/boot-modern-fixed/frames/present_100.png
+- Original legal: .local/options-freeze/menu-stress-original/frames/present_100.png
+- Modern communicator: .local/options-freeze/communicator-modern/frames/present_900.png
+- Original communicator: .local/options-freeze/native-original/frames/present_900.png
+
+Full corpus coverage is documented in COMMUNICATOR_FONT_AUDIT.md. These muted
+runs do not establish audible audio or every message's live trigger timing.
+The separate Traditional-preset report under GitHub #14 remains open.
+
+A third run, menu-stress-async, repeated the Modern sequence with
+SOTE_DIAGNOSTIC_CAPTURE_SYNC unset, retaining normal asynchronous presentation.
+It also exited normally: three returns, three applies, 36 observed native
+option changes, continued simulation through VI 8190 and no transition timeout.
+The captured Options page retained its background, values, highlight, footer
+and Return to Pause Menu. Across all three runs: nine cycles / 108 changes.
+This closes the observed Return input trap, superseding the earlier open
+verification status for that path; it does not close the separate #14 report.
+
+Both staged executable names were verified against the tested build:
+SHA-256 0A92DF875840C4AF3ABB1E7729A642A1176DF290FA796A26221D38C0CE9D1D28.

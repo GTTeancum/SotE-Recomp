@@ -2810,7 +2810,9 @@ void on_vi() {
         }
     }
     // Repeat the reported pause/options path entirely inside this process.
-    if (std::getenv("SOTE_DIAGNOSTIC_OPTIONS_RETURN_ROUTE") && count>=3100) {
+    if (std::getenv("SOTE_DIAGNOSTIC_OPTIONS_RETURN_ROUTE") &&
+        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") && count>=3100) {
+        const bool stress=std::strcmp(std::getenv("SOTE_DIAGNOSTIC_OPTIONS_RETURN_ROUTE"),"stress")==0;
         static int next_vi=3100, pulse_end=0, phase=0, toggles=0, cycles=0;
         static uint16_t buttons=0;static int8_t stick=0;
         if(count>=pulse_end) { buttons=0;stick=0; }
@@ -2818,7 +2820,7 @@ void on_vi() {
             const auto view=sote::menu_skin::latest();
             const auto screen=view ? view->screen : sote::menu_skin::Screen::Native;
             if(screen==sote::menu_skin::Screen::Pause) {
-                if(phase==2) {
+                if(phase==(stress?5:2)) {
                     ++cycles;phase=0;toggles=0;
                     std::printf("[sote][options-return-test] returned-to-pause cycle=%d VI=%d\n",cycles,count);
                 }
@@ -2827,14 +2829,23 @@ void on_vi() {
                     else stick=-80;
                 }
             } else if(screen==sote::menu_skin::Screen::Options) {
-                if(phase==2) { /* wait for native return */ }
+                if(stress && phase==0) {buttons=0x0010;phase=1;}
+                else if(phase==(stress?5:2)) { /* wait for native return */ }
                 else if(view->focused_setting!=1) stick=-80;
-                else if(toggles++<6) { buttons=0x8000;phase=1; }
-                else { buttons=0x0020;phase=2; }
+                else if(toggles++<(stress?12:6)) { buttons=0x8000;phase=stress?4:1; }
+                else { buttons=0x0020;phase=stress?5:2; }
+            } else if(stress && screen==sote::menu_skin::Screen::Graphics) {
+                if(phase==1) {
+                    if(view->rows[65].color==0xC8FFC8FFU) {buttons=0x8000;phase=2;}
+                    else stick=-80;
+                } else if(phase==2) {
+                    if(view->rows[67].color==0xC8FFC8FFU) {buttons=0x8000;phase=3;}
+                    else stick=-80;
+                } else if(phase==3) buttons=0x0020;
             } else if(screen==sote::menu_skin::Screen::Native) buttons=0x1000;
             std::printf("[sote][options-return-test] VI=%d screen=%s phase=%d focus=%d buttons=%04X stick=%d\n",
                 count,sote::menu_skin::screen_name(screen),phase,view?view->focused_setting:-1,buttons,stick);
-            std::fflush(stdout);pulse_end=count+12;next_vi=count+90;
+            std::fflush(stdout);pulse_end=count+12;next_vi=count+(stress?45:90);
         }
         scripted_buttons=buttons;scripted_x=0;scripted_y=stick;
     }

@@ -6,12 +6,12 @@ These issues remain open until their remaining checks are resolved.
 
 ## Current local regressions (October 20)
 
-- [ ] Pause/Options recurring freeze: fixed the observed Return transition
-  that injected B and toggled the selected option. Native Return now activates
-  its own row and recognizes Pause. Three normal Echo Base menu cycles / 18
-  toggles passed without timeout. Keep this report open for recurrence; its
-  relationship to GitHub #14 remains unconfirmed. Evidence:
-  `.local/options-freeze/return-natural/`.
+- [x] Correct the observed Pause/Options Return input trap. Return selects its
+  native row and releases the transition on arrival at Pause. Modern, Original
+  and normal asynchronous-rendering runs passed nine total cutscene/apply/
+  Options/Return cycles and 108 confirmed native option changes without timeout.
+  See [evidence and scope](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
+  The separate Traditional-preset freeze (#14) remains open below.
 - [x] Replace atlas rewriting with the shared UI font renderer for native text.
   Native parser supplies colors, opacity, wrapping and styles; UI fonts supply
   high-resolution glyphs and spacing. Decorative borders remain native.
