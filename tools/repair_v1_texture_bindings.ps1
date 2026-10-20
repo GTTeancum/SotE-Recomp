@@ -9,6 +9,10 @@ $database = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
 $verified = Get-Content -LiteralPath "$PSScriptRoot\..\config\v1_texture_bindings.json" -Raw | ConvertFrom-Json
 if ($verified.version -ne 1) { throw 'Unsupported verified binding catalog.' }
 $additions = @()
+$slotsPath = Join-Path $packRoot 'sote_slots.json'
+$slots = if (Test-Path -LiteralPath $slotsPath) { Get-Content -LiteralPath $slotsPath -Raw | ConvertFrom-Json } else { [pscustomobject]@{ version = 1; slots = @() } }
+if ($slots.version -ne 1) { throw 'Unsupported source-slot catalog.' }
+$slotAdditions = @()
 foreach ($binding in $verified.bindings) {
     if ($binding.rt64 -notmatch '^[0-9a-f]{16}$') { throw 'Invalid verified texture hash.' }
     $image = [IO.Path]::GetFullPath((Join-Path $packRoot ($binding.path + '.png')))
@@ -25,6 +29,18 @@ foreach ($binding in $verified.bindings) {
     if (-not $existing.Count) {
         $additions += [pscustomobject]@{ hashes = @{ rt64 = $binding.rt64 }; path = $binding.path }
     }
+    if ($binding.slot) {
+        if ($binding.slot.Count -ne 17) { throw 'Invalid verified source-slot key.' }
+        $existingSlot = @($slots.slots | Where-Object { $_.hash -eq $binding.rt64 })
+        if (@($existingSlot | Where-Object { ($_.key -join ',') -ne ($binding.slot -join ',') }).Count) {
+            throw 'Verified source-slot key conflicts with installed key.'
+        }
+        if (-not $existingSlot.Count) { $slotAdditions += [pscustomobject]@{ hash = $binding.rt64; key = $binding.slot } }
+    }
+}
+if ($slotAdditions.Count) {
+    $slots.slots = @($slots.slots) + $slotAdditions
+    [IO.File]::WriteAllText($slotsPath, ($slots | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
 }
 if ($additions.Count) {
     $database.textures = @($database.textures) + $additions

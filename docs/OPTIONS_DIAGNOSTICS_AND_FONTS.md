@@ -60,3 +60,38 @@ roles; staging does not reset the user's font preference.
 - Process-local menu replay changed Cutscenes N64 to PC, applied it, then toggled Overlay Displays eight times. Each input and alternating ON/OFF value was logged; progress continued and the run exited normally. The reported freeze did not reproduce in this run.
 
 Staged executable SHA-256: f0ca64c56d67544fff634122f202c05c4a487731483b5cc9fbb3d66ddb710623
+
+## October 20 follow-up: actual launcher, Echo entry and title tile
+
+The first font update was copied only to `SotE_Recompiled/sote_recomp.exe`.
+The player-facing `Shadows of the Empire.exe` still had the older hash
+`2381e1bfc6fe259b5ebee8da90751d0cdd1014ef6db8fb11ebE18f4190fb6e3e`.
+Both filenames are now updated and hash-checked by
+`tools/stage_runtime_executable.ps1`; a locked named launcher fails staging.
+The existing user fonts.ini was preserved. Native captures show Modern on the
+profile selector and Echo Base summary, including player, difficulty, level,
+lives, time and challenge text. A native Echo communicator also shows the
+replacement glyphs. Native text remains limited to the original atlas resolution,
+with native outline/layout; it is not the high-resolution host menu renderer.
+Evidence: `.local/options-freeze/staged-fonts`, `echo-late/entry`, and
+`echo-late/verified`.
+
+Echo Base previously waited for active result state 2 to start its opening SAN.
+It now also accepts level-entry state 1 for event 4. A native menu selection
+started L02INTRO at VI 949/state 1 and held game-frame count at 923 throughout
+the movie. The complete film ended around VI 2571, active state 2 followed at
+VI 2664, and ILB01 communicator audio was queued at VI 2794. Captures show the
+summary and PC film. The immediate post-film capture is the native blue loading
+view, so it is not counted as gameplay visual confirmation. The three targeted
+menu, SAN and texture-slot harnesses passed. Runs were muted.
+
+The title's bottom-right snow tile had frame-dependent hashes because its sampled
+TMEM extent includes unused bytes. Added a context/source/palette slot binding
+to the existing interceptor427 image, with no artwork changes. The repair tool
+now installs such bindings into both rt64.json and sote_slots.json. A native
+capture with both staged packs enabled confirms the bottom-right tile uses the
+HD snow image rather than the old angular patch. Press Start is native glyph
+text, not part of that texture. Evidence: `.local/options-freeze/title-audit`,
+`title-view`, `title-fixed`.
+
+Follow-up staged executable SHA-256 (both names): B9D005D13935429BCD4EF1ADEF8CCC1291FBB033064B3363203E8FF60A0639E2

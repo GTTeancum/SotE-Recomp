@@ -5,6 +5,30 @@
       "path": "maps/echo base/sote_DA35E49F_2_0_ED4A029A_ciByRGBA",
       "rt64": "517fa9ea59e79696",
       "evidence": "Echo Base event 5, Wampa actor class (flags & 15) == 2. Native upload: CI4 64x32, RGBA16 palette, source 3444816, palette 3445848."
+    },
+    {
+      "path": "menus/title screen/title screen/sote_7E22BD91_2_1_69836582_ciByRGBA",
+      "rt64": "8d8ccce7499e9d29",
+      "slot": [
+        2,
+        1757528,
+        64,
+        32,
+        2,
+        1,
+        8,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1713176
+      ],
+      "evidence": "Title screen bottom-right snow/red-border tile. Source 1757528, palette 1713176, CI8 64x32; unused lower TMEM changes the content hash between frames. Source-slot binding keeps the existing replacement selected. Captured in .local/options-freeze/title-audit."
     }
   ]
 }

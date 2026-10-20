@@ -875,7 +875,10 @@ void update_san_movie_triggers(uint8_t* rdram) {
         }
         san_game_over_started = false;
     }
-    if (result != 2) {
+    // Echo Base's opening belongs before the loaded mission is exposed.
+    // State 1 is level entry; waiting for active state 2 lets its opening
+    // gameplay render before the PC movie starts. Keep other event gates.
+    if (result != 2 && !(event == 4 && result == 1)) {
         return;
     }
     if (event == 15 && !san_gall_boss_started &&
@@ -921,6 +924,9 @@ void update_san_movie_triggers(uint8_t* rdram) {
         }
         if (const char* movie = san_intro_for_event(event)) {
             const bool playing = sote::san_movies::play_cached_preview(movie);
+            std::printf("[sote][san] chapter intro event=%d result=%d VI=%d movie=%s started=%d\n",
+                event, result, vi_count.load(std::memory_order_relaxed), movie, playing);
+            std::fflush(stdout);
             if (playing && event == 9)
                 san_ord_boss_story_handoff_pending = true;
             if (playing && san_story_skip_destination(event) != INT16_MIN)
