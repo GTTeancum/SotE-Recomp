@@ -3,7 +3,7 @@
     Create a self-contained Shadows of the Empire play folder.
 
 .DESCRIPTION
-    Copies the built executable, runtime DLLs, retail image, matching ROM, and
+    Copies the built executable, runtime DLLs, matching ROM, and
     existing save and optional external music into one portable directory. Packaged saves are
     preserved.
 #>
@@ -47,7 +47,6 @@ $sources = @{
     'SDL2.dll' = (Join-Path $releaseDirectory 'SDL2.dll')
     'dxcompiler.dll' = (Join-Path $releaseDirectory 'dxcompiler.dll')
     'dxil.dll' = (Join-Path $releaseDirectory 'dxil.dll')
-    'main.bin' = (Join-Path $repoRoot 'generated\main.bin')
     'sote.us.v1.2.z64' = $romAbsolute
 }
 

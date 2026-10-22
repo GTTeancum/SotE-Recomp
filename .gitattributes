@@ -1,0 +1,2 @@
+# Patch syntax must survive Windows checkouts with core.autocrlf=true.
+*.patch text eol=lf

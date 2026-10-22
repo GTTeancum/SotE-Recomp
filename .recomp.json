@@ -1,0 +1,11 @@
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Star Wars: Shadows of the Empire",
+  "system": "N64",
+  "type": "recomp",
+  "toolchain": "N64Recomp",
+  "project": "Shadows of the Empire: Recompiled",
+  "status": "released",
+  "targets": ["Windows"],
+  "original": { "region": "USA", "revision": "1.2" }
+}

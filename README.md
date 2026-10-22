@@ -2,7 +2,7 @@
 
 **[Report bugs / request features](https://github.com/GTTeancum/SotE-Recomp/issues)**
 
-**[Download 0.9.2 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.2)** · [Release notes](docs/RELEASE_0.9.2.md)
+**[Download 0.9.5 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.5)** · [Release notes](docs/RELEASE_0.9.5.md)
 
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
