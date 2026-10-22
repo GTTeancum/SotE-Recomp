@@ -40,5 +40,16 @@ int main(int argc, char** argv) {
  require(!play_visible_voice(first,vi,4),"duplicate slot replayed");
  require(play_visible_voice(first,1,4),"VI reset did not rearm");
  require(has_voice_for_text("Dfob"),"Gall alias lost");
+ // Skipping a visible line must remove its PCM before another line can mix.
+ stop_visible_voice(0);
+ std::vector<int16_t> silent(48000*2,0);
+ require(!mix_into(silent.data(),silent.size(),48000),"dismissed voice still mixing");
+ require(play_visible_voice(first,1000,4,30),"skip fixture failed");
+ require(!play_visible_voice("unmapped replacement",1001,4,30),"unmapped replacement played");
+ require(!mix_into(silent.data(),silent.size(),48000),"unmapped next line retained speech");
+ require(play_file("ILB01.WAV"),"independent sound fixture failed");
+ require(play_visible_voice(first,1002,4,30),"channel fixture failed");
+ stop_visible_voice(30);
+ require(mix_into(silent.data(),silent.size(),48000),"dismissal stopped unrelated audio");
  std::cout << count << " ROM messages loaded and mixed, visibility/retry checks passed\n";
 }

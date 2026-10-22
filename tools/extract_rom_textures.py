@@ -504,6 +504,8 @@ def scan_sprite_tables(owner: Image) -> list[dict]:
             tile.cms = tile.cmt = 2
             tile.lrs, tile.lrt = (sample_width-1)*4, (tile_height-1)*4
             found.append({"tile":tile.as_dict(), "width":sample_width, "height":tile_height,
+                          "visible_width":w, "visible_height":h,
+                          "sprite_descriptor":owner.base + off,
                           "tlut":TLUT_RGBA16 if palette_size else TLUT_NONE, "tmem":bytes(tmem),
                           "texels":texels, "source":(owner.name,src,byte_count), "container":owner.name,
                           "source_key": [owner.context, ptr & 0xffffff, sample_width, tile_height,

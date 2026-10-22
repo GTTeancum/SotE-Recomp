@@ -37,7 +37,7 @@ uint64_t fingerprint(const Snapshot& s) {
     for (uint8_t v : s.thumbnail.rgba) byte(v);
     string(s.preset);
     string(s.option_help);
-    byte(s.compatibility); byte(s.pc_cutscenes_available);
+    byte(s.compatibility); byte(s.pc_cutscenes_available); byte(s.pause_background);
     byte(unsigned(s.focused_setting));
     byte(s.rebinding); byte(s.binding_editing); byte(unsigned(s.binding_group)); byte(unsigned(s.binding_row));
     byte(unsigned(s.binding_column)); byte(unsigned(s.binding_phase));

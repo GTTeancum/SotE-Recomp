@@ -853,7 +853,8 @@ void poll_input() {
         (menu->screen == sote::menu_skin::Screen::Profiles ||
          menu->screen == sote::menu_skin::Screen::Options ||
          menu->screen == sote::menu_skin::Screen::Graphics ||
-         menu->screen == sote::menu_skin::Screen::Schemes);
+         menu->screen == sote::menu_skin::Screen::Schemes ||
+         (menu->screen == sote::menu_skin::Screen::Controls && !menu->binding_editing));
     const bool binding_screen = menu && menu->screen == sote::menu_skin::Screen::Controls && menu->rebinding;
     const auto now_ms = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count());
@@ -1156,12 +1157,12 @@ void poll_input() {
         if (key_down('X') || (!menu && modern_vehicle_keys && key_down(VK_LBUTTON))) keyboard_buttons |= n64_b;
         if (key_down('C')) keyboard_buttons |= n64_z;
         if (key_down(VK_RETURN)) keyboard_buttons |= n64_start;
-        if (key_down('Q')) keyboard_buttons |= page_keys ? n64_dl : n64_l;
-        if (key_down('E')) keyboard_buttons |= page_keys ? n64_dr : n64_r;
+        if (key_down('Q')) keyboard_buttons |= n64_l;
+        if (key_down('E')) keyboard_buttons |= n64_r;
         if (key_down(VK_UP)) keyboard_buttons |= n64_du;
         if (key_down(VK_DOWN)) keyboard_buttons |= n64_dd;
-        if (key_down(VK_LEFT)) keyboard_buttons |= page_keys ? n64_l : n64_dl;
-        if (key_down(VK_RIGHT)) keyboard_buttons |= page_keys ? n64_r : n64_dr;
+        if (key_down(VK_LEFT)) keyboard_buttons |= n64_dl;
+        if (key_down(VK_RIGHT)) keyboard_buttons |= n64_dr;
         if (key_down('I')) keyboard_buttons |= n64_cu;
         if (key_down('K')) keyboard_buttons |= n64_cd;
         if (key_down('J')) keyboard_buttons |= n64_cl;
@@ -1261,13 +1262,24 @@ void poll_input() {
 }
 
 bool mouse_capture_requested() {
-    bool gameplay = false;
+    bool gameplay = modern_controls::on_foot_active();
     for (int i = 0; i < int(control_bindings::Context::Count); ++i)
         gameplay |= control_bindings::context_active(static_cast<control_bindings::Context>(i));
-    return physical_input_enabled.load(std::memory_order_relaxed) &&
-        control_bindings::should_capture_mouse(gameplay, process_owns_foreground_window(),
-            bool(sote::menu_skin::latest()), movie_playback_token.load(std::memory_order_relaxed) != 0,
-            std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr);
+    const bool enabled = physical_input_enabled.load(std::memory_order_relaxed);
+    const bool focused = process_owns_foreground_window();
+    const bool menu = bool(sote::menu_skin::latest());
+    const bool movie = movie_playback_token.load(std::memory_order_relaxed) != 0;
+    const bool diagnostic = std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr;
+    const unsigned flags = unsigned(enabled) | unsigned(focused)<<1 | unsigned(gameplay)<<2 |
+        unsigned(menu)<<3 | unsigned(movie)<<4 | unsigned(diagnostic)<<5;
+    static unsigned previous_flags = ~0U;
+    if (flags != previous_flags) {
+        std::printf("[sote][mouse] gate enabled=%d focused=%d gameplay=%d menu=%d movie=%d diagnostic=%d\n",
+            enabled, focused, gameplay, menu, movie, diagnostic);
+        std::fflush(stdout);
+        previous_flags = flags;
+    }
+    return enabled && control_bindings::should_capture_mouse(gameplay, focused, menu, movie, diagnostic);
 }
 
 void add_mouse_delta(int x, int y) {

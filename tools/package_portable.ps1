@@ -43,6 +43,7 @@ $acceptedSha256 = @(
 $sources = @{
     'Shadows of the Empire.exe' =
         (Join-Path $releaseDirectory 'sote_recomp.exe')
+    'sandec.dll' = (Join-Path $releaseDirectory 'sandec.dll')
     'SDL2.dll' = (Join-Path $releaseDirectory 'SDL2.dll')
     'dxcompiler.dll' = (Join-Path $releaseDirectory 'dxcompiler.dll')
     'dxil.dll' = (Join-Path $releaseDirectory 'dxil.dll')
@@ -67,6 +68,10 @@ foreach ($entry in $sources.GetEnumerator()) {
     Copy-Item -LiteralPath $entry.Value `
         -Destination (Join-Path $outputAbsolute $entry.Key) -Force
 }
+
+# Keep the replaceable LGPL decoder source and license beside the library.
+Copy-Item -LiteralPath (Join-Path $repoRoot 'third_party\sandec') `
+    -Destination (Join-Path $outputAbsolute 'sandec-source') -Recurse -Force
 
 # Install the current control defaults for new portable folders. Existing
 # user tuning remains authoritative when refreshing a playable folder.

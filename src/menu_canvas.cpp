@@ -292,8 +292,16 @@ void summary(Canvas& c, const Snapshot& s) {
     c.text(s.rows[60].text, "summary.label.challenge", 610, 376, 26, 0x3F8F74FF, 274);
     c.text(s.rows[61].text, "summary.value.challenge", 610, 413, 30, 0x4DDD5EFF, 265);
 }
+void menu_background(Canvas& c, const Snapshot& s) {
+    if (!s.pause_background && s.screen != Screen::Pause) { c.stars(); return; }
+    // 75% black, including aspect-ratio margins; shared by Pause and subpages.
+    for (size_t i=0;i<c.image.rgba.size();i+=4) {
+        c.image.rgba[i]=c.image.rgba[i+1]=c.image.rgba[i+2]=0;
+        c.image.rgba[i+3]=192;
+    }
+}
 void options(Canvas& c, const Snapshot& s) {
-    c.stars();
+    menu_background(c,s);
     c.heading("Options", "options.heading");
     c.text("Main   < Options >   Graphics   Controls   Cheats", "options.tabs",
         480, 84, 18, 0x697388FF, 820, 1);
@@ -304,16 +312,23 @@ void options(Canvas& c, const Snapshot& s) {
         if (y > 447) break;
         const bool focus = s.focused_setting >= 0 ?
             s.focused_setting == (row - 51) / 2 : selected(s.rows[row]);
+        if (focus) { c.rect(184, y - 3, 665, 36, 0x17383CFF); c.border(184, y - 3, 665, 36, cyan); }
         c.text(s.rows[row].text, "options.label." + std::to_string(row), 200, y, 27, focus ? cyan : teal, 375);
         c.text(s.rows[row + 1].text, "options.value." + std::to_string(row), 660, y, 27, focus ? cyan : teal, 201);
         ++index;
     }
     c.rect(92, 430, 776, 2, purple);
     c.text(s.option_help,"options.help",480,450,16,0x98B6D0FF,776,1);
+    c.text("Q/E or LB/RB: page   Up/Down: select   Left/Right: adjust   Enter/A: confirm   Esc/B: back",
+        "options.navigation",480,480,14,0xB1BDE3FF,850,1);
+    if (s.focused_setting == 0 || selected(s.rows[52])) {
+        c.rect(254,507,452,31,0x17383CFF); c.border(254,507,452,31,cyan);
+    }
     c.text(s.rows[52].text, "options.return", 480, 510, 24,
         (s.focused_setting == 0 || selected(s.rows[52])) ? cyan : teal, 745, 1);
 }
 void pause(Canvas& c, const Snapshot& s) {
+    menu_background(c,s);
     // The retail header carries the live player, difficulty, time, and score.
     // Replace the three native action rows while retaining the paused scene.
     c.rect(264, 207, 432, 145, 0x071019FF);
@@ -330,7 +345,7 @@ void pause(Canvas& c, const Snapshot& s) {
     }
 }
 void graphics(Canvas& c, const Snapshot& s) {
-    c.stars(); c.heading("Graphics", "graphics.heading");
+    menu_background(c,s); c.heading("Graphics", "graphics.heading");
     c.text(s.rows[52].text, "graphics.tabs", 480, 84, 18,
         0x697388FF, 820, 1);
     for (int i = 0; i < 8; ++i) {
@@ -338,6 +353,7 @@ void graphics(Canvas& c, const Snapshot& s) {
         const bool focus = selected(s.rows[row]);
         const int value_row = i == 5 ? 65 : row + 1;
         const Color row_color = ((i == 5 && !s.pc_cutscenes_available) || (i == 3 && s.compatibility)) ? 0x697388FF : focus ? cyan : teal;
+        if (focus) { c.rect(162, 113.0f + i * 36, 686, 33, 0x17383CFF); c.border(162, 113.0f + i * 36, 686, 33, cyan); }
         c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 116.0f + i * 36, 25, row_color, 420);
         c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 116.0f + i * 36, 25, row_color, 224);
     }
@@ -345,6 +361,9 @@ void graphics(Canvas& c, const Snapshot& s) {
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 411, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
     c.rect(92, 443, 776, 2, purple);
     c.text(s.option_help,"graphics.help",480,459,16,0x98B6D0FF,776,1);
+    c.text("Q/E or LB/RB: page   Up/Down: select   Left/Right: adjust   Enter/A: confirm   Esc/B: back",
+        "graphics.navigation",480,483,14,0xB1BDE3FF,850,1);
+    if (selected(s.rows[64])) { c.rect(254,507,452,31,0x17383CFF); c.border(254,507,452,31,cyan); }
     c.text(s.rows[64].text, "graphics.return", 480, 510, 24, selected(s.rows[64]) ? cyan : teal, 740, 1);
 }
 void binding_column(Canvas& c, const std::vector<Binding>& rows, float x, float top, float width, float spacing,
@@ -367,11 +386,10 @@ void controls(Canvas& c, const Snapshot& s) {
         // The native options camera zooms as soon as this row is focused.
         // Keep the options list visible until the binding editor is opened.
         options(c, s);
-        c.text("Enter / A: edit bindings   Left / Right: preset",
-            "options.controls.hint", 480, 449, 18, teal, 770, 1);
+
         return;
     }
-    c.stars(); c.heading("Controls", "controls.heading");
+    menu_background(c,s); c.heading("Controls", "controls.heading");
     c.text("Action", "controls.columns.action", 115, 108, 19, teal, 250);
     c.text("Keyboard / Mouse", "controls.columns.keyboard", 546, 108, 19, teal, 200, 1);
     c.text("Controller", "controls.columns.pad", 763, 108, 19, teal, 200, 1);
@@ -460,7 +478,7 @@ void controls(Canvas& c, const Snapshot& s) {
     c.text(s.binding_hint, "controls.rebind.dialog.hint", 480, 393, 16, 0x98B6D0FF, 674, 1);
 }
 void schemes(Canvas& c, const Snapshot& s) {
-    c.stars();
+    menu_background(c,s);
     c.heading(s.rows[52].text.find("< Cheats >") != std::string::npos ? "Cheats" : "Controls",
         "schemes.heading");
     c.text(s.rows[52].text, "schemes.tabs", 480, 84, 18, 0x697388FF, 820, 1);
@@ -472,6 +490,7 @@ void schemes(Canvas& c, const Snapshot& s) {
         const int y = 128 + index * 30;
         const bool row_selected = selected(s.rows[label_row]) ||
             selected(s.rows[value_row]);
+        if (row_selected) { c.rect(98, y - 3, 748, 28, 0x17383CFF); c.border(98, y - 3, 748, 28, cyan); }
         c.text(
             s.rows[label_row].text,
             "schemes.row.label",
@@ -492,10 +511,16 @@ void schemes(Canvas& c, const Snapshot& s) {
     }
     c.rect(92, 448, 776, 2, purple);
     c.text(s.option_help,"schemes.help",480,467,16,0x98B6D0FF,776,1);
-    c.text(s.rows[75].text, "schemes.return", 312, 515, 21,
-        selected(s.rows[75]) ? cyan : teal, 380, 1);
-    c.text(s.rows[76].text, "schemes.apply", 652, 515, 21,
-        selected(s.rows[76]) ? cyan : teal, 220, 1);
+    c.text("Q/E or LB/RB: page   Up/Down: select   Left/Right: adjust   Enter/A: confirm   Esc/B: back",
+        "schemes.navigation",480,490,14,0xB1BDE3FF,850,1);
+    const int action_rows[] = {75,76,77};
+    for (int i=0;i<3;++i) {
+        const auto& row=s.rows[action_rows[i]];
+        if (row.text.empty()) continue;
+        const float x=250.0f+i*260;
+        if (selected(row)) { c.rect(x-124,512,248,27,0x17383CFF); c.border(x-124,512,248,27,cyan); }
+        c.text(row.text,"schemes.action."+std::to_string(i),x,515,19,selected(row)?cyan:teal,240,1);
+    }
 }
 } // namespace
 
@@ -662,9 +687,6 @@ void composite_native_text(Image& image,const NativeText& text) {
     for(const auto& label:text.labels) {
         const int left=int(std::lround(ox+label.x*sy)),top=int(std::lround(oy+label.y*sy));
         const int w=int(std::lround(label.width*sy)),h=int(std::lround(label.height*sy));
-        // Opaque UI label well covers the old baked letters without repainting
-        // any frame, ammunition icon or gun artwork. Text keeps native tint.
-        for(int yy=0;yy<h;++yy) for(int xx=0;xx<w;++xx) c.pixel(left+xx,top+yy,0x071119ff);
         int size=int(std::lround(12*sy));
         float width=0;
         auto measure=[&] { float n=0;for(unsigned char ch:label.text)n+=glyph(*face,ch,size).advance;return n; };
@@ -674,6 +696,13 @@ void composite_native_text(Image& image,const NativeText& text) {
         const int baseline=top+(h-cap.h)/2-cap.y;
         for(unsigned char ch:label.text) {
             const auto& g=glyph(*face,ch,size);
+            const int edge=std::max(1,int(std::lround(sy/2)));
+            for(int dy=-edge;dy<=edge;++dy) for(int dx=-edge;dx<=edge;++dx) {
+                if(!dx && !dy) continue;
+                for(int yy=0;yy<g.h;++yy) for(int xx=0;xx<g.w && !g.alpha.empty();++xx)
+                    c.pixel(int(std::lround(pen))+g.x+xx+dx,baseline+g.y+yy+dy,
+                        label.color & 255, g.alpha[size_t(yy)*g.w+xx]);
+            }
             for(int yy=0;yy<g.h;++yy) for(int xx=0;xx<g.w && !g.alpha.empty();++xx)
                 c.pixel(int(std::lround(pen))+g.x+xx,baseline+g.y+yy,label.color,g.alpha[size_t(yy)*g.w+xx]);
             pen+=g.advance;
@@ -743,7 +772,7 @@ Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
     if (snapshot.screen == Screen::Native || !snapshot.original || !snapshot.original->valid ||
         width < 320 || height < 180 || width > 3840 || height > 2160) return {};
     std::lock_guard lock(font_mutex);
-    Canvas c(width, height, *snapshot.original, snapshot.screen == Screen::Pause);
+    Canvas c(width, height, *snapshot.original, snapshot.pause_background || snapshot.screen == Screen::Pause);
     switch (snapshot.screen) {
         case Screen::Profiles: profiles(c, snapshot); break;
         case Screen::Summary: summary(c, snapshot); break;

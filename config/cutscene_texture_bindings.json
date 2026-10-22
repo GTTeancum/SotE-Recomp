@@ -1,0 +1,113 @@
+{
+  "version": 1,
+  "bindings": [
+    {
+      "pack": "SotE_V1_HD",
+      "path": "cutscenes/chapter 1/cockpit/sote_3542F5E3_2_1_60DA5F6D_ciByRGBA",
+      "rt64": "0fa42acbdb2b39e9",
+      "slot": [
+        0,
+        1927808,
+        64,
+        32,
+        2,
+        1,
+        8,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1857152
+      ],
+      "alias": "a11ffbb4d39cdc1d",
+      "visibleRows": 12,
+      "evidence": "Opening before Start. Native visible rows match captured_source/gall_spaceport references exactly; remaining sampled rows include unrelated memory. .local/options-freeze/intro-baseline."
+    },
+    {
+      "pack": "SotE_V1_HD",
+      "path": "cutscenes/chapter 1/cockpit/sote_CC2A9623_2_1_60DA5F6D_ciByRGBA",
+      "rt64": "14539fb7d276ab6a",
+      "slot": [
+        0,
+        1928576,
+        64,
+        32,
+        2,
+        1,
+        8,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1857152
+      ],
+      "alias": "50a306d79e5088e4",
+      "visibleRows": 12,
+      "evidence": "Opening before Start. Native visible rows match captured_source/gall_spaceport references exactly; remaining sampled rows include unrelated memory. .local/options-freeze/intro-baseline."
+    },
+    {
+      "pack": "SotE_AI_Upscale",
+      "path": "images/d5a6b7a680d3c4428a0121560cc9fb2eb2d4ed76e6c25ae452bde8c7b1f76d7b",
+      "rt64": "8cd3eaedb895be76",
+      "slot": [
+        0,
+        1856656,
+        32,
+        32,
+        2,
+        0,
+        2,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1837680
+      ],
+      "alias": "3d6333330e79a455",
+      "visibleRows": 16,
+      "evidence": "Opening before Start. Native visible rows match captured_source/gall_spaceport references exactly; remaining sampled rows include unrelated memory. .local/options-freeze/intro-baseline."
+    },
+    {
+      "pack": "SotE_AI_Upscale",
+      "path": "images/5253c3f0429c3fa55feb37af184dd4913b2dbb615c296ab3013763dcaeaa7eb7",
+      "rt64": "ecfa88c2fcd6b64c",
+      "slot": [
+        0,
+        1856144,
+        64,
+        32,
+        2,
+        0,
+        4,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1837680
+      ],
+      "alias": "b7530bd2275323e5",
+      "visibleRows": 16,
+      "evidence": "Opening before Start. Native visible rows match captured_source/gall_spaceport references exactly; remaining sampled rows include unrelated memory. .local/options-freeze/intro-baseline."
+    }
+  ]
+}

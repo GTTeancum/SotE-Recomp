@@ -152,6 +152,9 @@ try {
     Ensure-Patch `
         -Submodule 'third_party/rt64/src/contrib/plume' `
         -Patch 'patches/0009-plume-vulkan-capture.patch'
+    Ensure-Patch `
+        -Submodule 'third_party/rt64' `
+        -Patch 'patches/0011-rt64-pause-frame-and-textures.patch'
 
     if ($Clean) {
         foreach ($target in @(

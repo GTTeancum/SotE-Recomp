@@ -11,6 +11,9 @@ stubs = []
 ignored = []
 renamed = []
 hook = [
+    { func = "func_80019294", before_vram = 0x80019294, text = "sote_trace_story_load(rdram, (uint32_t)ctx->r4, (uint32_t)ctx->r31);" },
+    { func = "func_80009088", before_vram = 0x80009088, text = "sote_hide_communicator_slot((uint32_t)(int16_t)ctx->r4, (int16_t)ctx->r5);" },
+    { func = "func_8001CE98", before_vram = 0x8001CE98, text = "if (sote_intro_story_sprite(rdram, (uint32_t)ctx->r4) || sote_draw_hud_without_label(rdram, ctx)) return;" },
     # All native text uses these two font atlases, including HUD and communications.
     # Preserve native parsing/layout/color changes, replace only text glyph draws.
     { func = "func_80025228", before_vram = 0x80025228, text = "sote_native_text_begin(rdram, (uint32_t)ctx->r5);" },

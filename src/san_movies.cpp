@@ -14,6 +14,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <deque>
+#include <memory>
+extern "C" {
+#include "sandec.h"
+}
 
 namespace sote::san_movies {
 namespace {
@@ -45,35 +50,43 @@ constexpr std::string_view expected_movies[] = {
     "LONGTIME.SAN",
 };
 
-std::mutex cache_mutex;
-std::filesystem::path cache_root;
-CachedFrame current_frame;
+std::mutex playback_mutex;
+std::filesystem::path movie_runtime_root;
+MovieFrame current_frame;
 uint64_t frame_serial = 1;
 uint64_t movie_serial = 1;
 bool current_music_is_main_menu = false;
 std::vector<std::string> queued_movies;
 bool hold_last_frame = false;
 
-struct CacheMetadata {
-    unsigned width = 0;
-    unsigned height = 0;
-    uint32_t frames = 1;
-    uint32_t decoded_frames = 0;
-    double fps = 15.0;
-};
-
-struct CachePlayback {
-    std::filesystem::path frames_path;
-    std::filesystem::path audio_path;
-    CacheMetadata metadata;
+struct StreamPlayback {
+    std::ifstream input;
+    void* decoder = nullptr;
+    sanio io{};
+    std::deque<int16_t> audio;
     std::chrono::steady_clock::time_point started{};
-    uint32_t frame_index = UINT32_MAX;
-    uint64_t audio_frames = 0;
-    uint64_t audio_cursor = 0;
     uint64_t token = 0;
+    uint64_t audio_frames = 0;
+    uint32_t frames = 0;
+    uint32_t decoded = 0;
+    double frame_end = 0.0;
+    double frame_duration = 1.0 / 15.0;
+    bool done = false;
+    bool failed = false;
+    bool discard_audio = false;
+    ~StreamPlayback() { sandec_exit(&decoder); }
 };
-
-CachePlayback active_playback;
+std::unique_ptr<StreamPlayback> active_playback;
+#ifdef SOTE_SAN_TESTING
+std::chrono::steady_clock::duration test_clock_offset{};
+#endif
+auto playback_now() {
+    auto now = std::chrono::steady_clock::now();
+#ifdef SOTE_SAN_TESTING
+    now += test_clock_offset;
+#endif
+    return now;
+}
 
 uint16_t read_le16(const std::vector<uint8_t>& data, size_t offset) {
     return static_cast<uint16_t>(data[offset]) |
@@ -206,197 +219,100 @@ std::string basename_without_extension(std::string_view name) {
     return value;
 }
 
-std::string trim(std::string value) {
-    const size_t begin = value.find_first_not_of(" \t\r\n");
-    if (begin == std::string::npos) {
-        return {};
-    }
-    const size_t end = value.find_last_not_of(" \t\r\n");
-    return value.substr(begin, end - begin + 1);
+int read_stream(void* user, void* dst, uint32_t size) {
+    auto& stream = *static_cast<StreamPlayback*>(user);
+    stream.input.read(static_cast<char*>(dst), size);
+    return stream.input.gcount() == size;
 }
 
-bool read_metadata(
-    const std::filesystem::path& path,
-    CacheMetadata& metadata) {
-    std::ifstream input{path};
-    if (!input.is_open()) {
-        return false;
+void receive_audio(void* user, unsigned char* data, uint32_t size) {
+    auto& stream = *static_cast<StreamPlayback*>(user);
+    stream.audio_frames += size / 4;
+    if (stream.discard_audio) return;
+    // At most four seconds of interleaved stereo PCM, independent of movie length.
+    constexpr size_t limit = 22050 * 2 * 4;
+    if ((size & 3) || size / 2 > limit || stream.audio.size() + size / 2 > limit) {
+        stream.failed = true;
+        return;
     }
-    std::string line;
-    while (std::getline(input, line)) {
-        const size_t tab = line.find('\t');
-        if (tab == std::string::npos) {
-            continue;
-        }
-        const std::string key = trim(line.substr(0, tab));
-        const std::string value = trim(line.substr(tab + 1));
-        char* end = nullptr;
-        if (key == "width") {
-            const unsigned parsed = static_cast<unsigned>(
-                std::strtoul(value.c_str(), &end, 10));
-            if (end != value.c_str()) {
-                metadata.width = parsed;
-            }
-        } else if (key == "height") {
-            const unsigned parsed = static_cast<unsigned>(
-                std::strtoul(value.c_str(), &end, 10));
-            if (end != value.c_str()) {
-                metadata.height = parsed;
-            }
-        } else if (key == "frames") {
-            const unsigned parsed = static_cast<unsigned>(
-                std::strtoul(value.c_str(), &end, 10));
-            if (end != value.c_str() && parsed != 0) {
-                metadata.frames = parsed;
-            }
-        } else if (key == "fps") {
-            const size_t slash = value.find('/');
-            double parsed = 0.0;
-            if (slash != std::string::npos) {
-                const std::string numerator_text = value.substr(0, slash);
-                const std::string denominator_text = value.substr(slash + 1);
-                const double numerator = std::strtod(numerator_text.c_str(), nullptr);
-                const double denominator = std::strtod(denominator_text.c_str(), nullptr);
-                if (numerator > 0.0 && denominator > 0.0) {
-                    parsed = numerator / denominator;
-                }
+    for (uint32_t i = 0; i < size; i += 2)
+        stream.audio.push_back(static_cast<int16_t>(data[i] | (uint16_t(data[i + 1]) << 8)));
+}
+
+void receive_video(void* user, unsigned char* data, uint32_t size,
+                   uint16_t width, uint16_t height, uint16_t pitch,
+                   uint32_t* palette, uint16_t, uint32_t duration) {
+    auto& stream = *static_cast<StreamPlayback*>(user);
+    const size_t row_bytes = size_t(width) * (palette ? 1 : 2);
+    if (!width || !height || width > 2048 || height > 2048 || pitch < row_bytes ||
+        size_t(pitch) * (height - 1) + row_bytes > size) {
+        stream.failed = true;
+        return;
+    }
+    current_frame.width = width;
+    current_frame.height = height;
+    current_frame.rgba.resize(size_t(width) * height * 4);
+    for (size_t y = 0; y < height; ++y) {
+        for (size_t x = 0; x < width; ++x) {
+            auto* dst = current_frame.rgba.data() + (y * width + x) * 4;
+            if (palette) {
+                const uint32_t color = palette[data[y * pitch + x]];
+                // sandec stores palette entries as ABGR (little-endian RGBA bytes).
+                dst[0] = uint8_t(color); dst[1] = uint8_t(color >> 8); dst[2] = uint8_t(color >> 16);
             } else {
-                parsed = std::strtod(value.c_str(), &end);
+                const auto* src = data + y * pitch + x * 2;
+                const uint16_t color = src[0] | (uint16_t(src[1]) << 8);
+                dst[0] = uint8_t(((color >> 11) & 31) * 255 / 31);
+                dst[1] = uint8_t(((color >> 5) & 63) * 255 / 63);
+                dst[2] = uint8_t((color & 31) * 255 / 31);
             }
-            if (parsed > 0.0 && parsed < 240.0) {
-                metadata.fps = parsed;
-            }
+            dst[3] = 255;
         }
     }
-    return metadata.width != 0 && metadata.height != 0;
+    current_frame.serial = frame_serial++;
+    stream.frame_duration = duration ? duration / 1000000.0 : 1.0 / 15.0;
 }
 
-bool read_cache_frame_locked(uint32_t frame_index) {
-    if (active_playback.frames_path.empty() ||
-        active_playback.metadata.width == 0 ||
-        active_playback.metadata.height == 0) {
+bool decode_frame_locked() {
+    auto& stream = *active_playback;
+    if (stream.done || stream.failed) return false;
+    const int status = sandec_decode_next_frame(stream.decoder);
+    if (status == SANDEC_DONE) { stream.done = true; return false; }
+    if (status != SANDEC_OK || stream.failed) {
+        std::fprintf(stderr, "[sote][san] direct decode failed: status=%d frame=%u\n", status, stream.decoded);
+        stream.failed = true;
         return false;
     }
-    const size_t frame_bytes =
-        static_cast<size_t>(active_playback.metadata.width) *
-        active_playback.metadata.height * 4;
-    std::ifstream frames{active_playback.frames_path, std::ios::binary};
-    if (!frames.is_open()) {
-        return false;
-    }
-    frames.seekg(
-        static_cast<std::streamoff>(
-            static_cast<uint64_t>(frame_bytes) * frame_index),
-        std::ios::beg);
-    if (!frames.good()) {
-        return false;
-    }
-    CachedFrame next;
-    next.width = active_playback.metadata.width;
-    next.height = active_playback.metadata.height;
-    next.rgba.resize(frame_bytes);
-    frames.read(
-        reinterpret_cast<char*>(next.rgba.data()),
-        static_cast<std::streamsize>(next.rgba.size()));
-    if (frames.gcount() != static_cast<std::streamsize>(next.rgba.size())) {
-        return false;
-    }
-    next.serial = frame_serial++;
-    current_frame = std::move(next);
-    active_playback.frame_index = frame_index;
+    ++stream.decoded;
+    stream.frame_end += stream.frame_duration;
     return true;
 }
 
-uint32_t count_decoded_frames(
-    const std::filesystem::path& frames_path,
-    const CacheMetadata& metadata) {
-    if (metadata.width == 0 || metadata.height == 0) {
-        return 0;
-    }
-    const uint64_t frame_bytes =
-        static_cast<uint64_t>(metadata.width) * metadata.height * 4;
-    if (frame_bytes == 0) {
-        return 0;
-    }
-    std::error_code error;
-    const uint64_t bytes = std::filesystem::file_size(frames_path, error);
-    if (error || bytes < frame_bytes) {
-        return 0;
-    }
-    return static_cast<uint32_t>(
-        std::min<uint64_t>(bytes / frame_bytes, UINT32_MAX));
-}
-
-bool start_cached_preview_locked(std::string_view name) {
+bool start_movie_locked(std::string_view name) {
     hold_last_frame = false;
-    if (cache_root.empty()) {
+    active_playback.reset();
+    current_frame = {};
+    const auto path = find_movie(movie_runtime_root, name);
+    if (path.empty()) return false;
+    active_playback = std::make_unique<StreamPlayback>();
+    auto& stream = *active_playback;
+    stream.input.open(path, std::ios::binary);
+    stream.io = {read_stream, receive_video, receive_audio, &stream, 0};
+    if (!stream.input || sandec_init(&stream.decoder) != SANDEC_OK ||
+        sandec_open(stream.decoder, &stream.io) != SANDEC_OK) {
+        active_playback.reset();
         return false;
     }
-    const std::string base = basename_without_extension(name);
-    if (base.empty()) {
-        return false;
+    stream.frames = std::max(0, sandec_get_framecount(stream.decoder));
+    // Some files begin with palette/audio-only frames. Preserve their timeline.
+    while (!current_frame.valid() && decode_frame_locked()) {}
+    if (!current_frame.valid() || stream.failed) {
+        active_playback.reset(); current_frame = {}; return false;
     }
-    const std::filesystem::path movie_cache = cache_root / base;
-    CacheMetadata metadata;
-    if (!read_metadata(movie_cache / "metadata.tsv", metadata)) {
-        std::printf(
-            "[sote][san] cache unavailable for %s (missing metadata)\n",
-            base.c_str());
-        std::fflush(stdout);
-        return false;
-    }
-    const std::filesystem::path frames_path = movie_cache / "frames.rgba";
-    std::ifstream frames{frames_path, std::ios::binary};
-    if (!frames.is_open()) {
-        std::printf(
-            "[sote][san] cache unavailable for %s (missing frames.rgba)\n",
-            base.c_str());
-        std::fflush(stdout);
-        return false;
-    }
-    metadata.decoded_frames = count_decoded_frames(frames_path, metadata);
-    if (metadata.decoded_frames == 0) {
-        std::printf(
-            "[sote][san] cache unavailable for %s (empty frames.rgba)\n",
-            base.c_str());
-        std::fflush(stdout);
-        return false;
-    }
-    if (metadata.decoded_frames < metadata.frames) {
-        std::printf(
-            "[sote][san] cache for %s has %u decoded frame(s), metadata listed %u; clamping playback\n",
-            base.c_str(),
-            metadata.decoded_frames,
-            metadata.frames);
-        metadata.frames = metadata.decoded_frames;
-    }
-    active_playback.frames_path = frames_path;
-    active_playback.audio_path = movie_cache / "audio.pcm";
-    active_playback.metadata = metadata;
-    active_playback.started = std::chrono::steady_clock::now();
-    active_playback.frame_index = UINT32_MAX;
-    active_playback.audio_cursor = 0;
-    active_playback.token = movie_serial++;
-    std::error_code audio_error;
-    const uint64_t audio_bytes = std::filesystem::file_size(
-        active_playback.audio_path, audio_error);
-    active_playback.audio_frames = audio_error ? 0 : audio_bytes / 4;
-    if (!read_cache_frame_locked(0)) {
-        std::printf(
-            "[sote][san] cache unavailable for %s (truncated first frame)\n",
-            base.c_str());
-        std::fflush(stdout);
-        active_playback = {};
-        return false;
-    }
-    std::printf(
-        "[sote][san] cached playback active: %s %ux%u frames=%u fps=%.3f audio_frames=%llu\n",
-        base.c_str(),
-        metadata.width,
-        metadata.height,
-        metadata.frames,
-        metadata.fps,
-        static_cast<unsigned long long>(active_playback.audio_frames));
+    stream.token = movie_serial++;
+    stream.started = playback_now();
+    std::printf("[sote][san] direct SAN playback: %s %ux%u frames=%u (no disk cache)\n",
+        path.filename().string().c_str(), current_frame.width, current_frame.height, stream.frames);
     std::fflush(stdout);
     return true;
 }
@@ -405,7 +321,7 @@ bool start_next_queued_locked() {
     while (!queued_movies.empty()) {
         const std::string next = queued_movies.front();
         queued_movies.erase(queued_movies.begin());
-        if (start_cached_preview_locked(next)) {
+        if (start_movie_locked(next)) {
             return true;
         }
     }
@@ -413,6 +329,14 @@ bool start_next_queued_locked() {
 }
 
 } // namespace
+
+#ifdef SOTE_SAN_TESTING
+void advance_test_clock(double seconds) {
+    std::lock_guard lock{playback_mutex};
+    test_clock_offset += std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+        std::chrono::duration<double>(seconds));
+}
+#endif
 
 MovieInfo inspect_file(const std::filesystem::path& path) {
     MovieInfo info;
@@ -535,14 +459,14 @@ std::filesystem::path find_movie(
     return {};
 }
 
-bool play_cached_preview(std::string_view name) {
-    std::lock_guard lock{cache_mutex};
+bool play_movie(std::string_view name) {
+    std::lock_guard lock{playback_mutex};
     queued_movies.clear();
-    return start_cached_preview_locked(name);
+    return start_movie_locked(name);
 }
 
-bool play_cached_sequence(std::initializer_list<std::string_view> names) {
-    std::lock_guard lock{cache_mutex};
+bool play_sequence(std::initializer_list<std::string_view> names) {
+    std::lock_guard lock{playback_mutex};
     queued_movies.clear();
     for (const std::string_view name : names) {
         queued_movies.emplace_back(name);
@@ -551,18 +475,18 @@ bool play_cached_sequence(std::initializer_list<std::string_view> names) {
 }
 
 bool play_startup_sequence() {
-    std::lock_guard lock{cache_mutex};
+    std::lock_guard lock{playback_mutex};
     queued_movies = {
         "LONGTIME.SAN",
     };
-    if (start_cached_preview_locked("L00LOGO.SAN")) {
+    if (start_movie_locked("L00LOGO.SAN")) {
         return true;
     }
     return start_next_queued_locked();
 }
 
-bool stop_cached_playback() {
-    std::lock_guard lock{cache_mutex};
+bool stop_playback() {
+    std::lock_guard lock{playback_mutex};
     const bool was_active = current_frame.valid();
     current_frame = {};
     active_playback = {};
@@ -574,76 +498,58 @@ bool stop_cached_playback() {
     return was_active;
 }
 
-bool finish_cached_playback() {
-    std::lock_guard lock{cache_mutex};
-    if (!current_frame.valid() || active_playback.metadata.frames == 0 ||
-        active_playback.metadata.fps <= 0.0)
-        return false;
+bool finish_playback() {
+    std::lock_guard lock{playback_mutex};
+    if (!active_playback || !current_frame.valid()) return false;
     hold_last_frame = true;
-    const double seconds = active_playback.metadata.frames /
-        active_playback.metadata.fps;
-    active_playback.started = std::chrono::steady_clock::now() -
+    active_playback->discard_audio = true;
+    active_playback->audio.clear();
+    while (decode_frame_locked()) {}
+    active_playback->audio_frames = 0;
+    active_playback->started = playback_now() -
         std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-            std::chrono::duration<double>(seconds));
-    active_playback.audio_cursor = active_playback.audio_frames;
-    return read_cache_frame_locked(active_playback.metadata.frames - 1);
+            std::chrono::duration<double>(active_playback->frame_end));
+    return !active_playback->failed;
 }
 
-bool cached_playback_active() {
-    std::lock_guard lock{cache_mutex};
+bool playback_active() {
+    std::lock_guard lock{playback_mutex};
     return current_frame.valid();
 }
 
 uint64_t playback_token() {
-    std::lock_guard lock{cache_mutex};
-    return current_frame.valid() ? active_playback.token : 0;
+    std::lock_guard lock{playback_mutex};
+    return current_frame.valid() && active_playback ? active_playback->token : 0;
 }
 
-double cached_playback_remaining_seconds() {
-    std::lock_guard lock{cache_mutex};
-    if (!current_frame.valid() || active_playback.metadata.fps <= 0.0) {
-        return 0.0;
-    }
-    const double duration = active_playback.metadata.frames /
-        active_playback.metadata.fps;
+double playback_remaining_seconds() {
+    std::lock_guard lock{playback_mutex};
+    if (!active_playback) return 0.0;
+    const auto& stream = *active_playback;
+    const double duration = std::max(stream.audio_frames / 22050.0,
+        stream.frame_end + (stream.done ? 0 :
+        std::max<int64_t>(0, int64_t(stream.frames) - stream.decoded) * stream.frame_duration));
     const double elapsed = std::chrono::duration<double>(
-        std::chrono::steady_clock::now() - active_playback.started).count();
+        playback_now() - stream.started).count();
     return std::max(0.0, duration - elapsed);
 }
 
 void set_hold_last_frame(bool hold) {
-    std::lock_guard lock{cache_mutex};
+    std::lock_guard lock{playback_mutex};
     hold_last_frame = hold;
 }
 
-std::vector<int16_t> next_cached_audio() {
-    std::lock_guard lock{cache_mutex};
-    if (!current_frame.valid() || active_playback.audio_frames == 0) {
-        return {};
+std::vector<int16_t> next_audio() {
+    std::lock_guard lock{playback_mutex};
+    if (!active_playback) return {};
+    auto& queue = active_playback->audio;
+    const size_t count = std::min<size_t>(queue.size(), 8192);
+    std::vector<int16_t> result;
+    result.reserve(count);
+    for (size_t i = 0; i < count; ++i) {
+        result.push_back(queue.front()); queue.pop_front();
     }
-    constexpr uint64_t rate = 22050;
-    const double elapsed = std::chrono::duration<double>(
-        std::chrono::steady_clock::now() - active_playback.started).count();
-    const uint64_t target = std::min<uint64_t>(
-        active_playback.audio_frames,
-        static_cast<uint64_t>(elapsed * rate) + rate / 10);
-    if (target <= active_playback.audio_cursor) {
-        return {};
-    }
-    const uint64_t frames = std::min<uint64_t>(
-        target - active_playback.audio_cursor, 4096);
-    std::ifstream audio{active_playback.audio_path, std::ios::binary};
-    if (!audio) {
-        return {};
-    }
-    audio.seekg(static_cast<std::streamoff>(active_playback.audio_cursor * 4));
-    std::vector<int16_t> samples(static_cast<size_t>(frames * 2));
-    audio.read(reinterpret_cast<char*>(samples.data()),
-        static_cast<std::streamsize>(frames * 4));
-    const auto read_frames = static_cast<size_t>(audio.gcount() / 4);
-    samples.resize(read_frames * 2);
-    active_playback.audio_cursor += read_frames;
-    return samples;
+    return result;
 }
 
 void note_music_command(std::string_view name) {
@@ -653,41 +559,28 @@ void note_music_command(std::string_view name) {
         lower_name.end(),
         lower_name.begin(),
         [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    std::lock_guard lock{cache_mutex};
+    std::lock_guard lock{playback_mutex};
     current_music_is_main_menu =
         lower_name.find("main") != std::string::npos;
 }
 
 bool menu_music_active() {
-    std::lock_guard lock{cache_mutex};
+    std::lock_guard lock{playback_mutex};
     return current_music_is_main_menu;
 }
 
-CachedFrame latest_cached_frame() {
-    std::lock_guard lock{cache_mutex};
-    if (current_frame.valid() && active_playback.metadata.frames > 0 &&
-        active_playback.metadata.fps > 0.0) {
-        const auto elapsed = std::chrono::duration<double>(
-            std::chrono::steady_clock::now() - active_playback.started).count();
-        const double exact_frame = elapsed * active_playback.metadata.fps;
-        if (exact_frame >= active_playback.metadata.frames) {
-            if (hold_last_frame) {
-                const uint32_t last_frame =
-                    active_playback.metadata.frames - 1;
-                if (active_playback.frame_index != last_frame) {
-                    (void)read_cache_frame_locked(last_frame);
-                }
-                return current_frame;
-            }
+MovieFrame latest_frame() {
+    std::lock_guard lock{playback_mutex};
+    if (active_playback) {
+        const double elapsed = std::chrono::duration<double>(
+            playback_now() - active_playback->started).count();
+        while (elapsed >= active_playback->frame_end && decode_frame_locked()) {}
+        if (active_playback->failed || (active_playback->done && !hold_last_frame && active_playback->audio.empty() &&
+            elapsed >= std::max(active_playback->frame_end, active_playback->audio_frames / 22050.0))) {
             current_frame = {};
-            active_playback = {};
+            active_playback.reset();
             ++frame_serial;
             (void)start_next_queued_locked();
-            return current_frame;
-        }
-        const auto desired = static_cast<uint32_t>(std::floor(exact_frame));
-        if (desired != active_playback.frame_index) {
-            (void)read_cache_frame_locked(desired);
         }
     }
     return current_frame;
@@ -695,92 +588,21 @@ CachedFrame latest_cached_frame() {
 
 void initialize(const std::filesystem::path& runtime_directory) {
     {
-        std::lock_guard lock{cache_mutex};
-            cache_root = runtime_directory / "Sdata" / "SAN_CACHE";
+        std::lock_guard lock{playback_mutex};
+            movie_runtime_root = runtime_directory;
             current_frame = {};
             active_playback = {};
             queued_movies.clear();
             hold_last_frame = false;
             current_music_is_main_menu = false;
     }
-    uint32_t found = 0;
-    uint32_t anim = 0;
-    uint32_t sanm = 0;
-    std::array<std::filesystem::path, 3> examples{};
-    for (const auto& root : san_search_roots(runtime_directory)) {
-        std::error_code error;
-        if (!std::filesystem::is_directory(root, error)) {
-            continue;
-        }
-        for (const auto& entry : std::filesystem::directory_iterator(root, error)) {
-            if (error || !entry.is_regular_file(error)) {
-                continue;
-            }
-            auto extension = entry.path().extension().string();
-            std::transform(
-                extension.begin(),
-                extension.end(),
-                extension.begin(),
-                [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-            if (extension != ".san") {
-                continue;
-            }
-            const MovieInfo info = inspect_file(entry.path());
-            if (found < examples.size()) {
-                examples[found] = entry.path().filename();
-            }
-            ++found;
-            if (info.container == ContainerKind::AnimAhdr) {
-                ++anim;
-            } else if (info.container == ContainerKind::SanmShdr) {
-                ++sanm;
-            }
-        }
-        if (found != 0) {
-            uint32_t expected_present = 0;
-            for (const auto& name : expected_movies) {
-                std::error_code expected_error;
-                if (std::filesystem::is_regular_file(
-                        root / std::filesystem::path{name},
-                        expected_error)) {
-                    ++expected_present;
-                }
-            }
-            std::printf(
-                "[sote][san] found %u loose SAN file(s) in %s "
-                "(ANIM/AHDR=%u SANM/SHDR=%u expected=%u/%d; "
-                "cache playback available)\n",
-                found,
-                root.string().c_str(),
-                anim,
-                sanm,
-                expected_present,
-                expected_movie_count());
-            for (uint32_t index = 0; index < found && index < examples.size(); ++index) {
-                const MovieInfo info = inspect_file(root / examples[index]);
-                std::printf(
-                    "[sote][san]   %s: %s frames=%u size=%ux%u max=%ux%u "
-                    "FRME=%u FOBJ=%u c47=%u c48=%u IACT=%u XPAL=%u Bl16=%u Wave=%u\n",
-                    examples[index].string().c_str(),
-                    container_name(info.container),
-                    info.frame_count,
-                    info.first_width,
-                    info.first_height,
-                    info.max_width,
-                    info.max_height,
-                    info.frme_chunks,
-                    info.fobj_chunks,
-                    info.codec47_chunks,
-                    info.codec48_chunks,
-                    info.iact_chunks,
-                    info.xpal_chunks,
-                    info.bl16_chunks,
-                    info.wave_chunks);
-            }
-            std::fflush(stdout);
-            return;
-        }
+    unsigned found = 0;
+    for (auto name : expected_movies) {
+        if (!find_movie(runtime_directory, name).empty()) ++found;
     }
+    std::printf("[sote][san] %u/%zu loose SAN files available for direct playback\n",
+                found, std::size(expected_movies));
+    std::fflush(stdout);
 }
 
 } // namespace sote::san_movies

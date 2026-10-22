@@ -400,6 +400,8 @@ struct GeneralFailureTelemetry {
 
 GeneralFailureTelemetry previous_general_telemetry;
 bool san_logo_started = false;
+std::atomic<bool> san_intro_story_pending{false};
+std::atomic<bool> san_intro_story_attempted{false};
 int16_t san_last_movie_event = INT16_MIN;
 bool san_game_over_started = false;
 uint64_t san_game_over_movie_token = 0;
@@ -486,7 +488,7 @@ const char* san_intro_for_event(int16_t event) {
     // Chapter openings and the Ord IG-88 story play their matching PC film.
     // Later checkpoints must not replay a chapter introduction.
     switch (event) {
-        case 2: return "L01INTRO.SAN";
+        // Event 2 is the title/menu, not the opening comic sequence.
         case 4: return "L02INTRO.SAN";
         case 6: return "L03INTRO.SAN";
         case 7: return "L04INTRO.SAN";
@@ -505,6 +507,7 @@ int16_t san_story_skip_destination(int16_t event) {
     // Verified native Start-skip transitions for story sequences whose PC
     // movie narrates the same material. Keep later mission objectives intact.
     switch (event) {
+        case 0: return 2;  // Pre-title comic sequence -> title/menu.
         case 9: return 10; // IG-88 comic panels -> native arena reveal.
         case 7: return 8;   // Ord Mantell story -> playable hover train.
         case 11: return 14; // Gall story -> ship-side "find Boba Fett" briefing.
@@ -808,7 +811,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         san_gall_boss_started = false;
         san_palace_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_palace_boss_started = false;
-        sote::san_movies::stop_cached_playback();
+        sote::san_movies::stop_playback();
         const int16_t current_event = static_cast<int16_t>(
             read_guest_half(rdram, 0x8013CE0EU));
         san_last_movie_event = current_event;
@@ -817,7 +820,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (const char* preview = std::getenv("SOTE_SAN_PREVIEW")) {
         if (!san_logo_started && preview[0] != '\0') {
             san_logo_started = true;
-            sote::san_movies::play_cached_preview(preview);
+            sote::san_movies::play_movie(preview);
         }
         return;
     }
@@ -828,11 +831,14 @@ void update_san_movie_triggers(uint8_t* rdram) {
         if (std::getenv("SOTE_DIAGNOSTIC_SKIP_SAN_STARTUP") == nullptr)
             sote::san_movies::play_startup_sequence();
     }
-    if (sote::san_movies::cached_playback_active()) {
+    if (san_intro_story_pending.exchange(false, std::memory_order_relaxed))
+        san_pending_story_skip_event = 0;
+    if (sote::san_movies::playback_active()) {
         return;
     }
     const int16_t event = static_cast<int16_t>(
         read_guest_half(rdram, 0x8013CE0EU));
+    if (event != 0) san_intro_story_attempted.store(false, std::memory_order_relaxed);
     if (event != 15) {
         san_gall_boss_cue_pending.store(false, std::memory_order_relaxed);
         san_gall_boss_started = false;
@@ -852,6 +858,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
             write_guest_half(rdram, 0x800D255CU,
                 static_cast<uint16_t>(destination));
             write_guest_byte(rdram, 0x800D2558U, 2);
+            if (from_event == 0) san_last_movie_event = 2;
             std::printf("[sote][san] PC story complete; native skip %d -> %d\n",
                 from_event, destination);
             std::fflush(stdout);
@@ -868,7 +875,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         if (lives < 0) {
             if (!san_game_over_started) {
                 san_game_over_started = true;
-                if (sote::san_movies::play_cached_preview("GAMEOVER.SAN"))
+                if (sote::san_movies::play_movie("GAMEOVER.SAN"))
                     san_game_over_movie_token = sote::san_movies::playback_token();
             }
             return;
@@ -884,7 +891,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (event == 15 && !san_gall_boss_started &&
         san_gall_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
         san_gall_boss_started =
-            sote::san_movies::play_cached_preview("L05BOSS.SAN");
+            sote::san_movies::play_movie("L05BOSS.SAN");
         // Use ordinary movie playback: freeze the guest until the film
         // ends or is skipped, then resume its untouched native reveal.
         std::printf("[sote][san] Gall Boba encounter cue: %s\n",
@@ -895,7 +902,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
     if (event == 27 && !san_palace_boss_started &&
         san_palace_boss_cue_pending.exchange(false, std::memory_order_relaxed)) {
         san_palace_boss_started =
-            sote::san_movies::play_cached_preview("L09BOSS.SAN");
+            sote::san_movies::play_movie("L09BOSS.SAN");
         std::printf("[sote][san] Palace Gladiator encounter cue: %s\n",
             san_palace_boss_started ? "L09BOSS.SAN started" : "movie unavailable");
         std::fflush(stdout);
@@ -910,7 +917,7 @@ void update_san_movie_triggers(uint8_t* rdram) {
         if (event == 31) {
             // The N64 epilogue shows the memorial and Dash's survival in
             // sequence, then rolls credits without changing the event id.
-            if (sote::san_movies::play_cached_sequence(
+            if (sote::san_movies::play_sequence(
                     {"L11LOSE.SAN", "L11WIN.SAN"})) {
                 san_ending_sequence_pending = true;
                 san_ending_first_token = sote::san_movies::playback_token();
@@ -919,11 +926,11 @@ void update_san_movie_triggers(uint8_t* rdram) {
             return;
         }
         if (const char* movie = san_movie_for_event(event)) {
-            (void)sote::san_movies::play_cached_preview(movie);
+            (void)sote::san_movies::play_movie(movie);
             return;
         }
         if (const char* movie = san_intro_for_event(event)) {
-            const bool playing = sote::san_movies::play_cached_preview(movie);
+            const bool playing = sote::san_movies::play_movie(movie);
             std::printf("[sote][san] chapter intro event=%d result=%d VI=%d movie=%s started=%d\n",
                 event, result, vi_count.load(std::memory_order_relaxed), movie, playing);
             std::fflush(stdout);
@@ -1186,7 +1193,7 @@ void log_general_failure_telemetry(int vi) {
             if (smoke_expect_natural_game_over &&
                 previous_general_telemetry.lives == -1 &&
                 previous_general_telemetry.result == 4) {
-                if (sote::san_movies::cached_playback_active()) {
+                if (sote::san_movies::playback_active()) {
                     return;
                 }
                 std::printf(
@@ -1976,10 +1983,13 @@ void release_game_mouse() {
     if (!mouse_captured) return;
     ClipCursor(nullptr);
     mouse_captured = false;
+    SetCursor(LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)));
+    std::printf("[sote][mouse] capture released\n");
+    std::fflush(stdout);
 }
 void update_game_mouse(HWND window) {
-    if (window == nullptr || GetForegroundWindow() != window || IsIconic(window) ||
-        !sote::frontend::mouse_capture_requested()) {
+    const bool requested = sote::frontend::mouse_capture_requested();
+    if (window == nullptr || GetForegroundWindow() != window || IsIconic(window) || !requested) {
         release_game_mouse();
         return;
     }
@@ -1989,7 +1999,28 @@ void update_game_mouse(HWND window) {
         return;
     }
     MapWindowPoints(window, nullptr, reinterpret_cast<POINT*>(&bounds), 2);
-    if (ClipCursor(&bounds)) mouse_captured = true;
+    if (!mouse_captured) {
+        // Raw-input registrations are process-wide; libraries may replace one
+        // after window creation. Reassert our target when gameplay takes focus.
+        RAWINPUTDEVICE mouse{0x01, 0x02, 0, window};
+        if (!RegisterRawInputDevices(&mouse, 1, sizeof(mouse))) {
+            std::fprintf(stderr, "[sote][mouse] registration failed error=%lu\n", GetLastError());
+            return;
+        }
+    }
+    if (ClipCursor(&bounds)) {
+        if (!mouse_captured) {
+            std::printf("[sote][mouse] captured client=%ld,%ld-%ld,%ld\n", bounds.left, bounds.top, bounds.right, bounds.bottom);
+            std::fflush(stdout);
+        }
+        mouse_captured = true;
+        SetCursor(nullptr);
+    } else {
+        static DWORD reported = 0;
+        const DWORD error = GetLastError();
+        if (error != reported) std::fprintf(stderr, "[sote][mouse] capture failed error=%lu\n", error);
+        reported = error;
+    }
 }
 
 LRESULT CALLBACK window_proc(
@@ -2031,16 +2062,29 @@ LRESULT CALLBACK window_proc(
         case WM_ENTERSIZEMOVE:
             release_game_mouse();
             break;
+        case WM_SETCURSOR:
+            if (mouse_captured && LOWORD(lparam) == HTCLIENT) {
+                SetCursor(nullptr);
+                return TRUE;
+            }
+            break;
         case WM_INPUT: {
             if (!mouse_captured) break;
             RAWINPUT input{};
             UINT bytes = sizeof(input);
-            if (GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam),
-                    RID_INPUT, &input, &bytes, sizeof(RAWINPUTHEADER)) ==
-                    sizeof(input) && input.header.dwType == RIM_TYPEMOUSE &&
+            const UINT received = GetRawInputData(reinterpret_cast<HRAWINPUT>(lparam),
+                    RID_INPUT, &input, &bytes, sizeof(RAWINPUTHEADER));
+            if (received != UINT(-1) && received >= sizeof(RAWINPUTHEADER) + sizeof(RAWMOUSE) &&
+                    input.header.dwType == RIM_TYPEMOUSE &&
                     !(input.data.mouse.usFlags & MOUSE_MOVE_ABSOLUTE)) {
                 sote::frontend::add_mouse_delta(
                     input.data.mouse.lLastX, input.data.mouse.lLastY);
+                static ULONGLONG next_report = 0;
+                if (GetTickCount64() >= next_report) {
+                    std::printf("[sote][mouse] relative dx=%ld dy=%ld\n", input.data.mouse.lLastX, input.data.mouse.lLastY);
+                    std::fflush(stdout);
+                    next_report = GetTickCount64() + 5000;
+                }
             }
             break;
         }
@@ -2216,6 +2260,7 @@ void update_gfx(void*) {
                 requested_window.output_height);
         }
     }
+    update_game_mouse(graphics_window);
     MSG message{};
     while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
         TranslateMessage(&message);
@@ -2593,27 +2638,27 @@ void on_vi() {
     if (san_game_over_movie_token != 0 &&
         sote::san_movies::playback_token() == san_game_over_movie_token)
         sote::san_movies::set_hold_last_frame(true);
-    (void)sote::san_movies::latest_cached_frame();
+    (void)sote::san_movies::latest_frame();
     uint64_t movie_token = sote::san_movies::playback_token();
     if (movie_token != 0 &&
         sote::frontend::movie_skip_pressed(movie_token, count)) {
         if (san_ending_sequence_pending && game_rdram != nullptr &&
             read_guest_half(game_rdram, 0x8013CE0EU) == 31U &&
-            sote::san_movies::play_cached_preview("L11WIN.SAN") &&
-            sote::san_movies::finish_cached_playback()) {
+            sote::san_movies::play_movie("L11WIN.SAN") &&
+            sote::san_movies::finish_playback()) {
             // The final frame is black. Keep it over the native memorial and
             // survival scenes while their ordinary A-advance reaches credits.
             movie_token = sote::san_movies::playback_token();
             std::printf("[sote][san] ending films skipped to credits handoff\n");
             std::fflush(stdout);
         } else if (movie_token == san_game_over_movie_token &&
-            sote::san_movies::finish_cached_playback()) {
+            sote::san_movies::finish_playback()) {
             std::printf("[sote][san] game-over film skipped to title handoff\n");
             std::fflush(stdout);
         } else {
             std::printf("[sote][san] cutscene skipped\n");
             std::fflush(stdout);
-            sote::san_movies::stop_cached_playback();
+            sote::san_movies::stop_playback();
             san_ending_sequence_pending = false;
             movie_token = 0;
         }
@@ -2623,7 +2668,7 @@ void on_vi() {
     if (san_game_over_movie_token != 0 &&
         movie_token == san_game_over_movie_token && game_rdram != nullptr) {
         if (san_game_over_handoff_start_vi < 0 &&
-            sote::san_movies::cached_playback_remaining_seconds() <= 0.0) {
+            sote::san_movies::playback_remaining_seconds() <= 0.0) {
             san_game_over_handoff_start_vi = count;
             san_game_over_handoff_active.store(true, std::memory_order_relaxed);
             std::printf("[sote][san] game-over native title advance begins at VI=%d\n",
@@ -2635,7 +2680,7 @@ void on_vi() {
             const int16_t event = static_cast<int16_t>(
                 read_guest_half(game_rdram, 0x8013CE0EU));
             if (event == 2 || elapsed >= 180) {
-                sote::san_movies::stop_cached_playback();
+                sote::san_movies::stop_playback();
                 sote::frontend::set_movie_playback(0);
                 movie_token = 0;
                 san_game_over_movie_token = 0;
@@ -2661,7 +2706,7 @@ void on_vi() {
         static_cast<int16_t>(read_guest_half(game_rdram, 0x8013CE0EU)) == 31) {
         sote::san_movies::set_hold_last_frame(true);
         if (san_ending_advance_start_vi < 0 &&
-            sote::san_movies::cached_playback_remaining_seconds() <= 0.0) {
+            sote::san_movies::playback_remaining_seconds() <= 0.0) {
             san_ending_advance_start_vi = count;
             san_ending_handoff_active.store(true, std::memory_order_relaxed);
             std::printf("[sote][san] ending native story advance begins at VI=%d\n", count);
@@ -2672,7 +2717,7 @@ void on_vi() {
             if (elapsed < 120) {
                 ending_advance = elapsed % 2 == 0;
             } else {
-                sote::san_movies::stop_cached_playback();
+                sote::san_movies::stop_playback();
                 sote::frontend::set_movie_playback(0);
                 movie_token = 0;
                 san_ending_handoff_active.store(false,
@@ -2689,7 +2734,7 @@ void on_vi() {
     sote::frontend::set_movie_guest_advance(ending_advance);
     sote::frontend::set_movie_guest_start(game_over_advance);
     if (movie_token != 0) {
-        const auto audio = sote::san_movies::next_cached_audio();
+        const auto audio = sote::san_movies::next_audio();
         sote::frontend::queue_movie_audio(audio.data(), audio.size());
     }
     const int current_display_lists =
@@ -3066,6 +3111,30 @@ void cheat_reload_settings() {
 void sote_cheats_frame(uint8_t* rdram) {
     if (!rdram) return;
     const int vi = vi_count.load(std::memory_order_relaxed);
+    // Offscreen texture audit: select real HUD weapon variants on the game
+    // thread, without restoring scheduler memory or generating desktop input.
+    if (const char* audit = std::getenv("SOTE_DIAGNOSTIC_HUD_WEAPONS");
+        audit && std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") &&
+        read_guest_half(rdram, 0x8013CE0EU) == 4) {
+        const int start = std::atoi(audit);
+        const uint32_t player = read_guest_word(rdram, 0x80112B30U);
+        if (start > 0 && vi >= start && player >= 0x80000000U &&
+            player <= 0x807FFF00U) {
+            const char* fixed = std::strchr(audit, ':');
+            const int weapon = fixed ? std::clamp(std::atoi(fixed + 1), 0, 5)
+                                     : std::min((vi - start) / 240, 5);
+            write_guest_half(rdram, player + 0xB8U, uint16_t(weapon));
+            for (unsigned i = 0; i < 6; ++i) {
+                write_guest_word(rdram, player + 0xC0U + i * 4, 0x42C80000U);
+                // The native weapon-change action normally hides the old HUD
+                // slot. Direct selection must do that too, or sprites stack.
+                if (i != unsigned(weapon)) {
+                    write_guest_half(rdram, 0x80111110U + i * 4, uint16_t(-1000));
+                    write_guest_half(rdram, 0x80111112U + i * 4, 0);
+                }
+            }
+        }
+    }
     if (vi - cheat_last_check_vi >= 60 || vi < cheat_last_check_vi) {
         cheat_last_check_vi = vi;
         cheat_reload_settings();
@@ -3119,7 +3188,7 @@ extern "C" void sote_wait_for_game_frame() {
     // each iteration for two VIs reduced player and jetpack physics to 30 Hz
     // and felt visibly slow. Allow exactly one gameplay iteration per VI.
     std::unique_lock lock(game_frame_mutex);
-    while (sote::san_movies::cached_playback_active() &&
+    while (sote::san_movies::playback_active() &&
            !san_ending_handoff_active.load(std::memory_order_relaxed) &&
            !san_game_over_handoff_active.load(std::memory_order_relaxed)) {
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
@@ -4446,9 +4515,6 @@ extern "C" void sote_note_droid_text_buffer_draw(
     const bool mapped_voice = sote::hd_audio::has_voice_for_text(text);
     const bool trace_visual =
         std::getenv("SOTE_TRACE_DROID_VISUAL") != nullptr;
-    if (!mapped_voice && !trace_visual) {
-        return;
-    }
 
     const bool valid_position = is_guest_address(position_pointer);
     const bool valid_color = is_guest_address(color_pointer);
@@ -4489,10 +4555,13 @@ extern "C" void sote_note_droid_text_buffer_draw(
         std::fflush(stdout);
     }
 
-    if (mapped_voice)
-        sote::hd_audio::play_visible_voice(text,
+    sote::hd_audio::play_visible_voice(text,
             static_cast<uint64_t>(vi_count.load(std::memory_order_relaxed)),
-            event);
+            event, slot);
+}
+
+extern "C" void sote_hide_communicator_slot(uint32_t slot, int32_t x) {
+    if (x == -1000) sote::hd_audio::stop_visible_voice(slot);
 }
 
 extern "C" uint32_t sote_play_hd_sound_request(
@@ -4920,4 +4989,36 @@ extern "C" void sote_outrider_object(uint8_t*, uint32_t object) {
     outrider_object.store(object, std::memory_order_relaxed);
     outrider_object_vi.store(vi_count.load(std::memory_order_relaxed),
         std::memory_order_relaxed);
+}
+
+extern "C" void sote_trace_story_load(uint8_t* rdram, uint32_t event, uint32_t caller) {
+    if (std::getenv("SOTE_TRACE_STORY_LOAD")) {
+        std::printf("[sote][story-load] event=%u caller=%08X VI=%d current=%u header=%08X/%08X\n",
+            event, caller, vi_count.load(std::memory_order_relaxed),
+            read_guest_half(rdram, 0x8013CE0EU), read_guest_word(rdram, 0x80196954U), read_guest_word(rdram, 0x80196958U));
+        std::fflush(stdout);
+    }
+}
+
+extern "C" int sote_intro_story_sprite(uint8_t* rdram, uint32_t sprite) {
+    if (read_guest_half(rdram, 0x8013CE0EU) != 0) return 0;
+    const uint32_t table = read_guest_word(rdram, 0x8013CE2CU);
+    if (!is_guest_address(table) || !is_guest_address(sprite)) return 0;
+    if (sprite != read_guest_word(rdram, table + 4U * 4U) ||
+        read_guest_half(rdram, sprite + 4U) != 160 ||
+        read_guest_half(rdram, sprite + 6U) != 240) return 0;
+    static bool noted = false;
+    if (!noted) {
+        noted = true;
+        std::printf("[sote][san] pre-title story background VI=%d sprite=%08X\n",
+            vi_count.load(std::memory_order_relaxed), sprite);
+        std::fflush(stdout);
+    }
+    if (!sote::graphics_menu::pc_cutscenes_enabled() ||
+        san_intro_story_attempted.exchange(true, std::memory_order_relaxed)) return 0;
+    if (!sote::san_movies::play_movie("L01INTRO.SAN")) return 0;
+    san_intro_story_pending.store(true, std::memory_order_relaxed);
+    std::printf("[sote][san] pre-title comic replaced with L01INTRO.SAN\n");
+    std::fflush(stdout);
+    return 1;
 }

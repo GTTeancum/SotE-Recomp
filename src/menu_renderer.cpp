@@ -3,6 +3,7 @@
 #include "menu_skin.hpp"
 #include "san_movies.hpp"
 #include "modern_controls.hpp"
+#include "control_bindings.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -45,6 +46,10 @@ struct Resources {
     std::unique_ptr<RenderBuffer> upload;
     unsigned width = 0, height = 0, pitch = 0;
     uint64_t serial = 0, native_serial = 0, font_serial = 0;
+    std::unique_ptr<RenderTexture> scene;
+    std::unique_ptr<TextureSet> scene_descriptor;
+    unsigned scene_width = 0, scene_height = 0;
+    bool scene_valid = false;
     bool ready = false;
 };
 std::unique_ptr<Resources> resources;
@@ -54,7 +59,7 @@ RT64::RenderHookDraw* previous_draw = nullptr;
 RT64::RenderHookDeinit* previous_deinit = nullptr;
 
 menu_skin::Image letterbox_movie(
-    const san_movies::CachedFrame& frame,
+    const san_movies::MovieFrame& frame,
     unsigned width,
     unsigned height) {
     menu_skin::Image image;
@@ -173,10 +178,10 @@ void initialize(RenderInterface* rhi, RenderDevice* device) {
     } catch (const std::exception& e) { disable(e.what()); }
       catch (...) { disable("initialization failure"); }
 }
-void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
+void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture* output) {
     sote::diagnostics::Phase phase(sote::diagnostics::present_phase);
     ++sote::diagnostics::presents;
-    if (previous_draw) previous_draw(list, framebuffer);
+    if (previous_draw) previous_draw(list, framebuffer, output);
     if (!resources || !resources->ready || !framebuffer) return;
     try {
         if (!game_ready.load(std::memory_order_acquire)) {
@@ -184,16 +189,53 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
             list->clearColor(0, RenderColor(0.0f, 0.0f, 0.0f, 1.0f));
             return;
         }
-        const auto movie_frame = san_movies::latest_cached_frame();
+        const auto movie_frame = san_movies::latest_frame();
         phase.set(2);
         const auto snapshot = menu_skin::latest();
         const auto native = movie_frame.valid() ? nullptr : menu_skin::latest_native_text();
         const bool reticle = !movie_frame.valid() && !snapshot &&
             modern_controls::reticle_visible();
-        if (!movie_frame.valid() && !snapshot && !reticle && !native) return;
+
         auto& r = *resources;
         const unsigned fw = framebuffer->getWidth(), fh = framebuffer->getHeight();
         if (!fw || !fh) return;
+        const bool paused = snapshot && (snapshot->pause_background || snapshot->screen == menu_skin::Screen::Pause);
+        bool gameplay = modern_controls::on_foot_active();
+        for (int i = 0; i < int(control_bindings::Context::Count); ++i)
+            gameplay |= control_bindings::context_active(static_cast<control_bindings::Context>(i));
+        // The retail pause renderer alternates clears and partial display lists.
+        // Retain the last complete gameplay presentation, before host UI, and
+        // blend the translucent pause surface over that stable image.
+        if (!movie_frame.valid() && !snapshot && gameplay && output) {
+            if (!r.scene || r.scene_width != fw || r.scene_height != fh) {
+                r.scene = r.device->createTexture(RenderTextureDesc::Texture2D(fw, fh, 1, RenderFormat::B8G8R8A8_UNORM));
+                r.scene_descriptor = std::make_unique<TextureSet>(r.device);
+                if (!r.scene) throw std::runtime_error("pause scene allocation");
+                r.scene_descriptor->setTexture(r.scene_descriptor->input, r.scene.get(), RenderTextureLayout::SHADER_READ);
+                r.scene_width = fw; r.scene_height = fh;
+            }
+            list->barriers(RenderBarrierStage::COPY, RenderTextureBarrier(output, RenderTextureLayout::COPY_SOURCE));
+            list->barriers(RenderBarrierStage::COPY, RenderTextureBarrier(r.scene.get(), RenderTextureLayout::COPY_DEST));
+            list->copyTexture(r.scene.get(), output);
+            list->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(output, RenderTextureLayout::COLOR_WRITE));
+            list->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(r.scene.get(), RenderTextureLayout::SHADER_READ));
+            r.scene_valid = true;
+        } else if (movie_frame.valid() || (snapshot && (snapshot->screen == menu_skin::Screen::Profiles || snapshot->screen == menu_skin::Screen::Summary))) {
+            r.scene_valid = false;
+        }
+        if (paused && r.scene_valid) {
+            list->setFramebuffer(framebuffer);
+            list->setGraphicsPipelineLayout(r.layout.get());
+            list->setPipeline(r.pipeline.get());
+            list->setGraphicsDescriptorSet(r.scene_descriptor->get(), 0);
+            const CopyConstants scene_cb{0, 0, float(r.scene_width), float(r.scene_height)};
+            list->setGraphicsPushConstants(0, &scene_cb);
+            list->setViewports(RenderViewport(0, 0, float(fw), float(fh)));
+            list->setScissors(RenderRect(0, 0, int32_t(fw), int32_t(fh)));
+            list->setVertexBuffers(0, nullptr, 0, nullptr);
+            list->drawInstanced(3, 1, 0, 0);
+        }
+        if (!movie_frame.valid() && !snapshot && !reticle && !native) return;
         // Preserve window aspect, but cap CPU work at a 1920x1080 surface.
         const double scale = std::min({1.0, 1920.0 / fw, 1080.0 / fh});
         const unsigned w = std::max(1U, unsigned(std::lround(fw * scale)));
@@ -238,7 +280,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer) {
         }
         list->setFramebuffer(framebuffer);
         list->setGraphicsPipelineLayout(r.layout.get());
-        list->setPipeline((reticle || (!snapshot && native) || (snapshot && snapshot->screen == menu_skin::Screen::Pause)) && !movie_frame.valid()
+        list->setPipeline((reticle || (!snapshot && native) || paused) && !movie_frame.valid()
             ? r.alpha_pipeline.get() : r.pipeline.get());
         list->setGraphicsDescriptorSet(r.descriptor->get(), 0);
         const CopyConstants cb{0, 0, float(w), float(h)};

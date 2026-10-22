@@ -3,6 +3,7 @@
 #include "diagnostic_progress.hpp"
 
 #include "controls_menu.hpp"
+#include "control_bindings.hpp"
 #include "menu_skin.hpp"
 
 #include <algorithm>
@@ -66,6 +67,7 @@ enum class MenuTransition {
     WaitMain,
     RestoreProfileFocus,
     ActivateReturn,
+    FocusBindings,
 };
 
 constexpr int graphics_submenu_item_count = 11;
@@ -73,7 +75,7 @@ constexpr int graphics_submenu_item_count = 11;
 int submenu_item_count(TopCategory category) {
     if (category == TopCategory::Cheats) return cheats_item_count();
     return category == TopCategory::Controls
-        ? 4 + sote::controls_menu::tuning_menu_row_count()
+        ? 5 + sote::controls_menu::tuning_menu_row_count()
         : graphics_submenu_item_count;
 }
 
@@ -891,7 +893,7 @@ void draw_graphics_submenu(uint8_t* rdram) {
         set_row(rdram,63,"~sCutscenes",72,150,0x697388FF);
         set_row(rdram,65,"~sN64",160,150,0x697388FF);
     }
-    set_row(rdram, 69, "~sMenu Font", 72, 166, label_color(7));
+    set_row(rdram, 69, "~sFont", 72, 166, label_color(7));
     set_row(rdram, 70,
         sote::menu_skin::menu_font_original() ? "~sOriginal" : "~sModern",
         160, 166, value_color(7));
@@ -1138,6 +1140,16 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
             return;
         }
         switch (state.transition) {
+            case MenuTransition::FocusBindings:
+                if (view && view->screen == sote::menu_skin::Screen::Controls) {
+                    sote::control_bindings::open_editor();
+                    state.transition = MenuTransition::None;
+                } else if (state.original_selection != 63 &&
+                           (std::chrono::duration_cast<std::chrono::milliseconds>(
+                               now - state.phase_started).count() % 200) < 100) {
+                    *buttons |= n64_dd;
+                }
+                return;
             case MenuTransition::FocusOptions:
                 if (state.main_visible && state.options_focused_in_main) {
                     set_transition_locked(MenuTransition::OpenOptions);
@@ -1228,7 +1240,8 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
 
     if (!view || (view->screen != sote::menu_skin::Screen::Options &&
                   view->screen != sote::menu_skin::Screen::Graphics &&
-                  view->screen != sote::menu_skin::Screen::Schemes)) return;
+                  view->screen != sote::menu_skin::Screen::Schemes &&
+                  !(view->screen == sote::menu_skin::Screen::Controls && !view->binding_editing))) return;
 
     if (state.submenu_active) {
         consume_menu_input();
@@ -1277,6 +1290,11 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                            3 + sote::controls_menu::tuning_menu_row_count()) {
                     sote::controls_menu::persist();
                     sote::controls_menu::persist_tuning();
+                } else if (state.submenu_selection ==
+                           4 + sote::controls_menu::tuning_menu_row_count()) {
+                    state.submenu_active = false;
+                    state.transition_started = now;
+                    set_transition_locked(MenuTransition::FocusBindings);
                 } else {
                     adjust_selected_setting_locked(1);
                 }
@@ -1291,6 +1309,13 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         return;
     }
 
+    if ((pressed & n64_b) != 0) {
+        state.restore_profile_focus = false;
+        state.transition_started = now;
+        set_transition_locked(MenuTransition::ReturnToMain);
+        consume_menu_input();
+        return;
+    }
     int page_direction = 0;
     if ((pressed & n64_r) != 0) {
         page_direction = 1;
@@ -1348,16 +1373,18 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
     refresh_cutscene_availability_locked();
     view.pc_cutscenes_available = pc_movies_available;
     view.compatibility = state.editing.compatibility;
+    view.pause_background = state.return_to_pause;
     auto put = [&](int row, std::string text, int x, int y, int selection = -1) {
         const bool focus = selection >= 0 && selection == state.submenu_selection;
         view.rows[row] = {x, y, focus ? selected_color : normal_color, plain_text(text)};
     };
     if (!state.submenu_active) {
+        view.rows[63].text = "Control Bindings";
         view.rows[52].text = state.return_to_pause ? "Return to Pause Menu" : "Return to Main Menu";
         constexpr const char* help[] = {"Return to the previous screen.",
             "Show or hide on-screen gameplay information.", "Choose the seeker camera behavior.",
             "Adjust sound effects volume.", "Adjust music volume.",
-            "Choose the sound channel arrangement.", "Choose a control preset. Enter / A opens bindings."};
+            "Choose the sound channel arrangement.", "Enter / A: keyboard, mouse and gamepad bindings. Left/Right: native preset."};
         if (view.focused_setting>=0 && view.focused_setting<7) view.option_help=help[view.focused_setting];
         return;
     }
@@ -1400,6 +1427,8 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
                 "Adjust mouse movement sensitivity for Modern aiming."};
             const int index = state.submenu_selection - 3;
             view.option_help = index >= 0 && index < 9 ? tuning_help[index] :
+                state.submenu_selection == 4 + controls_menu::tuning_menu_row_count() ?
+                "Change keyboard, mouse-button and gamepad bindings for every gameplay context." :
                 "Save control schemes and tuning settings.";
         }
         put(52, "Main   Options   Graphics   < Controls >   Cheats", 160, 50);
@@ -1419,6 +1448,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         }
         put(75, "Return to Game Options", 105, 220, 0);
         put(76, "Apply", 220, 220, 3 + tuning_count);
+        put(77, "Edit Bindings", 270, 220, 4 + tuning_count);
     } else {
         view.screen = Screen::Graphics;
         constexpr const char* help[] = {"Return to Game Options without applying pending changes.",
@@ -1441,7 +1471,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(59, "Antialiasing", 72, 118, 4); put(60, antialiasing_name(state.editing.compatibility ? AntialiasingPreset::Off : state.editing.antialiasing), 160, 118, 4);
         put(61, "Display Mode", 72, 134, 5); put(62, state.editing.borderless ? "Borderless" : "Windowed", 160, 134, 5);
         put(63, "Cutscenes", 72, 150, 6); put(65, state.editing.pc_cutscenes ? "PC" : "N64", 160, 150, 6);
-        put(69, "Menu Font", 72, 166, 7);
+        put(69, "Font", 72, 166, 7);
         put(70, sote::menu_skin::menu_font_original() ? "Original" : "Modern", 160, 166, 7);
         put(71,"Compatibility Mode",42,181,8); put(72,state.editing.compatibility ? "On" : "Off",200,181,8);
         put(67, "Apply", 110, 198, 9); put(68, "Reset", 210, 198, 10);

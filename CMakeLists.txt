@@ -70,6 +70,7 @@ set(SOTE_RUNTIME_SOURCES
     src/graphics_menu.cpp
     src/menu_model.cpp
     src/menu_canvas.cpp
+    src/hud_labels.cpp
     src/menu_skin.cpp
     src/menu_renderer.cpp
     src/hd_audio.cpp
@@ -179,7 +180,18 @@ add_executable(texture_slots_harness tools/texture_slots_harness.cpp)
 target_include_directories(texture_slots_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${RT64_DIR}/src/contrib")
 add_test(NAME texture_slots_harness COMMAND texture_slots_harness "${CMAKE_BINARY_DIR}/texture_slots_test")
 
+add_library(sandec SHARED third_party/sandec/sandec.c)
+set_target_properties(sandec PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+target_include_directories(sandec PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sandec")
+if(MSVC)
+    target_compile_definitions(sandec PRIVATE __BYTE_ORDER__=1234 __ORDER_LITTLE_ENDIAN__=1234)
+    target_compile_options(sandec PRIVATE /wd4996)
+endif()
+target_link_libraries(sote_recomp PRIVATE sandec)
+
 add_executable(san_movies_harness tools/san_movies_harness.cpp src/san_movies.cpp)
+target_link_libraries(san_movies_harness PRIVATE sandec)
+target_compile_definitions(san_movies_harness PRIVATE SOTE_SAN_TESTING)
 target_include_directories(san_movies_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 add_test(NAME san_movies_harness COMMAND san_movies_harness
     "${CMAKE_BINARY_DIR}/san_movies_test"

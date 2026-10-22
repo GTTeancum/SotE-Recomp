@@ -57,36 +57,16 @@ portable packager also merges root-level `Sdata/*.SAN` from a local source
 tree into the play folder while intentionally ignoring `Sdata/MOVIES`.
 These files use LucasArts SMUSH: ScummVM's GRiME decoder identifies this
 SotE set as the `ANIM`/`AHDR` path, with `FOBJ` video chunks using codec 47
-or 48 and `IACT` audio chunks. The runtime currently plays from a generated
-RGBA/PCM cache. The video cache uses FFmpeg; IACT sound is decoded by the
-included LGPL-2.1 `sandec` converter.
+or 48 and `IACT` audio chunks. The runtime reads the original SAN files directly
+using the included LGPL-2.1 `sandec` shared library. It decodes video and stereo
+audio during playback into bounded memory buffers; no preprocessing, FFmpeg
+installation, or decoded disk cache is required.
 
-To verify the local files with FFmpeg and save first-frame previews, run:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\verify_san_movies.ps1
-```
-
-For runtime playback, decode the files into the local RGBA cache:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\prepare_san_cache.ps1
-```
-
-To rebuild only one movie for a targeted smoke check:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\prepare_san_cache.ps1 -MovieName GAMEOVER.SAN
-```
-
-This writes `Sdata/SAN_CACHE`, which is generated from local user assets and
-should not be committed. When the cache is present, the runtime can play the
-startup logo/long-time/intro sequence, level-intro, boss, and game-over
-movies from the runnable `Sdata` folder. Cutscenes pause gameplay and can be
-skipped with Start, A, B, Escape, Enter, or Space. After updating the executable,
-`prepare_san_cache.ps1 -AudioOnly` adds sound to an existing video cache.
-`SOTE_SAN_PREVIEW=<movie>.SAN` can be set before launch to force a single cached
-movie for smoke testing.
+Put your PC game's root-level `.SAN` files in `SotE_Recompiled/Sdata`.
+Cutscenes pause gameplay and can be skipped with Start, A, B, Escape, Enter,
+or Space. `SOTE_SAN_PREVIEW=<movie>.SAN` selects a movie for direct-playback testing.
+The original SAN files must remain present. Historical `SAN_CACHE` folders are
+not read by this player and are unnecessary.
 
 ## Texture packs
 

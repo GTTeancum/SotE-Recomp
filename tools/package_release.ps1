@@ -19,7 +19,7 @@ if (-not $CrtDirectory) {
     $crt = Get-ChildItem -LiteralPath "$vs\VC\Redist\MSVC" -Directory | Where-Object { $_.Name -match '^14\.' } | Sort-Object Name -Descending | Select-Object -First 1
     $CrtDirectory = Join-Path $crt.FullName 'x64\Microsoft.VC143.CRT'
 }
-foreach ($name in @('sote_recomp.exe','SDL2.dll','dxcompiler.dll','dxil.dll')) {
+foreach ($name in @('sote_recomp.exe','SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll')) {
     if (-not (Test-Path -LiteralPath "$buildDir\$name")) { throw "Missing runtime: $name" }
 }
 foreach ($source in @('rom_source_v2','captured_source','dynamic_source_v1')) {
@@ -27,7 +27,7 @@ foreach ($source in @('rom_source_v2','captured_source','dynamic_source_v1')) {
 }
 New-Item -ItemType Directory -Path $staging -Force | Out-Null
 Copy-Item -LiteralPath "$buildDir\sote_recomp.exe" -Destination "$staging\Shadows of the Empire.exe"
-foreach ($name in @('SDL2.dll','dxcompiler.dll','dxil.dll')) { Copy-Item -LiteralPath "$buildDir\$name" -Destination $staging }
+foreach ($name in @('SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll')) { Copy-Item -LiteralPath "$buildDir\$name" -Destination $staging }
 foreach ($name in @('msvcp140.dll','msvcp140_1.dll','msvcp140_2.dll','msvcp140_atomic_wait.dll','msvcp140_codecvt_ids.dll','vcruntime140.dll','vcruntime140_1.dll','concrt140.dll','vcruntime140_threads.dll')) {
     Copy-Item -LiteralPath "$CrtDirectory\$name" -Destination $staging
 }
@@ -45,6 +45,7 @@ $toolsDir = New-Item -ItemType Directory -Path "$staging\texture_tools"
 foreach ($name in @('extract_rom_textures.py','extract_rom_segments.py','rt64_tmem_hash.py','sote_texture_pack.py','convert_rt64_texture_dumps.py','build_dynamic_texture_pack.py','build_user_texture_pack.py','verify_tmem_hash.py','texture_coverage_capture.ps1','requirements.txt')) {
     Copy-Item -LiteralPath "$repoRoot\tools\$name" -Destination $toolsDir
 }
+Copy-Item -LiteralPath "$repoRoot\third_party\sandec" -Destination "$staging\sandec-source" -Recurse
 $licenses = New-Item -ItemType Directory -Path "$staging\licenses"
 Copy-Item -LiteralPath "$repoRoot\docs\licenses\DXC-LICENSE.txt" -Destination $licenses
 Copy-Item -LiteralPath "$repoRoot\docs\licenses\JSON-LICENSE.txt" -Destination $licenses
@@ -73,6 +74,12 @@ foreach ($pack in @('SotE_V1_HD','SotE_AI_Upscale')) {
     Copy-Item -LiteralPath $packSource -Destination $activeTextures -Recurse
 }
 & "$PSScriptRoot\repair_v1_texture_bindings.ps1" -PackDirectory "$activeTextures\SotE_V1_HD"
+if (Test-Path -LiteralPath "$repoRoot\shadows of the empire V1 texture pack.zip") {
+    & python "$PSScriptRoot\restore_original_cutscene_pack.py" --install --pack "$activeTextures\SotE_V1_HD"
+    if ($LASTEXITCODE -ne 0) { throw 'Original cutscene pack restoration failed.' }
+}
+& python "$PSScriptRoot\install_cutscene_texture_bindings.py" "$activeTextures"
+if ($LASTEXITCODE -ne 0) { throw 'Cutscene texture binding installation failed.' }
 New-Item -ItemType Directory -Path "$staging\Sdata\UI" -Force | Out-Null
 Copy-Item -LiteralPath "$repoRoot\Sdata\UI\fonts.ini" -Destination "$staging\Sdata\UI"
 foreach ($doc in @('CONTROL_REBINDING.md','PC_VOICES.md','EXTERNAL_MUSIC.md','OPTIONAL_ENHANCEMENTS.md')) {

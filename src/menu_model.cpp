@@ -289,6 +289,7 @@ Snapshot read_native_pause(const uint8_t* rdram, size_t size) {
     }
     s.focused_setting = selection;
     s.screen = Screen::Pause;
+    s.pause_background = true;
     return s;
 }
 bool native_pause_active(const uint8_t* rdram, size_t size) {

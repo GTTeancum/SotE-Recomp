@@ -35,6 +35,7 @@ void sote_native_text_begin(uint8_t* rdram, uint32_t text);
 int sote_native_text_glyph(uint8_t* rdram, uint32_t list, uint32_t character, int x, int y);
 void sote_publish_native_text(void);
 int sote_native_text_suppress(void);
+int sote_draw_hud_without_label(uint8_t* rdram, void* context);
 void sote_diagnostic_ord_region(uint8_t* rdram, uint32_t object,
     uint32_t position, uint32_t after_collision);
 double sote_sanitize_frame_delta(double delta);
@@ -127,6 +128,9 @@ void sote_bindings_context(uint8_t* rdram, int context);
 void sote_outrider_object(uint8_t* rdram, uint32_t object);
 void sote_diagnostic_vehicle(uint8_t* rdram, uint32_t object, int context);
 void sote_capture_native_options(uint8_t* rdram);
+int sote_intro_story_sprite(uint8_t* rdram, uint32_t sprite);
+void sote_trace_story_load(uint8_t* rdram, uint32_t event, uint32_t caller);
+void sote_hide_communicator_slot(uint32_t slot, int32_t x);
 #ifdef __cplusplus
 }
 #endif

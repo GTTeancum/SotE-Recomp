@@ -40,7 +40,7 @@ struct MovieInfo {
     std::string error;
 };
 
-struct CachedFrame {
+struct MovieFrame {
     unsigned width = 0;
     unsigned height = 0;
     std::vector<uint8_t> rgba;
@@ -51,25 +51,29 @@ struct CachedFrame {
     }
 };
 
+#ifdef SOTE_SAN_TESTING
+void advance_test_clock(double seconds);
+#endif
+
 MovieInfo inspect_file(const std::filesystem::path& path);
 int expected_movie_count();
 std::string_view expected_movie_name(int index);
 std::filesystem::path find_movie(
     const std::filesystem::path& runtime_directory,
     std::string_view name);
-bool play_cached_preview(std::string_view name);
-bool play_cached_sequence(std::initializer_list<std::string_view> names);
+bool play_movie(std::string_view name);
+bool play_sequence(std::initializer_list<std::string_view> names);
 bool play_startup_sequence();
-bool stop_cached_playback();
-bool finish_cached_playback();
-bool cached_playback_active();
+bool stop_playback();
+bool finish_playback();
+bool playback_active();
 uint64_t playback_token();
-double cached_playback_remaining_seconds();
+double playback_remaining_seconds();
 void set_hold_last_frame(bool hold);
-std::vector<int16_t> next_cached_audio();
+std::vector<int16_t> next_audio();
 void note_music_command(std::string_view name);
 bool menu_music_active();
-CachedFrame latest_cached_frame();
+MovieFrame latest_frame();
 void initialize(const std::filesystem::path& runtime_directory);
 
 } // namespace sote::san_movies

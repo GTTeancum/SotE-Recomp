@@ -42,6 +42,7 @@ struct Voice {
     std::shared_ptr<Wave> wave;
     double position = 0.0;
     float gain = default_gain;
+    bool communicator = false;
 };
 
 std::mutex audio_mutex;
@@ -60,6 +61,8 @@ std::unordered_map<uint32_t, std::chrono::steady_clock::time_point>
 std::vector<Voice> active_voices;
 std::unordered_map<uint32_t, uint64_t> visible_voice_last_seen;
 int visible_voice_event = -1;
+uint32_t visible_voice_slot = UINT32_MAX;
+uint32_t visible_voice_hash = 0;
 
 float read_gain_env(const char* name, float fallback) {
     const char* value = std::getenv(name);
@@ -339,12 +342,12 @@ std::shared_ptr<Wave> wave_for_filename_locked(std::string filename) {
     return wave;
 }
 
-bool enqueue_file_locked(const Mapping& mapping) {
+bool enqueue_file_locked(const Mapping& mapping, bool communicator = false) {
     std::shared_ptr<Wave> wave = wave_for_filename_locked(mapping.filename);
     if (wave == nullptr || !load_wave_locked(*wave)) {
         return false;
     }
-    active_voices.push_back(Voice{wave, 0.0, mapping.gain * global_gain});
+    active_voices.push_back(Voice{wave, 0.0, mapping.gain * global_gain, communicator});
     return true;
 }
 
@@ -526,6 +529,8 @@ void initialize(const std::filesystem::path& runtime_directory) {
     active_voices.clear();
     visible_voice_last_seen.clear();
     visible_voice_event = -1;
+    visible_voice_slot = UINT32_MAX;
+    visible_voice_hash = 0;
     trace_audio = std::getenv("SOTE_TRACE_HD_AUDIO") != nullptr;
     global_gain = read_gain_env("SOTE_HD_AUDIO_GAIN", default_gain);
     add_builtin_droid_voices_locked();
@@ -702,10 +707,32 @@ bool has_voice_for_text(std::string_view text) {
     return voice_map.contains(hash_normalized_message(text));
 }
 
-bool play_visible_voice(std::string_view text, uint64_t vi, int event) {
+void stop_visible_voice(uint32_t slot) {
+    std::lock_guard lock{audio_mutex};
+    if (visible_voice_slot == UINT32_MAX || slot != visible_voice_slot) return;
+    const auto stopped = std::erase_if(active_voices, [](const Voice& voice) { return voice.communicator; });
+    if (trace_audio) {
+        std::printf("[sote][hd-audio] dismissed visible voice slot=%u hash=0x%08X stopped=%zu\n",
+            slot, visible_voice_hash, stopped);
+    }
+    visible_voice_last_seen.erase(visible_voice_hash);
+    visible_voice_slot = UINT32_MAX;
+    visible_voice_hash = 0;
+}
+
+bool play_visible_voice(std::string_view text, uint64_t vi, int event, uint32_t slot) {
     const uint32_t hash = hash_normalized_message(text);
     std::lock_guard lock{audio_mutex};
     if (!enabled) return false;
+    // A changed message in the speaking slot dismisses the old speech even
+    // when the replacement text has no PC recording.
+    if (visible_voice_event != event ||
+        (slot == visible_voice_slot && hash != visible_voice_hash)) {
+        std::erase_if(active_voices, [](const Voice& voice) { return voice.communicator; });
+        visible_voice_last_seen.erase(visible_voice_hash);
+        visible_voice_slot = UINT32_MAX;
+        visible_voice_hash = 0;
+    }
     const auto mapping = voice_map.find(hash);
     if (mapping == voice_map.end()) return false;
     // The ROM reuses this generic key prompt. The PC line specifically
@@ -723,7 +750,10 @@ bool play_visible_voice(std::string_view text, uint64_t vi, int event) {
     if (!first_draw) return false;
     // Visibility owns repetition here. A lookup alias's one-shot setting
     // must not permanently mute the same conversation after a level retry.
-    const bool queued = enqueue_file_locked(mapping->second);
+    std::erase_if(active_voices, [](const Voice& voice) { return voice.communicator; });
+    visible_voice_slot = slot;
+    visible_voice_hash = hash;
+    const bool queued = enqueue_file_locked(mapping->second, true);
     std::printf("[sote][hd-audio] visible voice %s hash=0x%08X -> %s VI=%llu event=%d\n",
         queued ? "queued" : "unavailable", hash, mapping->second.filename.c_str(),
         static_cast<unsigned long long>(vi), event);

@@ -79,3 +79,76 @@ evidence remains in `PC_VOICE_AUDIT.md`.
 
 Staged both executable names in `SotE_Recompiled/`, with matching SHA-256:
 `79BFB9C401A72EFE0819F1C0EF3881D50FE133889D8E3BB9C2BA635DB9455369`.
+
+
+## HUD label revision: outlines instead of black fills
+
+Modern Health and weapon labels now use white UI text with black outlines and
+no filled label rectangle. The native sprite clipper excludes the baked label
+area before drawing the remaining frame and icon, preserving texture-pack
+rendering. Its clip bounds are restored after each sprite. Original font mode
+continues through the unmodified sprite draw. This supersedes the dark wells
+described above. The shared path covers Health and all six named weapon slots;
+Health and Laser were visually verified in the actual Echo Base output:
+.local/options-freeze/hud-outline-modern2/frames/present_1500.png.
+
+Original-mode HUD output was also inspected in hud-outline-original at
+present_1500; the native labels and frame remain intact. Menu harness: 118
+checks passed. Editable original HUD sprites were exported for the user to
+.local/hud-frame-edit/ (Health plus six weapon variants); they are source
+artwork, not installed texture replacements.
+
+The pause overlay now adds 50% black across the viewport. Native output with
+Options selected retains the level, HUD and header under that backdrop:
+.local/options-freeze/pause-outline-focus/frames/present_3200.png.
+A separate first-pause observation remains open: Resume-only captures can
+show the native flat sky background with missing scene/sprites until selection
+changes. The overlay's alpha is correct, but that underlying redraw behavior
+is not claimed fixed by this change.
+
+## HUD frame cleanup installed (2026-10-20)
+
+Installed the nine edited interceptor427 upscale tiles, plus thirteen matching
+bottom-strip tiles, into `SotE_Recompiled/textures/SotE_V1_HD/hud`. The bottom
+strips use the native artwork with an exact 4x frame continuation. Although the
+sprite draws only four bottom rows, its texture upload declares 32 rows; these
+replacements retain the full 128-pixel padded height. All 22 installed files
+were compared byte-for-byte with the reviewed outputs.
+
+`config/hud_frame_bindings.json` records 32 observed content hashes. The installer
+`tools/install_hud_frame_upscales.py` checks dimensions, preserves backups and
+sets these pixel-aligned replacements to `shift: none`. The general pack's
+half-texel shift misaligned the joins. Frame normalization removes corner debris
+and preserves interior artwork. Modern sprite clipping includes row 21 to remove
+the upscaled lettering's upper outline fringe, without adding a filled box.
+
+Native Echo Base output was inspected with Health and all six weapon variants:
+`.local/options-freeze/hud-clean-complete/frames/`, presents 1440 (Laser), 1800
+(Pulse), 2040 (Flame), 2280 (Seeker), 2520 (Stunner), and 2760 (Disruptor).
+All have continuous blue frames, intact icons and a single outlined Modern label.
+Original-font output was inspected separately in `hud-clean-original`, present
+1500; its baked labels remain visible. Both runs exited successfully. Audio was
+muted; this was a HUD visual check, not an audio or other-level validation.
+
+The offscreen-only `SOTE_DIAGNOSTIC_HUD_WEAPONS` audit selects weapon variants on
+the game thread and hides the previous HUD slot, matching native switching.
+Earlier diagnostic attempts that restored complete RDRAM or left old slots
+visible are superseded by the completed run above.
+
+Both staged executables match SHA256
+`0607F27993C3B1035C67BEB5BE0EC830A4AB6A84B446E77832BE60E84B6203A5`.
+The separate first-pause redraw observation remains open.
+
+Follow-up laser-icon cleanup: cleared the remaining debris inside the beam's
+well and straightened its ends using the existing center-column color ramp.
+Installed the updated tiles and inspected native output in
+`.local/options-freeze/hud-beam-cleanup/frames/present_1500.png`, including an
+enlarged nearest-neighbor crop of the divider and corners. The beam well is
+clear outside the symbol and its edges are straight. Run exited successfully.
+
+2026-10-21: corrected the stepped bottom-left corner of the Laser label well.
+The Modern lettering exclusion ended at row 34, clipping the first row of the
+bottom frame. It now ends at row 33. Inspected the native capture and enlarged
+corner in `hud-label-corner`, present 1500: the inner border is continuous and
+the label has no residual baked lettering. Run exited successfully; rebuilt
+and staged both executables.

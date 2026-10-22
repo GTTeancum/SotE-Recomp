@@ -157,3 +157,47 @@ verification status for that path; it does not close the separate #14 report.
 
 Both staged executable names were verified against the tested build:
 SHA-256 0A92DF875840C4AF3ABB1E7729A642A1176DF290FA796A26221D38C0CE9D1D28.
+
+## October 21: windowed mouse and pause-menu quality pass
+
+- Retain the last gameplay presentation for the pause backdrop. The host overlay
+  no longer blends against the native pause renderer's changing clear buffers.
+- Pause and its Options, Graphics, Controls, Cheats and binding-editor subpages
+  share a 75% black translucent backdrop. Front-end pages retain their star field.
+- Controls has an explicit Edit Bindings action, including when opened in-level.
+  Both keyboard/mouse and gamepad assignments remain visible together.
+- Selected rows/actions have visible outlines. Footer navigation now names
+  Q/E or LB/RB for pages, Up/Down for selection, Left/Right for adjustment,
+  Enter/A for confirmation and Esc/B for Back. Back from native Options uses
+  its Return row rather than decrementing the current setting.
+- The graphics setting is labeled Font, reflecting its game-wide coverage.
+- Mouse capture reasserts its raw-input registration on capture, hides the
+  client cursor, and uses the live aiming hook as an additional gameplay signal.
+  Logs distinguish capture eligibility, registration/confinement failures,
+  received relative movement, and whether Modern aiming consumed it.
+
+Verification:
+
+- Release build succeeded; menu_revamp_harness: 123 checks, zero failures.
+- `.local/options-freeze/quality-pause/`: inspected native Echo Base captures
+  showing the scene retained at Resume and Options selections.
+- `.local/options-freeze/quality-final-async/`: normal asynchronous presentation,
+  process-local mouse and keyboard input, VI 5900, exit 0. Inspected Options,
+  Graphics, Controls and binding-editor captures with the shared dark backdrop,
+  Escape back to Options, return to Pause and subsequent resumed gameplay.
+- Relative mouse input changed heading from 220.490 to 196.490 before pausing;
+  after resuming it changed 196.490 to 215.690. The production input/aim path
+  reported connected=1, modern=1, blocked=0. No force-active aim override used.
+- An initial candidate retained expired pause snapshots after Resume. Restored
+  snapshot expiration; the final asynchronous run proves the overlay disappears
+  and aiming resumes. Do not remove that expiration without an explicit native
+  menu-close signal.
+
+Physical foreground cursor confinement remains unverified: the process-local
+harness deliberately never clips or moves the desktop cursor. The user's
+windowed-capture report remains open pending a physical retest. Relevant new
+entries in `SotE_Recompiled/logs/sote-latest.log` use `[sote][mouse]` and
+`[sote][mouse-aim]`. Tests were muted and do not establish audible audio.
+
+Staged build SHA-256:
+`017F950902A5B214A00A5E1BFB453E9EF550212971DEDE52CEFA8C154C0079A0`.

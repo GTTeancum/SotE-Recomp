@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "bindings": [
+    {
+      "path": "hud/sote_1BA7508A_2_0_679762A4_ciByRGBA",
+      "rt64": "3267bc6f6f397da0",
+      "evidence": "Native Echo Base HUD upload; Rice hash 1ba7508a#2#0#679762a4; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_E41AB11B_2_0_D0ED1A6E_ciByRGBA",
+      "rt64": "4c1969e86e0c8959",
+      "evidence": "Native Echo Base HUD upload; Rice hash e41ab11b#2#0#d0ed1a6e; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_6084161B_2_0_00031A9E_ciByRGBA",
+      "rt64": "7467189bd613c3d0",
+      "evidence": "Native Echo Base HUD upload; Rice hash 6084161b#2#0#00031a9e; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_ACEF0635_2_0_80BC008F_ciByRGBA",
+      "rt64": "752018f9e52e8d7e",
+      "evidence": "Native Echo Base HUD upload; Rice hash acef0635#2#0#80bc008f; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_D70B74DB_2_0_86CCA117_ciByRGBA",
+      "rt64": "901f895a9cb877c4",
+      "evidence": "Native Echo Base HUD upload; Rice hash d70b74db#2#0#86cca117; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_2A521BD2_2_0_AFFD279A_ciByRGBA",
+      "rt64": "952c56dca93233ba",
+      "evidence": "Native Echo Base HUD upload; Rice hash 2a521bd2#2#0#affd279a; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_6574EA5F_2_0_210A002E_ciByRGBA",
+      "rt64": "ca3f420ba0b4e8e6",
+      "evidence": "Native Echo Base HUD upload; Rice hash 6574ea5f#2#0#210a002e; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_84D1D2B8_2_0_91239527_ciByRGBA",
+      "rt64": "eed25115c2f8825e",
+      "evidence": "Native Echo Base HUD upload; Rice hash 84d1d2b8#2#0#91239527; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_0AE70F0A_2_0_F058D49C_ciByRGBA",
+      "rt64": "f6b5b62c9731cb81",
+      "evidence": "Native Echo Base HUD upload; Rice hash 0ae70f0a#2#0#f058d49c; capture hud-cycle-bindings."
+    },
+    {
+      "path": "hud/sote_hud_Stunner_bottom",
+      "rt64": "04a301f4829d6c69",
+      "evidence": "Native HUD bottom strip, Stunner, source 2858304, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Health_bottom",
+      "rt64": "09706a1ea9e66f7b",
+      "evidence": "Native HUD bottom strip, Health, source 2863392, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Laser_bottom",
+      "rt64": "1f5ee05b6a6272f8",
+      "evidence": "Native HUD bottom strip, Laser, source 2851072, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Seeker_bottom",
+      "rt64": "23206addc1d799a8",
+      "evidence": "Native HUD bottom strip, Seeker, source 2856464, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Pulse_bottom",
+      "rt64": "2784d495a086540b",
+      "evidence": "Native HUD bottom strip, Pulse, source 2852912, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Flame_bottom",
+      "rt64": "2c8f096bff70afbe",
+      "evidence": "Native HUD bottom strip, Flame, source 2854624, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Flame_bottom",
+      "rt64": "51f6e5ba47522dea",
+      "evidence": "Native HUD bottom strip, Flame, source 2854752, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Seeker_bottom",
+      "rt64": "5cd7f3b8bc2ee589",
+      "evidence": "Native HUD bottom strip, Seeker, source 2856592, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Stunner_bottom",
+      "rt64": "6b785844bc3bf642",
+      "evidence": "Native HUD bottom strip, Stunner, source 2858432, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Pulse_bottom",
+      "rt64": "6b7dcd5364835335",
+      "evidence": "Native HUD bottom strip, Pulse, source 2852912, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Disruptor_bottom",
+      "rt64": "6cf907203033e176",
+      "evidence": "Native HUD bottom strip, Disruptor, source 2860272, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Seeker_bottom",
+      "rt64": "6f992e83a1e877c6",
+      "evidence": "Native HUD bottom strip, Seeker, source 2856464, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Flame_bottom",
+      "rt64": "7b0a51c3301d0818",
+      "evidence": "Native HUD bottom strip, Flame, source 2854752, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Stunner_bottom",
+      "rt64": "87562deb0a2da166",
+      "evidence": "Native HUD bottom strip, Stunner, source 2858432, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Laser_bottom",
+      "rt64": "91c5cacd0e11ffef",
+      "evidence": "Native HUD bottom strip, Laser, source 2851072, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Flame_bottom",
+      "rt64": "934f8cc1d5835f8c",
+      "evidence": "Native HUD bottom strip, Flame, source 2854624, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Laser_bottom",
+      "rt64": "95b9d319c1a65e2e",
+      "evidence": "Native HUD bottom strip, Laser, source 2850944, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Stunner_bottom",
+      "rt64": "c7f6c2743280ff26",
+      "evidence": "Native HUD bottom strip, Stunner, source 2858304, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Laser_bottom",
+      "rt64": "dee0c8588a68b65f",
+      "evidence": "Native HUD bottom strip, Laser, source 2850944, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Pulse_bottom",
+      "rt64": "e41bfccedac5dd1c",
+      "evidence": "Native HUD bottom strip, Pulse, source 2852784, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Disruptor_bottom",
+      "rt64": "e7a600788d32ee0d",
+      "evidence": "Native HUD bottom strip, Disruptor, source 2860144, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Pulse_bottom",
+      "rt64": "f6b58f8686c575a0",
+      "evidence": "Native HUD bottom strip, Pulse, source 2852784, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    },
+    {
+      "path": "hud/sote_hud_Frame_edge_Seeker_bottom",
+      "rt64": "f90f1cecfe68d125",
+      "evidence": "Native HUD bottom strip, Seeker, source 2856592, runtime capture hud-cycle-bindings. Exact 4x border continuation."
+    }
+  ]
+}

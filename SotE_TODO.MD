@@ -6,6 +6,24 @@ These issues remain open until their remaining checks are resolved.
 
 ## Current local regressions (October 20)
 
+- [x] Move PC pre-Start intro replacement to the opening comic; verify
+  skip-to-title without replay. Missing-cache native fallback also checked.
+- [x] Stop dismissed Leebo communicator PCM before the next line; Echo Base
+  native slot-hide path and mixer regression checks cover the reported overlap.
+- [ ] Finish cutscene texture visual consistency: all 1,512 catalog bindings
+  and referenced shared artwork assessed; four opening partial-tile bindings
+  installed. Restored all 1,877 original ZIP cutscene PNGs byte-for-byte;
+  intro starfield banding is repaired. Animated-head edge artifacts in IG-88
+  and bike dialogue remain to resolve. See
+  [audit and verification limits](docs/CUTSCENE_TEXTURE_AUDIT.md).
+
+- [x] First-pause backdrop redraw: retain the last gameplay presentation instead
+  of blending over the retail pause clear buffers. Echo Base Resume and Options
+  captures now retain the scene. Pause and all paused subpages use 75% black.
+  Evidence: `.local/options-freeze/quality-final-async/` and
+  [menu quality verification](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
+
+
 - [x] Correct the observed Pause/Options Return input trap. Return selects its
   native row and releases the transition on arrival at Pause. Modern, Original
   and normal asynchronous-rendering runs passed nine total cutscene/apply/
@@ -50,6 +68,12 @@ problems awaiting investigation; listing them does not confirm their causes.
 ### [#18 - Mouse movement is not captured](https://github.com/GTTeancum/SotE-Recomp/issues/18)
 
 - [x] Add foreground-gameplay cursor confinement and release on menus, movies, focus loss, resizing and closing. Capture-policy tests pass; actual host cursor interaction remains untested under the desktop-control prohibition.
+- [x] October 21 windowed-capture report: reacquire the raw-input target on capture,
+  hide the cursor over the playable client, and accept gameplay activity from
+  the aiming hook as well as the binding table. Added capture gates, Windows
+  errors, raw movement and aim-consumption logs. Process-local mouse aim works;
+  user confirmed mouse look works locally. Remote-session mouse look remains
+  limited and is not a blocker per the user.
 
 ### [#16 - Crosshair desync after death and on slopes](https://github.com/GTTeancum/SotE-Recomp/issues/16)
 

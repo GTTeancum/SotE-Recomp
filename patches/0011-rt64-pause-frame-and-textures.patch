@@ -1,0 +1,26 @@
+diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
+index 766c7ea..3532780 100644
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -581,7 +581,7 @@ namespace RT64 {
+ 
+                 RenderHookDraw *drawHook = GetRenderHookDraw();
+                 if (drawHook != nullptr) {
+-                    drawHook(commandList, swapChainFramebuffer);
++                    drawHook(commandList, swapChainFramebuffer, swapChainTexture);
+                 }
+ 
+                 {
+diff --git a/src/rhi/rt64_render_hooks.h b/src/rhi/rt64_render_hooks.h
+index be01701..0ce8980 100644
+--- a/src/rhi/rt64_render_hooks.h
++++ b/src/rhi/rt64_render_hooks.h
+@@ -8,7 +8,7 @@
+ 
+ namespace RT64 {
+     using RenderHookInit = void(RenderInterface *rhi, RenderDevice *device);
+-    using RenderHookDraw = void(RenderCommandList *list, RenderFramebuffer *swapChainFramebuffer);
++    using RenderHookDraw = void(RenderCommandList *list, RenderFramebuffer *swapChainFramebuffer, RenderTexture *swapChainTexture);
+     using RenderHookDeinit = void();
+ 
+     RenderHookInit *GetRenderHookInit();

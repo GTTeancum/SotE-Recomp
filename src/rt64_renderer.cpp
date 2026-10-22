@@ -555,7 +555,7 @@ public:
             std::fflush(stdout);
         }
         app->updateScreen();
-        if (sote::san_movies::cached_playback_active() &&
+        if (sote::san_movies::playback_active() &&
             app->state->presentId != 0) {
             app->workloadQueue->waitForWorkloadId(app->state->workloadId);
             app->presentQueue->waitForPresentId(app->state->presentId);

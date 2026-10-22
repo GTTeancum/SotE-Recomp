@@ -239,6 +239,7 @@ struct sanrt {
 	uint16_t def_anm_flags;	/* 2 movie default anm flags		*/
 	int16_t  lastseq;	/* 2 c47 last sequence id		*/
 	uint16_t subid;		/* 2 subtitle message number		*/
+	uint8_t stored_sote_frame; /* decoded STOR reference for SotE delta video */
 	uint16_t to_store;	/* 2 STOR encountered			*/
 	uint16_t currframe;	/* 2 current frame index		*/
 	uint16_t iactpos;	/* 2 IACT buffer write pointer		*/
@@ -3090,9 +3091,14 @@ static int handle_FOBJ(struct sanctx *ctx, uint32_t size, uint8_t *src,
 		rt->iact8c4x = 1;
 	}
 
+	/* Delta-compressed SotE frames must be stored after decoding. Replaying
+	 * their compressed bytes with the same sequence number reads an older
+	 * reference buffer after codec47 has rotated its buffers. */
+	const int store_sote_frame = rt->to_store && codec == 47 && w == 640 && h == 272;
 	if (rt->to_store) {
 		/* STOR: save the whole FOBJ */
 		rt->to_store = 0;
+		rt->stored_sote_frame = 0;
 		if (((size + 4) > size) && ((size + 4) <= rt->fbsize)) {
 			*(uint32_t *)rt->buf3 = size;
 			memcpy(rt->buf3 + 4, src, size);
@@ -3105,6 +3111,10 @@ static int handle_FOBJ(struct sanctx *ctx, uint32_t size, uint8_t *src,
 	ret = fob_decode_render(ctx, rt->fbuf, src, size, xoff, yoff, anm_flags, 1, 0);
 
 	if (ret == 0) {
+		if (store_sote_frame) {
+			memcpy(rt->buf3, rt->fbuf, rt->fbsize);
+			rt->stored_sote_frame = 1;
+		}
 		rt->have_frame = 1;
 		rt->last_fobj = src;
 		rt->last_fobj_size = size;
@@ -5071,6 +5081,14 @@ static int handle_FTCH(struct sanctx *ctx, uint32_t size, uint8_t *src, uint16_t
 	int16_t xoff, yoff;
 	uint32_t sz;
 	int ret;
+
+	if (ctx->rt.stored_sote_frame) {
+		memcpy(ctx->rt.fbuf, vb, ctx->rt.fbsize);
+		ctx->rt.vbuf = ctx->rt.fbuf;
+		ctx->rt.have_frame = 1;
+		ctx->rt.can_ipol = 0;
+		return 0;
+	}
 
 	if ((size == 6) && (ctx->rt.version == 2)) {
 		xoff = le16_to_cpu(*(int16_t *)(src + 2));

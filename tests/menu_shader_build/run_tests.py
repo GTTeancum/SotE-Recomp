@@ -32,7 +32,7 @@ void require(bool ok, const char* label) {
     if (!ok) { std::fprintf(stderr, "FAIL: %s\n", label); std::exit(1); }
     ++checks;
 }
-void previous_draw(plume::RenderCommandList*, plume::RenderFramebuffer*) { ++draws; }
+void previous_draw(plume::RenderCommandList*, plume::RenderFramebuffer*, plume::RenderTexture*) { ++draws; }
 void previous_deinit() { ++deinits; }
 }
 namespace sote::menu_skin {
@@ -59,7 +59,7 @@ int main() {
     sote::menu_renderer::install();
     require(RT64::GetRenderHookInit() == init && RT64::GetRenderHookDraw() == draw &&
         RT64::GetRenderHookDeinit() == deinit, "installation is idempotent");
-    draw(nullptr, nullptr);
+    draw(nullptr, nullptr, nullptr);
     require(draws == 1, "previous draw preserved with no GPU resources");
     deinit();
     require(deinits == 1 && !available, "deinitialization restores native fallback and previous hook");

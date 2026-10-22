@@ -14,7 +14,8 @@ bool play_file(std::string_view filename, float gain = 1.0F);
 bool play_voice_for_text(std::string_view text);
 bool has_voice_for_text(std::string_view text);
 // Call only for text actually drawn, with the current VI and level event.
-bool play_visible_voice(std::string_view text, uint64_t vi, int event);
+bool play_visible_voice(std::string_view text, uint64_t vi, int event, uint32_t slot = 0);
+void stop_visible_voice(uint32_t slot);
 void note_message_text(
     uint32_t message_key,
     std::string_view text,

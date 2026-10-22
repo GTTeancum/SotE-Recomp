@@ -580,9 +580,9 @@ int main(int argc, char** argv) {
         paused.focused_setting == 1 && paused.rows[71].text == "Options",
         "Pause reads native focus and presents Options");
     const auto pause_image = sote::menu_skin::render(paused, 960, 540);
-    check(pause_image.valid() && pause_image.rgba[3] == 0 &&
+    check(pause_image.valid() && pause_image.rgba[3] == 192 &&
         pause_image.rgba[(size_t(280) * 960 + 480) * 4 + 3] == 255,
-        "Pause overlay keeps gameplay visible outside its action panel");
+        "Pause overlay dims gameplay translucently outside its readable action panel");
 
     {
         std::ofstream options{scratch / "sote_options.json", std::ios::trunc};
@@ -844,6 +844,37 @@ int main(int argc, char** argv) {
         sote::graphics_menu::observe_other_screen();
         buttons=0x1000;sote::graphics_menu::filter_input(&buttons,&x,&y);
         check(buttons==0x1000,"arrival at Pause releases transition input immediately");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        sote::control_bindings::initialize(scratch);
+        Memory options;
+        options.native_options();
+        options.half(0x800e6808 + 3*2, 0x1000);
+        sote::graphics_menu::observe_other_screen(true);
+        sote_capture_native_options(options.bytes.data());
+        press(0x0010);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_snapshot().rows[69].text == "Font", "Graphics uses the global Font label");
+        check(latest_snapshot().pause_background && sote::menu_skin::render(latest_snapshot(),960,540).rgba[3]==192,
+            "paused Graphics uses the same 75 percent black overlay");
+        press(0x0010);
+        sote_capture_native_options(options.bytes.data());
+        press(0x0800);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_snapshot().rows[77].text == "Edit Bindings", "paused Controls exposes bindings directly");
+        press(0x8000);
+        options.half(0x800dd5e0,6);
+        options.word(0x800d0954,0x3f800000);
+        sote_capture_native_options(options.bytes.data());
+        press(0);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_snapshot().binding_editing, "binding entry opens the live editor while paused");
+        sote::control_bindings::PhysicalInput input{};
+        sote::control_bindings::handle_menu(input,true,100,true);
+        input.keys[27]=1;
+        sote::control_bindings::handle_menu(input,true,101,true);
+        check(!sote::control_bindings::editor_view().editing, "Escape leaves direct binding editor");
     }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

@@ -107,6 +107,7 @@ void decorate(sote::menu_skin::Snapshot& snapshot);
 // 0=passthrough, 1=consume, 2=one native Back pulse, 3=one native Pause pulse.
 int handle_menu(const PhysicalInput& raw, bool visible, uint64_t now_ms,
     bool native_menu_visible = false);
+void open_editor();
 void focus_lost();
 void scroll(int rows);
 bool capturing();

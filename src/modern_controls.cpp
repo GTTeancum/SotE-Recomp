@@ -172,6 +172,13 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
     active = frame.connected && sote::controls_menu::current_scheme(
         sote::controls_menu::SchemeSlot::OnFoot) ==
         sote::controls_menu::ControlScheme::Modern;
+    static int64_t next_mouse_report = 0;
+    if ((mouse_x || mouse_y) && now >= next_mouse_report) {
+        std::printf("[sote][mouse-aim] delta=%d,%d connected=%d modern=%d blocked=%d sensitivity=%.3f\n",
+            mouse_x, mouse_y, frame.connected, active, blocked(ram, object), tuning.mouse_sensitivity);
+        std::fflush(stdout);
+        next_mouse_report = now + 5000;
+    }
     // Explicit process-local diagnostic. No host input or device manipulation.
     if (std::getenv("SOTE_TEST_MODERN_INPUT") != nullptr) {
         active = true;

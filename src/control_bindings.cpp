@@ -768,6 +768,16 @@ int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_m
     }
     return done(1);
 }
+void open_editor() {
+    std::lock_guard lock(state.mutex);
+    if (!state.menu_valid) return;
+    state.editor.visible = state.editor.editing = true;
+    state.editor.phase = Phase::Browse;
+    state.editor.status.clear();
+    state.entrance_release = true;
+    state.exit_pending = false;
+    ensure_selection();
+}
 void focus_lost() {
     std::lock_guard lock(state.mutex);
     if(state.editor.editing&&state.editor.phase!=Phase::Browse)settle("Focus lost; pending change cancelled.");

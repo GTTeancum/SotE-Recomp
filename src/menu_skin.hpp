@@ -45,6 +45,7 @@ struct Snapshot {
     bool rebinding = false, binding_editing = false;
     bool pc_cutscenes_available = true;
     bool compatibility = false;
+    bool pause_background = false;
     std::string option_help;
     int binding_group = 0, binding_row = 0, binding_column = 0, binding_phase = 0;
     std::string binding_title, binding_detail, binding_hint, binding_status;
@@ -68,7 +69,8 @@ void initialize(const std::filesystem::path& runtime_directory);
 void set_renderer_available(bool available);
 void capture(const uint8_t* rdram);
 std::shared_ptr<const Snapshot> latest();
-// CPU surface is 16:9 and opaque; unsupported screens return an empty image.
+// Pause and its subpages use a translucent backdrop; front-end menus are opaque.
+// Unsupported screens return an empty image.
 // All fonts default to original. Optional per-widget/role TTFs are user supplied.
 Image render(const Snapshot& snapshot, unsigned width = 1280, unsigned height = 720);
 void scroll_controls(int lines);
