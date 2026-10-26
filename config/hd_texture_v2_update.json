@@ -1,0 +1,3469 @@
+{
+  "version": 1,
+  "source_folder": "V2 finished",
+  "entries": [
+    {
+      "source": "control panels/panels/2 frame/Shadow of the Empire#AAFFA912#2#0#3F5516A5_ciByRGBA.png",
+      "sha256": "5146cf5025822e9f80d6b389dde6f54c1f07d9f894dab901f24f9e58d9f0997a",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/2 frame/Shadow of the Empire#F7BE5D99#2#0#60DB987F_ciByRGBA.png",
+      "sha256": "25d2b5114c78d3ce3bbd240b437debb65f3aa618c4a88a4a973cd94a5211cae7",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/2-frame/Shadow of the Empire#4ABC44D9#2#0#6E6BE143_ciByRGBA.png",
+      "sha256": "8718c5df5e27691ea4df6bb4d2d1791a44684a15318c8ba6e501cdb7b23bf7a5",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/2-frame/Shadow of the Empire#CAC7A81D#2#0#457FDB16_ciByRGBA.png",
+      "sha256": "aa17658f60a74288750f1f34d2bdc487e7514e54ce7c96eec9efcbb0ad8dd96a",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/4 frame/Shadow of the Empire#82F50A6C#2#0#A97957BF_ciByRGBA.png",
+      "sha256": "23936e55e00ae7c80ba5c4fee086f9489cc87f411110a8ba1443a65cd2a427a6",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/4 frame/Shadow of the Empire#A25E7E55#2#0#36978701_ciByRGBA.png",
+      "sha256": "5282c4ec164b164b2a74d8829f7230aca98a31a080924defa047342de8383322",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/4 frame/Shadow of the Empire#DC3290B1#2#0#7DFD57F4_ciByRGBA.png",
+      "sha256": "cd56967fc2a03cc97d953e8bdb7714a05d15dd8411739b37407db157cb99a182",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/4 frame/Shadow of the Empire#E171C93B#2#0#80B530AC_ciByRGBA.png",
+      "sha256": "2dc616c4e7a3e60a024964a458913eeb508e29ee2e63708399818df2e7b37eda",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/Shadow of the Empire#358F376C#2#0#CFDF847F_ciByRGBA.png",
+      "sha256": "3347827d8e8709d6ffdc40719f8fe41a4afcfb6774bf48d05324852b32fd6224",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/Shadow of the Empire#6DA426BC#2#0#371C26F1_ciByRGBA.png",
+      "sha256": "6fd8c929a629a0e465e639bac0cb5f792fcf638fd15a6d70188759f430906e24",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/Shadow of the Empire#8D8670C5#2#0#1786C007_ciByRGBA.png",
+      "sha256": "adbcb3f1f92adc9f87a7762c38c7d19718b8d7d0c8189c1ba10e40b19b352d7a",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/Shadow of the Empire#BE2CA2D8#2#0#244C7670_ciByRGBA.png",
+      "sha256": "6c277eda9f26bd5a623a97d72cb7743a88ac95b276924cb608c3ed10ad85049b",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/panels/Shadow of the Empire#D1CF4CF8#2#0#DABADED1_ciByRGBA.png",
+      "sha256": "d751d973e4e1f8065e5277632c18d2f4d86381abd268fce282165a43bcc79475",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#0226E426#2#1#2C5671D7_ciByRGBA.png",
+      "sha256": "e13d31bb6ad3a07a1934818738760bbf8d6f9334ec266561bdec0b282bfc3a2f",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#184C445F#2#1#92A7B3CC_ciByRGBA.png",
+      "sha256": "63439ef9f389aec438b8f01d568549d55887d78bb75291668ef2937d5e510adf",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#1D071E7F#2#1#316808D9_ciByRGBA.png",
+      "sha256": "4be0e0a5081397f26c69d6eac66ed26aac502cb374c4cfd313eab621f17ea777",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#27B1AC87#2#0#05107C39_ciByRGBA.png",
+      "sha256": "c0e985990b53d8ce1d57f88161052c7021dea96c0d5fc1c0373510d1fad33649",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#2A0E90C9#2#1#8F656FCA_ciByRGBA.png",
+      "sha256": "0bcf6da3268db80f16986143ba1886436c14941f7e2e86b159397e5c87064e18",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#2E902690#2#0#DA1C7384_ciByRGBA.png",
+      "sha256": "11838c60a0a379c8e18e4ac9d228a0d663b80024ccec9e1881d8d9af6e6beb7c",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#48BD4BB1#2#1#3B42E170_ciByRGBA.png",
+      "sha256": "d5aa81de0da4955591b4f9dbe648b07e611933495bfa56d2cf3dfc12f2d2d250",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#63E894D4#2#1#9D873DAC_ciByRGBA.png",
+      "sha256": "29312cbd4c475fd922382ae64dd3b4553f59c103bc5f185e86f522b8528ddad8",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#73579C4E#2#1#7E139EF2_ciByRGBA.png",
+      "sha256": "5288e43dd545d11f3b7bca2443060f6dc2ab7bd32de8baf71edc09bf562b5e56",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#94F01DB8#2#1#D005A8FA_ciByRGBA.png",
+      "sha256": "21c09cbc9d87d98330d9f17da32a490db2dd2381f5e4d3d5c24dbe8bcc2b3cf7",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#B63C2323#2#1#1590FD82_ciByRGBA.png",
+      "sha256": "658b2d4d9b297c430f64e09e17b78ba6b96c10cbc651898319820233b9fe549e",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#CD78707A#2#1#0CC0CD06_ciByRGBA.png",
+      "sha256": "4151884372b91c1328e156643fb540cc2f3b0f8eefa6fc301faedcc7e3f5e80c",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#D8C019BA#2#1#8DA83D61_ciByRGBA.png",
+      "sha256": "e55232196406298aaf0648d393e5bba791ec98f6eff3bc8586717b7b5b9d0678",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#DAEB74CA#2#1#6FEBB3DD_ciByRGBA.png",
+      "sha256": "fbad96bf926f886db6ff8f7c09cca55213a63efc3172094977df285ee147ef17",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#EBAAD346#2#1#B44B5DDB_ciByRGBA.png",
+      "sha256": "3bab298a625a5955a43972eecb9097bc99e0dba54a8df0412d368840dfc8e9e8",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "control panels/switches/Shadow of the Empire#FABB94C9#2#1#9CC70F01_ciByRGBA.png",
+      "sha256": "e4a697674611a3bf24bee6f8931d366da87f2af92cb5bfca8d3fa5839df5c55d",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "dash/Shadow of the Empire#018B9FB8#0#2_rgb.png",
+      "sha256": "a094753fabeb9a12de409eabf90bbb06c29f12107e3a4d1bffc9cd445780062c",
+      "action": "replace",
+      "target": "dash/sote_018B9FB8_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#0BE84D9F#2#0#9EA95814_ciByRGBA.png",
+      "sha256": "7196bb727a826b605424f46635ac78358d9d7752628d207c78ae70c1eaa087de",
+      "action": "replace",
+      "target": "dash/jetpack/sote_0BE84D9F_2_0_9EA95814_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#0F8D19A6#2#0#C57F5091_ciByRGBA.png",
+      "sha256": "75d11a9186ace08e123e88efd5cdfad9be233f281959b8824f748953aea57f2a",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "dash/Shadow of the Empire#1994E51F#4#0_rgb.png",
+      "sha256": "14a7883414d90f0f894cd899fe35934dd547b993dae6a0961b4c4be4a37872fe",
+      "action": "replace",
+      "target": "dash/sote_1994E51F_4_0_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#1DC954AE#2#0#6BFBE288_ciByRGBA.png",
+      "sha256": "afefb519ae00104a154a83192aeea05785da8d2c884039f429e0553d8ac21d06",
+      "action": "replace",
+      "target": "dash/sote_1DC954AE_2_0_6BFBE288_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#245011AD#0#2_all.png",
+      "sha256": "ccd9b3215d2cf065c535c5aa8a762772624b74092d69f24cff01aef79cbe127a",
+      "action": "replace",
+      "target": "dash/sote_245011AD_0_2_all.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#2FB135BC#0#2_rgb.png",
+      "sha256": "2e3b81f88bdc8cd1b5c4b15ae9b33a7c5f34a9a2c3c3ad37be80f58d438023c2",
+      "action": "replace",
+      "target": "dash/sote_2FB135BC_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#36559C93#2#1#7D6416C2_ciByRGBA.png",
+      "sha256": "58b7e8ba96e3485029dd6f08b4323836ab28c773f4d9d1d442395c44eb673db2",
+      "action": "replace",
+      "target": "dash/sote_36559C93_2_1_7D6416C2_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#39EF8D49#2#1#246AF581_ciByRGBA.png",
+      "sha256": "c0d92cc16b6886ad580f1ae03d2c8ad2706ac79d7e96c52a63ff8574d7123a55",
+      "action": "replace",
+      "target": "dash/sote_39EF8D49_2_1_246AF581_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#45AAE074#2#0#2E95B098_ciByRGBA.png",
+      "sha256": "2757765fc3d54b67f332eb24eac5b06cb7e38a30f9d829343134d7806c9bae53",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "dash/Shadow of the Empire#5A09F5B9#2#0#0F22239C_ciByRGBA.png",
+      "sha256": "072da1851f3da3d22221ef70c01ce51a456fa93ffbdcc3ee4380e4860ae9510a",
+      "action": "replace",
+      "target": "dash/sote_5A09F5B9_2_0_0F22239C_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#6CF9BB3D#0#2_rgb.png",
+      "sha256": "1dd51e94c4a7442241868dfafcd8d395f8dd550a8d5012f131f93d7391acbe5b",
+      "action": "replace",
+      "target": "dash/sote_6CF9BB3D_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#7DBDDC28#0#2_rgb.png",
+      "sha256": "f5c671254faa0152d254539514e12b1a29ad24ff1eeeefe8aa6ed4891ff0e1bf",
+      "action": "replace",
+      "target": "dash/sote_7DBDDC28_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#7EA431CE#2#1#B22BC811_ciByRGBA.png",
+      "sha256": "e44cb3e2404fa550d8609b7905af64ee41a58c5871f050b3de949e39ed7635d5",
+      "action": "replace",
+      "target": "dash/sote_7EA431CE_2_1_B22BC811_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#7F1FFE97#0#2_all.png",
+      "sha256": "a4206bf6b121e2778e843e47a8a7cb41d5da9a668c46c949bc82928a4b3c8982",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "dash/Shadow of the Empire#9397DECF#0#2_rgb.png",
+      "sha256": "043c4c5683241e8ff086b4484f95241e5c4cae7a4420365e89243e8e1afbaffe",
+      "action": "replace",
+      "target": "dash/sote_9397DECF_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#9A6F7921#2#1#F39086B0_ciByRGBA.png",
+      "sha256": "1e36df6a73cad98becf8e71ec1f994c1f8d44944162fa9c137667e96ef99e216",
+      "action": "replace",
+      "target": "dash/sote_9A6F7921_2_1_F39086B0_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#A7B4966B#0#2_rgb.png",
+      "sha256": "7694ba4d8f3e7a0548c6a60dcd958a5f5794158d64600fedb6d2e6035c32c049",
+      "action": "replace",
+      "target": "dash/sote_A7B4966B_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#AD69E57F#0#2_rgb.png",
+      "sha256": "8ecb0e5442b2bb2e3bf170f617a6302bdd7681c2b46036eb2f5de5916d6620a4",
+      "action": "replace",
+      "target": "dash/sote_AD69E57F_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#BD5A093B#2#1#E6875903_ciByRGBA.png",
+      "sha256": "2c00235ec3f4ce657d99c59fade0c22efca795faa5a5c549881c000a4154d22c",
+      "action": "replace",
+      "target": "dash/sote_BD5A093B_2_1_E6875903_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#C668C454#0#2_rgb.png",
+      "sha256": "d266acdc1653820a40c3ca119a989cafa3652c32e177ee8f7ffd43b5afb437c5",
+      "action": "replace",
+      "target": "dash/sote_C668C454_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#D34F21F0#2#0#BD53E188_ciByRGBA.png",
+      "sha256": "c49f409f68fc06fbdfcd565ebc6802e9674069e94e81ba65216d0478ab4458fd",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "dash/Shadow of the Empire#E0706258#2#1#9C1CEE6C_ciByRGBA.png",
+      "sha256": "448e91c81821361ea14f5ce6271c5ead421ffb6d868c65ecb8e050d55d173f2d",
+      "action": "replace",
+      "target": "dash/sote_E0706258_2_1_9C1CEE6C_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#EB6A0CD6#0#2_rgb.png",
+      "sha256": "5a4ceef5e28a1439a9525de09fe3f1e2b11e32fe0ab40fc227a911b827e908d4",
+      "action": "replace",
+      "target": "dash/sote_EB6A0CD6_0_2_rgb.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#F85A5F47#2#1#286B3738_ciByRGBA.png",
+      "sha256": "4254c4b4f89cc18bf14f1bed84779b6e6fe760e37d6a8952948104b88850b4a1",
+      "action": "replace",
+      "target": "dash/sote_F85A5F47_2_1_286B3738_ciByRGBA.png"
+    },
+    {
+      "source": "dash/Shadow of the Empire#FE9DB5FE#0#2_rgb.png",
+      "sha256": "09c5721a7876892716e25684d85dbbbffb3668e9464a44510e84b4400a4ce460",
+      "action": "replace",
+      "target": "dash/sote_FE9DB5FE_0_2_rgb.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#0EB22B94#2#0#4F74534E_ciByRGBA.png",
+      "sha256": "83f008c65ae2b1d87d2e6680820bc4ecc2a35690dadef79bf6f81dade526343f",
+      "action": "replace",
+      "target": "maps/echo base/sote_0EB22B94_2_0_4F74534E_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#16978252#2#0#1F4EA06A_ciByRGBA.png",
+      "sha256": "c2fe3d24b8603fc577394329be10738d4b849d700a17a369837c477b033db151",
+      "action": "replace",
+      "target": "maps/hoth/sote_16978252_2_0_1F4EA06A_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#18D8054D#2#0#5FD10315_ciByRGBA.png",
+      "sha256": "fe1656323a698c046ce6249201e82a4a3bbd96cf4ff233549cb7b13c4eb877c9",
+      "action": "replace",
+      "target": "maps/hoth/sote_18D8054D_2_0_5FD10315_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#3E84DF27#2#0#ED37C3B2_ciByRGBA.png",
+      "sha256": "527681ebdb87c06bb11a51466beb7518c923f3a7f97bc19a8b5a9ca795857948",
+      "action": "replace",
+      "target": "maps/echo base/sote_3E84DF27_2_0_ED37C3B2_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#54A791C2#3#0#E59F8C6F_ciByRGBA.png",
+      "sha256": "a66929e264b8ee39d40765f20f800416bdfc8e5a56da56a014fc176ce422a868",
+      "action": "replace",
+      "target": "maps/hoth/sote_54A791C2_3_0_E59F8C6F_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#8A349F1B#0#3_all.png",
+      "sha256": "3565a92632337c013523b8f0d6f19706ab0f9533ec6d88a979104c5178a641ff",
+      "action": "replace",
+      "target": "maps/hoth/sote_8A349F1B_0_3_all.png"
+    },
+    {
+      "source": "enemies/probe droid/Shadow of the Empire#AE7B15AF#2#0#DC7B8F20_ciByRGBA.png",
+      "sha256": "1c8fd2480a1cfe9d9f808986b066c56f8377efdd27e6be942b7483104299333e",
+      "action": "replace",
+      "target": "maps/echo base/sote_AE7B15AF_2_0_DC7B8F20_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#034537F7#2#0#F3B170FC_ciByRGBA.png",
+      "sha256": "b77f513d6f9c1aaf96c6df35a56633aa009bd6aa3f719c56e4eaccade99ceec4",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_034537F7_2_0_F3B170FC_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#12E846FA#4#0_all.png",
+      "sha256": "e0103ffd67c802b3ef12cd56b0e5e8ddebdb2e37ee7ed9a274a5a0cbb07537c4",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_12E846FA_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#1599A2CF#4#0_all.png",
+      "sha256": "68a9ff5fcf45dba1a86879ac7f7c21ace2c95be489e49cd8f772d3f2540f0b2d",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_1599A2CF_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#178F8719#4#0_all.png",
+      "sha256": "497f92c36de726364e386125194187fd8d4e3304b17f12d32dd7aecb7df105bd",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_178F8719_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#37B638AE#2#0#8014A053_ciByRGBA.png",
+      "sha256": "f370ae9b241831b82cf0d3da3425f3573d31bda7a1080b4bd1a78426530af5bb",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_37B638AE_2_0_8014A053_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#496C535E#4#0_all.png",
+      "sha256": "44b8f5769dc7155df9844fb63c6abe6157d94c00aa94936c59b6b2b222191b14",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_496C535E_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#59B685C1#4#0_all.png",
+      "sha256": "dd6c23d25ef996244ad8e7905f4f004d0442cce944b662bf9b099617d37906cc",
+      "action": "replace",
+      "target": "maps/echo base/sote_59B685C1_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#5F7FC62D#2#0#E128B50F_ciByRGBA.png",
+      "sha256": "ac62ec0e5c2a6bf59d139444e279d35418e5c90beee7965178eeae834cd80901",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_5F7FC62D_2_0_E128B50F_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#65081CCD#4#0_all.png",
+      "sha256": "1ab7e593913acf3637a87a2d161aff6300e8e784b52f3a39bafe8952d3fd7bd9",
+      "action": "replace",
+      "target": "maps/echo base/sote_65081CCD_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#677B4D22#4#0_all.png",
+      "sha256": "21c12a4d9a1ae84620850db0cd3584f858ba9f434ff9732de7f591e946df1261",
+      "action": "replace",
+      "target": "maps/echo base/sote_677B4D22_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#677B4D22#4#0_rgb.png",
+      "sha256": "8ef3d064ed7ee934031bae5644005d20c3a52eb38def05e5d6a8dc9704fbf53b",
+      "action": "replace",
+      "target": "maps/echo base/sote_677B4D22_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#6EB9E112#4#0_all.png",
+      "sha256": "18141e4a4ccbe0afa6ea9e7bc4b83255865eaf279ed7490ec7bef07cbe956dd8",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_6EB9E112_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#76EBC8FF#4#0_all.png",
+      "sha256": "819fa7eeee385c8c1ec21ee17fe171743ac561ceb1cf8138fb12d02b9afb6192",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_76EBC8FF_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#81C25C4A#4#0_all.png",
+      "sha256": "29b1ce31aafc1f17c9e8e7823f9a54371fe987d54565f02f007f797d0dd96dc4",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_81C25C4A_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#86D243B2#4#0_all.png",
+      "sha256": "381eb4b9eb124a7999d53e8804aee949ad7f7f776074aadf86d451d50ec00be2",
+      "action": "replace",
+      "target": "maps/echo base/sote_86D243B2_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#8BFFB76A#4#0_all.png",
+      "sha256": "3f24e3f78fb5ed8b316b608ebac5406be381a6c6ad354163510bf837e7bbe7ef",
+      "action": "replace",
+      "target": "maps/echo base/sote_8BFFB76A_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#8BFFB76A#4#0_rgb.png",
+      "sha256": "3f24e3f78fb5ed8b316b608ebac5406be381a6c6ad354163510bf837e7bbe7ef",
+      "action": "replace",
+      "target": "maps/echo base/sote_8BFFB76A_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#ACF3A4BC#4#0_all.png",
+      "sha256": "e31c9a6a6ff70457fbc60ef7e6315e6637720e82dcf2c43535aae719dd4ca68a",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_ACF3A4BC_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#B67CC3CF#4#0_all.png",
+      "sha256": "b18ac4316093dea82f02202fb70442b8ed0c4bdf180c774a55ba5d52d0e281e8",
+      "action": "replace",
+      "target": "maps/echo base/sote_B67CC3CF_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#B67CC3CF#4#0_rgb.png",
+      "sha256": "b18ac4316093dea82f02202fb70442b8ed0c4bdf180c774a55ba5d52d0e281e8",
+      "action": "replace",
+      "target": "maps/echo base/sote_B67CC3CF_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#B8B62B8B#2#0#707AAC24_ciByRGBA.png",
+      "sha256": "3e7c28610fa868bd0fade168a781f291daa1e92c829285058d15385b8e3f373c",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_B8B62B8B_2_0_707AAC24_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#C2C71130#4#0_all.png",
+      "sha256": "0c408e3dcda86fe81c16fa67b6aa44d7b365a14e4dbead99383b13cdd40066b0",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_C2C71130_4_0_all.png"
+    },
+    {
+      "source": "enemies/sentry guns/Shadow of the Empire#F77D98DD#4#0_all.png",
+      "sha256": "f1be4c74befe765dfa0381180cad4cacbf6d1877e8e442379f08d04c6dad3466",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_F77D98DD_4_0_all.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#07223B1E#2#0#DB22BF7D_ciByRGBA.png",
+      "sha256": "883bd1a0e5cb36d28875e1a6e892d3136fd53967dc36daf40682deded9d6e366",
+      "action": "replace",
+      "target": "maps/echo base/sote_07223B1E_2_0_DB22BF7D_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#085CEA76#2#0#F7BCBF3B_ciByRGBA.png",
+      "sha256": "1dab2008f12f633f5afa4d5551d46ca4d31666e0a3ca1766b021a3d434921e4f",
+      "action": "replace",
+      "target": "maps/echo base/sote_085CEA76_2_0_F7BCBF3B_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#2EFE6B8A#2#0#0A607D0A_ciByRGBA.png",
+      "sha256": "ab9b37d0290861b44046a8ccffcc649fa22d12363b4fc66680d8c660da630edf",
+      "action": "replace",
+      "target": "maps/echo base/sote_2EFE6B8A_2_0_0A607D0A_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#322594EF#2#0#6C46888D_ciByRGBA.png",
+      "sha256": "974481b828de7bdef46fbc09934c9fdd7473d67d9b090101ded22a3cabcc5002",
+      "action": "replace",
+      "target": "maps/echo base/sote_322594EF_2_0_6C46888D_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#3B10184C#2#0#672EC2BE_ciByRGBA.png",
+      "sha256": "612420902c301e8c86b9c46a20eef8ea9c28c583a398b8d9ea3c03316b09f16d",
+      "action": "replace",
+      "target": "maps/echo base/sote_3B10184C_2_0_672EC2BE_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#7A8A65D3#2#0#D4FE8F5C_ciByRGBA.png",
+      "sha256": "d3e4f3545cdad2e3cdea09e845861525c535db4b42adf1a57826af615b4d5a9c",
+      "action": "replace",
+      "target": "maps/echo base/sote_7A8A65D3_2_0_D4FE8F5C_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#829989CC#2#0#F17CDD8F_ciByRGBA.png",
+      "sha256": "90c400603463b059c662e775b59c298b5f95e56298d36565cd8333ca8990a542",
+      "action": "replace",
+      "target": "maps/echo base/sote_829989CC_2_0_F17CDD8F_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#8E42AA01#2#0#24AFE440_ciByRGBA.png",
+      "sha256": "e97980e95d1ed665cb2972dcc6a0f2316f98dd9076d7ca20678902371174e21b",
+      "action": "replace",
+      "target": "maps/echo base/sote_8E42AA01_2_0_24AFE440_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#9090116E#2#0#71F04BEF_ciByRGBA.png",
+      "sha256": "c0d36e7d3677dec62f63af40417fa9d26d7d6a1979a37ecfaa4fff63cc5df64a",
+      "action": "replace",
+      "target": "maps/echo base/sote_9090116E_2_0_71F04BEF_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#A436E8FF#2#0#43CDC887_ciByRGBA.png",
+      "sha256": "793508783fb4abf5ed1da03e280b9983eea2ca2e8e415da98df735b490898b0c",
+      "action": "replace",
+      "target": "maps/echo base/sote_A436E8FF_2_0_43CDC887_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#ABDD7603#2#0#797B3084_ciByRGBA.png",
+      "sha256": "5404bed53bf88e6e02a2a73e0eeec5d1ee62cb5f2e312062dff091f4ead0715c",
+      "action": "replace",
+      "target": "maps/echo base/sote_ABDD7603_2_0_797B3084_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/snow troopers/Shadow of the Empire#F041CF50#2#0#CA01ADEC_ciByRGBA.png",
+      "sha256": "9b85c57b31690d7275bc6eba59ebf7c268222c5de758cf3e07a7b7b20f782bf5",
+      "action": "replace",
+      "target": "maps/echo base/sote_F041CF50_2_0_CA01ADEC_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#19225080#4#0_all.png",
+      "sha256": "4b09c6e0b9c955c7b51c2f6efd5ed79c47ab05dab0e0db91339783f60e5ddf7f",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_19225080_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#1C1655AA#4#0_all.png",
+      "sha256": "2fc76c8b2d028f3ebc616d9c69e3e9198360eef6b01f8c47e20525207b031492",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_1C1655AA_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#1EE6E64C#4#0_all.png",
+      "sha256": "212df49157e4d4cef7a8f97364e86cc4ccf9d1267300caf2f1091f9c66b6429e",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#30C2D0FF#4#0_all.png",
+      "sha256": "42d4121504bb91f4cf0def6d5d77b6b9dbbbcd72e75aa235fd17e5a5fa965f8c",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_30C2D0FF_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#481B23CC#4#0_all.png",
+      "sha256": "0e1c9373a0317cb13be0d4565a5da34ca3661276b6695f6224984731473a2835",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_481B23CC_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#4A03D0FE#4#0_all.png",
+      "sha256": "3fabdb18b7db335cd633a3cf770f36b0587de895ba59e828c0ef9ebfb04a1d37",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_4A03D0FE_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#566C8710#4#0_all.png",
+      "sha256": "5660c78aa7a1c03246f381fe5ca477715848d46a383934a09fa0edf166515d15",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_566C8710_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#5B3816BA#4#0_all.png",
+      "sha256": "539dc66cb29ea391bfabfeceb4c083d78be9df8ce41e372480c842f0f92497db",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_5B3816BA_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#6CA6EBC1#4#0_all.png",
+      "sha256": "f9ce43caeebe908f58deead5528626974e9125133873154f7f78e0694b2c6c0b",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#7E4796D8#4#0_all.png",
+      "sha256": "27815c4d6fb0345b449eeabf74b313efb4bceee0e08dcac24cd5dce1baa16bde",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_7E4796D8_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#85A01D07#4#0_all.png",
+      "sha256": "eaa3900024529191db9844211996cb02ad977d97202ea507cf449d1a5a3aeeff",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#8E6E0BE8#4#0_all.png",
+      "sha256": "d2332cf66e01dac6798159a3b27a2cf8ba745e0260ecc3281dadfcd4b549abc2",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_8E6E0BE8_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#A69E4132#4#0_all.png",
+      "sha256": "b079017aa373464e1d8d632a6eecdb0a691b892bed712976b90bf98d595d2c83",
+      "action": "replace",
+      "target": "maps/echo base/sote_A69E4132_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#A8885591#4#0_all.png",
+      "sha256": "9c99630703c8cf721cb099aefaf8926f5fead80929c46b63ee99439a911ec957",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#BD0D1CBD#4#0_all.png",
+      "sha256": "3716eb2481b7cf180f29247df58e15c2bf9da6f269d35e04fa1967b37bfbee64",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_BD0D1CBD_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#C1B09605#4#0_all.png",
+      "sha256": "dd863bbd57e24fd6c678707c43b95e1a5f786981576892c01056dda70225008a",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_C1B09605_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#CA6CED13#4#0_all.png",
+      "sha256": "14080a897d1215aee0149bcc5747441f71bac87f8664b5a239615e2e2175d1df",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_CA6CED13_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#D9919B02#4#0_all.png",
+      "sha256": "f36b22ad2fa9d4e3e38ee44daea40dd51f608c05d595998f146630a865c4d368",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_D9919B02_4_0_all.png"
+    },
+    {
+      "source": "enemies/stormtroopers/Shadow of the Empire#E6D60B61#4#0_all.png",
+      "sha256": "a02a5f49cbdf20dcd5dac69a49458b77161e2ee893eb696a53c7ffd7dec37288",
+      "action": "replace",
+      "target": "maps/gall spaceport/sote_E6D60B61_4_0_all.png"
+    },
+    {
+      "source": "enemies/wampa/Shadow of the Empire#07B346CE#2#0#3F34EE46_ciByRGBA.png",
+      "sha256": "281be54b0e5315cc94d43438dbf84062a9686f7b3233b4f6c08f3940e48a09ec",
+      "action": "replace",
+      "target": "maps/echo base/sote_07B346CE_2_0_3F34EE46_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/wampa/Shadow of the Empire#6B8E2141#2#0#CD2CA2FB_ciByRGBA.png",
+      "sha256": "068deec1e30d48ba129820120cbff0b8ef4bd9e0523888ce571384935bcc4c8c",
+      "action": "replace",
+      "target": "maps/echo base/sote_6B8E2141_2_0_CD2CA2FB_ciByRGBA.png"
+    },
+    {
+      "source": "enemies/wampa/Shadow of the Empire#DA35E49F#2#0#ED4A029A_ciByRGBA.png",
+      "sha256": "5580ae4f1773596cb87ffd44a831a8363fa3f788686b0d1f4e59b89c68e0c8f3",
+      "action": "replace",
+      "target": "maps/echo base/sote_DA35E49F_2_0_ED4A029A_ciByRGBA.png"
+    },
+    {
+      "source": "hud/Shadow of the Empire#0AE70F0A#2#0#F058D49C_ciByRGBA.png",
+      "sha256": "25e2d66d79cce9dcbe6f9fac26a707f3403117c14556945e19e676f3b8901b48",
+      "action": "omit",
+      "reason": "Preserve existing HUD border and health label."
+    },
+    {
+      "source": "hud/Shadow of the Empire#1BA7508A#2#0#679762A4_ciByRGBA.png",
+      "sha256": "d293d2d79ebc68234ca91b3d699d9982d8265901aa147e36d1448cfae9ac2b73",
+      "action": "regions",
+      "target": "hud/sote_1BA7508A_2_0_679762A4_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          252,
+          72
+        ],
+        [
+          16,
+          92,
+          64,
+          128
+        ]
+      ],
+      "reason": "Weapon and ammo icon only; preserve all borders and label pixels."
+    },
+    {
+      "source": "hud/Shadow of the Empire#2A521BD2#2#0#AFFD279A_ciByRGBA.png",
+      "sha256": "9edb969dea64256554ae56f235b496df580719cc91a0c8317edee59c597bbc87",
+      "action": "regions",
+      "target": "hud/sote_2A521BD2_2_0_AFFD279A_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          252,
+          72
+        ],
+        [
+          16,
+          92,
+          64,
+          128
+        ]
+      ],
+      "reason": "Weapon and ammo icon only; preserve all borders and label pixels."
+    },
+    {
+      "source": "hud/Shadow of the Empire#6084161B#2#0#00031A9E_ciByRGBA.png",
+      "sha256": "50dce68f65832feb99cfd2bd7ea8cdfe4cd7aef5afbeb722e9923bf507a7c369",
+      "action": "omit",
+      "reason": "Preserve existing HUD border and health label."
+    },
+    {
+      "source": "hud/Shadow of the Empire#6574EA5F#2#0#210A002E_ciByRGBA.png",
+      "sha256": "28965e7eab7712c74b4945a960eba209c93b7a737a78db5949f10ba7549e62cf",
+      "action": "omit",
+      "reason": "Preserve existing HUD border and health label."
+    },
+    {
+      "source": "hud/Shadow of the Empire#66CF9497#2#0#4BB8DBC7_ciByRGBA.png",
+      "sha256": "ee5b37735948bd1b8f299b259447b2294aaba41cb333590fd897fdb989d86988",
+      "action": "replace",
+      "target": "hud/sote_66CF9497_2_0_4BB8DBC7_ciByRGBA.png"
+    },
+    {
+      "source": "hud/Shadow of the Empire#68B52667#2#0#AAB222BA_ciByRGBA.png",
+      "sha256": "2e0de095bb4829437e34e6ca9cb293f7a0931a57918306295a55cc4e9d68e319",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "hud/Shadow of the Empire#84D1D2B8#2#0#91239527_ciByRGBA.png",
+      "sha256": "babb95418c1bd8974e37694973070dc82f89e6ecc41b854e1e6fe518a62403c1",
+      "action": "regions",
+      "target": "hud/sote_84D1D2B8_2_0_91239527_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          252,
+          72
+        ],
+        [
+          16,
+          92,
+          64,
+          128
+        ]
+      ],
+      "reason": "Weapon and ammo icon only; preserve all borders and label pixels."
+    },
+    {
+      "source": "hud/Shadow of the Empire#86CD3424#2#0#AAB222BA_ciByRGBA.png",
+      "sha256": "55351c565fc3b298aaac3ee48287ed388c86e2dfb4e02176ecd7fda8837e6f70",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "hud/Shadow of the Empire#ACEF0635#2#0#80BC008F_ciByRGBA.png",
+      "sha256": "d9b60482328091f3c304a0253a31558c60504b61b24755eff2c239ccf66ea2e2",
+      "action": "regions",
+      "target": "hud/sote_ACEF0635_2_0_80BC008F_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          252,
+          72
+        ],
+        [
+          16,
+          92,
+          64,
+          128
+        ]
+      ],
+      "reason": "Weapon and ammo icon only; preserve all borders and label pixels."
+    },
+    {
+      "source": "hud/Shadow of the Empire#AD1FB16C#2#0#F73D8323_ciByRGBA.png",
+      "sha256": "cf385f037c4c94fa8e56bc63981d3cb3428ccc600bedd4bd860eadeb8bd73874",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "hud/Shadow of the Empire#B01901BC#2#0#02860AE9_ciByRGBA.png",
+      "sha256": "354ff672edd8dda5f26c96dfa0c7762c25ee68159da2fc541838accda30a6233",
+      "action": "regions",
+      "target": "hud/sote_B01901BC_2_0_02860AE9_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          188,
+          188
+        ]
+      ],
+      "reason": "Portrait interior only; preserve frame."
+    },
+    {
+      "source": "hud/Shadow of the Empire#C0EBD42F#2#0#DC40EF1F_ciByRGBA.png",
+      "sha256": "a842b08e79d0fde5bf370bfe06e84db8453c4e03759d793d197c330740de0dcf",
+      "action": "replace",
+      "target": "hud/sote_C0EBD42F_2_0_DC40EF1F_ciByRGBA.png"
+    },
+    {
+      "source": "hud/Shadow of the Empire#C1860EE9#4#0_all.png",
+      "sha256": "e33d58be548011c87ccd7bd32cf2f80916cb7c9b12b00590465f3a5e9ba98de8",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "hud/Shadow of the Empire#C1FDDDC7#2#0#3D5C8781_ciByRGBA.png",
+      "sha256": "210e5ea9f420285bdc1136596b1f056cd2842c15ce4a37d8d273376a7da4c4a4",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "hud/Shadow of the Empire#D70B74DB#2#0#86CCA117_ciByRGBA.png",
+      "sha256": "8ceb3611704df584c577401acf2a156b70cee2990204c7d9d594ea1226a2c868",
+      "action": "regions",
+      "target": "hud/sote_D70B74DB_2_0_86CCA117_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          252,
+          72
+        ],
+        [
+          16,
+          92,
+          64,
+          128
+        ]
+      ],
+      "reason": "Weapon and ammo icon only; preserve all borders and label pixels."
+    },
+    {
+      "source": "hud/Shadow of the Empire#E41AB11B#2#0#D0ED1A6E_ciByRGBA.png",
+      "sha256": "9cbd01826230824ef9ac9921f5d484f970b6133962446a1c1a89da93fa3fb30f",
+      "action": "regions",
+      "target": "hud/sote_E41AB11B_2_0_D0ED1A6E_ciByRGBA.png",
+      "rectangles": [
+        [
+          16,
+          16,
+          252,
+          72
+        ],
+        [
+          16,
+          92,
+          64,
+          128
+        ]
+      ],
+      "reason": "Weapon and ammo icon only; preserve all borders and label pixels."
+    },
+    {
+      "source": "hud/Shadow of the Empire#E7CF3AD8#4#0_all.png",
+      "sha256": "ba5064928e509b541d0220534e34620bfee8a1907a4bc9246f670c8c821dc667",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#232883DA#0#2_all.png",
+      "sha256": "16f9b188b7b8aec26f8f6176ddaf31fee09280e86622ead2523ac94a0301932d",
+      "action": "replace",
+      "target": "maps/hoth/sote_232883DA_0_2_all.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#23F2B77F#2#0#54E6697D_ciByRGBA.png",
+      "sha256": "f2de674111526bbb319b56a01c3ba5d524adba8fc5ec1a097f374569e1a7bf8e",
+      "action": "replace",
+      "target": "maps/hoth/sote_23F2B77F_2_0_54E6697D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#2573CD4B#2#1#FB85D342_ciByRGBA.png",
+      "sha256": "e57e1df01173f3da61e319a461874524a3d66119a8f0b45fb5fc1847661e4708",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#25A8E42F#2#0#C6E2BA17_ciByRGBA.png",
+      "sha256": "c333298cbac8ccff638de5f177bd9e61d8d56b6d72c15b313d86d354dbe2fee2",
+      "action": "replace",
+      "target": "maps/hoth/sote_25A8E42F_2_0_C6E2BA17_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#298A9E6F#2#0#9112ADC4_ciByRGBA.png",
+      "sha256": "a4c453e14c8a77b19b70d357b661ad46cca161f50753c0c5850572d27fca3c21",
+      "action": "replace",
+      "target": "maps/hoth/sote_298A9E6F_2_0_9112ADC4_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#3DA89766#2#0#28C54688_ciByRGBA.png",
+      "sha256": "82d4c2fe9a743aa13d0848fec6fa46264a01e4f30ed2d89ed5ec8ec82dd09069",
+      "action": "replace",
+      "target": "maps/hoth/sote_3DA89766_2_0_28C54688_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#44A7B4B4#2#0#9112ADC4_ciByRGBA.png",
+      "sha256": "a4c453e14c8a77b19b70d357b661ad46cca161f50753c0c5850572d27fca3c21",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#4F5E9C95#2#0#68361468_ciByRGBA.png",
+      "sha256": "648a6e860c09a64dc00d1dfe35a1596e614d5abf461f3451e5abc866ce62d663",
+      "action": "replace",
+      "target": "maps/hoth/sote_4F5E9C95_2_0_68361468_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#5773970B#2#0#ECF7904D_ciByRGBA.png",
+      "sha256": "609e2ba17afddf54cc952b8a8089b9e665be2a9eaaaf72f50f39707a9ec10d57",
+      "action": "replace",
+      "target": "maps/hoth/sote_5773970B_2_0_ECF7904D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#6C5F27D9#2#0#3BE0257C_ciByRGBA.png",
+      "sha256": "77daa788e09f886b51a9c6ea058460f19dc123bd7c7dc3354133da453bfe0204",
+      "action": "replace",
+      "target": "maps/hoth/sote_6C5F27D9_2_0_3BE0257C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#7190B486#2#0#416AF61F_ciByRGBA.png",
+      "sha256": "5cdd895dc4f235a36c73dbc4e609267ab8a0a61c2749815302886e0e775b8e97",
+      "action": "replace",
+      "target": "maps/hoth/sote_7190B486_2_0_416AF61F_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#7258891B#2#0#D859770E_ciByRGBA.png",
+      "sha256": "4a6d14501c6f837c435015598a4b9812445285e379092c9d8b38b14309b41820",
+      "action": "replace",
+      "target": "maps/hoth/sote_7258891B_2_0_D859770E_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#73AD972C#2#0#72901A70_ciByRGBA.png",
+      "sha256": "b5374bdcac3bbbc64d8ca760f1dd7dbe2c20e6acb763b2e95ebfaf5c6e1a6491",
+      "action": "replace",
+      "target": "maps/hoth/sote_73AD972C_2_0_72901A70_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#850E8D4F#4#0_all.png",
+      "sha256": "d89f13615cf150960d716f7b3e91adfb496c414a60c48e28ab3eb4cae2a1d8cb",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#8F51FDBD#2#0#89625E61_ciByRGBA.png",
+      "sha256": "97f680d2b2a918ef9619846a9f065bd7b54df65381861b2dcefbe359adc300fa",
+      "action": "replace",
+      "target": "maps/hoth/sote_8F51FDBD_2_0_89625E61_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#98DD82FD#2#1#C84CB0F0_ciByRGBA.png",
+      "sha256": "1362386c69f939c86247f928877b9a8010aa776e30f694c9831f03a3bbab39cf",
+      "action": "replace",
+      "target": "maps/hoth/sote_98DD82FD_2_1_C84CB0F0_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#A1858376#2#0#9112ADC4_ciByRGBA.png",
+      "sha256": "a4c453e14c8a77b19b70d357b661ad46cca161f50753c0c5850572d27fca3c21",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#B32C869D#2#0#FC1B11D6_ciByRGBA.png",
+      "sha256": "8d57473f78979957f959ee491f6bd97facf76163b5a28b1b2254f303faa8b835",
+      "action": "replace",
+      "target": "maps/hoth/sote_B32C869D_2_0_FC1B11D6_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#BC31F2B1#0#3_all.png",
+      "sha256": "d0579060798c53539fb0201911b16103cd96d95e7fd924daeb593e2328cca4c5",
+      "action": "replace",
+      "target": "maps/hoth/sote_BC31F2B1_0_3_all.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#BDD81933#4#0_all.png",
+      "sha256": "333ba3b52c2fa3772881007e5bd861b837311db97bcb9daf39e866acaa8b73c1",
+      "action": "replace",
+      "target": "maps/hoth/sote_BDD81933_4_0_all.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#C93137A8#4#0_all.png",
+      "sha256": "6ca7faa76bbf6034f8f1077b07d90b99155f081d09fe7c13e7af6ce55c4b995a",
+      "action": "replace",
+      "target": "maps/hoth/sote_C93137A8_4_0_all.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#D4B2BA34#2#1#C84CB0F0_ciByRGBA.png",
+      "sha256": "1df17a726317221e42c1bbe0f1c608c55846c44e93891c13aeb1efcb4fa5e154",
+      "action": "replace",
+      "target": "maps/hoth/sote_D4B2BA34_2_1_C84CB0F0_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#E3B512BD#2#1#C84CB0F0_ciByRGBA.png",
+      "sha256": "f18cb944d4371fece4e91cb1a9df78571b406796d4181ef7f23771a91ec78b68",
+      "action": "replace",
+      "target": "maps/hoth/sote_E3B512BD_2_1_C84CB0F0_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#EBF71768#2#0#74974CB4_ciByRGBA.png",
+      "sha256": "fe804726c4f9460f789b7f90a35af99dad7dae993684ce4b533f6f75887e80cf",
+      "action": "replace",
+      "target": "maps/hoth/sote_EBF71768_2_0_74974CB4_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#F6AEC502#2#0#FD8C8344_ciByRGBA.png",
+      "sha256": "1f60785f6caa8f1fd5df435e48f767668c8b744c1acd14a1e7728949307cba1d",
+      "action": "replace",
+      "target": "maps/hoth/sote_F6AEC502_2_0_FD8C8344_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#FA4420B7#2#0#577F647A_ciByRGBA.png",
+      "sha256": "9355d8c313d1662ae764fbc3d837f2a3d4569a2a593ead77f1434b164519f8ae",
+      "action": "replace",
+      "target": "maps/hoth/sote_FA4420B7_2_0_577F647A_ciByRGBA.png"
+    },
+    {
+      "source": "maps/1-hoth/Shadow of the Empire#FF9B23DC#0#2_all.png",
+      "sha256": "003663a22eeb3998a63098db196bb464115fdaf3e6f6609b0143bea80576b621",
+      "action": "replace",
+      "target": "maps/hoth/sote_FF9B23DC_0_2_all.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#047AD896#2#0#0C9DE940_ciByRGBA.png",
+      "sha256": "96298604e569fe5669eeba8199f305a53381f96f7a72cfc5e50edef331f2c732",
+      "action": "replace",
+      "target": "maps/echo base/sote_047AD896_2_0_0C9DE940_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#0AFE0C62#2#0#3F1D8461_ciByRGBA.png",
+      "sha256": "cdb8616258e3468d18dfab1c409a9dec0a437ae68643097fd4b0f499516e1bd8",
+      "action": "replace",
+      "target": "maps/echo base/sote_0AFE0C62_2_0_3F1D8461_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#0B56447A#2#0#238EE492_ciByRGBA.png",
+      "sha256": "50a617fb8f33e9fba8f91efe57890a26db5d408174cb6a20ebbbfbe03cbb995a",
+      "action": "replace",
+      "target": "maps/echo base/sote_0B56447A_2_0_238EE492_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#0CDFA37A#2#0#AB66A0CD_ciByRGBA.png",
+      "sha256": "c3ffc517c09cc9171828a10b6ac6077ed551986e7563801aa3eccff90ed74326",
+      "action": "replace",
+      "target": "maps/echo base/sote_0CDFA37A_2_0_AB66A0CD_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#14B784D5#2#0#982F96FA_ciByRGBA.png",
+      "sha256": "f933f4c4f1f65f0495460b316df906f1ebd84d387dc078f5f064591852cd0ff9",
+      "action": "replace",
+      "target": "maps/echo base/sote_14B784D5_2_0_982F96FA_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#14E343A0#2#0#067CD26D_ciByRGBA.png",
+      "sha256": "44070b65b1b33248c1d0d4948727465af2be1fe6ff016b563cc3157e11d5aaad",
+      "action": "replace",
+      "target": "maps/echo base/sote_14E343A0_2_0_067CD26D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#15ABDB4A#2#0#DF4707A8_ciByRGBA.png",
+      "sha256": "e496dd788dee6833e34c83af2b5bbbf43ec7906eeb8ac39c8bd2c4f18c37fc2e",
+      "action": "replace",
+      "target": "maps/echo base/sote_15ABDB4A_2_0_DF4707A8_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#1A364DEB#2#0#84B54D9B_ciByRGBA.png",
+      "sha256": "4b7645d72399d7375df51b8e73cdb94f1e0533da97312be2eca667ebfb7f98e9",
+      "action": "replace",
+      "target": "maps/echo base/sote_1A364DEB_2_0_84B54D9B_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#208AC65A#2#0#55E70D5A_ciByRGBA.png",
+      "sha256": "7620898fcc997f1be5d7cd02aca8fbb932fbefd26704305d9a766387c7240752",
+      "action": "replace",
+      "target": "maps/echo base/sote_208AC65A_2_0_55E70D5A_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#2354CD49#4#0_all.png",
+      "sha256": "66a0d7d00706719ad0595b4e4f8a193a366079cef689005b57673a035c443f83",
+      "action": "replace",
+      "target": "maps/echo base/sote_2354CD49_4_0_all.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#2A44CA68#2#0#84BABEDF_ciByRGBA.png",
+      "sha256": "7a400beaf3e6fbec1c9eca5e7e188734186b816ced6e52b357da1af0339d3255",
+      "action": "replace",
+      "target": "maps/echo base/sote_2A44CA68_2_0_84BABEDF_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#2FD4C6CF#2#0#6730C08C_ciByRGBA.png",
+      "sha256": "1370118421b945f91a99153196f9fa743c031d1467873c31d5759e3b09f85fff",
+      "action": "replace",
+      "target": "maps/echo base/sote_2FD4C6CF_2_0_6730C08C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#35BC4D39#2#0#F45858B0_ciByRGBA.png",
+      "sha256": "44e3ecfc2d12404f7f875d8f9a131627988010890799b048d9da9bdc6a31fe42",
+      "action": "replace",
+      "target": "maps/echo base/sote_35BC4D39_2_0_F45858B0_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#37D65FF1#2#0#54BB4502_ciByRGBA.png",
+      "sha256": "c0f65c8ae48f1702f8f8fe79ba1cc9ce9557fa581d44d7b547a59db1f45e05f2",
+      "action": "replace",
+      "target": "maps/echo base/sote_37D65FF1_2_0_54BB4502_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#3B03E7CA#2#0#F1C9BECB_ciByRGBA.png",
+      "sha256": "2af17bd210dad87d2420032a837e2b95810be441ebe4f24cbe10bc903ec30994",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#44293726#2#0#56C6476C_ciByRGBA.png",
+      "sha256": "bba45ef47ab5a4bf4650d5e42c4c4aee1cd0a8394c066e48f94d193aafaf550e",
+      "action": "replace",
+      "target": "maps/echo base/sote_44293726_2_0_56C6476C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4812D6F5#2#0#208EFF3D_ciByRGBA.png",
+      "sha256": "d4181b7bd6b8e4e295239aeadbaac4ae8cf327fe6b23a281ab01124fc806d1f5",
+      "action": "replace",
+      "target": "maps/echo base/sote_4812D6F5_2_0_208EFF3D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#48431DDD#2#0#260F36DD_ciByRGBA.png",
+      "sha256": "df78fc01e8bb4a4eda2d4b46e63d9f58ddaafba776c0e2857f4b6ae2502eacf6",
+      "action": "replace",
+      "target": "maps/echo base/sote_48431DDD_2_0_260F36DD_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4A859BA2#2#0#2F73DA52_ciByRGBA.png",
+      "sha256": "13b5ad2e9caad59632bd38280bb0828417a42c2ae52e5aa1d7d6d4d5e3837b7e",
+      "action": "replace",
+      "target": "maps/echo base/sote_4A859BA2_2_0_2F73DA52_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4C3B2AD5#0#3_all.png",
+      "sha256": "8e37efbd919ae08c6865372bdc771d2eb11525a796c8cd8b90a72c2eebdc57fd",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4C5BED1D#2#0#08005EAA_ciByRGBA.png",
+      "sha256": "04c2ea4f7d8e0e2acf6f78149555b3e76196509252ed371e5c80f6397afac65c",
+      "action": "replace",
+      "target": "maps/echo base/sote_4C5BED1D_2_0_08005EAA_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4CBA1A70#2#0#63C1FD22_ciByRGBA.png",
+      "sha256": "4dbb3be6d5d54c8d9bc10e9f507115822665a13f26a952ba06954ecd3616ab13",
+      "action": "replace",
+      "target": "maps/echo base/sote_4CBA1A70_2_0_63C1FD22_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4CD84F34#2#0#ABCCFD1C_ciByRGBA.png",
+      "sha256": "d15cae8880106ce1e490790208309a1cc3d2e76313ec3a09a89afb25dbcf9cae",
+      "action": "replace",
+      "target": "maps/echo base/sote_4CD84F34_2_0_ABCCFD1C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#4E642CC6#2#0#B8635CD3_ciByRGBA.png",
+      "sha256": "b11f0ba1d991f4f2d7b8cf79b5943906e58dee46b141978df86ec10217270264",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#5372F859#2#0#63D43D42_ciByRGBA.png",
+      "sha256": "1370118421b945f91a99153196f9fa743c031d1467873c31d5759e3b09f85fff",
+      "action": "replace",
+      "target": "maps/echo base/sote_5372F859_2_0_63D43D42_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#5474B63B#2#0#FF62AA89_ciByRGBA.png",
+      "sha256": "0f67105c182ff165868fd4746cd179a98bda77492155fe5965ae8e9219dff5c3",
+      "action": "replace",
+      "target": "maps/echo base/sote_5474B63B_2_0_FF62AA89_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#5B96F55C#2#0#7502F932_ciByRGBA.png",
+      "sha256": "f4230b2c9d189e4ee7c975a7863dff1c074180cfeadc292491a847bfc33c4721",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#5E2762F2#2#0#40BF349A_ciByRGBA.png",
+      "sha256": "44ec779828ab976e13ee508379f6e85d0f50ed95af05e3ca00138ed2c662ac36",
+      "action": "replace",
+      "target": "maps/echo base/sote_5E2762F2_2_0_40BF349A_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#5EDF5BD3#2#0#CF182835_ciByRGBA.png",
+      "sha256": "3739bb48dd02da3d4027db3d3f56165713b1a0ce4224dba43fb5fd22ed3675d1",
+      "action": "replace",
+      "target": "maps/echo base/sote_5EDF5BD3_2_0_CF182835_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#630EC6C8#2#0#E0326707_ciByRGBA.png",
+      "sha256": "e2d14c9a7ba17f033e075c68aff63559d9be456ab5d75c3e528440cc6f7491b3",
+      "action": "replace",
+      "target": "maps/echo base/sote_630EC6C8_2_0_E0326707_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#694902E0#2#0#F8BDC341_ciByRGBA.png",
+      "sha256": "eb0058b937ff06a95f29650857ce87be50dd9b318daef14346b12cb502743389",
+      "action": "replace",
+      "target": "maps/echo base/sote_694902E0_2_0_F8BDC341_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#6BF09F9D#4#0_rgb.png",
+      "sha256": "687998d44c2a61debddeb71178e600e5954a6fdab9cb93da62a53dc916e77964",
+      "action": "replace",
+      "target": "maps/echo base/sote_6BF09F9D_4_0_rgb.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#6CFEFBEB#2#0#81864B56_ciByRGBA.png",
+      "sha256": "eebb6418ab0e9a69404f79ec49d0c7458376e9406b8b14a6d0775ed29987c319",
+      "action": "replace",
+      "target": "maps/echo base/sote_6CFEFBEB_2_0_81864B56_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#7360EE76#2#0#FABE5DBF_ciByRGBA.png",
+      "sha256": "92428d6bdb0ec172e00b8514c386135a467caaeee49bf83cd6523291154c5673",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#7B54F715#2#0#892FC857_ciByRGBA.png",
+      "sha256": "921ef2b1abd3c35879b3799562753773facabc469b5de4dbfe8c41d2682870bb",
+      "action": "replace",
+      "target": "maps/echo base/sote_7B54F715_2_0_892FC857_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#7C76CECC#4#0_all.png",
+      "sha256": "c1301c6283a492495ab51633418ec609f06d33bfd8bb5d0218d27f9dc42e8b2d",
+      "action": "replace",
+      "target": "maps/echo base/sote_7C76CECC_4_0_all.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#7D57D4EA#2#0#1D55569C_ciByRGBA.png",
+      "sha256": "cd0fe0cb161452ff4fa64f0a815dd373133bd597733a9e378c250057f1f1dfe7",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#7D90D57E#2#0#4C2E42C6_ciByRGBA.png",
+      "sha256": "a32c2a6138f8df789e55ea6c3ffff8cdd5d4004b6b7e5d1dd642bc3678b74556",
+      "action": "replace",
+      "target": "maps/echo base/sote_7D90D57E_2_0_4C2E42C6_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#7E6CA28C#2#0#FE74D8DB_ciByRGBA.png",
+      "sha256": "7d0c58dd1d4e13d7fe3ac312304ea7fff4be5b69c85d12add71fe02889928c7f",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#808E796F#2#0#BE14387A_ciByRGBA.png",
+      "sha256": "a134c4af88e39a63dea1e0029b493b59959aa13a328bb137b88aae81458994d4",
+      "action": "replace",
+      "target": "maps/echo base/sote_808E796F_2_0_BE14387A_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#8198F62D#2#0#B8635CD3_ciByRGBA.png",
+      "sha256": "b11f0ba1d991f4f2d7b8cf79b5943906e58dee46b141978df86ec10217270264",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#81CE98AF#2#0#462834F9_ciByRGBA.png",
+      "sha256": "c52205d3004fd9d6ddff4b4c73465c24163d5d42be5a65b53bbe15039518a2f9",
+      "action": "replace",
+      "target": "maps/echo base/sote_81CE98AF_2_0_462834F9_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#8659D6FE#4#0_all.png",
+      "sha256": "62b04c9c6fadcdd7e6c1a0acb3ec5968388b53d76e4bebc232e4daf725da63ad",
+      "action": "replace",
+      "target": "maps/echo base/sote_8659D6FE_4_0_all.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#87126755#2#0#6BBEB2D7_ciByRGBA.png",
+      "sha256": "7be5bdc1d5d351b5bd1af2f2d77f64cc1e2542505f966a9c23547ce366dca962",
+      "action": "replace",
+      "target": "maps/echo base/sote_87126755_2_0_6BBEB2D7_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#8A888684#2#0#FFFE0002_ciByRGBA.png",
+      "sha256": "75b9715eef0aa8d960de9f6f2f7e0a1d7f9b7e404f4af8f671c6c610a47f1625",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#8A888684#4#0_all.png",
+      "sha256": "75b9715eef0aa8d960de9f6f2f7e0a1d7f9b7e404f4af8f671c6c610a47f1625",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#8CCCCFF9#4#0_all.png",
+      "sha256": "8032e4282727441281a6e88cae235295a0f9985c901b4f8190eedb86e3e12af0",
+      "action": "replace",
+      "target": "maps/echo base/sote_8CCCCFF9_4_0_all.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#911C4EFC#2#0#64172576_ciByRGBA.png",
+      "sha256": "91972af07237c4d6961b7723f521b4cdff20c0dbe63b7d14e291e186d55a39ca",
+      "action": "replace",
+      "target": "maps/echo base/sote_911C4EFC_2_0_64172576_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#922DA117#4#0_all.png",
+      "sha256": "15f19acc42980e5ccc7b8d675d3550c891e9908ff791b802866197ab726e64a1",
+      "action": "replace",
+      "target": "maps/echo base/sote_922DA117_4_0_all.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#971A47DE#2#0#6670766C_ciByRGBA.png",
+      "sha256": "d2af4f68c0c930c53142aedf2954b89fda6f15e10dba5a26962b69692a2af34e",
+      "action": "replace",
+      "target": "maps/echo base/sote_971A47DE_2_0_6670766C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#9A519240#2#0#B8635CD3_ciByRGBA.png",
+      "sha256": "b11f0ba1d991f4f2d7b8cf79b5943906e58dee46b141978df86ec10217270264",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#9B5B3AE0#2#0#6BB0538D_ciByRGBA.png",
+      "sha256": "c6cfb046685d005180f20f10d2bed778be56968b3867923f64a258d33f7147df",
+      "action": "replace",
+      "target": "maps/echo base/sote_9B5B3AE0_2_0_6BB0538D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#A0200423#2#0#27C772A8_ciByRGBA.png",
+      "sha256": "41b6b9a69dfed65452090c39ee73ef9a3af7234f660b0cddf4d735fba1f8b24f",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#A35862DF#2#0#516600D6_ciByRGBA.png",
+      "sha256": "337b8105d89c71ff49c7dd491135622f4253655aa55864ab064c3b34011dce3d",
+      "action": "replace",
+      "target": "maps/echo base/sote_A35862DF_2_0_516600D6_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#A3EAAE29#2#0#FCDC3DAE_ciByRGBA.png",
+      "sha256": "a102ccb37aa66968784b2275c1f1a4e42bc44dbe54d88178c406040610985be3",
+      "action": "replace",
+      "target": "maps/echo base/sote_A3EAAE29_2_0_FCDC3DAE_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#A87445CE#2#0#2402B2AE_ciByRGBA.png",
+      "sha256": "97e5b9adccc48aec7401ce7f416845930708f9ba997fa7cf8a486617438409ca",
+      "action": "replace",
+      "target": "maps/echo base/sote_A87445CE_2_0_2402B2AE_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#A87DDDF9#2#0#A840AF8C_ciByRGBA.png",
+      "sha256": "f021a742b5026614a9f4a7f4c8dcd862651c42f50ff6c952bfcbf615a150fbbe",
+      "action": "replace",
+      "target": "maps/echo base/sote_A87DDDF9_2_0_A840AF8C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#AA75C5B5#0#3_all.png",
+      "sha256": "8e37efbd919ae08c6865372bdc771d2eb11525a796c8cd8b90a72c2eebdc57fd",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#B0E664FE#2#0#F0E31283_ciByRGBA.png",
+      "sha256": "46a96b5c232d5ce3ca9b54f36aa34ca490d96099ce6da9b04dde1078234ca4e5",
+      "action": "replace",
+      "target": "maps/echo base/sote_B0E664FE_2_0_F0E31283_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#B8F62D30#2#0#C078C34C_ciByRGBA.png",
+      "sha256": "19567856ea6effcc4ecb4705fb2e52cdd5c8d02efc6d92388d15f6110fcbccf1",
+      "action": "replace",
+      "target": "maps/echo base/sote_B8F62D30_2_0_C078C34C_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#BB7233B1#2#0#99B8D245_ciByRGBA.png",
+      "sha256": "14d3c16a4f754860636427dd572305283be6364169e3be8106dc52ae21e2db8b",
+      "action": "replace",
+      "target": "maps/echo base/sote_BB7233B1_2_0_99B8D245_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#BEC2600C#2#0#4953DC4D_ciByRGBA.png",
+      "sha256": "250a2c56bfdfa52e3c662003ce65e924e643eaadb98b55211a18cecf6cc58d4c",
+      "action": "replace",
+      "target": "maps/echo base/sote_BEC2600C_2_0_4953DC4D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#C776119B#2#0#25E9ACE1_ciByRGBA.png",
+      "sha256": "8fee3d5cb38cf6136c4e83af83996cf9e7b10e333335ce5bbd567d85cdccdf3a",
+      "action": "replace",
+      "target": "maps/echo base/sote_C776119B_2_0_25E9ACE1_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#D07C2CCD#2#0#DC1785D1_ciByRGBA.png",
+      "sha256": "00e3d279b4868fa50af140a9bcdfecc0f034d8eee1b08dad4729f372359ff157",
+      "action": "replace",
+      "target": "maps/echo base/sote_D07C2CCD_2_0_DC1785D1_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#D4A23413#2#0#02976A23_ciByRGBA.png",
+      "sha256": "418b04a66a47a1f8d24f69c4401b97a2d528bffa7dea7b0a4cc487a0ef32a935",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#D6122A35#2#0#9B9EC13B_ciByRGBA.png",
+      "sha256": "03ee576927a48403594f1ab670bb19d13f1f02428f3bbec90b752b2207cf1f44",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#D96BF176#2#0#514C9283_ciByRGBA.png",
+      "sha256": "708cf03ac226687441068376d201c23419abf1cd42060a568afd0ba644927d0c",
+      "action": "add",
+      "target": "maps/2-echo base/sote_D96BF176_2_0_514C9283_ciByRGBA.png",
+      "bindings": [
+        {
+          "rt64": "fbec84b3992dc8d2",
+          "rice": "d96bf176#2#0#514c9283",
+          "native_size": [
+            64,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#DFF6A232#2#0#2FD7C1CD_ciByRGBA.png",
+      "sha256": "bbdbad2ed8294aa86bb90217a156d43acddf5cf2e667e460fc350dc657e5372b",
+      "action": "replace",
+      "target": "maps/echo base/sote_DFF6A232_2_0_2FD7C1CD_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#E0499A4E#2#0#9C488C3D_ciByRGBA.png",
+      "sha256": "eef3c3f7d444255b4d6655aa5bd3410c0793892986afadaab9314fcfcb25e1c9",
+      "action": "replace",
+      "target": "maps/echo base/sote_E0499A4E_2_0_9C488C3D_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#E7A31461#2#0#533356E0_ciByRGBA.png",
+      "sha256": "f55afdc0b11af28f38400b5e9314264ed5a675bebf6ec9903a691f81e70daf82",
+      "action": "replace",
+      "target": "maps/echo base/sote_E7A31461_2_0_533356E0_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#EB9E1CC3#2#0#0B1E06D3_ciByRGBA.png",
+      "sha256": "d08dbbfa5bfbbc31da14a0f275e2139a6016197fbdc1942bd40676f1270f2160",
+      "action": "replace",
+      "target": "maps/echo base/sote_EB9E1CC3_2_0_0B1E06D3_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#F030FCD5#4#0_rgb.png",
+      "sha256": "0179d6da2dcdfca7ee952373f14dac35c1534208fb23e845fa93e5eaf3835b56",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#F6141DCD#2#0#740E5158_ciByRGBA.png",
+      "sha256": "18a9fe930d3453d72cfe62d5631c00dad0b69d7941cb8202b388ce358f3adcd3",
+      "action": "replace",
+      "target": "maps/echo base/sote_F6141DCD_2_0_740E5158_ciByRGBA.png"
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#F7AD2AF6#0#3_all.png",
+      "sha256": "8e37efbd919ae08c6865372bdc771d2eb11525a796c8cd8b90a72c2eebdc57fd",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/2-echo base/Shadow of the Empire#F9515507#2#0#8A31F5A6_ciByRGBA.png",
+      "sha256": "10971847e42722dd51db5a10c6a62b400d18179c7cc2e6a6e85c5b654c1aa47d",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#2A9A1191#2#0#8773CC77_ciByRGBA.png",
+      "sha256": "48743dc7e4eaf4eab0d9876b302eda982648d4edd225d1e4cda7f77742f1be04",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_2A9A1191_2_0_8773CC77_ciByRGBA.png"
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#2FC027FD#4#0_all.png",
+      "sha256": "9c0984e28fcde48a81ecbc6567891cf00d9ea147d81ed72a2821b6f18c627119",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_2FC027FD_4_0_all.png"
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#56E4C180#4#0_all.png",
+      "sha256": "7597bac11fda76c8a5b9461d35707ff0783c7a712c4f23699a4b3567c17a8621",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_56E4C180_4_0_all.png"
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#68E1DC4F#2#0#85CB4C65_ciByRGBA.png",
+      "sha256": "083630a11e9660de262367ddde0bc43e557c64268d95c6e23b6c184b9edf4f75",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_68E1DC4F_2_0_85CB4C65_ciByRGBA.png"
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#850C84FC#2#0#FFFC0002_ciByRGBA.png",
+      "sha256": "77d2e4b39ba049fafee55eda0046b85df28ff7b400f844f3e205d70356b83f3a",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#9D5392C4#0#3_all.png",
+      "sha256": "8cf1aeff8634b2196f1745d97d84415ba7c5ee279f942380c44ba6c2bbdf2f0c",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_9D5392C4_0_3_all.png"
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#C54A9FB0#0#2_all.png",
+      "sha256": "690dcda78e7748ee7a9bf94c36cd522f2cf75c6bd27501c491184945134dd971",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_C54A9FB0_0_2_all.png"
+    },
+    {
+      "source": "maps/3-asteroid field/Shadow of the Empire#C6AF5A38#4#0_all.png",
+      "sha256": "57de6c7598f6cce65bc08e1de64a1776c3ed062f5c0e97d4c5bb680b065f261b",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_C6AF5A38_4_0_all.png"
+    },
+    {
+      "source": "pickups/disruptor/Shadow of the Empire#4B1B5E49#2#0#5D9C4AC7_ciByRGBA.png",
+      "sha256": "49535192dee5337d6d3a73c8cd78e8b06b482000d35e01e77932f6dea932a707",
+      "action": "replace",
+      "target": "pickups/sote_4B1B5E49_2_0_5D9C4AC7_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/disruptor/Shadow of the Empire#5809124F#2#0#D8A9335C_ciByRGBA.png",
+      "sha256": "e35311b204d7d4b6b43a9f565e16437e7f564d5c82bec47b3d4f6c1217968ba6",
+      "action": "replace",
+      "target": "pickups/sote_5809124F_2_0_D8A9335C_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/disruptor/Shadow of the Empire#723A6F92#2#0#F6E38822_ciByRGBA.png",
+      "sha256": "d8f16380df75d23cd56d0cec1eedf88a1fecd85a67d357387c4ab613920e942c",
+      "action": "replace",
+      "target": "pickups/sote_723A6F92_2_0_F6E38822_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/flamethrower/Shadow of the Empire#77CC98C9#2#0#2D833322_ciByRGBA.png",
+      "sha256": "86a55d85175903d1ebd95b904f9fa1024c0bf66bafdc0e034d92d76af119adc9",
+      "action": "replace",
+      "target": "pickups/sote_77CC98C9_2_0_2D833322_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/flamethrower/Shadow of the Empire#7A34ABD1#2#0#F6DE5896_ciByRGBA.png",
+      "sha256": "075de07c256391a0afcf1090a1a49b96e1d11fd06137c246de36fe74c2ea3fc9",
+      "action": "replace",
+      "target": "pickups/sote_7A34ABD1_2_0_F6DE5896_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/flamethrower/Shadow of the Empire#E85DDD97#2#0#90C29565_ciByRGBA.png",
+      "sha256": "4e3a9ef90ed74b17e016b67a85f7c5996fdc3f2b5b3e1d9c35cb03b76d271317",
+      "action": "replace",
+      "target": "pickups/sote_E85DDD97_2_0_90C29565_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/healthfull/Shadow of the Empire#5A8D7C15#2#0#0892D1D0_ciByRGBA.png",
+      "sha256": "ed37873461bab323f792d46edb4cca2045b20b6d81d42a6630b522c6a2573123",
+      "action": "replace",
+      "target": "pickups/sote_5A8D7C15_2_0_0892D1D0_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/healthfull/Shadow of the Empire#873978DC#2#0#951A66C1_ciByRGBA.png",
+      "sha256": "74d3405d19aadd7836797fa40fc301ba352e787e70804452e84e0d43380b5812",
+      "action": "replace",
+      "target": "pickups/sote_873978DC_2_0_951A66C1_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/healthmed/Shadow of the Empire#32355392#2#0#0A6CDAEA_ciByRGBA.png",
+      "sha256": "990224ad690c58ad503ec20284cb79ef176d47a665f3b5d558c7fcfb2e013e5f",
+      "action": "replace",
+      "target": "pickups/sote_32355392_2_0_0A6CDAEA_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/healthmed/Shadow of the Empire#33FE569E#2#0#1CBDF1AF_ciByRGBA.png",
+      "sha256": "65443651864be6de063023bc0ec8b8eb7511ced5ce6622400238b84f26ffefd6",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/healthmed/Shadow of the Empire#9040B6F3#2#0#E254686E_ciByRGBA.png",
+      "sha256": "969c5ca80bdcab727115ab2779d7a07d74d84889c01b8f8d69f560bc49d4d25b",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/healthsmall/Shadow of the Empire#1D2E3F08#2#0#441ED7E2_ciByRGBA.png",
+      "sha256": "e68503c33753098c661f90028dc7fdc566804880b45db2b85bc636be26ba8382",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/healthsmall/Shadow of the Empire#E3133626#2#0#F65FCC6F_ciByRGBA.png",
+      "sha256": "6b8fb0b6c34cede2a85eb595166dc32cf1c87db6816fcd4d44a81ddfca573f28",
+      "action": "replace",
+      "target": "pickups/sote_E3133626_2_0_F65FCC6F_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/jetpack/Shadow of the Empire#4F14E20E#2#0#D8303189_ciByRGBA.png",
+      "sha256": "fcc4f875f194aa13f102a112821e56ca7b882ad5d2f34f991b48503e0ccee3ed",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/keys/Shadow of the Empire#3710CF94#2#0#B598C611_ciByRGBA.png",
+      "sha256": "468d7d6dcffe2d3229e3625c3ad68f7a2d09e87271e807005794e3f7e44491a6",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/keys/Shadow of the Empire#8F5520E0#2#0#D5794C32_ciByRGBA.png",
+      "sha256": "bf1922e0ffc6689d6af5b834e3974913fe367d102db8bb21056994b1e547359b",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/life/Shadow of the Empire#81EA8C97#2#0#0001B002_ciByRGBA.png",
+      "sha256": "703e36e8a10fc31efb51ac8315a6645f7fb6820fb61a943d9453cfb4aeaa0ac2",
+      "action": "replace",
+      "target": "pickups/sote_81EA8C97_2_0_0001B002_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/pulsecannon/Shadow of the Empire#7B4A93B8#2#0#12316D35_ciByRGBA.png",
+      "sha256": "aebb08d4b020db486d4d18f8b2e3ae94f0ba6e96de899618fb754ec0a7d8b9fd",
+      "action": "replace",
+      "target": "pickups/sote_7B4A93B8_2_0_12316D35_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/pulsecannon/Shadow of the Empire#B89E1737#2#0#FDB62AC0_ciByRGBA.png",
+      "sha256": "4c180bab4945b1c2ae7801417f8c1d6acfffe9040d39b5b7e438f75ce80d0d52",
+      "action": "replace",
+      "target": "pickups/sote_B89E1737_2_0_FDB62AC0_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/pulsecannon/Shadow of the Empire#F6592040#2#0#95F0AA7D_ciByRGBA.png",
+      "sha256": "8972c3e0f3c6c746114d0acd11ebef347c8f1fff0a5b7c7bd71dd64491cd9601",
+      "action": "replace",
+      "target": "pickups/sote_F6592040_2_0_95F0AA7D_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/seekers/Shadow of the Empire#9B835BBD#2#0#F04AC8E2_ciByRGBA.png",
+      "sha256": "ffb6177b0ecc66bd96a2af08361e3d1e95e7db656098335d9a708188a7b0a29e",
+      "action": "replace",
+      "target": "pickups/sote_9B835BBD_2_0_F04AC8E2_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/seekers/Shadow of the Empire#CAB47694#2#0#785AD786_ciByRGBA.png",
+      "sha256": "5393cbe3787f18065816038d80c908faa2791321e09271dc3ed3182ff23a13da",
+      "action": "replace",
+      "target": "pickups/sote_CAB47694_2_0_785AD786_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/seekers/Shadow of the Empire#F189A22F#2#0#A8BA3775_ciByRGBA.png",
+      "sha256": "a244ede4d8512c67b46842e06142fbf76fe7cd3b098b0a723cb36433dcb06e87",
+      "action": "replace",
+      "target": "pickups/sote_F189A22F_2_0_A8BA3775_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/shield/Shadow of the Empire#1F7225F5#2#0#9D315736_ciByRGBA.png",
+      "sha256": "cb15a41195965b4064800718a6854afb1f7f73021c5f54570271cf5d716be983",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/shield/Shadow of the Empire#2C0660B7#2#0#C351C55C_ciByRGBA.png",
+      "sha256": "07b7a09303ff14347195422db627eb4489d6af0abcccb275285ee5dd47a44798",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "pickups/stunner/Shadow of the Empire#400CBBF5#2#0#CCBF7BEE_ciByRGBA.png",
+      "sha256": "abd82f17520a347cb63ac23b82f7b6b7a8664dcd3fc8d108643566e5d7095073",
+      "action": "replace",
+      "target": "pickups/sote_400CBBF5_2_0_CCBF7BEE_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/stunner/Shadow of the Empire#61515F45#2#0#53F1185B_ciByRGBA.png",
+      "sha256": "d52a8001fa1902bcab2c1756787e97c55dc8d2839194e1a041d85546652e62f7",
+      "action": "replace",
+      "target": "pickups/sote_61515F45_2_0_53F1185B_ciByRGBA.png"
+    },
+    {
+      "source": "pickups/stunner/Shadow of the Empire#8A2EECEE#2#0#A72E7386_ciByRGBA.png",
+      "sha256": "a8b6c8a652a370919cc7128a944a83b3d78bbf0a121e742e4724f2e890209104",
+      "action": "replace",
+      "target": "pickups/sote_8A2EECEE_2_0_A72E7386_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#035106F2#4#0_all.png",
+      "sha256": "9c161eecbfc9f18ba1c80f3ba809dbcef800f84bb8f945997266166b758cdcd1",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_035106F2_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#07C2758C#4#0_all.png",
+      "sha256": "d527f8693d59a6981131bb62553966fb4d9c37028df9e803e023ad1f5f307c06",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_07C2758C_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#373109DF#4#0_all.png",
+      "sha256": "59b159220ff5dfa1989e7434ab098cd4b1778634812ee07289bf52ead3107862",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_373109DF_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#3C639DB5#4#0_all.png",
+      "sha256": "0bdbbb69b63111ece674c4acddef3f7ddbdfb675b435d9edcf4e2392a3fdfadb",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_3C639DB5_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#3CD25B33#4#0_all.png",
+      "sha256": "901a78ba419eb43e720fcf711cbba2db11abe9a5a569cbd213cbbcbdd88a7f99",
+      "action": "add",
+      "target": "vehicles/atat/sote_3CD25B33_4_0_all.png",
+      "bindings": [
+        {
+          "rt64": "e3d406c8e8dc2269",
+          "rice": "3cd25b33#4#0",
+          "native_size": [
+            64,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#452F4172#2#0#3530AC25_ciByRGBA.png",
+      "sha256": "c7d811496a1acb20295d5f652d6880de9112f728cdb0c3303e7f73a969d48eba",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_452F4172_2_0_3530AC25_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#61A37B71#4#0_all.png",
+      "sha256": "5af4744566d0faf473b2841442263e4af55743233766240c4a34076ff432da54",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_61A37B71_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#71B00411#4#0_all.png",
+      "sha256": "901a78ba419eb43e720fcf711cbba2db11abe9a5a569cbd213cbbcbdd88a7f99",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_71B00411_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#7BCEE58D#4#0_all.png",
+      "sha256": "031f0cedb1c54a68c304a9fcaeaff5b9610b11e982c74b54a8ff76ba29d9c654",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_7BCEE58D_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#815F6236#4#0_all.png",
+      "sha256": "035cba058d356dbc76beba27a276cd75ebc0af10ad9ae44ecf1438ecf0206bbd",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_815F6236_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#86C1CFE2#4#0_all.png",
+      "sha256": "819a9016bfd78a60747df38272c1d3b13ad56ed068c63d1929fd046068f498e8",
+      "action": "add",
+      "target": "vehicles/atat/sote_86C1CFE2_4_0_all.png",
+      "bindings": [
+        {
+          "rt64": "46e87a100c9af0f8",
+          "rice": "86c1cfe2#4#0",
+          "native_size": [
+            64,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#922DA117#4#0_rgb.png",
+      "sha256": "901a78ba419eb43e720fcf711cbba2db11abe9a5a569cbd213cbbcbdd88a7f99",
+      "action": "replace",
+      "target": "maps/echo base/sote_922DA117_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#99ED5348#4#0_all.png",
+      "sha256": "4cc24bcfeebd70283cb353a410cc1499b99ef196069f9c703f3fb6b6855566e9",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_99ED5348_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#9E632CD3#4#0_all.png",
+      "sha256": "147e17cb1cba0b03038f6689f09a320cd15ecd2de837b64b4aa70660607f024f",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_9E632CD3_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#AAB90F9C#4#0_all.png",
+      "sha256": "88bca13ebf0770dd686b1446190d8798f5ce790cdac1c879b54e8694ba788e8a",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_AAB90F9C_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#B60FF5EE#4#0_all.png",
+      "sha256": "6be1a4e16f31498e7978fc7eee734bfe9e47a24ce3fd086ec4ce5617dd13fcb1",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_B60FF5EE_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#BE37258A#4#0_all.png",
+      "sha256": "4c3e3333153a61c767ae5e5f0ebf0ca4b921fff2003149521e862e2c7b28151f",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_BE37258A_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#C0AD29A5#4#0_all.png",
+      "sha256": "f1e59069df8a3772360dff5bf3ea587662e0ef923decac6147a6b1fd5cbe11d6",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_C0AD29A5_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#C23804FB#4#0_all.png",
+      "sha256": "901a78ba419eb43e720fcf711cbba2db11abe9a5a569cbd213cbbcbdd88a7f99",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#D5F047F1#4#0_all.png",
+      "sha256": "e5578a9f6201ddcd620d716dfdd6795e30f0c7279b6d1007aff58aa8ea7c3d66",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_D5F047F1_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#EF09B10E#4#0_all.png",
+      "sha256": "04e3774e7c44f163d1e5ae097aa22fb8063983858bfd2e93c39da72ac775dde2",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_EF09B10E_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#EFA6C7DB#4#0_all.png",
+      "sha256": "8f848ce0c72c0d6c43d3d4087a9f8f03d6563f905b0e613883b898005492a21d",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_EFA6C7DB_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#F8F68514#4#0_all.png",
+      "sha256": "88cc9a698c4c9577434fd4aa7c43a420e64de62f0705126a2b2d40b28a654b6a",
+      "action": "add",
+      "target": "vehicles/atat/sote_F8F68514_4_0_all.png",
+      "bindings": [
+        {
+          "rt64": "edc2fdef08b43134",
+          "rice": "f8f68514#4#0",
+          "native_size": [
+            64,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#FA50D51B#4#0_all.png",
+      "sha256": "8c7fe9643c3bfd3d3751db89b9b29401241fac7c884508af0e1b6a9bf9b748f1",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_FA50D51B_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atat/Shadow of the Empire#FBB83DDC#4#0_all.png",
+      "sha256": "8c7fe9643c3bfd3d3751db89b9b29401241fac7c884508af0e1b6a9bf9b748f1",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#11523F8C#4#0_all.png",
+      "sha256": "65a1b597ab82f7255a85ea8df83bd6511bfbe07b8ab29fcf1d430e0cf7b6ecf4",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_11523F8C_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#11523F8C#4#0_rgb.png",
+      "sha256": "08fe64d56bb3eb7c6c032860e927d0ac2a74e5c61f86f0223df76fdc9d16811d",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_11523F8C_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#24963514#4#0_all.png",
+      "sha256": "f8f0f6f43b4740c86da218884567dd256fd6503f057858f2096e7f2811ebad6c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_24963514_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#24963514#4#0_rgb.png",
+      "sha256": "f8f0f6f43b4740c86da218884567dd256fd6503f057858f2096e7f2811ebad6c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_24963514_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#2C4DA5B6#4#0_rgb.png",
+      "sha256": "84f5af0696558f6036966d90f6c2db046fc9657fe658c6633f64eb918bb5782b",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_2C4DA5B6_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#38EA1604#4#0_all.png",
+      "sha256": "4be9ce00aa3711be72e5402af27130a41863ea1bce249bf0bb69a46d140a1559",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_38EA1604_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#38EA1604#4#0_rgb.png",
+      "sha256": "4be9ce00aa3711be72e5402af27130a41863ea1bce249bf0bb69a46d140a1559",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_38EA1604_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#42E8DB86#4#0_all.png",
+      "sha256": "a5d7e2f66c2705149bb70c6ea4300e3227d8e2bd2af1cf4678b3d58e4b3d945c",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#4387C6BA#4#0_all.png",
+      "sha256": "cbcf9787dbdd4fa08824766d730aee2d55d6e408064a735d546f78b319232780",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_4387C6BA_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#4387C6BA#4#0_rgb.png",
+      "sha256": "3ca24016adba360f4fa7b651d641e10893be69c3587ac90020f4904788f95db6",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_4387C6BA_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#4B849286#4#0_rgb.png",
+      "sha256": "a30c7b6d90855a288a0692a412640aacbee0511e33c9c0ee20b86c8cfd7b89aa",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_4B849286_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#505BE7B9#4#0_all.png",
+      "sha256": "96bbaddeea98ef35ef45944033763c0a2f258521a67bd1a395ed943a013b06b3",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_505BE7B9_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#505BE7B9#4#0_rgb.png",
+      "sha256": "96bbaddeea98ef35ef45944033763c0a2f258521a67bd1a395ed943a013b06b3",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_505BE7B9_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#524134A6#4#0_rgb.png",
+      "sha256": "a5d7e2f66c2705149bb70c6ea4300e3227d8e2bd2af1cf4678b3d58e4b3d945c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_524134A6_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#724D2BA3#4#0_all.png",
+      "sha256": "cac82696e742992c59ac214cdce765a3d66ee225c0d9349b9bec5d2128451f7c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_724D2BA3_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#724D2BA3#4#0_rgb.png",
+      "sha256": "5b7ae6b39bf781b104714c184d18a223a1f04701f7d967cec6f6f24c6b283dc4",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_724D2BA3_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#9495A01A#4#0_all.png",
+      "sha256": "09ad87049e5bac9f78eda563f0bf84b192a0cc55bf516f72f51648fb1d724cd5",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_9495A01A_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#9495A01A#4#0_rgb.png",
+      "sha256": "09ad87049e5bac9f78eda563f0bf84b192a0cc55bf516f72f51648fb1d724cd5",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_9495A01A_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#9A3D6B3B#4#0_rgb.png",
+      "sha256": "96bbaddeea98ef35ef45944033763c0a2f258521a67bd1a395ed943a013b06b3",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_9A3D6B3B_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#A0DC989F#4#0_all.png",
+      "sha256": "03f482ba62020a300af63223f4e4e8a02d54c5ec98e4c02fcd3303e95a593622",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_A0DC989F_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#A0DC989F#4#0_rgb.png",
+      "sha256": "03f482ba62020a300af63223f4e4e8a02d54c5ec98e4c02fcd3303e95a593622",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_A0DC989F_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#A135D7EE#4#0_all.png",
+      "sha256": "a5d7e2f66c2705149bb70c6ea4300e3227d8e2bd2af1cf4678b3d58e4b3d945c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_A135D7EE_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#A135D7EE#4#0_rgb.png",
+      "sha256": "a5d7e2f66c2705149bb70c6ea4300e3227d8e2bd2af1cf4678b3d58e4b3d945c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_A135D7EE_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#A17DAC62#4#0_all.png",
+      "sha256": "84f5af0696558f6036966d90f6c2db046fc9657fe658c6633f64eb918bb5782b",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_A17DAC62_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#A17DAC62#4#0_rgb.png",
+      "sha256": "84f5af0696558f6036966d90f6c2db046fc9657fe658c6633f64eb918bb5782b",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_A17DAC62_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#ACED1837#4#0_rgb.png",
+      "sha256": "2a40b922a6f5ca390af741ad4611eded9b66cad591e04e9ee19341f81da38b80",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_ACED1837_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#B168B3C2#4#0_rgb.png",
+      "sha256": "a6acc399b118b6b7e4325baeb3292580a142fbeb2b1c9f3d483a0c0a2d10299a",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_B168B3C2_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#B8AB6F4D#4#0_rgb.png",
+      "sha256": "09ad87049e5bac9f78eda563f0bf84b192a0cc55bf516f72f51648fb1d724cd5",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_B8AB6F4D_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#BF9AA7A8#4#0_all.png",
+      "sha256": "2fe7e10044ae0ebe2b894c0b9411d433005a844ce1bd42af22a06da137e652d3",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_BF9AA7A8_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#BF9AA7A8#4#0_rgb.png",
+      "sha256": "abe4affd6cd82c11766ca5fd224365724817894b1ec1a5fc78e941e7404e058c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_BF9AA7A8_4_0_all.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#C1BAB8EA#4#0_rgb.png",
+      "sha256": "4be9ce00aa3711be72e5402af27130a41863ea1bce249bf0bb69a46d140a1559",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_C1BAB8EA_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#E3B3A3AC#4#0_rgb.png",
+      "sha256": "f8f0f6f43b4740c86da218884567dd256fd6503f057858f2096e7f2811ebad6c",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_E3B3A3AC_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#E44FED95#4#0_rgb.png",
+      "sha256": "03f482ba62020a300af63223f4e4e8a02d54c5ec98e4c02fcd3303e95a593622",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_E44FED95_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/atst/Shadow of the Empire#F892DB56#4#0_rgb.png",
+      "sha256": "ddc39613af8b486335456801ac64eb1c51fd2aebb8fa4725fe2d321cc5ced646",
+      "action": "replace",
+      "target": "vehicles/imperial walkers/sote_F892DB56_4_0_rgb.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#15A114E2#2#0#3B8AC0BE_ciByRGBA.png",
+      "sha256": "1e4638d6353539eee5f3f165dc03c0ed42219cc01dcd7ff486492cd83d81c1a3",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_15A114E2_2_0_3B8AC0BE_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#175757EA#2#0#7566D496_ciByRGBA.png",
+      "sha256": "b0368ca84e3f1873da3a07ed25c9830a03104a73d4f38457b731e3e3eac575ca",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_175757EA_2_0_7566D496_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#1ED51EE2#2#0#2C5AF4A7_ciByRGBA.png",
+      "sha256": "ecd9e3dced804f3498bfe597eda6e4cb33796dd18e8dda6371826fe9e06e065a",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_1ED51EE2_2_0_2C5AF4A7_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#20B3EAE8#2#0#6BBAB13D_ciByRGBA.png",
+      "sha256": "5ccce8995531194658d69ee41cfdaa3075ae2817d10c60830f4dc66dd9542680",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_20B3EAE8_2_0_6BBAB13D_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#3873C6B2#2#0#87B0D190_ciByRGBA.png",
+      "sha256": "726e79b72279776214e419c1142613f8ecccd627f43345853c3fbab85ddf19a5",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_3873C6B2_2_0_87B0D190_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#3FA57CEE#2#0#4767106D_ciByRGBA.png",
+      "sha256": "c7e1d47b191f30361490605de31cc4481517df82c4cd47c1d38f1cf415cf545e",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_3FA57CEE_2_0_4767106D_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#4246423E#2#0#FFFE0002_ciByRGBA.png",
+      "sha256": "3e82f115bfe13630f971571ab47b72aa0e98ce09c31a508b1b8b2655167c7f99",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#788D6937#2#0#3DE6B825_ciByRGBA.png",
+      "sha256": "5d6ff7a67f2d93b4b82db9930c6c8e1cee920426aee02796e56eb58e44210032",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_788D6937_2_0_3DE6B825_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#823DEBEC#2#0#D8450E3E_ciByRGBA.png",
+      "sha256": "e843a231cec867fb31699f317d2ea1d01dd3fa1b8f27607bd242a19a8a1dc7f3",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_823DEBEC_2_0_D8450E3E_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#C5BF0BE3#2#0#89E04756_ciByRGBA.png",
+      "sha256": "a527d2cbba492715057691859cc8dc8adc91b492eb24f93e4bd57e5563b56dd6",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_C5BF0BE3_2_0_89E04756_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#C6356F2A#2#0#72383A19_ciByRGBA.png",
+      "sha256": "d4537725a58646a2ff40d53e993656874c6187b809ec795178952ce6a2575a2f",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_C6356F2A_2_0_72383A19_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#D782BB18#2#0#9AE11A25_ciByRGBA.png",
+      "sha256": "d33646dd7a366b219b431eb7765b36eba1aca43b1aaa278cc29b5ccf2d3543da",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_D782BB18_2_0_9AE11A25_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#DA5B3491#2#0#623A6E49_ciByRGBA.png",
+      "sha256": "67fb3d97e9fc9e1aeefe9984acb08b5f0d1c9f574d31e6723067debe48e32a3a",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_DA5B3491_2_0_623A6E49_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#DB85CB82#2#0#8664CF5D_ciByRGBA.png",
+      "sha256": "8de630497f65d6099e6411967635dfc3b1166403aefe9e58c3f2e528d7217835",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_DB85CB82_2_0_8664CF5D_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#DFB7CE03#2#0#6F43DAB2_ciByRGBA.png",
+      "sha256": "ea3470943d087c530cd1fb5927434d169506a6d0261c2fe6f6fb89f29b394bb2",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_DFB7CE03_2_0_6F43DAB2_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/millenium falcon/Shadow of the Empire#F94E30A7#2#0#13FA0A19_ciByRGBA.png",
+      "sha256": "32ca04284fd7f75a67dd7b3f1825973d49da844f1702d699e3b3f683b5183648",
+      "action": "replace",
+      "target": "vehicles/millenium falcon/sote_F94E30A7_2_0_13FA0A19_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/might need this for dashboard.png",
+      "sha256": "52cd331dae3ce92c7da98ae5ef947e0488a1636d9097f2f78d256191a80b8be3",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#0C214D2F#2#0#3F2B69CD_ciByRGBA.png",
+      "sha256": "faf30e31cb83f55ee8d19df5f507a58b2902162d2a416a4245caebb21b58412f",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#2DD9918E#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "e4e41e2a8416d09be9423963bec1f0e974df23cb0c6e42517fe3a9690783ab06",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#338797DE#2#0#485152F8_ciByRGBA.png",
+      "sha256": "be504fd3a4150aeeb11c8688cfd0703861d0be10ef1fd80a7e5e27fb889eefbb",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#3821D74B#2#0#EE2A2FCE_ciByRGBA.png",
+      "sha256": "f8967c249bf0ba3179689200b1d2a68dbc7a0ef002b76349efdb0fe96dae8cc0",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#3FAE0D23#2#0#D4316DE1_ciByRGBA.png",
+      "sha256": "d6d6ac975936a54c8a8d4688e32fd57180ce915ad8d111621a502fe31111e17c",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#4637EDBA#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "b37834e2a97f385559b3bd45ef1fda38eaca8c5b26fb256e9fbd26051a90368f",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#6334E94B#2#0#485152F8_ciByRGBA.png",
+      "sha256": "07adde449dfc1c1ae27957e995b4de86e3ad25ec2ad96b2ed72cc2d652d5e6ef",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#7D6320A2#2#0#2E2A2FCD_ciByRGBA.png",
+      "sha256": "ddd65a43ad2da4177f75b89314c164f86adfc458d0d866bf5f9efddbb81fe2f9",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#888BBD7F#2#0#D4316DE1_ciByRGBA.png",
+      "sha256": "fcb0dd867c73e3de6b9847182671b05724298e663c48fb48f9d12ea16326b882",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#8EA87764#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "adead1d07546795f718755115a5701e09052a998f7f50411d4abdcda3c6c4f76",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#8F13B84A#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "a69c53eae705bf89212c7ae509b095032a6a737c7b3af0ed52cca05a02e37799",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#8F2A7EBA#2#0#3F2B69CD_ciByRGBA.png",
+      "sha256": "b77ae2d6042f80e8ca283117887dd4b29387455c7c3b6d2aab8c2c2e325a4bab",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#91FECCD9#2#0#D4316DE1_ciByRGBA.png",
+      "sha256": "adc77712cada9c56a0f7c84bd260bb799cf15fd0b2d30895bf85d5b3376b6d48",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#936E4EED#2#0#485152F8_ciByRGBA.png",
+      "sha256": "b99aec16e54de7a30a5a9990ea3ff0e05dcc33061b8522842648b08034a86751",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#94794466#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "c320c23409172931a3eb95298fc15ebd32f84ea77cbf884b16f78886e55818f3",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#CB6F3C80#2#0#2E2A2FCD_ciByRGBA.png",
+      "sha256": "62ea94329cc295a59d75f317a7aa978d01e2e481b99319dd9e8eafea69723b4b",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#E3A885C1#2#0#3F2B69CD_ciByRGBA.png",
+      "sha256": "014cc2ab80168b6877848de1ce56856e58da691134ac76af71cf31ab778997a5",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#E7FDD04F#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "172d77916b4aa253da36ec709219b0b4e6f75c17dd18ade1d6cec3c03570adb3",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#EDCCA97B#2#0#D4316DE1_ciByRGBA.png",
+      "sha256": "08cbf49b4cc51acde8b7205ffa06948e24e814198f4a50ca8c576cdba52d4816",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#F1B76BC7#2#0#3F1A69CE_ciByRGBA.png",
+      "sha256": "d3a9bd67b4a6743ce654ab25b3b22257501d77c2f9a0fb0787b59bfa97ca65fa",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/dashboard/Shadow of the Empire#F8AD2C07#2#0#2E2A2FCD_ciByRGBA.png",
+      "sha256": "00acbd4d374af3781f12e95d5a6499995de463bfbf82b3c19d64fba0a708e07b",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/OLD - Shadow of the Empire#3A8C8EC3#2#0#0F57698F_ciByRGBA - Copy.png",
+      "sha256": "49376ca07b3983f3e93876ae8d921eaa9e57393d31e27693f0cad597e19882c7",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/OLD - sote_3A8C8EC3_2_0_0F57698F_ciByRGBA - Copy.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#33236408#2#0#EB6CAD58_ciByRGBA.png",
+      "sha256": "bd315f8bc05a2f5c7531e936ac5753dce74ddeff7809595741bf1a513ffb3d96",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_33236408_2_0_EB6CAD58_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#3A51474E#2#0#E74FABAA_ciByRGBA.png",
+      "sha256": "e0157b7ad44461a01867d343501fe8fa38daf9893aac18eeac707df91ba97bcc",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_3A51474E_2_0_E74FABAA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#3A8C8EC3#2#0#0F57698F_ciByRGBA.png",
+      "sha256": "d8a1efe3717cfa03c637febe2909b24aec929ee5d347a897a6ebbeb227538f18",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/OLD - sote_3A8C8EC3_2_0_0F57698F_ciByRGBA - Copy.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#6B190A34#2#0#86D1FFE5_ciByRGBA.png",
+      "sha256": "784e0e988ea92e5331b3c00b54233aef1d04e146e046469a30d4e7bb3f9581d8",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_6B190A34_2_0_86D1FFE5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#733C2FA9#2#0#EB6CAD58_ciByRGBA.png",
+      "sha256": "f6c5246d84c9b78918aa7e3709d8b5b1f79a156636b66d34ffff0f4d66ea3c7b",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_733C2FA9_2_0_EB6CAD58_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#7C190A2D#2#0#00000002_ciByRGBA.png",
+      "sha256": "02081ef20fdcb242ff6ab5fc3f25296781f58deffadf89b3f37e1bfc8cb437f0",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#8E6F4E16#2#0#0F57698F_ciByRGBA.png",
+      "sha256": "1f0901ba3f2c71978dff9d91daf12872301e843fcf54f4ee4f5954be14e78718",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_8E6F4E16_2_0_0F57698F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#955EC08A#2#0#0F57698F_ciByRGBA.png",
+      "sha256": "c90cb5556ca9fab6eb55e18df6a3deef31d90532c3fc20983dcc3d40ca7dc1a9",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_955EC08A_2_0_0F57698F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#95ED6283#2#0#CF1E93AA_ciByRGBA.png",
+      "sha256": "2af27010f0ef4dce84722e962a8299fac3d232f37cf7311a6db5af2dcf13ccaa",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_95ED6283_2_0_CF1E93AA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#9AA30B45#2#0#A7EDAD60_ciByRGBA.png",
+      "sha256": "bed900eb3559e914ee0ac734ccbaa11143d8369730eaf2324b9921b0ac3180f3",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_9AA30B45_2_0_A7EDAD60_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#B2FACB8F#2#0#86D1FFE5_ciByRGBA.png",
+      "sha256": "3fa2ea385675e98e8663d142bcebe6ebb9ca7924c78d2107dc62c414f70bc124",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_B2FACB8F_2_0_86D1FFE5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#BFB675AA#2#0#0F57698F_ciByRGBA.png",
+      "sha256": "b2c1aee5481a7ed8fc74bf764146a0756ecb3a58f565e2e580a930a59a4bd42b",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_BFB675AA_2_0_0F57698F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#C048C8AE#2#0#0F57698F_ciByRGBA.png",
+      "sha256": "2db43390d5cc44a4693003f611c0c1ca6c67f2ea324039cd26ebbdae47c97359",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_C048C8AE_2_0_0F57698F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#D27B3CDE#2#0#A7EDAD60_ciByRGBA.png",
+      "sha256": "4c40e50e771121fcc0aef504a2f2e8cc9920b5c78892f3f8965fc514263127b0",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_D27B3CDE_2_0_A7EDAD60_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#D558C8B8#2#0#86D1FFE5_ciByRGBA.png",
+      "sha256": "02081ef20fdcb242ff6ab5fc3f25296781f58deffadf89b3f37e1bfc8cb437f0",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#DB20B58C#2#0#86D1FFE5_ciByRGBA.png",
+      "sha256": "d5d6841376f97a6c00ac817d733dca31e71a0caab36c7eb1cddb85b584d36ea5",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_DB20B58C_2_0_86D1FFE5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#E1FB054F#2#0#CF1E93AA_ciByRGBA.png",
+      "sha256": "bc7164988da4cd54af489695fc5db4cc4af52b9bb08763215ee01f9664566565",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_E1FB054F_2_0_CF1E93AA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#E82FB356#2#0#CF1E93AA_ciByRGBA.png",
+      "sha256": "29ff06be3bcca91ac731dbe2720b31d6446c681d06af54cbc4d872c64e9e7cf0",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_E82FB356_2_0_CF1E93AA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#EBF21D31#2#0#86D1FFE5_ciByRGBA.png",
+      "sha256": "da479caed6f2e03dfab9c7f5fa25fff2ede830d72ee17f57dc41aea66faf4822",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_EBF21D31_2_0_86D1FFE5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#ED576C30#2#0#86D1FFE5_ciByRGBA.png",
+      "sha256": "b824bf5a7a3df419061582849ee3d45c471f4f5b7b97a5a6b335ba5299d7eaee",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_ED576C30_2_0_86D1FFE5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#F27716E8#2#0#EB6CAD58_ciByRGBA.png",
+      "sha256": "f0dc3e5c9f2423a84bf25f69684738693fb3e41aa16d8edbecdf8dbd06c7c882",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_F27716E8_2_0_EB6CAD58_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/cockpit/windshield/Shadow of the Empire#F7E03540#2#0#CF1E93AA_ciByRGBA.png",
+      "sha256": "fc9881302bbfb2664c419150baced4a84c4b175965ade96758d17346073a4d17",
+      "action": "replace",
+      "target": "vehicles/outrider/cockpit/windshield/sote_F7E03540_2_0_CF1E93AA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#0664C6D6#4#0_all.png",
+      "sha256": "fd7f845486dfe61438cab7f93739c3143239f4de781e2adf35472f980f20ac15",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_0664C6D6_4_0_all.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#0664C6D6#4#0_rgb.png",
+      "sha256": "fd7f845486dfe61438cab7f93739c3143239f4de781e2adf35472f980f20ac15",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_0664C6D6_4_0_all.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#099088D5#2#0#48A4D169_ciByRGBA.png",
+      "sha256": "0b5cfe7f839bb70f31fe27f2b1829b8a9655963f1f7525ded51f9c52b5588e7e",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_099088D5_2_0_48A4D169_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#1205CFF3#2#0#90671116_ciByRGBA.png",
+      "sha256": "898736c66414dff7f3346c7489bad4c29e9f3d5494c0187ed89baac21008eef5",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_1205CFF3_2_0_90671116_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#15304752#2#0#77C9B8DF_ciByRGBA.png",
+      "sha256": "186d1081df42cbd3cb8d8b9e47a7c22abd94af70be7f1e5b147883bd3d0370af",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_15304752_2_0_77C9B8DF_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#1675A1C4#0#3_all.png",
+      "sha256": "d669408968b4196f058756e62db76fc2d0d37d781f4ce6851f94e088a1c3b02e",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_1675A1C4_0_3_all.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#34729FC7#2#0#8012FF80_ciByRGBA.png",
+      "sha256": "1a137c36f83ba994bc6a08a769d9a7d37f38f82361c0e9e0129606ec924e5608",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_34729FC7_2_0_8012FF80_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#43454140#2#0#6501F6B7_ciByRGBA.png",
+      "sha256": "a68fa3f866401899ed7db5276b79b44278778a6d52ccbf802cf87b8464d5fd74",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_43454140_2_0_6501F6B7_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#4D6C01EB#2#0#3DB339B5_ciByRGBA.png",
+      "sha256": "92fafad343ac586eaa65d19a276a08f00cc58199f0f1ede4261a9becd8ff53d6",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_4D6C01EB_2_0_3DB339B5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#4FC13169#2#0#246543DA_ciByRGBA.png",
+      "sha256": "3aa2ddb031f5b24c21c007e6b975fba7b2584790de7fe3c0ce535cae151b8f60",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_4FC13169_2_0_246543DA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#64417950#2#0#28BFC8BF_ciByRGBA.png",
+      "sha256": "00de3185da61ad8e7458c2bcbe70ee616c79d39fddb401da8bb62f8aa84e02dd",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_64417950_2_0_28BFC8BF_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#64F74090#2#0#07A0A032_ciByRGBA.png",
+      "sha256": "0b00b0d62701823c5d65a3ed5607bad605e422029bea2526bc02275c73489105",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_64F74090_2_0_07A0A032_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#75152F32#3#0#C82B1E64_ciByRGBA.png",
+      "sha256": "46113483b19abfb5a031d0a19328f236d1493e4f110574d2ca914cbe0f29d641",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#A0F1B557#2#0#FC456E19_ciByRGBA.png",
+      "sha256": "68206164b0d1a94278074cf6a2381e4f4f9c2b7811090fe472d71b5d7af3d7da",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_A0F1B557_2_0_FC456E19_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#A2BA954D#2#0#AE64F0C0_ciByRGBA.png",
+      "sha256": "cbb3e4b1706de3349fc84b647a1aa6662f26579de7fec96b92d1d588ed37f25d",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_A2BA954D_2_0_AE64F0C0_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#C6356F2A#2#0#72383A19_ciByRGBA.png",
+      "sha256": "e8ab7fe5e3beb537d13a3b7b6a662eaf2d4ba9798764b8a3fac6dfdbebf6275b",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_C6356F2A_2_0_72383A19_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/outrider/exterior/Shadow of the Empire#DFA554DE#2#0#475F2CEB_ciByRGBA.png",
+      "sha256": "a4dc3f640c9b8fc3381695c9e91efe0dad7ea1b850526801a09fdef63d0e7cf5",
+      "action": "replace",
+      "target": "vehicles/outrider/exterior/sote_DFA554DE_2_0_475F2CEB_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#06828583#2#1#F5564574_ciByRGBA.png",
+      "sha256": "222c6a569e37eb0297550006ba7089efaf8adcae15988e91cbcbad055ca9749a",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#1D0A9356#2#1#749CAF4F_ciByRGBA.png",
+      "sha256": "3549c5d4091c7caafbb257565f4c3902b68f2aa1298612fd1cd51ed86aac4323",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#264036B1#2#1#F59C20E9_ciByRGBA.png",
+      "sha256": "d679232f4fee8f7c580566c92f08fceaa2a338b94c5783c18495579e4ae0d367",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#2813DC33#2#1#C4B90540_ciByRGBA.png",
+      "sha256": "5eaf435f2a603f0b45df5dd79d92da410cbd10b79554675bde9de38a6b906f05",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#4317D078#2#1#22141F24_ciByRGBA.png",
+      "sha256": "692019db5e674641a3b15e6a7ed5142021ad63aa4157eadbd626296e7335a702",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#748F245B#2#1#F5564574_ciByRGBA.png",
+      "sha256": "28b25f909b626bcd9e58e2a0909bee360b1eb90afec6433385f71ee9e0f81f94",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#7538298A#2#1#2C5B44A6_ciByRGBA.png",
+      "sha256": "73fc97b68e881571c766bf6f227a5479f9da720ad480a4d47fa0b17bae8b77d9",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#89763501#2#1#F59C20E9_ciByRGBA.png",
+      "sha256": "2480e90ca9872db7f54cabac72fba19c6df5aea9452c46c6a186e4869e849484",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#A44020F2#2#1#DD2685B9_ciByRGBA.png",
+      "sha256": "358748a97721832444bef007aad8f0e1a6314b806f2ce79da04c99121bdad972",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#B53ADCB5#2#0#EE177A1D_ciByRGBA.png",
+      "sha256": "32852b696830a9866d177e69d9769e248549556e72ce7bc78a2f6c701808fae9",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#BF047494#2#1#5E5F8441_ciByRGBA.png",
+      "sha256": "51908a5fe588d3c753230402d2e177541b47dbdc32af77b389a174a253ae7123",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#D5DD19AE#2#1#F59C20E9_ciByRGBA.png",
+      "sha256": "93d944f072043616d2c1d0b13453dd955e42f077188022ceaafafc604aa6de09",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#E76AA141#2#1#086BEB08_ciByRGBA.png",
+      "sha256": "f9edcf951521036d31abdbc54525a318f07c17b83e90b3fac8d8bd437aed1aec",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#E8B1BE88#2#1#749CAF4F_ciByRGBA.png",
+      "sha256": "3cb820fd8983369371c7ddfe6f5f44ceb00b1a54e41a21efd1b72b52c4048550",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#F6AC11AD#2#1#E448EAB1_ciByRGBA.png",
+      "sha256": "05e3521cee03752243d0be7698162796b08a8876ed2c708dac37d4e95fd0bc5d",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/dash/Shadow of the Empire#F71D3541#2#1#F5564574_ciByRGBA.png",
+      "sha256": "853098f2b2376608fee2dc7a6b5f66075a379a79a6c70bcf934d59b7a84b1cbc",
+      "action": "omit",
+      "reason": "Font, text, or panel/sign with lettering; preserve existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#03185485#2#0#4329BA4B_ciByRGBA.png",
+      "sha256": "edaf12493e0a731163da2c92bff137bb3ac0e20cf70f3619aa4255276cc5b800",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_03185485_2_0_4329BA4B_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#0398E067#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "1c441aa32a4eaedfb31aa95aeec98e014f23ca425d869dd66c56bcd6358a8bab",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_0398E067_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#0B1B5489#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "c663800c7bbbba8b02301cf74e0b48dbc59b284b4faf25672fe3725562558ebd",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_0B1B5489_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#1570B9BE#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "e54f2ba8ed4e53936f96ec10260cc1ab4d3b04222303f6e3d6968d0654dac29f",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_1570B9BE_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#27D12EE3#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "c73a6982c54fc862e22d4fa5a86fdb2e17afc1ac4b3f5b1606f05b6fc4a58f3e",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_27D12EE3_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#60735A3C#2#0#E46B6576_ciByRGBA.png",
+      "sha256": "8f903d5c24c8051b81141cdcadc00b351168da42f917065275cca4007c2a80ef",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_60735A3C_2_0_E46B6576_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#72106094#2#0#4329BA4B_ciByRGBA.png",
+      "sha256": "a82bf5012d5e6f60916c5ebe71de63f68195de8323242556bbee46c7c9d82301",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_72106094_2_0_4329BA4B_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#77252F96#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "67d804daab6bab784b1afe9fd6a204045e2224ef30f05a6b865433842eda9655",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_77252F96_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#8A45E918#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "83b461d616e58ce5954be0568045951249fa92a475f7755fd504c20c646cab44",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_8A45E918_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#8E16DE94#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "b0e509eb15ec3d886306b0d94f47d4a1473f925b1cf7ff628aa467b8fa89f791",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_8E16DE94_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#B12E8B91#2#0#E46B6576_ciByRGBA.png",
+      "sha256": "da6c193763254d7c3848ec30df48b74ce8014dbe11df7f6f23aee9affb9c3a4d",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_B12E8B91_2_0_E46B6576_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#BC33FF47#2#0#4E270E48_ciByRGBA.png",
+      "sha256": "15074b008863dc12c804c746fdf4d4543c4ac03c25fe15746c6f8c16a6b22f13",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_BC33FF47_2_0_4E270E48_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#CCF6828F#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "63b05524b7c5f4f74ffc3c022ab8a39ee568ca420b0324d731bfc70cfd0a9b73",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_CCF6828F_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#D408D266#2#0#AA6CAF34_ciByRGBA.png",
+      "sha256": "ca5c3161aab6bedcf5b58945d86ac9c2cd626d6071505f46406cb3df808be008",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_D408D266_2_0_AA6CAF34_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#DC7335C1#2#0#E46B6576_ciByRGBA.png",
+      "sha256": "88281f3e73757c97ff042a64f5d95077aee959a2a044a496920ea7cb5c83ebb6",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_DC7335C1_2_0_E46B6576_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/left side/Shadow of the Empire#FD421C18#2#0#85C69E46_ciByRGBA.png",
+      "sha256": "3de2af5f6e7984714a182f40db8721beb11fc759127e636adaf8ed6125eaec09",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/left side/sote_FD421C18_2_0_85C69E46_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#15A73EFA#2#0#3664B1E3_ciByRGBA.png",
+      "sha256": "454693f9ebb471019f3b6382a0f777ee276eda49da3eef381487500eb7fd8e6a",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_15A73EFA_2_0_3664B1E3_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#3E70140E#2#0#3664B1E3_ciByRGBA.png",
+      "sha256": "62a37582bc708c5610b27e07a8bed37c4a107ed25579c25bc76bb00e428b82f3",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_3E70140E_2_0_3664B1E3_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#5070D69E#2#0#8D05F9EA_ciByRGBA.png",
+      "sha256": "d3c93c393a8a8ba692f2a9a0700a685b4ff4b7da69ad75e35ff9348f9dc8a344",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_5070D69E_2_0_8D05F9EA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#557F9169#2#0#A3D7A1A5_ciByRGBA.png",
+      "sha256": "99eb106e80621f731a2e105be9e3f78e1d9d2ff48b381341cd8fee1e494025e3",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_557F9169_2_0_A3D7A1A5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#69071487#2#0#8D05F9EA_ciByRGBA.png",
+      "sha256": "ef7540319565c52d610a1d846b852056402162524ddd5449e297fd58379e516a",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_69071487_2_0_8D05F9EA_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#6B1C598C#2#0#3664B1E3_ciByRGBA.png",
+      "sha256": "250f573e30e05ea08e5463264c9ea18e78113884ec0bf97452063b39f63a1939",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_6B1C598C_2_0_3664B1E3_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#6C6ADC4A#2#0#EFA47B71_ciByRGBA.png",
+      "sha256": "51e98764369c8a20a587a02314758bbbd81d15911a84b96ed4c709d6eba8d37f",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_6C6ADC4A_2_0_EFA47B71_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#7A1AFA75#2#0#2FA47B6F_ciByRGBA.png",
+      "sha256": "9b948d14d5570ff34ab795f9c66499a400f2a139ea7ad7ef266d0fb637c44082",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_7A1AFA75_2_0_2FA47B6F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#7CC17D21#2#0#2FA47B6F_ciByRGBA.png",
+      "sha256": "d7ee0c99be7f5130df5668876c5a353b673a8df1e63f4d41d686906fd59a0eb0",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_7CC17D21_2_0_2FA47B6F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#829E694D#2#0#EFA47B71_ciByRGBA.png",
+      "sha256": "00a4b8d00b5959ca73a05de8a22c0e5b6454bdf03d3b561e183009d8df795e03",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#93A83B33#2#0#2FA47B6F_ciByRGBA.png",
+      "sha256": "ffe7bd765d5ee4219f391d3a776bbeea55eac3896fbe80e84e8128e81647c70d",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_93A83B33_2_0_2FA47B6F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#B31A78A0#2#0#2FA47B6F_ciByRGBA.png",
+      "sha256": "409fdb60e383b4c2d7bebd2dec5a60cdada7fcb690a6e61d7e5339bc01e4f098",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_B31A78A0_2_0_2FA47B6F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#C2F4A30E#2#0#2FA47B6F_ciByRGBA.png",
+      "sha256": "6d2e7688763227a09dc63aeec9794c31aabe9395a77ee893b4bce2b031f89db4",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/right side/sote_C2F4A30E_2_0_2FA47B6F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/Shadow of the Empire#462F65D3#2#0#06057CF5_ciByRGBA.png",
+      "sha256": "e14dec8c2b22a3220f8f99eac3ffd78f84140f4401e106d0d67b840e9be356e6",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/sote_462F65D3_2_0_06057CF5_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/Shadow of the Empire#87FDC0A2#2#0#EFA322EF_ciByRGBA.png",
+      "sha256": "90c19002d19eea2fe10077f43a1abb63569aedbfce1271b7541d7f518c89369a",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/Shadow of the Empire#A6F38360#2#0#41FCF80F_ciByRGBA.png",
+      "sha256": "f392d5c2ccbbd2c0ac4c28675a03c8ba7e67a6068c2e72b0394e922ddfb4ccfb",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/cockpit/sote_A6F38360_2_0_41FCF80F_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/cockpit/Shadow of the Empire#CFA0659F#2#0#8D05F9EA_ciByRGBA.png",
+      "sha256": "7703b923616ee43ce94ba7e35fa90379761c07194d7814a4603329d4467ce99e",
+      "action": "omit",
+      "reason": "Fully transparent source image; do not hide existing artwork."
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#01CBCE4D#2#0#819782DF_ciByRGBA.png",
+      "sha256": "7064522118a67bbaf574bfe02a0404f12d33e7ac92ba057190f4821a60fc5477",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_01CBCE4D_2_0_819782DF_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#34B8F1C4#4#0_all.png",
+      "sha256": "f7f1d8f2d63db0b3c4dc87b4372ceee033458cd487eae189c2a18a4c0787631d",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_34B8F1C4_4_0_all.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#352B80ED#2#0#D751F612_ciByRGBA.png",
+      "sha256": "e83d2e425fa43666cf2ae0c1c56ab0832d545fbfc41723ae524cfac04f49ef40",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_352B80ED_2_0_D751F612_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#4BE5E5E1#2#0#B959B2F7_ciByRGBA.png",
+      "sha256": "f43154566fd3494c7e3d561fd1cb63a4627fa1d7de26fbe21c5d6c2c2bccf365",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_4BE5E5E1_2_0_B959B2F7_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#5D7426D8#2#0#E83F7E17_ciByRGBA.png",
+      "sha256": "9a188660c472f3bc62c1723ba2d6bada3471959559a81f48ce97ac06488b4cae",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_5D7426D8_2_0_E83F7E17_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#5EF97F08#2#0#641A69E1_ciByRGBA.png",
+      "sha256": "8823e38670af24efb619b49924275cfda3f9e17e3d76b37c0ba1f94ffc6a0275",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_5EF97F08_2_0_641A69E1_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#74255C73#2#0#0D2AF777_ciByRGBA.png",
+      "sha256": "bd40ae1f18b67edc9830be451eca442be32ce31b2c5c62e3289099d5a8ceb83f",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_74255C73_2_0_0D2AF777_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#9B41DBB2#2#0#650F1691_ciByRGBA.png",
+      "sha256": "e8dbeb4dd7412923c0376d8d66cbedabf2e211df45f7c1b1d889b5f3e4b792ac",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_9B41DBB2_2_0_650F1691_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#BF626902#2#0#47885153_ciByRGBA.png",
+      "sha256": "99f3be7b4990dd7db2852a058c9253974eeefbfe2d2af24d0c78d09c46016aa9",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_BF626902_2_0_47885153_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#D66CBF36#2#0#583F5C5E_ciByRGBA.png",
+      "sha256": "c76141e8c30210ef08a8142fdd7332ae10c8cfd03835f78846b91a16f290cce1",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_D66CBF36_2_0_583F5C5E_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#D743D82A#0#2_all.png",
+      "sha256": "5bbe4963f3c88a4337fa34bffc0ddc4fe23709250412dfe722cfcbf5fe52064e",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_D743D82A_0_2_all.png"
+    },
+    {
+      "source": "vehicles/snowspeeder/exterior/Shadow of the Empire#F150D83A#2#0#3FBC6EA3_ciByRGBA.png",
+      "sha256": "ec24ee54c8d6c67e3ccb76ce3999c15cafd975155ca72716379b69ba6b1ceb46",
+      "action": "replace",
+      "target": "vehicles/snowspeeder/exterior/sote_F150D83A_2_0_3FBC6EA3_ciByRGBA.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#2FB5E1B4#4#0_all.png",
+      "sha256": "60d89df582bb61a0f5db481089d60a408cca5eca78dce71b7dc99dbe22ea16e2",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_2FB5E1B4_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#5A87CB06#4#0_all.png",
+      "sha256": "b24cea6e56ccdb117f18e66c20fe08b7e1330e67bf06f1e81758921449d98e59",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_5A87CB06_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#61E886AC#4#0_all.png",
+      "sha256": "55a893e0df82e79ae42d332491be46a01255ad19ed9c66ab6f6d639f06c131b3",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_61E886AC_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#773FA54B#4#0_all.png",
+      "sha256": "f2ed9a9b0fb5891d9960af1a7329cf8f50bffd9edfbc4b549462d9da0bda8c09",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_773FA54B_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#9953851A#4#0_all.png",
+      "sha256": "29c57728cb1ad9c774d9227638c0fdd30fcf74610a55c8aad14ebc23cd8d7591",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_9953851A_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#A37B6D30#4#0_all.png",
+      "sha256": "844b535634c08a50f1b38a130f7c995b2c3d2c2d81449a8ce636476dd11eb0ad",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_A37B6D30_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#A68A4038#4#0_all.png",
+      "sha256": "624ea7e181f7212036104427c6bd122016dcc1f862059cf087fb2ac802ffdf3c",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_A68A4038_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#AB7D8287#4#0_all.png",
+      "sha256": "1923295fec283068b24651f694334b7653cbb58b059100c4b4fddd6b1ad36d99",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_AB7D8287_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#BC92FDF6#4#0_all.png",
+      "sha256": "1923295fec283068b24651f694334b7653cbb58b059100c4b4fddd6b1ad36d99",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_BC92FDF6_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#D4EF2263#4#0_all.png",
+      "sha256": "055564fc6812800cf4dbf252fd6a557d1e2c2d0de674e393a76122e5fa6ba2b8",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_D4EF2263_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#DE6D1AA1#4#0_all.png",
+      "sha256": "a953db5238c63800cf5ffbad990e5a02b4615668270c1c43e454997a5d3ad501",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_DE6D1AA1_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#EA3D9F31#4#0_all.png",
+      "sha256": "99950afd1178857f6b9fd601d4f71dfd6931a57dc66e2d04b97ff596c3c9e1b0",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_EA3D9F31_4_0_all.png"
+    },
+    {
+      "source": "vehicles/star destroyer/Shadow of the Empire#FB3D6748#4#0_all.png",
+      "sha256": "47e5151b738ff65aa7a158309ec3f6a9f0ab372f3a96c397124be6e401dc55d7",
+      "action": "replace",
+      "target": "vehicles/star destroyer/sote_FB3D6748_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#143B7338#4#0_all.png",
+      "sha256": "728fb9a14ad16ab5deab461f13ae1ee1687fb2bb319cbe99aa758268723bad05",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_143B7338_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#213266C9#4#0_all.png",
+      "sha256": "73a15fff850e08e2f53ca2441713e8e359ddfc70582ef6ae0a9580e3d131b24c",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_213266C9_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#23B22BDB#4#0_all.png",
+      "sha256": "818a8e279377723c5de9ef2e868ba6db6761576cc21c6d278e00cbcb8ffb2019",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_23B22BDB_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#24E3C29A#4#0_all.png",
+      "sha256": "76360f6709f44b16abd4d0cb4cc49e29420208404dcc60fbd718e8bb1d199a54",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_24E3C29A_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#3FA4DA7F#4#0_all.png",
+      "sha256": "630a75ff8992dae2d8ed596d2b41387e1c3efbb89f021223d49780f60f284098",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_3FA4DA7F_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#58807CD2#4#0_all.png",
+      "sha256": "7ff063f1d22108b4d5d4e5b7d73591c2e4c79239e25e88b0b12059f0ce8ad551",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_58807CD2_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#78CBD40B#4#0_all.png",
+      "sha256": "56f6c83ad1d0f24b9e7e3ec5117d01cb0467038aa40439ac219e8d17cbab36e1",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_78CBD40B_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#7B2080D1#4#0_all.png",
+      "sha256": "ff71e53dfe72ea592b6b6951da1d86b4fd675d7b00595df1b5f3a750f6fa9408",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_7B2080D1_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#9EEE572F#4#0_all.png",
+      "sha256": "56f6c83ad1d0f24b9e7e3ec5117d01cb0467038aa40439ac219e8d17cbab36e1",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#A176BFD7#4#0_all.png",
+      "sha256": "2e16c63bf1211374e0d5da361820697ae6af11b32e1411aeea7b061236a7f2be",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_A176BFD7_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#B38F45C6#4#0_all.png",
+      "sha256": "c0955d497f83f45bda340c6d206d3f070a82a734e8024e7df9627b1f3444f601",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_B38F45C6_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#D3A8E595#4#0_all.png",
+      "sha256": "c1fd4a8083f49688eaca49a9b0479d7e078a63ea1d3efb09cbafa43daea57037",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_D3A8E595_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#DC83329F#4#0_all.png",
+      "sha256": "22fc8ecd3ba63b2421efd16be0b4b180ba67a8e8d063a96f91ea012c1dc65cc1",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_DC83329F_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#EA13856D#4#0_all.png",
+      "sha256": "7e5542a8d9c4550fee7508f7082541eda89de56a9bf0c4321f72c74501b7536a",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_EA13856D_4_0_all.png"
+    },
+    {
+      "source": "vehicles/tie fighters/Shadow of the Empire#F066CF5A#4#0_all.png",
+      "sha256": "941ae3bca679e2c3d088f00cd04f1b8f149147b4e578b85bf3c168d0439effd9",
+      "action": "replace",
+      "target": "vehicles/tie fighters/sote_F066CF5A_4_0_all.png"
+    },
+    {
+      "source": "weapons/disruptor/Shadow of the Empire#38F920C0#0#3_all.png",
+      "sha256": "ae82a267347bc151f4c94fd7fdc74db2c13bd1bad4ebbab1cac429f8751d8d39",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/disruptor/Shadow of the Empire#7164D996#0#3_all.png",
+      "sha256": "42844ac741686182ef8bcdcedd07f06551badd2b24411b82f6855cea0b5e255f",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/disruptor/Shadow of the Empire#7D33A040#0#3_all.png",
+      "sha256": "289abf93a32bc4bef96862b2a890b626198fe2d3f10c2fb29237863c3ee325c6",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/disruptor/Shadow of the Empire#96DEDC3B#0#3_all.png",
+      "sha256": "74302fd768e1da6d2af2052728dcd721e87668201cd41cff4aa60a4fea5d036f",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/disruptor/Shadow of the Empire#9DDDD18E#0#3_all.png",
+      "sha256": "33f230c33b9e5f5536a97346d2bb0fb76da4d91047dcdc1f6ede861c029055e4",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/disruptor/Shadow of the Empire#CF9BABDB#0#3_all.png",
+      "sha256": "be63ac794b0bde21c305ac62dfbb526e628267f7d49c5befd3b5b4cb7246b682",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#00F17900#0#3_all.png",
+      "sha256": "e4ef8ec7e7fbc5184d008c715464cc95db55c87983e6c8c6fdcc3c4fa4676d74",
+      "action": "replace",
+      "target": "maps/hoth/sote_00F17900_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#055E0AA4#0#3_all.png",
+      "sha256": "05ca72c06778f99fa393f451608f3f4fa6355642d851cc65827b2c4bb79dc80f",
+      "action": "replace",
+      "target": "maps/hoth/sote_055E0AA4_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#180A1F20#0#3_all.png",
+      "sha256": "018dbcee181f4919f0190b3b6fd824c303dd392f63412d79e80d2aa50948e57f",
+      "action": "replace",
+      "target": "maps/hoth/sote_180A1F20_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#18D3C95C#0#3_all.png",
+      "sha256": "b8f2880f60cb2840c1e7135666bcb1e5d29056a5974d5878715529d3408d121d",
+      "action": "replace",
+      "target": "maps/hoth/sote_18D3C95C_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#1964FDE8#0#3_all.png",
+      "sha256": "73034cb43997e9cb831434ddc9673b8d70029884292fd18323ff8b2716f9272f",
+      "action": "replace",
+      "target": "maps/hoth/sote_1964FDE8_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#1BC5CB51#0#3_all.png",
+      "sha256": "0c0095dbeb6c67d7831a9a317c5adf9f87384b807c486c3c61d57a384cf58c6a",
+      "action": "replace",
+      "target": "maps/hoth/sote_1BC5CB51_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#2D96B6F6#0#3_all.png",
+      "sha256": "016f159599c48224533cc153df828526144db2478c3c5805d96f9df17d63c512",
+      "action": "replace",
+      "target": "maps/hoth/sote_2D96B6F6_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#33801A3D#0#3_all.png",
+      "sha256": "822c75dc73adb399d13de088299d4bc9b0cbd4ab6ed1cc0807af3d9f0fa3824c",
+      "action": "replace",
+      "target": "maps/hoth/sote_33801A3D_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#4C23BC79#0#3_all.png",
+      "sha256": "8996d2611371b0ed8758fdb9855fe962df5d07ebca54770349b8f08d881f58e0",
+      "action": "replace",
+      "target": "maps/hoth/sote_4C23BC79_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#59DD12CD#0#3_all.png",
+      "sha256": "ec29297a383aacbcd8afdefe1fc25437742ad3de1e2f2d65fc263c3f61b72f85",
+      "action": "replace",
+      "target": "maps/hoth/sote_59DD12CD_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#6BCA8B57#0#3_all.png",
+      "sha256": "1e5b28aae74e60d647ceaf0267dd8baed138ecfc0144ad84d9c55e4629264b78",
+      "action": "replace",
+      "target": "maps/hoth/sote_6BCA8B57_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#6EDC6C39#0#3_all.png",
+      "sha256": "dcb11690db096cee2e49882241ec65450fcf2b2f5610396cf93dd66a5e39bfab",
+      "action": "replace",
+      "target": "maps/hoth/sote_6EDC6C39_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#705177F5#0#3_all.png",
+      "sha256": "97f6443a2acf2326a53aa4dc5a681fd84698f1d2b420d5e6fc18f1285b088c36",
+      "action": "replace",
+      "target": "maps/hoth/sote_705177F5_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#735D2430#0#3_all.png",
+      "sha256": "436897795e715e5238892075fad2f43683f19bb063174e2dd9aef45bfee00c2a",
+      "action": "replace",
+      "target": "maps/hoth/sote_735D2430_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#753C312F#0#3_all.png",
+      "sha256": "9cbb02e7eb3eb25c9f91d96997dace6c2705b035c6a1474b28f863314e95c3cd",
+      "action": "replace",
+      "target": "maps/hoth/sote_753C312F_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#78CA5DAE#0#3_all.png",
+      "sha256": "b82f142dedae3878aea81da8698ebdd39b155fdb7500b34f4d4bd6efb513183c",
+      "action": "replace",
+      "target": "maps/hoth/sote_78CA5DAE_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#855402E6#0#3_all.png",
+      "sha256": "d2ac1112d5e32894b8cfa54b84df4f43ae559be464d3ce458e0485b3794c8e47",
+      "action": "replace",
+      "target": "maps/hoth/sote_855402E6_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#8834F26E#0#3_all.png",
+      "sha256": "a8fa9542dc135c65e1f1bb9b95ef37156ba919a6216e2b685857cf93b7e29235",
+      "action": "replace",
+      "target": "maps/hoth/sote_8834F26E_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#8B7F6775#0#3_all.png",
+      "sha256": "9e0fa911caa97badba6e0bea3497f2b0459c039d6035f42b27facc4db76f24ae",
+      "action": "replace",
+      "target": "maps/hoth/sote_8B7F6775_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#97226302#0#3_all.png",
+      "sha256": "9e3d6cdd48cc1e48e6fca256a4514e544dc68aa362d26a37892837a33d24491d",
+      "action": "replace",
+      "target": "maps/hoth/sote_97226302_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#A8CA86B8#0#3_all.png",
+      "sha256": "fbb18b6c16a0457be86749457594ef9d506b187cea9a9086322601253c2cb5df",
+      "action": "replace",
+      "target": "maps/hoth/sote_A8CA86B8_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#B4E42B95#0#3_all.png",
+      "sha256": "1db24fb0e7e985fe045c6f5637e887101dccb17db9559397b4f154e45671e878",
+      "action": "replace",
+      "target": "maps/hoth/sote_B4E42B95_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#B733DDCE#0#3_all.png",
+      "sha256": "b16b8bd85e09df21cb9499380496de7d3f05ba73f293a74ede60f4fee7e64559",
+      "action": "replace",
+      "target": "maps/hoth/sote_B733DDCE_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#CB46ED13#0#3_all.png",
+      "sha256": "d58cdb02802b0ace52a68b984581eaf761c27fe33eb585577093c2c21f33d891",
+      "action": "replace",
+      "target": "maps/hoth/sote_CB46ED13_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#F333DE98#0#3_all.png",
+      "sha256": "0782a289f125e42bda1b4480c404d1843b3d82be600294f5c9772b263054e1e2",
+      "action": "replace",
+      "target": "maps/hoth/sote_F333DE98_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#F3817A8D#0#3_all.png",
+      "sha256": "5e61e956b4738af5410f3ff799211ccc62bd0439be544fb3e0776f231c2a0ab8",
+      "action": "replace",
+      "target": "maps/hoth/sote_F3817A8D_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#F8837347#0#3_all.png",
+      "sha256": "e659e263fd5723fb45e92c6a2b1237f00eeb13968b5d6e8fbc9dfe8d0976dd1f",
+      "action": "replace",
+      "target": "maps/hoth/sote_F8837347_0_3_all.png"
+    },
+    {
+      "source": "weapons/fire/Shadow of the Empire#FAB5C102#0#3_all.png",
+      "sha256": "51d65961e17d53cb6076a1bb41c328d0c718580d73c32a77243cc52d4717af85",
+      "action": "replace",
+      "target": "maps/hoth/sote_FAB5C102_0_3_all.png"
+    },
+    {
+      "source": "weapons/flamethrower/Shadow of the Empire#2A2AF242#0#3_all.png",
+      "sha256": "3f4a9c9dd901c2b8ab80abae95e67bece5deb63b242512780ed86b8779bf19e3",
+      "action": "replace",
+      "target": "weapons/sote_2A2AF242_0_3_all.png"
+    },
+    {
+      "source": "weapons/flamethrower/Shadow of the Empire#3A1E1478#0#3_all.png",
+      "sha256": "8b306eab2af399fe9c35b924d89c21e7165d11253900fd64b4db4b05db7768f2",
+      "action": "replace",
+      "target": "weapons/sote_3A1E1478_0_3_all.png"
+    },
+    {
+      "source": "weapons/flamethrower/Shadow of the Empire#9D958196#0#3_all.png",
+      "sha256": "2773eeef4b57a795e5fa652f2331ef8efa87085834eabdbc296fcbfc67fe024f",
+      "action": "replace",
+      "target": "weapons/sote_9D958196_0_3_all.png"
+    },
+    {
+      "source": "weapons/flamethrower/Shadow of the Empire#B990AF2E#0#3_all.png",
+      "sha256": "d41d5d376a35edebd46042bbe0ce46824c2e904d93b89131343751a8433ed1a7",
+      "action": "replace",
+      "target": "weapons/sote_B990AF2E_0_3_all.png"
+    },
+    {
+      "source": "weapons/laser/Shadow of the Empire#02B4B3F9#0#2_all.png",
+      "sha256": "a9698086bd2596d593a69790be613e0221cf6a46a173eae794911deb0ae9a1ad",
+      "action": "replace",
+      "target": "maps/hoth/sote_02B4B3F9_0_2_all.png"
+    },
+    {
+      "source": "weapons/laser/Shadow of the Empire#3260226E#2#0#CBCCAF67_ciByRGBA.png",
+      "sha256": "a381b972b2b2bfe36ed518b0b88fde55abf0c71a005341c65d792e9fa331bd01",
+      "action": "replace",
+      "target": "maps/asteroid field/sote_3260226E_2_0_CBCCAF67_ciByRGBA.png"
+    },
+    {
+      "source": "weapons/laser/Shadow of the Empire#5770C575#0#2_all.png",
+      "sha256": "6e28352fb4ab93f2ad60be6110c002b16bffafb709bde8c8a1da528b5d616485",
+      "action": "replace",
+      "target": "weapons/sote_5770C575_0_2_all.png"
+    },
+    {
+      "source": "weapons/laser/Shadow of the Empire#B296B9E5#0#3_all.png",
+      "sha256": "55682760d527a2686b1a86a17d41a775c0e409e867ef929ecc653eae600d40e6",
+      "action": "replace",
+      "target": "weapons/sote_B296B9E5_0_3_all.png"
+    },
+    {
+      "source": "weapons/laser/Shadow of the Empire#C765DB25#0#2_all.png",
+      "sha256": "71eac7593ab4eddd0b84e683934ac894def6f9a5572b6a9b2d2ec7e038230a8b",
+      "action": "replace",
+      "target": "maps/hoth/sote_C765DB25_0_2_all.png"
+    },
+    {
+      "source": "weapons/pulse/Shadow of the Empire#2E1B8467#0#3_all.png",
+      "sha256": "4e3158b5a60eac8711f51ae706ac6a17c9b1862aaa948fde8cde33dac4aeeabc",
+      "action": "replace",
+      "target": "weapons/sote_2E1B8467_0_3_all.png"
+    },
+    {
+      "source": "weapons/pulse/Shadow of the Empire#50A97762#0#3_all.png",
+      "sha256": "8a6e20be07c6e936b0596833bc0621c51d6c2169b6ba7ad8f44ea5542f7cbfe8",
+      "action": "replace",
+      "target": "weapons/sote_50A97762_0_3_all.png"
+    },
+    {
+      "source": "weapons/pulse/Shadow of the Empire#7516F4DE#0#3_all.png",
+      "sha256": "a343acbe9a0afe04d1b0002e263e9ea2398316e57b6bafadb82f5a8282cad7ca",
+      "action": "replace",
+      "target": "weapons/sote_7516F4DE_0_3_all.png"
+    },
+    {
+      "source": "weapons/seeker/Shadow of the Empire#6B184D60#0#3_all.png",
+      "sha256": "9ec08d14f3b911e9bcc178553c25cb630e7d85c743f3699abcdf4b3f7fc6eb61",
+      "action": "replace",
+      "target": "weapons/sote_6B184D60_0_3_all.png"
+    },
+    {
+      "source": "weapons/stunner/Shadow of the Empire#5645063A#0#3_all.png",
+      "sha256": "87b2790a0ab54144741188281f0278bf7cf0b8b11c03b37f3c33f26e3a37651c",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/stunner/Shadow of the Empire#8521FB98#0#3_all.png",
+      "sha256": "c3cec23785cc6575a916243b61f0e5952f9d4984c30af53ff1f1ed9ae6c9f05d",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/stunner/Shadow of the Empire#939A9E7F#0#3_all.png",
+      "sha256": "850959b3f4a82c418305113f7c1ede9eade9257c20573722dc23a6483d7722e5",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/stunner/Shadow of the Empire#D3F26FAB#0#3_all.png",
+      "sha256": "d78615c9eb63301fd019931aed9a4744011c82f2a3e61fbccb0117e3b6a15f95",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/stunner/Shadow of the Empire#EF3CDC41#0#3_all.png",
+      "sha256": "d2d3e3ccf150e701ad15400e29316e725b6612a29d717e9062c414cb076d52b0",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    },
+    {
+      "source": "weapons/stunner/Shadow of the Empire#FCAA41C2#0#3_all.png",
+      "sha256": "368c5a955875067b1bd3e59bfc7505c2b114b397eb9f327d1a2d219a2946abec",
+      "action": "unmatched",
+      "reason": "No exact existing or native texture identity found; not installed."
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 # TODO
 
 GitHub status reconciled October 22, 2026. Open issues: #12, #14, #17 and #19.
-Completed on `main`: #10, #11, #13, #15, #16 and #18. A new binary release
-containing all current fixes has not yet been published. Historical controls
+Completed on `main`: #10, #11, #13, #15, #16 and #18. Release 0.9.6
+was published October 22 with these fixes and the texture packs. Historical controls
 verification is recorded in [the issue checkpoint](docs/ISSUES_11_14_16_17_18.md).
 
 ## Current local regressions (October 20)
@@ -61,6 +61,9 @@ Reviewed all open issue bodies and comments on October 22, 2026.
 - [x] Keep the Options list visible when Controls is selected; open the binding editor only on A/Enter.
 
 ### [#17 - Missing V1 texture replacements](https://github.com/GTTeancum/SotE-Recomp/issues/17)
+
+- [x] October 26: apply the reviewed V2 finished update to the local V1 pack: 284 whole-image updates, 7 HUD art-only updates, and 4 newly mapped images. Preserve all text/font assets and HUD borders. Manifest: `config/hd_texture_v2_update.json`; repeatable installer: `tools/update_hd_texture_pack.py`. Not included in the already-published 0.9.6 archive.
+- [ ] Resolve 28 incoming images without an exact mapping (listed as `unmatched` in the manifest). 110 entries were deliberately omitted for text/border protection or empty artwork; 121 selected images already matched. Asset inspection and pixel preservation checks passed; updated gameplay appearance has not yet been checked.
 
 - [x] Fix the reported Wampa face replacement: added its observed runtime hash and verified matching native before/after captures. Local pack and release packaging include the binding repair.
 - [ ] Resolve the remaining texture coverage and matching gaps. The Wampa example is fixed, but the broader missing-replacements issue remains open; see the cutscene regression above.
