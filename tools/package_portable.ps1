@@ -68,6 +68,11 @@ foreach ($entry in $sources.GetEnumerator()) {
         -Destination (Join-Path $outputAbsolute $entry.Key) -Force
 }
 
+foreach ($notice in @('LICENSE', 'LICENSES.md')) {
+    Copy-Item -LiteralPath (Join-Path $repoRoot $notice) `
+        -Destination (Join-Path $outputAbsolute $notice) -Force
+}
+
 # Keep the replaceable LGPL decoder source and license beside the library.
 Copy-Item -LiteralPath (Join-Path $repoRoot 'third_party\sandec') `
     -Destination (Join-Path $outputAbsolute 'sandec-source') -Recurse -Force

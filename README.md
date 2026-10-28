@@ -7,6 +7,14 @@
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 
+## License and ports
+
+Original project code is available under the [MIT License](LICENSE).
+Ports to other platforms, including iPhone, are welcome. Third-party licenses
+still apply; combined builds using N64ModernRuntime must comply with its GPL
+requirements. Game files and replacement artwork are separately owned. See
+[licensing details](LICENSES.md).
+
 ## Screenshots
 
 | Main menu | On-foot level |
