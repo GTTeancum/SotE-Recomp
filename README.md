@@ -15,6 +15,11 @@ still apply; combined builds using N64ModernRuntime must comply with its GPL
 requirements. Game files and replacement artwork are separately owned. See
 [licensing details](LICENSES.md).
 
+Native Linux support is planned in [#22](https://github.com/GTTeancum/SotE-Recomp/issues/22).
+Vulkan rendering is already available, but the window/input handling and build
+setup still need Linux support. There is no native Linux release yet. Steam Deck
+flickering is tracked separately in [#12](https://github.com/GTTeancum/SotE-Recomp/issues/12).
+
 ## Screenshots
 
 | Main menu | On-foot level |
@@ -47,6 +52,42 @@ legally obtained matching ROM is required locally to build and run the port.
 Modern blaster convergence and optional INI magnetism are documented in
 [Modern aiming](docs/MODERN_AIM.md).
 
+## High-quality OGG music
+
+You can replace the N64 music with higher-quality recordings from your own PC
+soundtrack. Music files are optional and are not included in the download.
+
+1. Close the game and create `Sdata/MUSIC` beside `Shadows of the Empire.exe`.
+2. Put your soundtrack's **Ogg Vorbis** files in that folder. The supported
+   numbered set uses `Track02.ogg` through `Track14.ogg`. Keep those filenames;
+   changing a WAV or MP3 extension to `.ogg` does not convert the audio.
+3. Restart the game. Available replacements load automatically; no rebuild,
+   extra player, or separate audio DLL is needed. The in-game Music setting
+   controls their volume.
+
+For example:
+
+```text
+Shadows of the Empire.exe
+Sdata/
+  MUSIC/
+    Track02.ogg   (title theme)
+    Track03.ogg   (Battle of Hoth)
+    Track04.ogg   (Echo Base and Imperial Freighter)
+    ...
+    Track14.ogg   (Skyhook battle)
+```
+
+If you are ripping or converting your own soundtrack, match the files to the
+[cue/filename table](docs/EXTERNAL_MUSIC.md#default-track-mapping) rather than assuming
+the CD track order is the same. The built-in mapping works without a map file;
+custom filenames can be assigned in `Sdata/MUSIC/n64_music_map.tsv` as described
+in the [music guide](docs/EXTERNAL_MUSIC.md). Avoid copying an old map from an
+unrelated music archive, since it may assign the wrong tracks.
+
+A separate `main_menu.ogg` can replace the main-menu cue. Missing or unreadable
+replacements fall back to the original N64 music, and sound effects stay intact.
+
 ## Leebo's PC voices
 
 The current build maps 31 distinct Leebo communicator messages to PC recordings and starts
@@ -78,11 +119,13 @@ not read by this player and are unnecessary.
 
 ## Texture packs
 
-Stock textures are the default. Optional replacement packs support higher-resolution
-PNG artwork, transparency and runtime source-slot matching. The portable folder
-includes 4,244 editable stock PNG references under `texture_upgrade`,
-`Build-HD-Pack.ps1`, `texture_tools` and `TEXTURE_PACKS.md`. Edit the bundled
-sources to create your own HD pack; the basic workflow needs no Python. See the
+The Windows release includes the updated **interceptor427 HD texture pack** and
+additional AI upscales. Both load automatically; textures without a replacement
+use their original N64 artwork. To use original textures throughout, close the
+game and rename or remove the `textures` folder beside the executable.
+
+Replacement packs support higher-resolution PNG artwork, transparency and
+runtime source-slot matching. See the
 [authoring and installation guide](docs/TEXTURE_PACKS_USER.md) or
 [developer workflow and validation](docs/TEXTURE_PACKS.md).
 
@@ -109,17 +152,17 @@ to build your own HD pack.
 
 ## Status
 
-The 0.9.2 open beta is playable on Windows. Graphics, music and sound effects,
+The 0.9.7 release is playable on Windows. Graphics, music and sound effects,
 keyboard and controller input, rumble, EEPROM saves, widescreen rendering,
 MSAA, and the in-game graphics/options hooks are connected. Automated crash
 testing navigates the in-game Change Level menu and has exercised all ten
 levels. Longer input-driven runs cover on-foot, speeder bike, spacecraft,
 turret, and jetpack gameplay paths.
 
-The 0.9.2 release contains the executable, required runtime DLLs, configuration,
-documentation, texture tools and editable stock texture sources. Sources stay
-outside the active `textures` folder so native rendering remains the default.
-It does not include a ROM, `main.bin`, saves or PC audio.
+The 0.9.7 release contains the executable, required runtime DLLs, documentation,
+license notices and both active texture packs. Your settings are created when
+you run the game. It does not include a ROM, `main.bin`, saves, PC music, voices
+or movies.
 At runtime, the executable validates the user's local USA v1.2 big-endian ROM
 and reconstructs the retail executable image in memory.
 
