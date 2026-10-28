@@ -15,11 +15,6 @@ still apply; combined builds using N64ModernRuntime must comply with its GPL
 requirements. Game files and replacement artwork are separately owned. See
 [licensing details](LICENSES.md).
 
-Native Linux support is planned in [#22](https://github.com/GTTeancum/SotE-Recomp/issues/22).
-Vulkan rendering is already available, but the window/input handling and build
-setup still need Linux support. There is no native Linux release yet. Steam Deck
-flickering is tracked separately in [#12](https://github.com/GTTeancum/SotE-Recomp/issues/12).
-
 ## Screenshots
 
 | Main menu | On-foot level |
