@@ -12,6 +12,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <vector>
@@ -213,7 +214,7 @@ public:
         app->emulatorConfig.dither.postBlendNoise = false;
         app->emulatorConfig.dither.postBlendNoiseNegative = false;
         app->userConfig.graphicsAPI =
-            RT64::UserConfiguration::GraphicsAPI::Automatic;
+            RT64::UserConfiguration::GraphicsAPI::Vulkan;
         app->userConfig.resolution =
             RT64::UserConfiguration::Resolution::WindowIntegerScale;
         app->userConfig.resolutionMultiplier = 4;
@@ -248,6 +249,21 @@ public:
         // Keep the user's normal settings on disk. Compatibility is an
         // effective runtime profile, so disabling it can restore those values.
         app->loadConfiguration();
+        const auto vulkan_default_marker =
+            data_directory / "vulkan-default-v1.applied";
+        std::error_code migration_error;
+        const bool migrate_graphics_api = !std::filesystem::is_regular_file(
+            vulkan_default_marker, migration_error);
+        // The first upgraded launch overrides saved API choices too. Later
+        // explicit choices remain authoritative; Automatic defaults to Vulkan.
+        if (migrate_graphics_api || app->userConfig.graphicsAPI ==
+                RT64::UserConfiguration::GraphicsAPI::Automatic) {
+            std::printf("[sote][graphics-default] %s: selecting Vulkan (previous=%d)\n",
+                migrate_graphics_api ? "first-run migration" : "Automatic",
+                static_cast<int>(app->userConfig.graphicsAPI));
+            app->userConfig.graphicsAPI =
+                RT64::UserConfiguration::GraphicsAPI::Vulkan;
+        }
         normal_config = app->userConfig;
         compatibility_active = sote::graphics_menu::compatibility_enabled();
         apply_compatibility_profile();
@@ -267,7 +283,15 @@ public:
         }
 
         if (!compatibility_active) normal_config.antialiasing = app->userConfig.antialiasing;
-        save_normal_configuration();
+        if (save_normal_configuration() && migrate_graphics_api) {
+            // Mark the migration only after renderer setup and settings save
+            // succeed, so failed launches do not consume the first-run override.
+            std::ofstream marker(vulkan_default_marker);
+            marker << "Vulkan default migration 1\n";
+            if (!marker) {
+                std::fprintf(stderr, "[sote][graphics-default] Could not save migration marker; the override will retry next launch.\n");
+            }
+        }
         log_compatibility();
         // The host supplies context; RT64 itself remains game-independent.
         app->state->textureManager.replacementContext = [rdram]() -> uint32_t {
@@ -626,13 +650,14 @@ private:
         app->userConfig.refreshRate = compatibility_active ? Config::RefreshRate::Original : normal_config.refreshRate;
         app->userConfig.internalColorFormat = compatibility_active ? Config::InternalColorFormat::Standard : normal_config.internalColorFormat;
     }
-    void save_normal_configuration() {
+    bool save_normal_configuration() {
         const auto effective = app->userConfig;
         app->userConfig.antialiasing = normal_config.antialiasing;
         app->userConfig.refreshRate = normal_config.refreshRate;
         app->userConfig.internalColorFormat = normal_config.internalColorFormat;
-        app->saveConfiguration();
+        const bool saved = app->saveConfiguration();
         app->userConfig = effective;
+        return saved;
     }
     void log_compatibility() {
         const char* api = chosen_api == ultramodern::renderer::GraphicsApi::Vulkan ? "Vulkan" :

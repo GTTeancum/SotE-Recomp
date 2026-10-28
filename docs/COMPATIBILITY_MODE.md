@@ -21,6 +21,30 @@ cutscene files and compatibility's AA lock receive explanatory text there.
 
 ## Renderer diagnostics
 
+Vulkan is the default API as of October 28. A versioned first-run migration
+overrides existing saved API choices once, after which explicit selections
+are respected and Automatic uses Vulkan. The migration marker is written only
+after renderer setup and configuration persistence succeed. This migration
+preserves the other graphics settings and does not depend on Compatibility Mode.
+
+October 28 validation: four isolated native runs verified saved D3D12 migrating
+to Vulkan, an explicit D3D12 selection being respected after migration, Automatic
+selecting Vulkan after migration, and a fresh installation selecting Vulkan.
+Unrelated saved render settings and the existing migration marker were preserved.
+All eight automated tests passed. A separate Vulkan Echo Base run loaded both
+texture packs, and its native capture was inspected for gameplay, environment,
+communicator portrait, and UI text. Audio was muted. These runs used Radeon 780M;
+they do not establish a fix for the reported 9070 XT crash or flickering.
+A subsequent smoke test used the staged executable (SHA-256
+`aced97ceb9cdf32f8a5f8bd9737629e24a5fadd6be0662261e25665052b20d40`)
+in an isolated repository-local runtime. It advanced past Echo Base's opening
+communications and verified actual movement, jumping, mouse aim, blaster spawning
+and projectile impacts. Native gameplay output was visually inspected; the game
+exited normally. Both texture packs loaded. This check was muted and does not
+verify audio, remote mouse behavior, or the intermittent menu soft lock.
+Evidence: `.local/vulkan-default/`, `.local/vulkan-staged-smoke-gameplay/`,
+and `.local/vulkan-staged-smoke-visual/`.
+
 - Present-source tracing records the framebuffer selected after SkipBuffering's
   history substitution.
 - Vulkan native capture requests transfer-source image usage only when the

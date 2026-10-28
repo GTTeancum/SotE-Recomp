@@ -263,8 +263,10 @@
     {
       "source": "dash/Shadow of the Empire#7F1FFE97#0#2_all.png",
       "sha256": "a4206bf6b121e2778e843e47a8a7cb41d5da9a668c46c949bc82928a4b3c8982",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Visually identified alternate enhancement of the same native artwork as FE9DB5FE. Its larger update is already installed. Source filename checksum equivalence is not established; retain the sharper mapped image.",
+      "covered_by": "dash/sote_FE9DB5FE_0_2_rgb.png",
+      "native_counterpart": "c2b4d259f59e821d"
     },
     {
       "source": "dash/Shadow of the Empire#9397DECF#0#2_rgb.png",
@@ -599,8 +601,10 @@
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#1EE6E64C#4#0_all.png",
       "sha256": "212df49157e4d4cef7a8f97364e86cc4ccf9d1267300caf2f1091f9c66b6429e",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Visually identified alternate enhancement of the same native artwork as A69E4132. Its larger update is already installed. Source filename checksum equivalence is not established; retain the sharper mapped image.",
+      "covered_by": "maps/echo base/sote_A69E4132_4_0_all.png",
+      "native_counterpart": "386621a996240516"
     },
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#30C2D0FF#4#0_all.png",
@@ -635,8 +639,10 @@
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#6CA6EBC1#4#0_all.png",
       "sha256": "f9ce43caeebe908f58deead5528626974e9125133873154f7f78e0694b2c6c0b",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Visually identified alternate enhancement of the same native artwork as BD0D1CBD. Its larger update is already installed. Source filename checksum equivalence is not established; retain the sharper mapped image.",
+      "covered_by": "maps/gall spaceport/sote_BD0D1CBD_4_0_all.png",
+      "native_counterpart": "4dc62804f499399d"
     },
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#7E4796D8#4#0_all.png",
@@ -647,8 +653,11 @@
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#85A01D07#4#0_all.png",
       "sha256": "eaa3900024529191db9844211996cb02ad977d97202ea507cf449d1a5a3aeeff",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "replace",
+      "reason": "Original archive artwork is pixel-identical to 19225080. Apply this larger 128x256 update to that existing native binding.",
+      "alias_of": "enemies/stormtroopers/Shadow of the Empire#19225080#4#0_all.png",
+      "original_pixel_sha256": "c7b91180d3bf46359f295e69a52e6fa23cb04f359c4637431066a37fd97a9c9b",
+      "target": "maps/gall spaceport/sote_19225080_4_0_all.png"
     },
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#8E6E0BE8#4#0_all.png",
@@ -665,8 +674,10 @@
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#A8885591#4#0_all.png",
       "sha256": "9c99630703c8cf721cb099aefaf8926f5fead80929c46b63ee99439a911ec957",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Visually identified alternate enhancement of the same native artwork as 30C2D0FF. Its larger update is already installed. Source filename checksum equivalence is not established; retain the sharper mapped image.",
+      "covered_by": "maps/gall spaceport/sote_30C2D0FF_4_0_all.png",
+      "native_counterpart": "d21aff4749f94bbe"
     },
     {
       "source": "enemies/stormtroopers/Shadow of the Empire#BD0D1CBD#4#0_all.png",
@@ -962,8 +973,11 @@
     {
       "source": "maps/1-hoth/Shadow of the Empire#44A7B4B4#2#0#9112ADC4_ciByRGBA.png",
       "sha256": "a4c453e14c8a77b19b70d357b661ad46cca161f50753c0c5850572d27fca3c21",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Both original archive artwork and incoming update are pixel-identical to the mapped alias 298A9E6F; its replacement is already installed.",
+      "alias_of": "maps/1-hoth/Shadow of the Empire#298A9E6F#2#0#9112ADC4_ciByRGBA.png",
+      "original_pixel_sha256": "2477780c9d875f7d132e37c7ce665319491e8794084c954a8689d73223e0dfad",
+      "covered_by": "maps/hoth/sote_298A9E6F_2_0_9112ADC4_ciByRGBA.png"
     },
     {
       "source": "maps/1-hoth/Shadow of the Empire#4F5E9C95#2#0#68361468_ciByRGBA.png",
@@ -1004,8 +1018,10 @@
     {
       "source": "maps/1-hoth/Shadow of the Empire#850E8D4F#4#0_all.png",
       "sha256": "d89f13615cf150960d716f7b3e91adfb496c414a60c48e28ab3eb4cae2a1d8cb",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Visually identified alternate enhancement of the same native artwork as BDD81933. Its larger update is already installed. Source filename checksum equivalence is not established; retain the sharper mapped image.",
+      "covered_by": "maps/hoth/sote_BDD81933_4_0_all.png",
+      "native_counterpart": "215006aa7b9aee18"
     },
     {
       "source": "maps/1-hoth/Shadow of the Empire#8F51FDBD#2#0#89625E61_ciByRGBA.png",
@@ -1022,8 +1038,11 @@
     {
       "source": "maps/1-hoth/Shadow of the Empire#A1858376#2#0#9112ADC4_ciByRGBA.png",
       "sha256": "a4c453e14c8a77b19b70d357b661ad46cca161f50753c0c5850572d27fca3c21",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Both original archive artwork and incoming update are pixel-identical to the mapped alias 298A9E6F; its replacement is already installed.",
+      "alias_of": "maps/1-hoth/Shadow of the Empire#298A9E6F#2#0#9112ADC4_ciByRGBA.png",
+      "original_pixel_sha256": "2477780c9d875f7d132e37c7ce665319491e8794084c954a8689d73223e0dfad",
+      "covered_by": "maps/hoth/sote_298A9E6F_2_0_9112ADC4_ciByRGBA.png"
     },
     {
       "source": "maps/1-hoth/Shadow of the Empire#B32C869D#2#0#FC1B11D6_ciByRGBA.png",
@@ -1524,8 +1543,9 @@
     {
       "source": "maps/2-echo base/Shadow of the Empire#F030FCD5#4#0_rgb.png",
       "sha256": "0179d6da2dcdfca7ee952373f14dac35c1534208fb23e845fa93e5eaf3835b56",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Identified as the 32x32 mipmap at byte 2048 of native 64x64 I4 texture 4207243d0accaea5 (Rice 922DA117). Keep its already-updated 384x384 replacement rather than overwrite it with this 256x256 alternate.",
+      "covered_by": "maps/echo base/sote_922DA117_4_0_all.png"
     },
     {
       "source": "maps/2-echo base/Shadow of the Empire#F6141DCD#2#0#740E5158_ciByRGBA.png",
@@ -1938,8 +1958,11 @@
     {
       "source": "vehicles/atat/Shadow of the Empire#FBB83DDC#4#0_all.png",
       "sha256": "8c7fe9643c3bfd3d3751db89b9b29401241fac7c884508af0e1b6a9bf9b748f1",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Both original archive artwork and incoming update are pixel-identical to the mapped alias FA50D51B; its replacement is already installed.",
+      "alias_of": "vehicles/atat/Shadow of the Empire#FA50D51B#4#0_all.png",
+      "original_pixel_sha256": "f214e2bcec0e8421cdb55ca9201191faf8049267fc80c0a7ad85f71a128b7004",
+      "covered_by": "vehicles/imperial walkers/sote_FA50D51B_4_0_all.png"
     },
     {
       "source": "vehicles/atst/Shadow of the Empire#11523F8C#4#0_all.png",
@@ -1986,8 +2009,11 @@
     {
       "source": "vehicles/atst/Shadow of the Empire#42E8DB86#4#0_all.png",
       "sha256": "a5d7e2f66c2705149bb70c6ea4300e3227d8e2bd2af1cf4678b3d58e4b3d945c",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Both original archive artwork and incoming update are pixel-identical to the mapped alias A135D7EE; its replacement is already installed.",
+      "alias_of": "vehicles/atst/Shadow of the Empire#A135D7EE#4#0_all.png",
+      "original_pixel_sha256": "fd1fea63cf9837f6030804209603cdfdbff3009044c586f2c0d3b11f4443060d",
+      "covered_by": "vehicles/imperial walkers/sote_A135D7EE_4_0_all.png"
     },
     {
       "source": "vehicles/atst/Shadow of the Empire#4387C6BA#4#0_all.png",
@@ -2586,8 +2612,19 @@
     {
       "source": "vehicles/outrider/exterior/Shadow of the Empire#75152F32#3#0#C82B1E64_ciByRGBA.png",
       "sha256": "46113483b19abfb5a031d0a19328f236d1493e4f110574d2ca914cbe0f29d641",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Source filename mislabels CI4 as IA4; native image CRC and palette CRC both match exactly. Native Outrider artwork visually confirmed.",
+      "target": "native-v2/sote_75152F32_2_0_C82B1E64_ciByRGBA.png",
+      "bindings": [
+        {
+          "rt64": "c9960609a1905b6a",
+          "rice": "75152f32#2#0#c82b1e64",
+          "native_size": [
+            64,
+            64
+          ]
+        }
+      ]
     },
     {
       "source": "vehicles/outrider/exterior/Shadow of the Empire#A0F1B557#2#0#FC456E19_ciByRGBA.png",
@@ -2863,7 +2900,27 @@
       "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#829E694D#2#0#EFA47B71_ciByRGBA.png",
       "sha256": "00a4b8d00b5959ca73a05de8a22c0e5b6454bdf03d3b561e183009d8df795e03",
       "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "reason": "Cockpit look-around exposed a 64x32 CI4 slot with matching EFA47B71 palette. Its 18 visible rows are identical across 344 dumps; unused rows change the Rice and RT64 hashes. Source-slot correspondence is a candidate pending visible-artwork/binding validation; not installed.",
+      "candidate_source_slot": [
+        3,
+        2365008,
+        64,
+        32,
+        2,
+        0,
+        4,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        2355760
+      ],
+      "candidate_slot_alias": "df6723b8e7609645"
     },
     {
       "source": "vehicles/snowspeeder/cockpit/right side/Shadow of the Empire#93A83B33#2#0#2FA47B6F_ciByRGBA.png",
@@ -3108,8 +3165,11 @@
     {
       "source": "vehicles/tie fighters/Shadow of the Empire#9EEE572F#4#0_all.png",
       "sha256": "56f6c83ad1d0f24b9e7e3ec5117d01cb0467038aa40439ac219e8d17cbab36e1",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "omit",
+      "reason": "Both original archive artwork and incoming update are pixel-identical to the mapped alias 78CBD40B; its replacement is already installed.",
+      "alias_of": "vehicles/tie fighters/Shadow of the Empire#78CBD40B#4#0_all.png",
+      "original_pixel_sha256": "ab7980dfc68e515c28267fbe66b5b753c9d78b6a33e4189054f85b41de7f02f0",
+      "covered_by": "vehicles/tie fighters/sote_78CBD40B_4_0_all.png"
     },
     {
       "source": "vehicles/tie fighters/Shadow of the Empire#A176BFD7#4#0_all.png",
@@ -3150,38 +3210,104 @@
     {
       "source": "weapons/disruptor/Shadow of the Empire#38F920C0#0#3_all.png",
       "sha256": "ae82a267347bc151f4c94fd7fdc74db2c13bd1bad4ebbab1cac429f8751d8d39",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_38F920C0_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "83ac16d0962b531b",
+          "rice": "38f920c0#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/disruptor/Shadow of the Empire#7164D996#0#3_all.png",
       "sha256": "42844ac741686182ef8bcdcedd07f06551badd2b24411b82f6855cea0b5e255f",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_7164D996_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "3545e294c91c2086",
+          "rice": "7164d996#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/disruptor/Shadow of the Empire#7D33A040#0#3_all.png",
       "sha256": "289abf93a32bc4bef96862b2a890b626198fe2d3f10c2fb29237863c3ee325c6",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_7D33A040_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "517f49c8c12bfe8a",
+          "rice": "7d33a040#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/disruptor/Shadow of the Empire#96DEDC3B#0#3_all.png",
       "sha256": "74302fd768e1da6d2af2052728dcd721e87668201cd41cff4aa60a4fea5d036f",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_96DEDC3B_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "2f16ed6a84090794",
+          "rice": "96dedc3b#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/disruptor/Shadow of the Empire#9DDDD18E#0#3_all.png",
       "sha256": "33f230c33b9e5f5536a97346d2bb0fb76da4d91047dcdc1f6ede861c029055e4",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_9DDDD18E_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "35f954e6ef542498",
+          "rice": "9dddd18e#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/disruptor/Shadow of the Empire#CF9BABDB#0#3_all.png",
       "sha256": "be63ac794b0bde21c305ac62dfbb526e628267f7d49c5befd3b5b4cb7246b682",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_CF9BABDB_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "52044f07c1ee85fa",
+          "rice": "cf9babdb#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/fire/Shadow of the Empire#00F17900#0#3_all.png",
@@ -3432,38 +3558,104 @@
     {
       "source": "weapons/stunner/Shadow of the Empire#5645063A#0#3_all.png",
       "sha256": "87b2790a0ab54144741188281f0278bf7cf0b8b11c03b37f3c33f26e3a37651c",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_5645063A_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "7276705b38ed85fc",
+          "rice": "5645063a#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/stunner/Shadow of the Empire#8521FB98#0#3_all.png",
       "sha256": "c3cec23785cc6575a916243b61f0e5952f9d4984c30af53ff1f1ed9ae6c9f05d",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_8521FB98_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "d632961e98a9940b",
+          "rice": "8521fb98#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/stunner/Shadow of the Empire#939A9E7F#0#3_all.png",
       "sha256": "850959b3f4a82c418305113f7c1ede9eade9257c20573722dc23a6483d7722e5",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_939A9E7F_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "1b587876516fe13e",
+          "rice": "939a9e7f#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/stunner/Shadow of the Empire#D3F26FAB#0#3_all.png",
       "sha256": "d78615c9eb63301fd019931aed9a4744011c82f2a3e61fbccb0117e3b6a15f95",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_D3F26FAB_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "59f66ff78d86261a",
+          "rice": "d3f26fab#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/stunner/Shadow of the Empire#EF3CDC41#0#3_all.png",
       "sha256": "d2d3e3ccf150e701ad15400e29316e725b6612a29d717e9062c414cb076d52b0",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_EF3CDC41_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "e7fe239cd68a3538",
+          "rice": "ef3cdc41#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     },
     {
       "source": "weapons/stunner/Shadow of the Empire#FCAA41C2#0#3_all.png",
       "sha256": "368c5a955875067b1bd3e59bfc7505c2b114b397eb9f327d1a2d219a2946abec",
-      "action": "unmatched",
-      "reason": "No exact existing or native texture identity found; not installed."
+      "action": "add",
+      "reason": "Exact Rice identity from native weapon firing dump; image inspected against native frame.",
+      "target": "native-v2/sote_FCAA41C2_0_3_all.png",
+      "bindings": [
+        {
+          "rt64": "f30742f4da08d6b4",
+          "rice": "fcaa41c2#0#3",
+          "native_size": [
+            32,
+            32
+          ]
+        }
+      ]
     }
   ]
 }

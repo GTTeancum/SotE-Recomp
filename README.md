@@ -2,7 +2,7 @@
 
 **[Report bugs / request features](https://github.com/GTTeancum/SotE-Recomp/issues)**
 
-**[Download 0.9.6 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.6)** · [Release notes](docs/RELEASE_0.9.6.md)
+**[Download 0.9.7 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.7)** · [Release notes](docs/RELEASE_0.9.7.md)
 
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
@@ -142,6 +142,11 @@ mission timers several times too fast even though presentation itself was
 properly synchronized.
 
 ## Requirements
+
+Vulkan is the default graphics API. The first launch of the updated build
+switches existing graphics API settings to Vulkan once. Later explicit API
+choices are respected; Automatic selects Vulkan. Other graphics settings are
+preserved.
 
 For the release zip:
 

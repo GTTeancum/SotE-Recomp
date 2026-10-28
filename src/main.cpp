@@ -2903,6 +2903,11 @@ void on_vi() {
         static int route_pulse_end_vi = 0;
         static uint16_t route_buttons = 0;
         static int8_t route_y = 0;
+        static bool route_saw_controls = false;
+        static bool route_resumed = false;
+        const bool verify_resume =
+            std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") != nullptr &&
+            std::getenv("SOTE_DIAGNOSTIC_BINDING_RESUME") != nullptr;
         if (count >= route_pulse_end_vi) {
             route_buttons = 0;
             route_y = 0;
@@ -2911,12 +2916,25 @@ void on_vi() {
             const auto menu = sote::menu_skin::latest();
             const auto screen = menu ? menu->screen :
                 sote::menu_skin::Screen::Native;
-            if (screen == sote::menu_skin::Screen::Pause) {
+            if (verify_resume && route_resumed) {
+                // Stop driving menus after the native Resume action so the
+                // remaining physical-input pulses can verify player response.
+            } else if (verify_resume && route_saw_controls &&
+                       screen == sote::menu_skin::Screen::Native) {
+                route_resumed = true;
+                std::printf("[sote][binding-route] resumed-after-controls VI=%d\n", count);
+                std::fflush(stdout);
+            } else if (verify_resume && route_saw_controls &&
+                       screen == sote::menu_skin::Screen::Pause) {
+                if (menu->focused_setting == 0) route_buttons = 0x8000;
+                else route_y = 80;
+            } else if (screen == sote::menu_skin::Screen::Pause) {
                 if (menu->focused_setting == 0) route_y = -80;
                 else if (menu->focused_setting == 1) route_buttons = 0x8000;
             } else if (screen == sote::menu_skin::Screen::Options) {
                 if (menu->focused_setting < 6) route_y = -80;
             } else if (screen == sote::menu_skin::Screen::Controls) {
+                route_saw_controls = true;
                 if (menu->rebinding && !menu->binding_editing &&
                     std::getenv("SOTE_DIAGNOSTIC_BINDING_BROWSE_ONLY") == nullptr)
                     route_buttons = 0x8000;

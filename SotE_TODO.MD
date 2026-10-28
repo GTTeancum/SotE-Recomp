@@ -1,52 +1,11 @@
 # TODO
 
-GitHub status reconciled October 22, 2026. Open issues: #12, #14, #17 and #19.
-Completed on `main`: #10, #11, #13, #15, #16 and #18. Release 0.9.6
-was published October 22 with these fixes and the texture packs. Historical controls
-verification is recorded in [the issue checkpoint](docs/ISSUES_11_14_16_17_18.md).
-
-## Current local regressions (October 20)
-
-- [x] Move PC pre-Start intro replacement to the opening comic; verify
-  skip-to-title without replay. Missing-media native fallback was also checked;
-  current playback reads original SAN files directly without a disk cache.
-- [x] Stop dismissed Leebo communicator PCM before the next line; Echo Base
-  native slot-hide path and mixer regression checks cover the reported overlap.
-- [ ] Finish cutscene texture visual consistency: all 1,512 catalog bindings
-  and referenced shared artwork assessed; four opening partial-tile bindings
-  installed. Restored all 1,877 original ZIP cutscene PNGs byte-for-byte;
-  intro starfield banding is repaired. Animated-head edge artifacts in IG-88
-  and bike dialogue remain to resolve. See
-  [audit and verification limits](docs/CUTSCENE_TEXTURE_AUDIT.md).
-
-- [x] First-pause backdrop redraw: retain the last gameplay presentation instead
-  of blending over the retail pause clear buffers. Echo Base Resume and Options
-  captures now retain the scene. Pause and all paused subpages use 75% black.
-  Evidence: `.local/options-freeze/quality-final-async/` and
-  [menu quality verification](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
-
-
-- [x] Correct the observed Pause/Options Return input trap. Return selects its
-  native row and releases the transition on arrival at Pause. Modern, Original
-  and normal asynchronous-rendering runs passed nine total cutscene/apply/
-  Options/Return cycles and 108 confirmed native option changes without timeout.
-  See [evidence and scope](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
-  The separate Traditional-preset freeze (#14) remains open below.
-- [x] Replace atlas rewriting with the shared UI font renderer for native text.
-  Native parser supplies colors, opacity, wrapping and styles; UI fonts supply
-  high-resolution glyphs and spacing. Decorative borders remain native.
-  Communicator, HUD, summary and Pause output inspected; all 78 shared-string
-  call sites covered in source. Not every game screen visually exercised.
-  Details: [font and menu diagnostics](docs/OPTIONS_DIAGNOSTICS_AND_FONTS.md).
-- [x] Audit communicator font layouts across the full extracted message corpus:
-  75 cases visually reviewed, including pilot radio and four Hoth briefings;
-  225 renderer checks passed. Follow the native dynamic message slot, preserve
-  centered announcements, and reflow portrait paragraphs using UI-font widths.
-  [Scope and verification limits](docs/COMMUNICATOR_FONT_AUDIT.md).
+GitHub open issue list checked October 28, 2026: #12, #14, #19 and #20.
 
 ## Open GitHub issues
 
-Reviewed all open issue bodies and comments on October 22, 2026.
+Open issue list checked October 28, 2026. #21 is closed after publishing the
+MIT license and welcoming the independent iPhone port.
 
 ### [#12 - Steam Deck flickering](https://github.com/GTTeancum/SotE-Recomp/issues/12)
 
@@ -54,75 +13,34 @@ Reviewed all open issue bodies and comments on October 22, 2026.
 
 ### [#14 - Traditional preset freezes the game](https://github.com/GTTeancum/SotE-Recomp/issues/14)
 
-- [ ] Investigate the 0.9.5 freeze after Pause -> Options -> Controls -> Preset -> Traditional.
-  All eight presets pass process-local cycling with both Classic and Modern
-  controls. Awaiting the reporter's level/save and input-device details in
-  [the requested follow-up](https://github.com/GTTeancum/SotE-Recomp/issues/14#issuecomment-6290452860).
-- [x] Keep the Options list visible when Controls is selected; open the binding editor only on A/Enter.
-
-### [#17 - Missing V1 texture replacements](https://github.com/GTTeancum/SotE-Recomp/issues/17)
-
-- [x] October 26: apply the reviewed V2 finished update to the local V1 pack: 284 whole-image updates, 7 HUD art-only updates, and 4 newly mapped images. Preserve all text/font assets and HUD borders. Manifest: `config/hd_texture_v2_update.json`; repeatable installer: `tools/update_hd_texture_pack.py`. Not included in the already-published 0.9.6 archive.
-- [ ] Resolve 28 incoming images without an exact mapping (listed as `unmatched` in the manifest). 110 entries were deliberately omitted for text/border protection or empty artwork; 121 selected images already matched. Asset inspection and pixel preservation checks passed; updated gameplay appearance has not yet been checked.
-
-- [x] Fix the reported Wampa face replacement: added its observed runtime hash and verified matching native before/after captures. Local pack and release packaging include the binding repair.
-- [ ] Resolve the remaining texture coverage and matching gaps. The Wampa example is fixed, but the broader missing-replacements issue remains open; see the cutscene regression above.
+- [ ] Diagnose the intermittent input soft lock after Pause -> Options -> Controls -> Preset -> Traditional.
+  October 28: fresh current-main Release build and all eight automated tests pass.
+  Echo Base keyboard/controller runs with Classic and Modern cycle all presets;
+  both Traditional variants also resume gameplay and respond to movement input.
+  The user confirms this was a soft lock and has not seen it recently. Cause
+  remains unconfirmed; keep open. Details: [current validation](docs/ISSUES_11_14_16_17_18.md#october-28-traditional-preset-soft-lock).
 
 ### [#19 - Remapping and inconsistent menu input](https://github.com/GTTeancum/SotE-Recomp/issues/19)
 
-- [x] Modern controls expose keyboard/mouse and controller rebinding.
 - [ ] Reproduce the newer report that Enter acts as Right and menu inputs behave inconsistently; verify against current main before declaring it fixed.
 
-## Completed GitHub issues
+### [#20 - AMD 9070 XT crashes and other issues](https://github.com/GTTeancum/SotE-Recomp/issues/20)
 
-Closed as completed on GitHub; fixes are on main. Hardware and release limits
-recorded below remain explicit and do not imply an additional published build.
+Filed October 25, 2026.
 
-### [#10 - Project discovery metadata](https://github.com/GTTeancum/SotE-Recomp/issues/10)
+- [ ] Verify the reported AMD 9070 XT crash with the new Vulkan default. October 28: first launch overrides saved API selections to Vulkan once; afterward explicit choices are respected and Automatic uses Vulkan. API migration/persistence checks and all eight automated tests pass. The reporter says Vulkan works; 9070 XT hardware/driver validation remains open.
+- [ ] Fix the confirmed rebinding neutral-input trap: a held/off-center controller stick prevents Escape from cancelling while the editor waits for neutral input. A current-code probe with axis 12000 repeatedly blocked Escape until centering the stick. This is a confirmed local defect, not proof of the reporter's exact cause. Evidence: `.local/issue20/neutral-result.log`.
+- [ ] Provide an in-game Original/HD texture option. Pack folders currently load automatically; removing/renaming the active packs is the available manual opt-out. Update the stale README claim that stock textures are the default.
+- [ ] Isolate texture flickering by level, API, and original versus HD textures; overlap with #12 is possible but unconfirmed. Compatibility Mode changes MSAA/color precision and does not force Vulkan. The issue supplies no exact level, driver version, or rebinding sequence.
 
-- [x] Add .recomp.json with released status, Windows target, N64Recomp toolchain and USA revision 1.2; update the README release link to 0.9.5. Completed in d97fbee.
+## Local texture follow-up (formerly GitHub #17)
 
-### [#11 - Control regressions in 0.9.5](https://github.com/GTTeancum/SotE-Recomp/issues/11)
+GitHub returned 404 for #17 on October 28. Its closure or removal could not be
+confirmed; retain the unfinished texture work below.
 
-- [x] Route WASD through the same digital menu input as arrow keys; mapping tests pass.
-- [x] Exclude controller X from native menu confirmation while retaining its binding-editor clear action; mapping tests pass.
-- [x] Restore WASD flight input; native camera response verified in Hoth, both turret sections and Outrider.
-- [x] Preserve first-person mouse control across PC in-level cutscenes and the native N64 Gall reveal; camera recovery and subsequent mouse movement verified.
-- [x] Add mouse motion to the native vehicle stick path; camera response verified in flying and turret sections.
-- [x] Verify keyboard and mouse rebinding through the live editor: T and Mouse 5 both saved correctly. Harness restart checks verify persistence; the reported failure was not reproduced after the Controls-entry changes.
-- [x] Fix the underwater flag being mistaken for death. Native sewer-water mouse aim, right-stick aim and projectile alignment pass. The boss fight itself was not played through.
+- [ ] Three V2 bindings remain unresolved: AT-AT C23804FB, Falcon 4246423E, and cockpit 829E694D. New Hoth walker/camera/look-around, Freighter, Palace, Echo Base and space probes were collected. Cockpit look-around exposed a candidate source slot with the correct palette and stable 18 visible rows across 344 changing dumps; validate its visible artwork and durable binding before installation. Falcon has a near-color native flat-swatch candidate but no verified palette identity. Do not treat these candidates as installed replacements.
 
-### [#13 - Windows source build and packaging failures](https://github.com/GTTeancum/SotE-Recomp/issues/13)
-
-- [x] Correct patch 0007 formatting and enforce LF patch checkouts. Application checks pass with LF and CRLF input.
-- [x] Remove the stale generated/main.bin packaging requirement. A fresh portable output packages successfully without main.bin. Completed in d97fbee.
-
-### [#15 - Optional controls, cheats and menu enhancements](https://github.com/GTTeancum/SotE-Recomp/issues/15)
-
-- [x] Integrate CtrlP1's full patch: cheats and vehicle health, rapid fire, aim-assist settings, Center Camera, Quick Turn variants, and menu-font toggle. New actions support keyboard/mouse and controller bindings.
-- [x] Reconcile current controls fixes, regenerate hooks, and verify the Windows build, targeted harnesses, live turn/recenter behavior, font rendering, and Cheats page persistence.
-  See [features and verification](docs/OPTIONAL_ENHANCEMENTS.md). Integration is complete and pushed to main; GitHub issue closed. The Traditional-preset freeze remains separate under #14.
-
-### [#16 - Crosshair desync after death and on slopes](https://github.com/GTTeancum/SotE-Recomp/issues/16)
-
-- [x] Fix camera-slot convergence and death detection; native death/respawn shot verification passes without a pause/unpause workaround.
-- [x] Verify shots while standing on a measured Gall slope: Mouse 1 and SDL right-stick/RT input hit the camera-ray target. Physical Xbox 360 hardware remains untested.
-
-### [#18 - Mouse movement is not captured](https://github.com/GTTeancum/SotE-Recomp/issues/18)
-
-- [x] Add foreground-gameplay cursor confinement and release on menus, movies, focus loss, resizing and closing. Capture-policy tests pass; subsequent user confirmation established that local mouse aiming works.
-- [x] October 21 windowed-capture report: reacquire the raw-input target on capture,
-  hide the cursor over the playable client, and accept gameplay activity from
-  the aiming hook as well as the binding table. Added capture gates, Windows
-  errors, raw movement and aim-consumption logs. Process-local mouse aim works;
-  user confirmed mouse look works locally. Remote-session mouse look remains
-  limited and is not a blocker per the user.
-
-## Deferred work
-
-### SOTE-OPEN-009 - Original Xbox port (DEFERRED)
-
-- [ ] Port the game to original Xbox after the core playability work.
+- [ ] Resolve the remaining texture coverage and matching gaps. The Wampa example is fixed, but the broader missing-replacements issue remains open; see the cutscene regression above.
 
 ## Deferred user review and signoff
 

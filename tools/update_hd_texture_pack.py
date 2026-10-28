@@ -26,7 +26,7 @@ def install(source, pack, backup):
     plan = json.loads((ROOT / 'config/hd_texture_v2_update.json').read_text())
     database = json.loads((pack / 'rt64.json').read_text())
     known = {r['hashes']['rt64']: r for r in database['textures']}
-    prepared = []
+    prepared = {}
     skipped = []
     # Validate everything before touching the active pack.
     for entry in plan['entries']:
@@ -67,12 +67,14 @@ def install(source, pack, backup):
             if h in known and known[h]['path'] != target_stem:
                 raise ValueError('Conflicting RT64 binding: ' + h)
             known[h] = {'hashes': {'rt64': h}, 'path': target_stem}
-        prepared.append((entry, target, replacement))
+        # Multiple source aliases can name one installed texture. Validate all
+        # aliases above, but write only the final reviewed choice for each path.
+        prepared[target] = (entry, target, replacement)
     before = {p.relative_to(pack).as_posix(): digest(p.read_bytes()) for p in pack.rglob('*.png')}
     backup.mkdir(parents=True, exist_ok=False)
     (backup / 'rt64.json').write_bytes((pack / 'rt64.json').read_bytes())
     applied = []
-    for entry, target, data in prepared:
+    for entry, target, data in prepared.values():
         if target.exists() and target.read_bytes() == data:
             continue
         if target.exists():
