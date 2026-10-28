@@ -33,6 +33,9 @@ foreach ($pair in @(@("RELEASE_$Version.md",'README.md'),@('TEXTURE_PACKS_USER.m
     Copy-Item -LiteralPath "$repoRoot\docs\$($pair[0])" -Destination "$staging\$($pair[1])"
 }
 Copy-Item -LiteralPath "$repoRoot\third_party\sandec" -Destination "$staging\sandec-source" -Recurse
+foreach ($notice in @('LICENSE', 'LICENSES.md')) {
+    Copy-Item -LiteralPath (Join-Path $repoRoot $notice) -Destination $staging
+}
 $licenses = New-Item -ItemType Directory -Path "$staging\licenses"
 Copy-Item -LiteralPath "$repoRoot\docs\licenses\DXC-LICENSE.txt" -Destination $licenses
 Copy-Item -LiteralPath "$repoRoot\docs\licenses\JSON-LICENSE.txt" -Destination $licenses
