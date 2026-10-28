@@ -2,10 +2,18 @@
 
 **[Report bugs / request features](https://github.com/GTTeancum/SotE-Recomp/issues)**
 
-**[Download 0.9.6 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.6)** · [Release notes](docs/RELEASE_0.9.6.md)
+**[Download 0.9.6 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.6)** Â· [Release notes](docs/RELEASE_0.9.6.md)
 
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
+
+## License and ports
+
+Original project code is available under the [MIT License](LICENSE).
+Ports to other platforms, including iPhone, are welcome. Third-party licenses
+still apply; combined builds using N64ModernRuntime must comply with its GPL
+requirements. Game files and replacement artwork are separately owned. See
+[licensing details](LICENSES.md).
 
 ## Screenshots
 
@@ -80,19 +88,19 @@ sources to create your own HD pack; the basic workflow needs no Python. See the
 
 ### Before / after texture comparison
 
-Hoth with stock textures and the experimental 4× RealisticRescaler texture pack.
+Hoth with stock textures and the experimental 4Ã— RealisticRescaler texture pack.
 These renderer captures use the same scripted route, capture point and graphics
 settings; separate runs can have small differences in scene timing. Click either
 image to inspect the full-resolution capture.
 
-| Before: stock textures | After: experimental 4× texture pack |
+| Before: stock textures | After: experimental 4Ã— texture pack |
 | --- | --- |
-| [![Hoth with stock textures](docs/screenshots/textures_hoth_stock.png)](docs/screenshots/textures_hoth_stock.png) | [![Hoth with the experimental 4× texture pack](docs/screenshots/textures_hoth_4x.png)](docs/screenshots/textures_hoth_4x.png) |
+| [![Hoth with stock textures](docs/screenshots/textures_hoth_stock.png)](docs/screenshots/textures_hoth_stock.png) | [![Hoth with the experimental 4Ã— texture pack](docs/screenshots/textures_hoth_4x.png)](docs/screenshots/textures_hoth_4x.png) |
 
-Snowspeeder detail, with both crops enlarged 2× using nearest-neighbor scaling
+Snowspeeder detail, with both crops enlarged 2Ã— using nearest-neighbor scaling
 and no sharpening:
 
-![Stock and 4× texture pack snowspeeder detail](docs/screenshots/textures_hoth_detail.png)
+![Stock and 4Ã— texture pack snowspeeder detail](docs/screenshots/textures_hoth_detail.png)
 
 The enhanced pack shown here is a [proof of concept](docs/CPU_TEXTURE_UPSCALE_POC.md).
 The 0.9.2 download includes stock source textures and authoring tools; this
@@ -277,7 +285,7 @@ The combined-input test fails if any of those action classes is absent from
 the captured runtime log. Pass `-NoRefillLives` to exercise natural life
 depletion instead of the default long-smoke refill. Add
 `-ExpectNaturalGameOver` to require the exact four-death sequence
-`3→2→1→0→-1` and a result-4 return to the level menu.
+`3â†’2â†’1â†’0â†’-1` and a result-4 return to the level menu.
 
 These tests use the headless renderer so they can run without taking window
 focus. They also pass `--muted`, while still exercising game audio tasks,
