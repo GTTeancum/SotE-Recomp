@@ -364,14 +364,15 @@ void graphics(Canvas& c, const Snapshot& s) {
     menu_background(c,s); c.heading("Graphics", "graphics.heading");
     c.text(s.rows[52].text, "graphics.tabs", 480, 84, 18,
         0x697388FF, 820, 1);
-    for (int i = 0; i < 8; ++i) {
-        const int row = i == 7 ? 71 : i == 6 ? 69 : 53 + i * 2;
+    constexpr int label_rows[] = {53,55,57,59,61,63,69,71,73};
+    for (int i = 0; i < 9; ++i) {
+        const int row = label_rows[i];
         const bool focus = selected(s.rows[row]);
         const int value_row = i == 5 ? 65 : row + 1;
         const Color row_color = ((i == 5 && !s.pc_cutscenes_available) || (i == 3 && s.compatibility)) ? 0x697388FF : focus ? cyan : teal;
-        if (focus) { c.rect(162, 113.0f + i * 36, 686, 33, 0x17383CFF); c.border(162, 113.0f + i * 36, 686, 33, cyan); }
-        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 116.0f + i * 36, 25, row_color, 420);
-        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 116.0f + i * 36, 25, row_color, 224);
+        if (focus) { c.rect(162, 109.0f + i * 32, 686, 30, 0x17383CFF); c.border(162, 109.0f + i * 32, 686, 30, cyan); }
+        c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 112.0f + i * 32, 24, row_color, 420);
+        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 112.0f + i * 32, 24, row_color, 224);
     }
     for (int row : {67, 68}) if (s.rows[row].visible())
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 411, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);

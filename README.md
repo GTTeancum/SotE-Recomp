@@ -118,8 +118,11 @@ not read by this player and are unnecessary.
 
 The Windows release includes the updated **interceptor427 HD texture pack** and
 additional AI upscales. Both load automatically; textures without a replacement
-use their original N64 artwork. To use original textures throughout, close the
-game and rename or remove the `textures` folder beside the executable.
+use their original N64 artwork. To switch to original textures, open
+**Options → Graphics → HD Textures**, choose **Off**, and select **Apply**.
+You can switch back to **On** during play without restarting. The choice is saved;
+loading the packs can briefly pause the game. With no pack installed, the game
+uses the original artwork either way.
 
 Replacement packs support higher-resolution PNG artwork, transparency and
 runtime source-slot matching. See the

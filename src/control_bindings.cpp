@@ -114,6 +114,34 @@ PhysicalInput menu_navigation(PhysicalInput input) {
     input.buttons[2] = 0;
     return input;
 }
+uint16_t menu_buttons(const PhysicalInput& raw,bool start_confirmation) {
+    const auto p=menu_navigation(raw);
+    auto k=[&](int code){return p.keys[code]!=0;};
+    auto b=[&](int code){return p.connected && p.buttons[code]!=0;};
+    uint16_t result=0;
+    // Start has context-dependent native effects, including changing a preset.
+    // Route menu confirmation to A consistently for keyboard and controller.
+    if(k(13)||b(6)) result|=start_confirmation?0x1000:0x8000;
+    if(k(32)||k('Z')||b(0)) result|=0x8000;
+    // Escape is edge-triggered by handle_menu, including Pause recovery.
+    // Forwarding the held key again would immediately close the menu it opened.
+    if(k('X')||b(1)||b(4)) result|=0x4000;
+    if(k('Q')||b(9)) result|=0x0020;
+    if(k('E')||b(10)) result|=0x0010;
+    if(k(38)||b(11)||value(p,axis(1,-1))>.5f) result|=0x0800;
+    if(k(40)||b(12)||value(p,axis(1,1))>.5f) result|=0x0400;
+    if(k(37)||b(13)||value(p,axis(0,-1))>.5f) result|=0x0200;
+    if(k(39)||b(14)||value(p,axis(0,1))>.5f) result|=0x0100;
+    return result;
+}
+uint32_t menu_input(const PhysicalInput& raw,bool start_confirmation) {
+    const uint16_t buttons=menu_buttons(raw,start_confirmation);
+    // Retail Pause navigates with the stick, not D-pad bits. Give every menu
+    // direction one canonical stick pulse; do not send it a second time as D-pad.
+    const int x=((buttons&0x0100)?80:0)-((buttons&0x0200)?80:0);
+    const int y=((buttons&0x0800)?80:0)-((buttons&0x0400)?80:0);
+    return (buttons&~0x0F00U) | (uint32_t(uint8_t(x))<<16) | (uint32_t(uint8_t(y))<<24);
+}
 std::string token_text(Token t) {
     switch (t.kind) {
         case Kind::None: return "none";
@@ -524,6 +552,11 @@ bool edge(const PhysicalInput& raw, Token t, float threshold=.5f) {
     return value(raw,t)>threshold && value(state.previous,t)<=threshold;
 }
 bool all_neutral(const PhysicalInput& p) {return neutral(p,Device::Keyboard)&&neutral(p,Device::Controller);}
+bool buttons_released(PhysicalInput p) {
+    // Stick drift must not hold menu entry/exit or a completed edit hostage.
+    p.axes.fill(0);
+    return all_neutral(p);
+}
 void settle(const std::string& status) {
     state.editor.phase=Phase::Settle; state.editor.status=status;
     state.editor.title.clear();state.editor.detail.clear();state.editor.hint.clear();state.conflicts.clear();
@@ -642,9 +675,14 @@ void decorate(menu_skin::Snapshot& s) {
 int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_menu_visible) {
     std::lock_guard lock(state.mutex);auto& e=state.editor;
     auto done=[&](int result){state.previous=raw;return result;};
+    const bool cancel=edge(raw,key(escape))||edge(raw,button(pad_back));
     if(!visible||!state.menu_valid) {
         if(e.visible) {e.visible=false;e.editing=false;state.external_block=true;e.phase=Phase::Browse;state.exit_pending=false;}
-        if(state.external_block) {if(all_neutral(raw))state.external_block=false;return done(1);}
+        if(state.external_block) {
+            if(cancel && native_menu_visible) {state.external_block=false;return done(2);}
+            if(buttons_released(raw))state.external_block=false;
+            return done(1);
+        }
         // A reserved, edge-triggered recovery key: even clearing every Pause
         // binding must not strand a keyboard-only player outside the menus.
         // Holding Escape across the menu transition must not immediately
@@ -656,14 +694,20 @@ int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_m
     }
     if(!e.visible) {e.visible=true;e.editing=false;e.phase=Phase::Browse;state.entrance_release=true;state.exit_pending=false;state.repeat_direction=0;ensure_selection();}
     if(state.exit_pending)return done(1);
-    if(state.entrance_release) {if(all_neutral(raw))state.entrance_release=false;return done(1);}
-    const bool cancel=edge(raw,key(escape))||edge(raw,button(pad_back));
+    // Recovery is checked before every release gate, even with a held stick.
+    if(cancel) {
+        if(!e.editing) {state.exit_pending=true;return done(2);}
+        if(e.phase==Phase::Browse||e.phase==Phase::Settle) {
+            e.editing=false;e.phase=Phase::Browse;e.status.clear();state.entrance_release=true;
+        } else settle("Cancelled; binding unchanged.");
+        return done(1);
+    }
+    if(state.entrance_release) {if(buttons_released(raw))state.entrance_release=false;return done(1);}
     // Native Controls zooms automatically when the Options row is focused.
     // Keep this reference/preset mode native until Enter/A explicitly opens
     // the editor. Otherwise Up/Down can no longer reach Graphics/Schemes and
     // Left/Right can no longer change the original game's preset.
     if(!e.editing) {
-        if(cancel) {state.exit_pending=true;return done(2);}
         if(edge(raw,key(enter))||edge(raw,button(pad_a))) {
             e.editing=true;e.phase=Phase::Browse;e.status.clear();
             state.entrance_release=true;ensure_selection();return done(1);
@@ -671,7 +715,7 @@ int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_m
         return done(0);
     }
     if(e.phase==Phase::Browse) {
-        if(cancel||edge(raw,button(pad_b))) {
+        if(edge(raw,button(pad_b))) {
             e.editing=false;e.status.clear();state.entrance_release=true;
             return done(1);
         }
@@ -704,17 +748,18 @@ int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_m
             if(a->targets[e.column].empty()){e.status="No independent input in this column; use its linked row.";return done(1);}
             if(e.column==1&&!raw.connected){e.status="Connect a controller before assigning a button.";return done(1);}
             state.capture_instance=raw.instance;
-            set_dialog(Phase::Release,"Change: "+a->label,"Release the opening key/button and center the sticks.","Esc / View cancels. B can be assigned during capture.");
+            set_dialog(Phase::Release,"Change: "+a->label,
+                e.column==0?"Release the opening key or mouse button.":"Release the opening button and center the sticks.",
+                "Esc / View cancels. B can be assigned during capture.");
         }
         return done(1);
     }
-    if(e.phase==Phase::Settle) {if(all_neutral(raw))e.phase=Phase::Browse;return done(1);}
-    if(cancel) {settle("Cancelled; binding unchanged.");return done(1);}
+    if(e.phase==Phase::Settle) {if(buttons_released(raw))e.phase=Phase::Browse;return done(1);}
     if((e.phase==Phase::Release||e.phase==Phase::Capture||e.phase==Phase::ConflictRelease||e.phase==Phase::Conflict)&&e.column==1&&(!raw.connected||raw.instance!=state.capture_instance)) {
         settle("Controller disconnected; binding unchanged.");return done(1);
     }
     if(e.phase==Phase::Release) {
-        if(all_neutral(raw)) {
+        if(neutral(raw,static_cast<Device>(e.column))) {
             const auto* a=selected();
             set_dialog(Phase::Capture,"Change: "+(a?a->label:std::string("control")),
                 e.column==0?"Press a key or mouse button.":"Press a controller button, trigger, or stick direction.",
@@ -752,7 +797,10 @@ int handle_menu(const PhysicalInput& raw,bool visible,uint64_t now,bool native_m
         return done(1);
     }
     if(e.phase==Phase::ConflictRelease||e.phase==Phase::DefaultsRelease) {
-        if(all_neutral(raw))e.phase=e.phase==Phase::ConflictRelease?Phase::Conflict:Phase::Defaults;
+        if(edge(raw,button(pad_b))) {settle("Cancelled; bindings unchanged.");return done(1);}
+        const bool released=e.phase==Phase::ConflictRelease ?
+            neutral(raw,static_cast<Device>(e.column)) : buttons_released(raw);
+        if(released)e.phase=e.phase==Phase::ConflictRelease?Phase::Conflict:Phase::Defaults;
         return done(1);
     }
     if(edge(raw,button(pad_b))) {settle("Cancelled; bindings unchanged.");return done(1);}

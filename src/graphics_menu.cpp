@@ -70,7 +70,7 @@ enum class MenuTransition {
     FocusBindings,
 };
 
-constexpr int graphics_submenu_item_count = 11;
+constexpr int graphics_submenu_item_count = 12;
 
 int submenu_item_count(TopCategory category) {
     if (category == TopCategory::Cheats) return cheats_item_count();
@@ -407,6 +407,8 @@ void persist_window_mode_locked() {
            << state.applied.output_height
            << ",\n  \"compatibilityMode\": "
            << (state.applied.compatibility ? "true" : "false")
+           << ",\n  \"hdTextures\": "
+           << (state.applied.hd_textures ? "true" : "false")
            << "\n}\n";
 }
 
@@ -645,6 +647,9 @@ void adjust_selected_setting_locked(int direction) {
             break;
         case 8:
             state.editing.compatibility = !state.editing.compatibility;
+            break;
+        case 9:
+            state.editing.hd_textures = !state.editing.hd_textures;
             break;
         case 7:
             // Applies immediately; it only changes how menus are drawn.
@@ -899,20 +904,22 @@ void draw_graphics_submenu(uint8_t* rdram) {
         160, 166, value_color(7));
     set_row(rdram,71,"~sCompatibility Mode",42,181,label_color(8));
     set_row(rdram,72,state.editing.compatibility ? "~sOn" : "~sOff",200,181,value_color(8));
+    set_row(rdram,73,"~sHD Textures",72,194,label_color(9));
+    set_row(rdram,74,state.editing.hd_textures ? "~sOn" : "~sOff",200,194,value_color(9));
     set_row(
         rdram,
         67,
         "~s~cApply",
         110,
-        198,
-        label_color(9));
+        208,
+        label_color(10));
     set_row(
         rdram,
         68,
         "~s~cReset",
         210,
-        198,
-        label_color(10));
+        208,
+        label_color(11));
     set_row(
         rdram,
         64,
@@ -1003,6 +1010,7 @@ void initialize(const std::filesystem::path& data_directory) {
         state.applied.borderless = read_persisted_bool(
             contents, "\"borderless\"", state.applied.borderless);
         state.applied.compatibility = read_persisted_bool(contents, "\"compatibilityMode\"", false);
+        state.applied.hd_textures = read_persisted_bool(contents, "\"hdTextures\"", true);
         state.applied.pc_cutscenes = read_persisted_bool(
             contents, "\"pcCutscenes\"", state.applied.pc_cutscenes);
         state.applied.output_width = read_persisted_integer(
@@ -1019,6 +1027,7 @@ void initialize(const std::filesystem::path& data_directory) {
         state.editing.output_height = state.applied.output_height;
     }
     state.editing.compatibility = state.applied.compatibility;
+    state.editing.hd_textures = state.applied.hd_textures;
     refresh_cutscene_availability_locked(true);
     state.window_request = true;
     state.initialized = true;
@@ -1035,12 +1044,14 @@ void sync_display_resolution(int width, int height) {
 void sync_from_renderer(const Settings& settings) {
     std::lock_guard lock{state.mutex};
     const bool saved_compatibility = state.applied.compatibility;
+    const bool saved_hd_textures = state.applied.hd_textures;
     const bool saved_borderless = state.applied.borderless;
     const bool saved_pc_cutscenes = state.applied.pc_cutscenes;
     const int saved_output_width = state.applied.output_width;
     const int saved_output_height = state.applied.output_height;
     state.applied = settings;
     state.applied.compatibility = saved_compatibility;
+    state.applied.hd_textures = saved_hd_textures;
     state.applied.borderless = saved_borderless;
     state.applied.pc_cutscenes = saved_pc_cutscenes;
     state.applied.output_width = saved_output_width;
@@ -1058,6 +1069,11 @@ void sync_window_mode(bool borderless) {
 bool compatibility_enabled() {
     std::lock_guard lock{state.mutex};
     return state.applied.compatibility;
+}
+
+bool hd_textures_enabled() {
+    std::lock_guard lock{state.mutex};
+    return state.applied.hd_textures;
 }
 
 bool pc_cutscenes_enabled() {
@@ -1298,9 +1314,9 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                 } else {
                     adjust_selected_setting_locked(1);
                 }
-            } else if (state.submenu_selection <= 8) {
+            } else if (state.submenu_selection <= 9) {
                 adjust_selected_setting_locked(1);
-            } else if (state.submenu_selection == 9) {
+            } else if (state.submenu_selection == 10) {
                 queue_apply_locked();
             } else {
                 state.editing = Settings{};
@@ -1457,9 +1473,10 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
             "Choose a bordered window or borderless display.", "Choose original N64 scenes or PC video cutscenes.",
             "Choose the original game font or modern text. Changes save immediately.",
             "Conservative graphics settings that may reduce flickering.\nApply, then restart to finish changing color precision.",
+            "Apply without restarting. Loading texture packs may briefly pause the game.",
             "Save and apply graphics settings. Compatibility color changes need a restart.",
             "Restore default graphics settings. Select Apply to save."};
-        view.option_help=help[std::clamp(state.submenu_selection,0,10)];
+        view.option_help=help[std::clamp(state.submenu_selection,0,11)];
         if(state.submenu_selection==6 && !pc_movies_available)
             view.option_help="PC cutscenes require SAN files in Sdata beside the executable.";
         if(state.submenu_selection==4 && state.editing.compatibility)
@@ -1474,8 +1491,9 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(69, "Font", 72, 166, 7);
         put(70, sote::menu_skin::menu_font_original() ? "Original" : "Modern", 160, 166, 7);
         put(71,"Compatibility Mode",42,181,8); put(72,state.editing.compatibility ? "On" : "Off",200,181,8);
-        put(67, "Apply", 110, 198, 9); put(68, "Reset", 210, 198, 10);
-        put(64, "Return to Game Options", 160, 202, 0);
+        put(73,"HD Textures",72,194,9); put(74,state.editing.hd_textures ? "On" : "Off",200,194,9);
+        put(67, "Apply", 110, 208, 10); put(68, "Reset", 210, 208, 11);
+        put(64, "Return to Game Options", 160, 220, 0);
     }
 }
 

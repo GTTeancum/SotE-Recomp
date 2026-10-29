@@ -41,6 +41,9 @@ float value(const PhysicalInput& input, Token token);
 bool neutral(const PhysicalInput& input, Device device);
 // Native menus receive identical digital navigation from WASD and arrows.
 PhysicalInput menu_navigation(PhysicalInput input);
+// Fixed menu controls, independent of gameplay bindings, presets and tuning.
+uint16_t menu_buttons(const PhysicalInput& input, bool start_confirmation = false);
+uint32_t menu_input(const PhysicalInput& input, bool start_confirmation = false);
 bool should_capture_mouse(bool gameplay, bool focused, bool menu, bool movie, bool diagnostic);
 
 struct NativeTable {

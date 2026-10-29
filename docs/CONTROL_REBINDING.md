@@ -20,7 +20,11 @@ the native preset, and Up/Down navigates Options, including the existing
 Graphics / Controls-scheme extension. Press Enter or controller A to open the
 binding editor.
 
-WASD uses the same digital menu navigation as the arrow keys. Controller X
+Menus use fixed controls regardless of gameplay bindings or aim sensitivity.
+Enter and controller A confirm options; Enter/Start retain the native Start
+action on profile, level selection and Pause screens. WASD uses the same menu
+navigation as the arrow keys. Right-stick aim and triggers do not navigate menus.
+Controller X
 does not confirm native menu choices; inside the editor it still clears the
 selected binding.
 
@@ -38,8 +42,10 @@ Inside the editor:
 | Escape / B while browsing | Leave the editor and return to native settings navigation |
 | Wheel / Page Up / Page Down / Home / End | Move through the action list |
 
-The opening Enter/A press must be released and the sticks centered before
-capture is armed. Captured input is not forwarded into the game or used to
+The opening Enter/A press must be released before capture is armed. Controller
+capture also requires centered sticks; keyboard capture ignores controller drift.
+Escape/View cancels even while waiting for release or centered sticks, and
+stick drift cannot prevent leaving the editor. Captured input is not forwarded into the game or used to
 immediately confirm a second dialog. After an edit/cancellation, the editor also
 waits for release. B is intentionally assignable during capture; use Escape or
 View to cancel there. B cancels conflict/default confirmations normally.
@@ -161,6 +167,18 @@ Snapshots are immutable on the render side. Source generation hooks and shipped
 generated calls are checked against their instruction addresses by the tests.
 
 ## Validation performed in this continuation
+
+October 28 menu-input follow-up (#19 and the rebinding item in #20): menu
+directions now use a fixed native stick route, with no duplicate D-pad input or
+gameplay aim/trigger mapping. Escape is handled once per press so holding it
+does not close the Pause menu it just opened. Release gates allow recovery with
+an off-center stick, and keyboard capture only waits for keyboard/mouse release.
+The current Windows and Linux builds pass all eight automated suites. A Windows
+process-local Echo Base run opened Pause → Options → Controls, entered controller
+capture with axis 12000 held, cancelled its neutral wait, exited the editor and
+menus, and resumed gameplay with movement responding. Saved bindings were also
+checked for preservation by the regression tests. This does not establish a
+cause or fix for the separate AMD crash and texture-flickering reports in #20.
 
 See `docs/control_rebinding_evidence/SUMMARY.txt` and the accompanying logs.
 The production binding module, frontend input path, menu model/canvas/bridge,

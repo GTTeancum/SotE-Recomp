@@ -31,10 +31,12 @@ struct Settings {
     bool borderless = false;
     bool pc_cutscenes = true;
     bool compatibility = false;
+    bool hd_textures = true;
 };
 
 bool pc_cutscenes_enabled();
 bool compatibility_enabled();
+bool hd_textures_enabled();
 
 void initialize(const std::filesystem::path& data_directory);
 void sync_display_resolution(int width, int height);

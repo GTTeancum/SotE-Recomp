@@ -452,9 +452,7 @@ int main(int argc, char** argv) {
         "Cutscene mode changes through the menu");
     check(sote::graphics_menu::pc_cutscenes_enabled(),
         "Cutscene mode waits for Apply");
-    press(0x0400);
-    press(0x0400);
-    press(0x0400);
+    for (int i=0;i<4;++i) press(0x0400);
     press(0x8000);
     check(!sote::graphics_menu::pc_cutscenes_enabled(),
         "Apply activates original N64 cutscenes");
@@ -465,9 +463,9 @@ int main(int argc, char** argv) {
     check(saved_text.find("\"pcCutscenes\": false") != std::string::npos,
         "Apply persists cutscene mode");
 
-    // Apply is row 9; compatibility is row 8. Keep the normal 4x AA preference.
+    // Apply is row 10; compatibility is row 8. Keep the normal 4x AA preference.
     check(!sote::graphics_menu::compatibility_enabled(), "compatibility defaults off");
-    press(0x0800); // Up to compatibility.
+    press(0x0800); press(0x0800); // Up past HD Textures to compatibility.
     press(0x8000);
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[72].text == "On" && latest_snapshot().rows[60].text == "OFF",
@@ -479,7 +477,7 @@ int main(int argc, char** argv) {
     press(0x0100); // Attempt to edit AA while compatibility preview is on.
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[60].text == "OFF", "AA is locked while compatibility is on");
-    for(int i=0;i<5;++i) press(0x0400);
+    for(int i=0;i<6;++i) press(0x0400);
     press(0x8000);
     sote::graphics_menu::Settings requested;
     check(sote::graphics_menu::take_renderer_request(requested) && requested.compatibility &&
@@ -497,10 +495,43 @@ int main(int argc, char** argv) {
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[72].text == "Off" && latest_snapshot().rows[60].text == "4x MSAA",
         "disabling compatibility restores the normal AA preview");
-    press(0x0400);press(0x8000);
+    press(0x0400);press(0x0400);press(0x8000);
     check(sote::graphics_menu::take_renderer_request(requested) && !requested.compatibility &&
         requested.antialiasing == sote::graphics_menu::AntialiasingPreset::MSAA4x,
         "Apply restores normal graphics request");
+
+    check(sote::graphics_menu::hd_textures_enabled(), "existing settings default to HD textures On");
+    press(0x0800); // Apply -> HD Textures.
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[73].text == "HD Textures" && latest_snapshot().rows[74].text == "Off",
+        "HD texture row previews original textures");
+    check(latest_snapshot().option_help.find("without restarting") != std::string::npos,
+        "HD texture help explains live Apply");
+    check(sote::graphics_menu::hd_textures_enabled(), "HD texture preview waits for Apply");
+    check(!sote::graphics_menu::take_renderer_request(requested), "preview does not queue a texture reload");
+    press(0x0400);press(0x8000);
+    check(sote::graphics_menu::take_renderer_request(requested) && !requested.hd_textures &&
+        !sote::graphics_menu::hd_textures_enabled(), "Apply queues original textures immediately");
+    {
+        std::ifstream in(scratch / "sote_options.json");
+        const std::string saved{std::istreambuf_iterator<char>{in},std::istreambuf_iterator<char>{}};
+        check(saved.find("\"hdTextures\": false") != std::string::npos, "texture choice persists in settings");
+    }
+    sote::graphics_menu::initialize(scratch);
+    sote::graphics_menu::sync_from_renderer(normal);
+    check(!sote::graphics_menu::hd_textures_enabled(), "saved Off survives restart and renderer sync");
+    memory.native_options();sote_capture_native_options(memory.bytes.data());press(0x0010);
+    for(int i=0;i<9;++i)press(0x0400);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[74].text == "Off", "reopened Graphics shows the saved texture choice");
+    press(0x0400);press(0x0400);press(0x8000); // Reset.
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().rows[74].text == "On" && !sote::graphics_menu::hd_textures_enabled(),
+        "Reset previews default HD On without applying");
+    press(0x0800);press(0x8000); // Apply.
+    check(sote::graphics_menu::take_renderer_request(requested) && requested.hd_textures &&
+        sote::graphics_menu::hd_textures_enabled(), "HD textures can be enabled again through Apply");
 
     press(0x0010);
     sote_capture_native_options(memory.bytes.data());
@@ -608,6 +639,28 @@ int main(int argc, char** argv) {
             "WASD menus use the same digital path as arrow keys without analog duplication");
         check(!mapped.buttons[2] && raw.buttons[2],
             "X is excluded from native menu actions without altering binding-capture input");
+        namespace b=sote::control_bindings;
+        raw={};raw.keys[13]=1;
+        check(b::menu_buttons(raw)==0x8000,"Enter confirms options without Start or Right");
+        check(b::menu_buttons(raw,true)==0x1000,"profile and level selection retain native Start confirmation");
+        raw.connected=true;raw.axes[0]=12000;raw.axes[2]=32767;raw.axes[4]=32767;
+        check(b::menu_buttons(raw)==0x8000,"idle stick drift, right-stick aim and held triggers cannot alter menu confirmation");
+        raw={};raw.connected=true;raw.buttons[6]=1;
+        check(b::menu_buttons(raw)==0x8000,"controller Start confirms options consistently with Enter");
+        for(const auto [vk,mask]: {std::pair{38,0x0800},{40,0x0400},{37,0x0200},{39,0x0100},
+                {'W',0x0800},{'S',0x0400},{'A',0x0200},{'D',0x0100},{'Q',0x0020},{'E',0x0010}}) {
+            raw={};raw.keys[vk]=1;
+            check(b::menu_buttons(raw)==mask,"menu keys have one fixed action independent of gameplay tuning");
+        }
+        raw={};raw.connected=true;raw.axes[0]=24000;
+        check(b::menu_buttons(raw)==0x0100,"deliberate left-stick movement navigates menus digitally");
+        check(b::menu_input(raw)==(80U<<16),"menu direction reaches native stick navigation without duplicate D-pad input");
+        raw={};raw.keys[40]=1;
+        check(b::menu_input(raw)==(uint32_t(uint8_t(-80))<<24),"keyboard Down drives the native Pause menu stick route");
+        raw={};raw.keys[13]=1;
+        check(b::menu_input(raw)==0x8000,"Enter has no horizontal menu movement");
+        raw={};raw.keys[27]=1;
+        check(b::menu_input(raw)==0,"held Escape does not close the Pause menu it just opened");
     }
 
     check(sote::control_bindings::should_capture_mouse(true, true, false, false, false),
@@ -700,6 +753,41 @@ int main(int argc, char** argv) {
             "mouse button assignment survives editor restart");
     }
 
+    {
+        namespace b=sote::control_bindings;
+        Memory memory;memory.native_options();memory.half(0x800e6808+6,0x1000);
+        b::initialize(scratch);b::observe_menu(memory.bytes.data(),memory.bytes.size());
+        b::PhysicalInput raw{};raw.connected=true;raw.instance=42;raw.axes[0]=12000;
+        uint64_t time=20000;
+        auto poll=[&](int vk=0,int pad=-1) {
+            raw.keys.fill(0);raw.buttons.fill(0);
+            if(vk)raw.keys[vk]=1;if(pad>=0)raw.buttons[pad]=1;
+            return b::handle_menu(raw,true,time+=100,true);
+        };
+        poll();check(poll(27)==2,"Escape exits Controls reference with an off-center stick");
+        b::initialize(scratch);b::observe_menu(memory.bytes.data(),memory.bytes.size());
+        poll();poll(13);poll();
+        check(b::editor_view().editing,"stick drift does not block entering binding editor");
+        poll(13);poll();
+        check(b::editor_view().phase==b::Phase::Capture,"keyboard capture ignores unrelated controller drift");
+        const auto unchanged=b::saved_assignments();
+        poll(27);poll();
+        check(b::editor_view().phase==b::Phase::Browse,"cancelled capture settles despite stick drift");
+        poll(39);poll();poll(13);poll();
+        check(b::editor_view().phase==b::Phase::Release,"controller capture still waits for centered stick");
+        poll(27);poll();
+        check(b::editor_view().phase==b::Phase::Browse,"Escape cancels controller neutral wait without centering");
+        poll(13);poll();poll(0,4);poll();
+        check(b::editor_view().phase==b::Phase::Browse,"controller View cancels neutral wait without centering");
+        poll(120);poll();
+        check(b::editor_view().phase==b::Phase::Defaults,"defaults confirmation ignores stick drift after opening button release");
+        poll(27);poll();
+        check(b::saved_assignments()==unchanged,"cancelling neutral wait never changes saved bindings");
+        poll(27);poll();check(poll(27)==2,"Escape can leave editor and Controls with stick still off center");
+        b::initialize(scratch);b::observe_menu(memory.bytes.data(),memory.bytes.size());
+        b::open_editor();b::focus_lost();poll(27);
+        check(!b::editor_view().editing,"Escape works at focus-loss release gate");
+    }
     {
         namespace b=sote::control_bindings;
         b::NativeTable table; table.modern_foot=true;

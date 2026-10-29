@@ -2963,6 +2963,53 @@ void on_vi() {
         }
         scripted_buttons=buttons;scripted_x=0;scripted_y=stick;
     }
+    // Switch packs through the actual paused Graphics menu, then resume so
+    // captures can compare newly drawn world textures in the same process.
+    if (std::getenv("SOTE_DIAGNOSTIC_TEXTURE_ROUTE") &&
+        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") && count >= 3100) {
+        static int next_vi=3100, pulse_end=0, phase=0, cycles=0;
+        static uint16_t buttons=0;
+        static int8_t stick=0;
+        if(count>=pulse_end) { buttons=0;stick=0; }
+        if(count>=next_vi && cycles<2) {
+            const auto view=sote::menu_skin::latest();
+            const auto screen=view?view->screen:sote::menu_skin::Screen::Native;
+            int focus=view?view->focused_setting:-1;
+            if(view && screen==sote::menu_skin::Screen::Graphics) {
+                constexpr int rows[]={64,53,55,57,59,61,63,69,71,73,67,68};
+                for(int i=0;i<12;++i)
+                    if(view->rows[rows[i]].color==0xC8FFC8FFU) focus=i;
+            }
+            int delay=60;
+            if(screen==sote::menu_skin::Screen::Native) {
+                if(phase==7) {
+                    ++cycles;phase=0;delay=360;
+                    std::printf("[sote][texture-route] resumed cycle=%d VI=%d\n",cycles,count);
+                } else if(phase<=1) { buttons=0x1000;phase=1; }
+            } else if(screen==sote::menu_skin::Screen::Pause) {
+                if(phase>=5) {
+                    if(focus==0) {buttons=0x8000;phase=7;}
+                    else stick=80;
+                } else if(focus==1) buttons=0x8000;
+                else stick=-80;
+            } else if(screen==sote::menu_skin::Screen::Options) {
+                if(phase>=5) {buttons=0x4000;phase=6;}
+                else {buttons=0x0010;phase=2;}
+            } else if(screen==sote::menu_skin::Screen::Graphics) {
+                if(phase==2) {
+                    if(focus==9) {buttons=0x8000;phase=3;}
+                    else stick=-80;
+                } else if(phase==3) {
+                    if(focus==10) {buttons=0x8000;phase=4;delay=180;}
+                    else stick=-80;
+                } else if(phase==4 || phase==5) {buttons=0x4000;phase=5;}
+            }
+            std::printf("[sote][texture-route] VI=%d screen=%s focus=%d phase=%d cycles=%d buttons=%04X stick=%d\n",
+                count,sote::menu_skin::screen_name(screen),focus,phase,cycles,buttons,stick);
+            std::fflush(stdout);pulse_end=count+12;next_vi=count+delay;
+        }
+        scripted_buttons=buttons;scripted_x=0;scripted_y=stick;
+    }
     // Process-local route for checking the live binding editor. It follows
     // observed menu state instead of guessing fixed VI timings, and never
     // sends input to a host window or device.

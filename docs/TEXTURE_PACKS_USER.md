@@ -1,13 +1,15 @@
 # Texture packs
 
-The game uses stock textures by default. Enhanced or custom artwork is optional.
+Installed texture packs are enabled by default. Enhanced or custom artwork is optional.
 
 ## Install a pack
 
 Extract the pack into a folder such as `textures/MyPack` beside the executable.
 The pack folder should contain `rt64.json`, its images, and (when supplied)
 `sote_slots.json`. Restart the game after installing or changing a pack.
-Move the pack outside `textures` to return to stock. Missing images fall back
+Use **Options → Graphics → HD Textures → Off → Apply** to return to stock.
+Switching back to **On → Apply** reloads installed packs without restarting.
+The choice is saved, and loading can briefly pause the game. Missing images fall back
 to the original textures. Source-slot packs currently require an extracted
 folder; ordinary RT64 content-hash packs also support the existing archive path.
 

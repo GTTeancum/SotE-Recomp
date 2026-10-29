@@ -169,7 +169,8 @@ public:
         uint8_t* rdram,
         ultramodern::renderer::WindowHandle window_handle,
         bool developer_mode,
-        const std::filesystem::path& data_directory) {
+        const std::filesystem::path& data_directory)
+        : texture_data_directory(data_directory) {
         static uint8_t dummy_rom_header[0x40]{};
 
         RT64::Application::Core core{};
@@ -310,56 +311,7 @@ public:
             std::memcpy(&event, rdram + (0x13CE0EU ^ 2U), sizeof(event));
             return event;
         };
-        const char* texture_pack_path = std::getenv("SOTE_TEXTURE_PACK_PATH");
-        std::vector<RT64::ReplacementDirectory> replacement_directories;
-        if (texture_pack_path != nullptr && texture_pack_path[0] != '\0') {
-            replacement_directories =
-                discover_texture_pack_directories(texture_pack_path);
-        } else {
-            const std::filesystem::path default_texture_pack_directory =
-                data_directory / "textures";
-            if (std::filesystem::is_directory(default_texture_pack_directory)) {
-                replacement_directories = discover_texture_pack_directories(
-                    default_texture_pack_directory);
-            }
-        }
-
-        if (!replacement_directories.empty()) {
-            const bool loaded = app->textureCache->loadReplacementDirectories(
-                replacement_directories);
-            std::printf(
-                "[sote] RT64 texture pack %s: %zu pack path(s)\n",
-                loaded ? "loaded" : "failed",
-                replacement_directories.size());
-            for (const auto& directory : replacement_directories) {
-                std::printf(
-                    "[sote]   texture pack path: %s\n",
-                    directory.dirOrZipPath.string().c_str());
-            }
-            std::fflush(stdout);
-            auto slots = std::make_shared<sote::texture_slots::Map>();
-            for (const auto& directory : replacement_directories) {
-                try {
-                    if (std::filesystem::is_directory(directory.dirOrZipPath))
-                        sote::texture_slots::load(directory.dirOrZipPath / "sote_slots.json", *slots);
-                } catch (const std::exception& error) {
-                    std::fprintf(stderr, "[sote][textures] ignored slot manifest: %s\n", error.what());
-                }
-            }
-            if (!slots->empty()) {
-                app->state->textureManager.sourceReplacement = [slots](uint32_t context,
-                    const RT64::LoadOperation& op, const RT64::LoadTile& tile,
-                    uint16_t width, uint16_t height, uint32_t tlut, uint32_t paletteAddress) -> uint64_t {
-                    const sote::texture_slots::Key key{context, op.texture.address, width, height,
-                        tile.fmt, tile.siz, tile.line, tile.tmem, tile.palette, tlut,
-                        op.texture.width, op.tile.uls, op.tile.ult, op.texture.fmt, op.texture.siz,
-                        static_cast<uint32_t>(op.type), paletteAddress};
-                    const auto found = slots->find(key);
-                    return found == slots->end() ? 0 : found->second;
-                };
-                std::printf("[sote][textures] loaded %zu source slot replacements\n", slots->size());
-            }
-        }
+        apply_texture_packs(sote::graphics_menu::hd_textures_enabled(), false);
 
         // Match Zelda64Recomp's conservative defaults for F3DEX-family games.
         app->enhancementConfig.f3dex.forceBranch = true;
@@ -572,6 +524,7 @@ public:
                         Antialiasing::None;
                     break;
             }
+            apply_texture_packs(requested.hd_textures, true);
             normal_config.antialiasing = app->userConfig.antialiasing;
             compatibility_active = requested.compatibility;
             apply_compatibility_profile();
@@ -655,6 +608,80 @@ public:
     }
 
 private:
+    void apply_texture_packs(bool enabled, bool synchronize) {
+        if (synchronize && enabled == hd_textures_applied) return;
+        if (synchronize) {
+            // This is the graphics submission thread. Drain in-flight users of
+            // replacement textures before changing their mappings or ownership.
+            app->workloadQueue->waitForWorkloadId(app->state->workloadId);
+            app->presentQueue->waitForPresentId(app->state->presentId);
+            app->workloadQueue->waitForIdle();
+            app->presentQueue->waitForIdle();
+        }
+        app->state->textureManager.sourceReplacement = {};
+        if (!enabled) {
+            app->textureCache->clearReplacementDirectories();
+            hd_textures_applied = false;
+            std::printf("[sote][textures] HD textures Off; original textures active\n");
+            std::fflush(stdout);
+            return;
+        }
+        const char* texture_pack_path = std::getenv("SOTE_TEXTURE_PACK_PATH");
+        std::vector<RT64::ReplacementDirectory> replacement_directories;
+        if (texture_pack_path != nullptr && texture_pack_path[0] != '\0') {
+            replacement_directories =
+                discover_texture_pack_directories(texture_pack_path);
+        } else {
+            const std::filesystem::path default_texture_pack_directory =
+                texture_data_directory / "textures";
+            if (std::filesystem::is_directory(default_texture_pack_directory)) {
+                replacement_directories = discover_texture_pack_directories(
+                    default_texture_pack_directory);
+            }
+        }
+
+        if (!replacement_directories.empty()) {
+            const bool loaded = app->textureCache->loadReplacementDirectories(
+                replacement_directories);
+            std::printf(
+                "[sote] RT64 texture pack %s: %zu pack path(s)\n",
+                loaded ? "loaded" : "failed",
+                replacement_directories.size());
+            for (const auto& directory : replacement_directories) {
+                std::printf(
+                    "[sote]   texture pack path: %s\n",
+                    directory.dirOrZipPath.string().c_str());
+            }
+            std::fflush(stdout);
+            auto slots = std::make_shared<sote::texture_slots::Map>();
+            for (const auto& directory : replacement_directories) {
+                try {
+                    if (std::filesystem::is_directory(directory.dirOrZipPath))
+                        sote::texture_slots::load(directory.dirOrZipPath / "sote_slots.json", *slots);
+                } catch (const std::exception& error) {
+                    std::fprintf(stderr, "[sote][textures] ignored slot manifest: %s\n", error.what());
+                }
+            }
+            if (!slots->empty()) {
+                app->state->textureManager.sourceReplacement = [slots](uint32_t context,
+                    const RT64::LoadOperation& op, const RT64::LoadTile& tile,
+                    uint16_t width, uint16_t height, uint32_t tlut, uint32_t paletteAddress) -> uint64_t {
+                    const sote::texture_slots::Key key{context, op.texture.address, width, height,
+                        tile.fmt, tile.siz, tile.line, tile.tmem, tile.palette, tlut,
+                        op.texture.width, op.tile.uls, op.tile.ult, op.texture.fmt, op.texture.siz,
+                        static_cast<uint32_t>(op.type), paletteAddress};
+                    const auto found = slots->find(key);
+                    return found == slots->end() ? 0 : found->second;
+                };
+                std::printf("[sote][textures] loaded %zu source slot replacements\n", slots->size());
+            }
+        }
+
+        hd_textures_applied = true;
+        std::printf("[sote][textures] HD textures On; %zu available pack(s)\n",
+            replacement_directories.size());
+        std::fflush(stdout);
+    }
     void apply_compatibility_profile() {
         using Config = RT64::UserConfiguration;
         app->userConfig.antialiasing = compatibility_active ? Config::Antialiasing::None : normal_config.antialiasing;
@@ -679,6 +706,8 @@ private:
             app->shaderLibrary->usesHDR ? "High" : "Standard");
         std::fflush(stdout);
     }
+    std::filesystem::path texture_data_directory;
+    bool hd_textures_applied = false;
     RT64::UserConfiguration normal_config;
     bool compatibility_active = false;
     std::unique_ptr<RT64::Application> app;

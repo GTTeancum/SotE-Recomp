@@ -850,6 +850,50 @@ void poll_input() {
     if (diagnostic_keys)
         diagnostic_keys_at(diagnostic_vi.load(std::memory_order_relaxed), raw_input);
     const auto menu = sote::menu_skin::latest();
+    if(diagnostic_keys && std::getenv("SOTE_DIAGNOSTIC_MENU_RECOVERY") &&
+       diagnostic_vi.load(std::memory_order_relaxed)>=3100) {
+        // Process-local physical snapshots exercise the production menu mapper.
+        // Follow observed focus rather than assuming a native frame rate.
+        static int next=3100,end=0,key=0,phase=0;
+        const int vi=diagnostic_vi.load(std::memory_order_relaxed);
+        if(vi>=end) key=0;
+        if(vi>=next && phase<7) {
+            using Screen=sote::menu_skin::Screen;
+            const auto screen=menu?menu->screen:Screen::Native;
+            const int focus=menu?menu->focused_setting:-1;
+            const auto editor=control_bindings::editor_view();
+            if(screen==Screen::Native) {
+                if(phase==6) {
+                    phase=7;key='W';
+                    std::printf("[sote][menu-recovery] resumed after cancelled held-stick capture VI=%d\n",vi);
+                } else if(phase==0) key=27;
+            } else if(screen==Screen::Pause) {
+                const int target=phase>=5?0:1;
+                if(focus==target) {key=32;if(phase>=5)phase=6;}
+                else key=focus<target?40:38;
+            } else if(screen==Screen::Options) {
+                if(phase>=5) key=27;
+                else key=40;
+            } else if(screen==Screen::Controls) {
+                if(!editor.editing) {
+                    if(phase==0) {key=13;phase=1;}
+                    else if(phase==4) {key=27;phase=5;}
+                } else if(phase==1) {
+                    if(editor.column!=1) key=39;
+                    else {key=13;phase=2;}
+                } else if(phase==2 && editor.phase==control_bindings::Phase::Release) {
+                    key=27;phase=3;
+                } else if(phase==3 && editor.phase==control_bindings::Phase::Browse) {
+                    key=27;phase=4;
+                }
+            }
+            std::printf("[sote][menu-recovery] VI=%d screen=%s focus=%d phase=%d editor=%d key=%d\n",
+                vi,sote::menu_skin::screen_name(screen),focus,phase,int(editor.phase),key);
+            std::fflush(stdout);end=vi+(phase==7?120:8);next=vi+80;
+        }
+        raw_input.keys.fill(0);
+        if(key)raw_input.keys[key]=1;
+    }
     const bool page_keys = menu &&
         (menu->screen == sote::menu_skin::Screen::Profiles ||
          menu->screen == sote::menu_skin::Screen::Options ||
@@ -863,6 +907,15 @@ void poll_input() {
     if (menu_action != 0) {
         sote::modern_controls::publish({});
         input_snapshot.store(menu_action == 2 ? n64_b : menu_action == 3 ? n64_start : 0, std::memory_order_relaxed);
+        return;
+    }
+    if(menu) {
+        // Menus must not inherit aim, triggers, gameplay remaps or sensitivity.
+        sote::modern_controls::publish({});
+        const bool start_confirmation=menu->screen==sote::menu_skin::Screen::Profiles ||
+            menu->screen==sote::menu_skin::Screen::Summary ||
+            menu->screen==sote::menu_skin::Screen::Pause;
+        input_snapshot.store(control_bindings::menu_input(raw_input,start_confirmation),std::memory_order_relaxed);
         return;
     }
     mapped_input = menu ? control_bindings::menu_navigation(raw_input) :
