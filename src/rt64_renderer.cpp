@@ -17,9 +17,11 @@
 #include <string>
 #include <vector>
 
+#ifdef _WIN32
 #include <unknwn.h>
 #include <objidl.h>
 #include <oleauto.h>
+#endif
 
 #include "gbi/rt64_gbi_f3d.h"
 #include "gbi/rt64_gbi_f3dwave.h"
@@ -171,7 +173,11 @@ public:
         static uint8_t dummy_rom_header[0x40]{};
 
         RT64::Application::Core core{};
+#ifdef _WIN32
         core.window = window_handle.window;
+#else
+        core.window = window_handle;
+#endif
         core.checkInterrupts = check_interrupts;
         core.HEADER = dummy_rom_header;
         core.RDRAM = rdram;
@@ -269,7 +275,12 @@ public:
         apply_compatibility_profile();
         const bool use_configuration_file = app->appConfig.useConfigurationFile;
         app->appConfig.useConfigurationFile = false; // Already loaded above.
-        setup_result = map_setup_result((sote::menu_renderer::install(), app->setup(window_handle.thread_id)));
+        sote::menu_renderer::install();
+#ifdef _WIN32
+        setup_result = map_setup_result(app->setup(window_handle.thread_id));
+#else
+        setup_result = map_setup_result(app->setup(0));
+#endif
         app->appConfig.useConfigurationFile = use_configuration_file;
         chosen_api = map_graphics_api(app->chosenGraphicsAPI);
         if (setup_result != ultramodern::renderer::SetupResult::Success) {

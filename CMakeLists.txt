@@ -13,6 +13,10 @@ if(NOT EXISTS "${RT64_DIR}/CMakeLists.txt")
         "RT64 submodule is missing. Run git submodule update --init --recursive.")
 endif()
 set(RT64_STATIC TRUE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(RT64_SDL_WINDOW_VULKAN ON CACHE BOOL "Use SDL Vulkan windows" FORCE)
+    find_package(SDL2 REQUIRED CONFIG)
+endif()
 add_subdirectory("${RT64_DIR}" "${CMAKE_BINARY_DIR}/rt64")
 target_include_directories(rt64 PRIVATE "${CMAKE_BINARY_DIR}/rt64/src")
 
@@ -127,7 +131,6 @@ target_include_directories(sote_recomp PRIVATE
     "${RT64_DIR}/src/contrib/imgui"
     "${RT64_DIR}/src/contrib/hlslpp/include"
     "${RT64_DIR}/src/contrib/nativefiledialog-extended/src/include"
-    "${RT64_DIR}/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3/include"
 )
 target_link_libraries(sote_recomp PRIVATE
     sote_recompiled
@@ -138,7 +141,12 @@ target_link_libraries(sote_recomp PRIVATE
 target_compile_definitions(sote_recomp PRIVATE NOMINMAX)
 set(RT64_SDL_BIN
     "${RT64_DIR}/src/contrib/mupen64plus-win32-deps/SDL2-2.26.3")
-target_link_directories(sote_recomp PRIVATE "${RT64_SDL_BIN}/lib/x64")
+if(WIN32)
+    target_include_directories(sote_recomp PRIVATE "${RT64_SDL_BIN}/include")
+    target_link_directories(sote_recomp PRIVATE "${RT64_SDL_BIN}/lib/x64")
+else()
+    target_link_libraries(sote_recomp PRIVATE SDL2::SDL2)
+endif()
 
 # Host-side harness for the control-scheme module. It links only
 # controls_menu.cpp, so it needs neither the ROM nor a graphics device, and
@@ -247,4 +255,8 @@ else()
         -fno-strict-aliasing
         -fms-extensions
     )
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
+        # RSPRecomp's vector implementation uses SSE4.1 intrinsics.
+        target_compile_options(sote_recomp PRIVATE -msse4.1)
+    endif()
 endif()

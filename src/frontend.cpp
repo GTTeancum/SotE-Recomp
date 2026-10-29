@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <Windows.h>
+#include "host_platform.hpp"
 #include <SDL.h>
 
 namespace sote::frontend {
@@ -58,10 +58,7 @@ std::chrono::steady_clock::time_point rapid_fire_checked{};
 std::filesystem::file_time_type rapid_fire_mtime{};
 
 std::filesystem::path rapid_fire_ini_path() {
-    wchar_t buffer[MAX_PATH]{};
-    const DWORD length = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-    return std::filesystem::path{std::wstring{buffer, length}}.parent_path() /
-        "SOTE_CHEATS.INI";
+    return sote::host::executable_directory() / "SOTE_CHEATS.INI";
 }
 
 void refresh_rapid_fire_settings() {
@@ -337,7 +334,7 @@ std::atomic<bool> first_audio_buffer{false};
 std::atomic<bool> first_non_silent_buffer{false};
 uint64_t audio_buffer_count = 0;
 uint64_t audio_sample_count = 0;
-ULONGLONG first_audio_host_tick = 0;
+uint64_t first_audio_host_tick = 0;
 FILE* audio_dump_file = nullptr;
 bool audio_dump_checked = false;
 
@@ -500,6 +497,7 @@ void apply_modern_bike_scheme(
 }
 
 bool process_owns_foreground_window() {
+#ifdef _WIN32
     const HWND foreground = GetForegroundWindow();
     if (foreground == nullptr) {
         return false;
@@ -507,6 +505,9 @@ bool process_owns_foreground_window() {
     DWORD foreground_process = 0;
     GetWindowThreadProcessId(foreground, &foreground_process);
     return foreground_process == GetCurrentProcessId();
+#else
+    return SDL_GetKeyboardFocus() != nullptr;
+#endif
 }
 
 float normalize_axis(
@@ -724,9 +725,9 @@ void queue_movie_audio(const int16_t* samples, size_t sample_count) {
 }
 
 bool skip_controls_down() {
-    bool pressed = (GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0 ||
-        (GetAsyncKeyState(VK_RETURN) & 0x8000) != 0 ||
-        (GetAsyncKeyState(VK_SPACE) & 0x8000) != 0;
+    bool pressed = sote::host::key_down(VK_ESCAPE) ||
+        sote::host::key_down(VK_RETURN) ||
+        sote::host::key_down(VK_SPACE);
     if (initialized) {
         SDL_GameControllerUpdate();
         find_controller();
@@ -834,7 +835,7 @@ void poll_input() {
         raw_input = diagnostic_pad_at(diagnostic_vi.load(std::memory_order_relaxed));
     } else if (!diagnostic_mouse && !diagnostic_keys) {
         for (int vk = 1; vk < 256; ++vk)
-            raw_input.keys[vk] = (GetAsyncKeyState(vk) & 0x8000) != 0;
+            raw_input.keys[vk] = sote::host::key_down(vk);
         raw_input.connected = controller != nullptr;
         if (controller != nullptr) {
             raw_input.instance = SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(controller));
@@ -1526,8 +1527,7 @@ void queue_samples(int16_t* samples, size_t sample_count) {
         audio_dump_checked = true;
         if (const char* path = std::getenv("SOTE_AUDIO_DUMP_PATH")) {
             if (path[0] != '\0') {
-                if (fopen_s(&audio_dump_file, path, "wb") == 0 &&
-                    audio_dump_file != nullptr) {
+                if ((audio_dump_file = std::fopen(path, "wb")) != nullptr) {
                     // Smoke tests terminate with _Exit, so keep the diagnostic
                     // stream unbuffered rather than relying on process cleanup.
                     std::setvbuf(audio_dump_file, nullptr, _IONBF, 0);
@@ -1599,7 +1599,7 @@ void queue_samples(int16_t* samples, size_t sample_count) {
     }
     ++audio_buffer_count;
     audio_sample_count += sample_count;
-    const ULONGLONG host_tick = GetTickCount64();
+    const uint64_t host_tick = sote::host::clock_ms();
     if (first_audio_host_tick == 0) {
         first_audio_host_tick = host_tick;
     }

@@ -1,6 +1,6 @@
 # TODO
 
-GitHub open issue list checked October 28, 2026: #12, #14, #19 and #20.
+GitHub open issue list checked October 28, 2026: #12, #14, #19, #20 and #22.
 
 ## Open GitHub issues
 
@@ -32,6 +32,25 @@ Filed October 25, 2026.
 - [ ] Fix the confirmed rebinding neutral-input trap: a held/off-center controller stick prevents Escape from cancelling while the editor waits for neutral input. A current-code probe with axis 12000 repeatedly blocked Escape until centering the stick. This is a confirmed local defect, not proof of the reporter's exact cause. Evidence: `.local/issue20/neutral-result.log`.
 - [ ] Provide an in-game Original/HD texture option. Pack folders currently load automatically; removing/renaming the active packs is the available manual opt-out. Update the stale README claim that stock textures are the default.
 - [ ] Isolate texture flickering by level, API, and original versus HD textures; overlap with #12 is possible but unconfirmed. Compatibility Mode changes MSAA/color precision and does not force Vulkan. The issue supplies no exact level, driver version, or rebinding sequence.
+
+### [#22 - Add a native Linux build](https://github.com/GTTeancum/SotE-Recomp/issues/22)
+
+Enhancement. Native Linux platform and build support now compiles with Vulkan;
+runtime validation and portable packaging remain open.
+
+October 28 progress: native x86-64 Linux Release executable built under Ubuntu
+WSL2 with Vulkan/SDL2; all eight automated suites and the Windows regression
+build pass. Runtime library dependencies resolve. Offscreen software-Vulkan
+captures show the profile menu and early Echo Base gameplay; movement and a
+blaster impact are confirmed. Later captures turn solid blue, and HD-pack startup
+times out during path resolution on the Windows mount. Runtime validation and
+portable packaging remain open. See [Linux build](docs/LINUX_BUILD.md).
+
+- [ ] Verify Linux window/input behavior and crash diagnostics in a running game.
+- [ ] Diagnose the later solid-blue gameplay captures; repeated without mouse movement or jumping. Do not treat early rendered gameplay as a clean runtime pass.
+- [ ] Resolve HD-pack startup taking over 160 seconds while canonicalizing paths on the WSL Windows mount; HD-enabled gameplay remains unverified.
+- [ ] Package the Linux executable with the required libraries and license notices.
+- [ ] Finish gameplay, controls, audio, cutscene and texture validation on Linux. Build and automated checks pass, but the offscreen runtime checks have unresolved failures. Track Steam Deck/Proton flickering separately in #12.
 
 ## Local texture follow-up (formerly GitHub #17)
 

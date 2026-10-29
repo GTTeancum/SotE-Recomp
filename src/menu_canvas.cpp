@@ -93,6 +93,22 @@ FontFace* face_for(std::string role) {
         if (safe) full = std::filesystem::path(directory) / L"Fonts" / L"segoeui.ttf";
         ec.clear();
     } else
+#elif defined(__linux__)
+    if (path == "system:segoeui.ttf") {
+        // Preserve the shared font configuration without requiring Windows fonts.
+        safe = false;
+        for (const auto* candidate : {
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+                "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"}) {
+            if (std::filesystem::is_regular_file(candidate, ec)) {
+                full = candidate;
+                safe = true;
+                break;
+            }
+        }
+        ec.clear();
+    } else
 #endif
     {
         full = std::filesystem::weakly_canonical(ui_root / relative, ec);

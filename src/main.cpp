@@ -19,9 +19,17 @@
 #include <unordered_set>
 #include <vector>
 
+#include "host_platform.hpp"
+#include <ctime>
+#ifdef _WIN32
 #include <Windows.h>
 #include <DbgHelp.h>
 #include <TlHelp32.h>
+#else
+#include <SDL.h>
+#include <execinfo.h>
+#include <unistd.h>
+#endif
 
 #include "librecomp/game.hpp"
 #include "librecomp/overlays.hpp"
@@ -124,8 +132,12 @@ std::string smoke_expected_level_name;
 std::filesystem::path runtime_directory;
 std::filesystem::path selected_rom_path;
 bool graphics_fullscreen = false;
+#ifdef _WIN32
 HWND graphics_window = nullptr;
 WINDOWPLACEMENT windowed_placement{sizeof(WINDOWPLACEMENT)};
+#else
+SDL_Window* graphics_window = nullptr;
+#endif
 std::once_flag symbol_engine_once;
 std::atomic<bool> stall_stack_dumped{false};
 int last_display_activity_vi = 0;
@@ -151,17 +163,7 @@ struct ScriptedInputPulse {
 std::vector<ScriptedInputPulse> scripted_input;
 
 std::filesystem::path get_executable_directory() {
-    std::vector<wchar_t> path_buffer(32768);
-    const DWORD path_length = GetModuleFileNameW(
-        nullptr,
-        path_buffer.data(),
-        static_cast<DWORD>(path_buffer.size()));
-    if (path_length == 0 || path_length >= path_buffer.size()) {
-        return std::filesystem::current_path();
-    }
-    return std::filesystem::path(
-        path_buffer.data(),
-        path_buffer.data() + path_length).parent_path();
+    return sote::host::executable_directory();
 }
 
 uint32_t read_u32_be(const std::vector<uint8_t>& bytes, size_t offset) {
@@ -292,30 +294,25 @@ void initialize_persistent_logging() {
         (log_directory / "sote-latest.log").string();
     const std::string stderr_path =
         (log_directory / "sote-latest-errors.log").string();
-    if (freopen_s(
-            &stdout_file, stdout_path.c_str(), "w", stdout) != 0 ||
-        freopen_s(
-            &stderr_file, stderr_path.c_str(), "w", stderr) != 0) {
-        return;
-    }
+    stdout_file = std::freopen(stdout_path.c_str(), "w", stdout);
+    stderr_file = std::freopen(stderr_path.c_str(), "w", stderr);
+    if (!stdout_file || !stderr_file) return;
 
     std::setvbuf(stdout, nullptr, _IONBF, 0);
     std::setvbuf(stderr, nullptr, _IONBF, 0);
     persistent_logging = true;
 
-    SYSTEMTIME local_time{};
-    GetLocalTime(&local_time);
-    std::printf(
-        "[sote] session started %04u-%02u-%02u %02u:%02u:%02u.%03u "
-        "pid=%lu\n",
-        local_time.wYear,
-        local_time.wMonth,
-        local_time.wDay,
-        local_time.wHour,
-        local_time.wMinute,
-        local_time.wSecond,
-        local_time.wMilliseconds,
-        static_cast<unsigned long>(GetCurrentProcessId()));
+    const auto now = std::time(nullptr);
+    const auto* local_time = std::localtime(&now);
+    char timestamp[32]{};
+    if (local_time) std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", local_time);
+#ifdef _WIN32
+    const auto process_id = GetCurrentProcessId();
+#else
+    const auto process_id = getpid();
+#endif
+    std::printf("[sote] session started %s pid=%lu\n", timestamp,
+        static_cast<unsigned long>(process_id));
 }
 
 uint32_t read_guest_word(uint8_t* rdram, uint32_t address) {
@@ -1557,6 +1554,7 @@ void parse_scripted_input(const char* specification) {
         scripted_input.size());
 }
 
+#ifdef _WIN32
 LONG WINAPI report_unhandled_exception(EXCEPTION_POINTERS* exception) {
     const DWORD code = exception->ExceptionRecord->ExceptionCode;
     const DWORD64 address =
@@ -1761,6 +1759,17 @@ void dump_process_thread_stacks(const char* reason) {
     std::fflush(stderr);
 }
 
+#else
+void dump_process_thread_stacks(const char* reason) {
+    // POSIX cannot safely suspend arbitrary threads as the Windows debugger does.
+    // Emit the calling diagnostic thread's stack without stopping the game.
+    std::fprintf(stderr,"[sote][stall] %s (calling thread only)\n",reason);
+    void* frames[64]{};
+    const int count=backtrace(frames,64);
+    backtrace_symbols_fd(frames,count,fileno(stderr));
+}
+#endif
+
 void retail_entrypoint(uint8_t* rdram, recomp_context* ctx) {
     constexpr size_t main_offset = 0x1EC0;
     constexpr size_t main_size = 0xEC880;
@@ -1873,6 +1882,7 @@ std::unique_ptr<ultramodern::renderer::RendererContext> create_renderer(
         runtime_directory);
 }
 
+#ifdef _WIN32
 void toggle_graphics_fullscreen(HWND window) {
     if (window == nullptr) {
         return;
@@ -2205,16 +2215,58 @@ ultramodern::renderer::WindowHandle create_window(void*) {
     return {window, GetCurrentThreadId()};
 }
 
+#else
+void toggle_graphics_fullscreen(SDL_Window* window) {
+    if (!window) return;
+    const bool next = !graphics_fullscreen;
+    if (SDL_SetWindowFullscreen(window,next ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)==0)
+        graphics_fullscreen=next;
+    else std::fprintf(stderr,"[sote] fullscreen failed: %s\n",SDL_GetError());
+}
+void resize_graphics_window(SDL_Window* window,int width,int height,bool = true) {
+    if (window && width>0 && height>0) SDL_SetWindowSize(window,width,height);
+}
+void update_game_mouse(SDL_Window* window) {
+    const bool requested=window &&
+        (SDL_GetWindowFlags(window)&SDL_WINDOW_INPUT_FOCUS) &&
+        sote::frontend::mouse_capture_requested();
+    const bool active=SDL_GetRelativeMouseMode()==SDL_TRUE;
+    if(active!=requested && SDL_SetRelativeMouseMode(requested?SDL_TRUE:SDL_FALSE)!=0)
+        std::fprintf(stderr,"[sote] mouse capture failed: %s\n",SDL_GetError());
+}
+ultramodern::renderer::WindowHandle create_window(void*) {
+    if(smoke_test) return nullptr;
+    SDL_SetMainReady();
+    if(SDL_InitSubSystem(SDL_INIT_VIDEO)!=0) {
+        std::fprintf(stderr,"[sote] SDL video failed: %s\n",SDL_GetError());
+        return nullptr;
+    }
+    const bool offscreen=std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN")!=nullptr;
+    graphics_window=SDL_CreateWindow("Shadows of the Empire Recompiled",
+        SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,1280,720,
+        SDL_WINDOW_VULKAN|SDL_WINDOW_RESIZABLE|(offscreen?SDL_WINDOW_HIDDEN:SDL_WINDOW_SHOWN));
+    if(!graphics_window) {
+        std::fprintf(stderr,"[sote] SDL window failed: %s\n",SDL_GetError());
+        return nullptr;
+    }
+    SDL_DisplayMode display{};
+    if(SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(graphics_window),&display)==0)
+        sote::graphics_menu::sync_display_resolution(display.w,display.h);
+    return graphics_window;
+}
+#endif
+
 void log_diagnostic_progress() {
     // Runs independently of the VI, menu, renderer and window message pump.
-    static ULONGLONG next_diagnostic = 0;
+    static uint64_t next_diagnostic = 0;
     static int last_vi = -1;
-    const auto now = GetTickCount64();
+    const auto now = sote::host::clock_ms();
     if (now >= next_diagnostic) {
         using namespace sote::diagnostics;
         const int vi = vi_count.load();
         std::fprintf(stderr, "[sote][progress] ms=%llu vi=%d delta=%d game=%llu dl=%d input=%llu/%d capture=%llu/%d present=%llu/%d vi_phase=%d frame_phase=%d\n",
-            now, vi, last_vi < 0 ? 0 : vi-last_vi, game_frame_count.load(), display_list_count.load(),
+            static_cast<unsigned long long>(now), vi, last_vi < 0 ? 0 : vi-last_vi,
+            static_cast<unsigned long long>(game_frame_count.load()), display_list_count.load(),
             inputs.load(),input_phase.load(),captures.load(),capture_phase.load(),
             presents.load(),present_phase.load(),vi_phase.load(),frame_phase.load());
         std::fflush(stderr);
@@ -2261,11 +2313,28 @@ void update_gfx(void*) {
         }
     }
     update_game_mouse(graphics_window);
+#ifdef _WIN32
     MSG message{};
     while (PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) {
         TranslateMessage(&message);
         DispatchMessageW(&message);
     }
+#else
+    SDL_Event event{};
+    while(SDL_PollEvent(&event)) {
+        if(event.type==SDL_QUIT || (event.type==SDL_WINDOWEVENT && event.window.event==SDL_WINDOWEVENT_CLOSE)) {
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+            ultramodern::quit();
+        } else if(event.type==SDL_WINDOWEVENT && event.window.event==SDL_WINDOWEVENT_FOCUS_LOST) {
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+        } else if(event.type==SDL_MOUSEMOTION && SDL_GetRelativeMouseMode()) {
+            sote::frontend::add_mouse_delta(event.motion.xrel,event.motion.yrel);
+        } else if(event.type==SDL_KEYDOWN && !event.key.repeat && !sote::control_bindings::capturing() &&
+            (event.key.keysym.sym==SDLK_F11 || (event.key.keysym.sym==SDLK_RETURN && (event.key.keysym.mod&KMOD_ALT)))) {
+            toggle_graphics_fullscreen(graphics_window);
+        }
+    }
+#endif
     update_game_mouse(graphics_window);
 }
 
@@ -4776,9 +4845,11 @@ extern "C" void sote_note_motion_loop_guard(
 }
 
 int main(int argc, char** argv) {
+#ifdef _WIN32
     SetUnhandledExceptionFilter(report_unhandled_exception);
     SetProcessDpiAwarenessContext(
         DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+#endif
 
     runtime_directory = get_executable_directory();
     sote::graphics_menu::initialize(runtime_directory);

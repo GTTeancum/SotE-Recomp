@@ -4,6 +4,8 @@
 
 **[Download 0.9.7 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.7)** · [Release notes](docs/RELEASE_0.9.7.md)
 
+[Experimental Linux x86-64 download](https://github.com/GTTeancum/SotE-Recomp/releases/download/0.9.7/SotE-Recomp-0.9.7-linux-x86_64.tar.gz) · [Linux setup and known issues](docs/RELEASE_0.9.7_LINUX.md)
+
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
 
