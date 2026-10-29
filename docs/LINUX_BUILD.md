@@ -6,8 +6,8 @@ host-side suites passed, and the Windows Release regression build passed.
 Offscreen Linux menu and Echo Base gameplay checks now have native captures and
 movement/projectile-impact evidence. The runtime check is not a clean pass:
 later gameplay captures became solid blue, and HD-pack startup timed out.
-Physical device input and audible playback have not been tested. This is a local
-build, not a published Linux release.
+Physical device input and audible playback have not been tested. The Linux
+download is experimental and accompanies the existing 0.9.7 release.
 
 ## Dependencies
 
@@ -55,9 +55,11 @@ directly; do not create decoded movie caches.
 
 For this WSL build, missing Ubuntu development/runtime packages were downloaded
 and unpacked into `.local/linux/deps` without changing the system installation.
-The build therefore records repository-local library paths and is not a portable
-release package. Its loader dependencies resolve with that directory on
-`LD_LIBRARY_PATH`; SDL2 Classic is used rather than the SDL3 compatibility shim.
+The raw build records repository-local library paths. Release packaging copies
+the needed libraries and changes those paths to `$ORIGIN/lib`; `Play.sh` sets
+the package's library directory. SDL2 Classic is used rather than the SDL3
+compatibility shim. This binary requires glibc 2.43 and GLIBCXX 3.4.32 or newer;
+it is not compatible with older distributions' system libraries.
 
 The automated suites cover control schemes, Modern controls/aim, voice mapping,
 texture slot matching, direct SAN decoding and menu behavior. They do not prove

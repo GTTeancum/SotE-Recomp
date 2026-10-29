@@ -4,6 +4,9 @@ This is an experimental native Linux build, available alongside the Windows
 download on the same 0.9.7 release. Vulkan is the default renderer. The updated
 texture packs are included, with thanks to **interceptor427** for the HD artwork.
 
+**Requires glibc 2.43 or newer and GLIBCXX 3.4.32 or newer.** This is an
+Ubuntu 26.04-era build; it will not run on systems with older libraries.
+
 ## Getting started
 
 1. Extract `SotE-Recomp-0.9.7-linux-x86_64.tar.gz` onto your Linux filesystem.
