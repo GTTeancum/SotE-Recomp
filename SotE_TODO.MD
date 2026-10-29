@@ -43,13 +43,14 @@ WSL2 with Vulkan/SDL2; all eight automated suites and the Windows regression
 build pass. Runtime library dependencies resolve. Offscreen software-Vulkan
 captures show the profile menu and early Echo Base gameplay; movement and a
 blaster impact are confirmed. Later captures turn solid blue, and HD-pack startup
-times out during path resolution on the Windows mount. Runtime validation and
-portable packaging remain open. See [Linux build](docs/LINUX_BUILD.md).
+times out during path resolution on the Windows mount. An experimental Linux
+archive with texture packs and bundled libraries is published alongside Windows
+on release 0.9.7; it requires glibc 2.43 and GLIBCXX 3.4.32 or newer. Runtime
+validation remains open. See [Linux build](docs/LINUX_BUILD.md).
 
 - [ ] Verify Linux window/input behavior and crash diagnostics in a running game.
 - [ ] Diagnose the later solid-blue gameplay captures; repeated without mouse movement or jumping. Do not treat early rendered gameplay as a clean runtime pass.
 - [ ] Resolve HD-pack startup taking over 160 seconds while canonicalizing paths on the WSL Windows mount; HD-enabled gameplay remains unverified.
-- [ ] Package the Linux executable with the required libraries and license notices.
 - [ ] Finish gameplay, controls, audio, cutscene and texture validation on Linux. Build and automated checks pass, but the offscreen runtime checks have unresolved failures. Track Steam Deck/Proton flickering separately in #12.
 
 ## Local texture follow-up (formerly GitHub #17)
