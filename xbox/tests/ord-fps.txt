@@ -1,0 +1,11 @@
+# Native level selection and story confirmation. Leave Dash at his starting
+# position; the train/world simulation continues during the observation window.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0
+1850 0400 0 0
+1900 0400 0 0
+1950 0400 0 0
+2100 1000 0 0
+2500 1000 0 0 0 7
+2700 0000 0 0 0 8

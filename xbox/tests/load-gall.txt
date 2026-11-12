@@ -1,0 +1,11 @@
+# Isolated unlocked save; fifth level through the original level picker.
+# Entry coverage only: no fabricated completion or boss-trigger writes.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0
+1850 0400 0 0
+1900 0400 0 0
+1950 0400 0 0
+2000 0400 0 0
+2150 1000 0 0
+2600 1000 0 0
