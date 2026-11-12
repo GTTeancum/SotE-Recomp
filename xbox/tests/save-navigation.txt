@@ -1,6 +1,0 @@
-# Title, save selection, down/up selection changes, then B back.
-900 1000 0 0
-1500 1000 0 0
-1600 0400 0 0
-1650 0800 0 0
-1700 4000 0 0

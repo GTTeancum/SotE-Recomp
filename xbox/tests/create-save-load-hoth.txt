@@ -1,9 +1,0 @@
-# Retail name entry: select first empty slot, enter A, finish with Start,
-# select the resulting profile and start its first level. One-poll taps only.
-900 1000 0 0
-1500 1000 0 0
-1700 8000 0 0
-1800 8000 0 0
-1900 1000 0 0
-2100 1000 0 0
-2300 1000 0 0

@@ -1,5 +1,0 @@
-# Existing profile A in the isolated test HDD: title, save, level, launch.
-900 1000 0 0
-1500 1000 0 0
-1700 1000 0 0
-1900 1000 0 0

@@ -1,7 +1,9 @@
-"""Apply the reviewed V2 HD update without replacing text or HUD borders."""
+"""Apply a reviewed HD update without replacing protected text or HUD borders."""
 import argparse
 import hashlib
 import json
+import io
+import zipfile
 from pathlib import Path
 from PIL import Image
 
@@ -19,19 +21,20 @@ def contained(root, relative):
     return path
 
 
-def install(source, pack, backup):
+def install(source, pack, backup, plan_path=None, validate_only=False):
     for directory in (pack, backup):
         if not directory.resolve().is_relative_to(ROOT):
             raise ValueError('Output must stay inside repository')
-    plan = json.loads((ROOT / 'config/hd_texture_v2_update.json').read_text())
+    plan = json.loads((plan_path or ROOT / 'config/hd_texture_v2_update.json').read_text())
+    archive = zipfile.ZipFile(source) if source.is_file() else None
     database = json.loads((pack / 'rt64.json').read_text())
     known = {r['hashes']['rt64']: r for r in database['textures']}
     prepared = {}
     skipped = []
     # Validate everything before touching the active pack.
     for entry in plan['entries']:
-        path = contained(source, entry['source'])
-        if digest(path.read_bytes()) != entry['sha256']:
+        raw = archive.read(entry['source']) if archive else contained(source, entry['source']).read_bytes()
+        if digest(raw) != entry['sha256']:
             raise ValueError('Source changed since review: ' + entry['source'])
         action = entry['action']
         if action in ('omit', 'unmatched'):
@@ -40,10 +43,10 @@ def install(source, pack, backup):
         target = contained(pack, entry['target'])
         if action != 'add' and not target.is_file():
             raise ValueError('Missing installed target: ' + entry['target'])
-        replacement = path.read_bytes()
+        replacement = raw
         if action == 'regions':
             old = Image.open(target).convert('RGBA')
-            new = Image.open(path).convert('RGBA')
+            new = Image.open(io.BytesIO(raw)).convert('RGBA')
             if old.size != new.size:
                 raise ValueError('HUD dimensions changed')
             result = old.copy()
@@ -59,7 +62,7 @@ def install(source, pack, backup):
             result.save(buffer, format='PNG')
             replacement = buffer.getvalue()
         else:
-            with Image.open(path) as im:
+            with Image.open(io.BytesIO(raw)) as im:
                 im.verify()
         for binding in entry.get('bindings', []):
             h = binding['rt64']
@@ -67,9 +70,21 @@ def install(source, pack, backup):
             if h in known and known[h]['path'] != target_stem:
                 raise ValueError('Conflicting RT64 binding: ' + h)
             known[h] = {'hashes': {'rt64': h}, 'path': target_stem}
-        # Multiple source aliases can name one installed texture. Validate all
-        # aliases above, but write only the final reviewed choice for each path.
+        # Older reviewed plans intentionally select their final alias. New
+        # plans opt into strict conflict rejection after resolving aliases.
+        if (plan.get('reject_conflicting_targets', False) and
+                target in prepared and prepared[target][2] != replacement):
+            raise ValueError('Conflicting source images for target: ' + entry['target'])
         prepared[target] = (entry, target, replacement)
+    if archive:
+        archive.close()
+    for row in known.values():
+        target = contained(pack, row['path'] + '.png')
+        if not target.is_file() and target not in prepared:
+            raise ValueError('Missing texture for binding: ' + row['path'])
+    if validate_only:
+        print(f'Validated {len(prepared)} targets and {len(known)} bindings; no files changed.')
+        return
     before = {p.relative_to(pack).as_posix(): digest(p.read_bytes()) for p in pack.rglob('*.png')}
     backup.mkdir(parents=True, exist_ok=False)
     (backup / 'rt64.json').write_bytes((pack / 'rt64.json').read_bytes())
@@ -106,8 +121,10 @@ def install(source, pack, backup):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('source', type=Path, help='Reviewed V2 finished directory')
+    ap.add_argument('source', type=Path, help='Reviewed source directory or ZIP archive')
     ap.add_argument('--pack', type=Path, default=ROOT/'SotE_Recompiled/textures/SotE_V1_HD')
     ap.add_argument('--backup', type=Path, default=ROOT/'.local/texture-v2/backup')
+    ap.add_argument('--plan', type=Path, default=ROOT/'config/hd_texture_v2_update.json')
+    ap.add_argument('--validate-only', action='store_true')
     args = ap.parse_args()
-    install(args.source, args.pack, args.backup)
+    install(args.source, args.pack, args.backup, args.plan, args.validate_only)

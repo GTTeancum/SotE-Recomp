@@ -1,8 +1,0 @@
-# Enter Echo Base and dismiss each communicator page through native Start.
-900 1000 0 0
-1500 1000 0 0
-1700 1000 0 0
-1850 0400 0 0
-2000 1000 0 0
-2200 1000 0 0 1
-2300 1000 0 0 1

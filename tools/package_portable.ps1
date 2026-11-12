@@ -64,8 +64,13 @@ if ($acceptedSha256 -notcontains $actualSha256) {
 
 New-Item -ItemType Directory -Path $outputAbsolute -Force | Out-Null
 foreach ($entry in $sources.GetEnumerator()) {
+    $destination = Join-Path $outputAbsolute $entry.Key
+    if ([System.IO.Path]::GetFullPath($entry.Value) -eq
+        [System.IO.Path]::GetFullPath($destination)) {
+        continue
+    }
     Copy-Item -LiteralPath $entry.Value `
-        -Destination (Join-Path $outputAbsolute $entry.Key) -Force
+        -Destination $destination -Force
 }
 
 foreach ($notice in @('LICENSE', 'LICENSES.md')) {

@@ -1,7 +1,0 @@
-# Isolated unlocked save; choose the third level through the retail picker.
-900 1000 0 0
-1500 1000 0 0
-1700 1000 0 0
-1850 0400 0 0
-1900 0400 0 0
-2000 1000 0 0
