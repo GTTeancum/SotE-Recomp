@@ -29,9 +29,9 @@ def sha(path):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument('--version', default='0.9.7')
+    ap.add_argument('--version', default='0.9.8')
     ap.add_argument('--build', default='build/linux')
-    ap.add_argument('--output', default='build/release-0.9.7-linux')
+    ap.add_argument('--output', default='build/release-0.9.8-linux')
     ap.add_argument('--deps', default='.local/linux/deps')
     ap.add_argument('--textures', default='SotE_Recompiled/textures')
     args = ap.parse_args()

@@ -44,11 +44,13 @@ void sync_from_renderer(const Settings& settings);
 void sync_window_mode(bool borderless);
 bool take_renderer_request(Settings& settings);
 bool take_window_request(Settings& settings);
+bool front_end_picker_active();
 void filter_input(uint16_t* buttons, float* x, float* y);
 // Direct-drawn native options (func_8001FC90), separate from cached UI rows.
+void synchronize_guest_focus(uint8_t* rdram);
 void observe_native_options(int selection);
-void observe_main_menu(bool options_focused);
 void observe_other_screen(bool pause = false);
+void decorate_title_snapshot(sote::menu_skin::Snapshot& snapshot);
 void decorate_native_snapshot(sote::menu_skin::Snapshot& snapshot);
 
 } // namespace sote::graphics_menu

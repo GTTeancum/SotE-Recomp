@@ -199,6 +199,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
         auto& r = *resources;
         const unsigned fw = framebuffer->getWidth(), fh = framebuffer->getHeight();
         if (!fw || !fh) return;
+        const bool title = snapshot && snapshot->screen == menu_skin::Screen::Title;
         const bool paused = snapshot && (snapshot->pause_background || snapshot->screen == menu_skin::Screen::Pause);
         bool gameplay = modern_controls::on_foot_active();
         for (int i = 0; i < int(control_bindings::Context::Count); ++i)
@@ -280,7 +281,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
         }
         list->setFramebuffer(framebuffer);
         list->setGraphicsPipelineLayout(r.layout.get());
-        list->setPipeline((reticle || (!snapshot && native) || paused) && !movie_frame.valid()
+        list->setPipeline((reticle || (!snapshot && native) || paused || title) && !movie_frame.valid()
             ? r.alpha_pipeline.get() : r.pipeline.get());
         list->setGraphicsDescriptorSet(r.descriptor->get(), 0);
         const CopyConstants cb{0, 0, float(w), float(h)};

@@ -2570,8 +2570,8 @@ void on_vi() {
         }
     }
     // Profile-screen selection state, from func_8003B480: 0x800DD750 holds
-    // -1 when focus is on the Options/Rename/Clear row and 0-3 for the four
-    // player slots; 0x800DD754 is the index within that row (bounded by 3).
+    // -1 for save rows, 0/1/2 for Options/Rename/Clear and 3 for clear
+    // confirmation; 0x800DD754 enables difficulty adjustment.
     if (std::getenv("SOTE_TRACE_PROFILE") != nullptr &&
         game_rdram != nullptr && count % 15 == 0) {
         // Per-entry focus flags, stride 4, located by RDRAM diffing across
@@ -2883,6 +2883,32 @@ void on_vi() {
             static_cast<int16_t>(read_guest_half(game_rdram, 0x800D255CU)));
         std::fflush(stdout);
     }
+    if (std::getenv("SOTE_TRACE_MENU_NAVIGATION") && game_rdram && count % 10 == 0) {
+        const auto menu = sote::menu_skin::latest();
+        const auto editor = sote::control_bindings::editor_view();
+        const int mode_override = static_cast<int16_t>(read_guest_half(game_rdram, 0x800DD744));
+        const uint32_t profile = 0x8018BBF8U + read_guest_byte(game_rdram, 0x8018BBFD) * 0x7AU;
+        std::printf("[sote][navigation] vi=%d frame=%llu event=%d mode=%d save=%d action=%d difficulty=%d name=%u pause=%u quit=%u options=%u focus=%d screen=%s adjusting=%d title=%d editing=%d phase=%d group=%d row=%d column=%d level=%u profile_difficulty=%u occupied=%d packed=%08X native_focus=%d cached=%s header=%s\n",
+            count, static_cast<unsigned long long>(game_frame_count.load()), read_guest_half(game_rdram, 0x8013CE0E),
+            mode_override >= 0 ? mode_override : static_cast<int16_t>(read_guest_half(game_rdram, 0x800DD748)),
+            read_guest_byte(game_rdram, 0x8018BBFD),
+            static_cast<int16_t>(read_guest_half(game_rdram, 0x800DD750)),
+            read_guest_half(game_rdram, 0x800DD754), read_guest_word(game_rdram, 0x800DD758),
+            read_guest_word(game_rdram, 0x800D0948), read_guest_word(game_rdram, 0x800D094C), read_guest_word(game_rdram, 0x800DD5E4),
+            menu ? menu->focused_setting : -1, menu ? sote::menu_skin::screen_name(menu->screen) : "native",
+            menu && menu->adjusting, menu && menu->title_options,
+            editor.editing, int(editor.phase), editor.group, editor.row, editor.column,
+            read_guest_word(game_rdram, 0x800DD728), read_guest_byte(game_rdram, profile + 7),
+            (read_guest_byte(game_rdram, profile + 9) & 0x10) != 0,
+            (read_guest_byte(game_rdram, profile + 0x1A) << 24) |
+                (read_guest_byte(game_rdram, profile + 0x1B) << 16) |
+                (read_guest_byte(game_rdram, profile + 0x1C) << 8) |
+                read_guest_byte(game_rdram, profile + 0x1D),
+            static_cast<int16_t>(read_guest_half(game_rdram, 0x800D0944)),
+            sote::menu_skin::screen_name(sote::menu_skin::read_guest(game_rdram, 0x800000).screen),
+            menu ? menu->rows[52].text.c_str() : "");
+        std::fflush(stdout);
+    }
     uint16_t scripted_buttons = 0;
     int8_t scripted_x = 0;
     int8_t scripted_y = 0;
@@ -3076,7 +3102,7 @@ void on_vi() {
         scripted_y = route_y;
     }
     sote::frontend::set_scripted_input(
-        count, scripted_buttons, scripted_x, scripted_y);
+        count, scripted_buttons, scripted_x, scripted_y, current_game_frame);
     current_scripted_buttons.store(
         scripted_buttons, std::memory_order_relaxed);
     current_scripted_stick_x.store(
@@ -3094,8 +3120,10 @@ void on_vi() {
                 game_frame_count.load(std::memory_order_relaxed)));
         std::fflush(stdout);
     }
+    const char* smoke_frame_limit = std::getenv("SOTE_SMOKE_GAME_FRAMES");
     if ((smoke_test || frontend_smoke_test) &&
-        count >= smoke_vi_limit) {
+        (count >= smoke_vi_limit || (smoke_frame_limit &&
+            current_game_frame >= std::strtoull(smoke_frame_limit, nullptr, 10)))) {
         if (smoke_expected_level_index >= 0) {
             const int observation_display_lists =
                 display_list_count.load(std::memory_order_relaxed) -

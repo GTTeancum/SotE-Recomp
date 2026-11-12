@@ -129,7 +129,7 @@ struct TuningMenuRow {
 
 int tuning_menu_row_count();
 bool tuning_menu_row(int index, TuningMenuRow& row);
-void adjust_tuning_menu_row(int index, int direction);
+void adjust_tuning_menu_row(int index, int direction, bool cycle = false);
 void persist_tuning();
 
 // One row of the control legend: physical input on the left, what it does on

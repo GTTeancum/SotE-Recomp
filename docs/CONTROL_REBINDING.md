@@ -15,15 +15,13 @@ native-command replacement hooks, music maps, saves, and Modern tuning remain.
 
 ## Using Controls
 
-Selecting the Controls row keeps the Options list visible. Left/Right changes
-the native preset, and Up/Down navigates Options, including the existing
-Graphics / Controls-scheme extension. Press Enter or controller A to open the
-binding editor.
+From the title, choose Options, switch to Controls and select Edit Bindings.
+From pause Options, select the Control Bindings row and press Enter or controller
+A. The Controls page also has an Edit Bindings action.
 
 Menus use fixed controls regardless of gameplay bindings or aim sensitivity.
-Enter and controller A confirm options; Enter/Start retain the native Start
-action on profile, level selection and Pause screens. WASD uses the same menu
-navigation as the arrow keys. Right-stick aim and triggers do not navigate menus.
+Enter and controller A confirm menu actions. WASD uses the same navigation as
+the arrow keys. LT/RT switch Options pages from the title and Pause.
 Controller X
 does not confirm native menu choices; inside the editor it still clears the
 selected binding.

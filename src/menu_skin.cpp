@@ -37,7 +37,8 @@ uint64_t fingerprint(const Snapshot& s) {
     for (uint8_t v : s.thumbnail.rgba) byte(v);
     string(s.preset);
     string(s.option_help);
-    byte(s.compatibility); byte(s.pc_cutscenes_available); byte(s.pause_background);
+    byte(s.compatibility); byte(s.pc_cutscenes_available); byte(s.pause_background); byte(s.title_options); byte(s.adjusting);
+    byte(s.pause_quit_confirmation);
     byte(unsigned(s.focused_setting));
     byte(s.rebinding); byte(s.binding_editing); byte(unsigned(s.binding_group)); byte(unsigned(s.binding_row));
     byte(unsigned(s.binding_column)); byte(unsigned(s.binding_phase));
@@ -143,13 +144,12 @@ void capture(const uint8_t* rdram) {
         if (native_options_active(rdram, 0x800000)) return;
         phase.set(2);
         auto snapshot = read_guest(rdram, 0x800000);
+        if (snapshot.screen == Screen::Title && !renderer_available.load()) return;
         if (snapshot.screen == Screen::Native && native_pause_active(rdram, 0x800000)) return;
-        if (snapshot.screen == Screen::Profiles && renderer_available.load()) {
-            const auto& options = snapshot.rows[76];
-            graphics_menu::observe_main_menu(
-                ((options.color >> 24) & 255) >= 0xA0 &&
-                ((options.color >> 16) & 255) >= 0xD0 &&
-                ((options.color >> 8) & 255) >= 0xA0);
+        if (snapshot.screen == Screen::Title && renderer_available.load()) {
+            graphics_menu::decorate_title_snapshot(snapshot);
+        } else if (snapshot.screen == Screen::Profiles && renderer_available.load()) {
+            graphics_menu::observe_other_screen();
         } else if ((snapshot.screen == Screen::Options ||
                     snapshot.screen == Screen::Graphics ||
                     snapshot.screen == Screen::Schemes) &&
@@ -161,15 +161,18 @@ void capture(const uint8_t* rdram) {
                    renderer_available.load()) {
             graphics_menu::observe_other_screen();
         }
+        if (snapshot.title_options)
+            control_bindings::observe_menu(rdram, 0x800000);
         phase.set(4);
         publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }
 }
 void capture_native_pause(const uint8_t* rdram);
-void capture_native_options(const uint8_t* rdram) {
+void capture_native_options(uint8_t* rdram) {
     sote::diagnostics::Phase phase(sote::diagnostics::capture_phase);
     ++sote::diagnostics::captures;
     if (!enabled.load(std::memory_order_relaxed)) return;
+    if (renderer_available.load()) graphics_menu::synchronize_guest_focus(rdram);
     if (!native_options_active(rdram, 0x800000)) {
         capture_native_pause(rdram);
         return;
@@ -177,7 +180,7 @@ void capture_native_options(const uint8_t* rdram) {
     try {
         phase.set(2);
         auto snapshot = read_native_options(rdram, 0x800000);
-        if (snapshot.screen == Screen::Controls)
+        if (snapshot.screen != Screen::Native)
             control_bindings::observe_menu(rdram, 0x800000);
         if (snapshot.screen != Screen::Native && renderer_available.load()) {
             phase.set(3);

@@ -2,9 +2,9 @@
 
 **[Report bugs / request features](https://github.com/GTTeancum/SotE-Recomp/issues)**
 
-**[Download 0.9.7 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.7)** · [Release notes](docs/RELEASE_0.9.7.md)
+**[Download 0.9.8 for Windows](https://github.com/GTTeancum/SotE-Recomp/releases/tag/0.9.8)** · [Release notes](docs/RELEASE_0.9.8.md)
 
-[Experimental Linux x86-64 download](https://github.com/GTTeancum/SotE-Recomp/releases/download/0.9.7/SotE-Recomp-0.9.7-linux-x86_64.tar.gz) · [Linux setup and known issues](docs/RELEASE_0.9.7_LINUX.md)
+[Experimental Linux x86-64 download](https://github.com/GTTeancum/SotE-Recomp/releases/download/0.9.8/SotE-Recomp-0.9.8-linux-x86_64.tar.gz) · [Linux setup and known issues](docs/RELEASE_0.9.8_LINUX.md)
 
 This repository contains a playable Windows static recompilation of the
 Nintendo 64 version of *Star Wars: Shadows of the Empire* using N64Recomp.
@@ -152,14 +152,14 @@ to build your own HD pack.
 
 ## Status
 
-The 0.9.7 release is playable on Windows. Graphics, music and sound effects,
+The 0.9.8 release is playable on Windows. Graphics, music and sound effects,
 keyboard and controller input, rumble, EEPROM saves, widescreen rendering,
 MSAA, and the in-game graphics/options hooks are connected. Automated crash
 testing navigates the in-game Change Level menu and has exercised all ten
 levels. Longer input-driven runs cover on-foot, speeder bike, spacecraft,
 turret, and jetpack gameplay paths.
 
-The 0.9.7 release contains the executable, required runtime DLLs, documentation,
+The 0.9.8 release contains the executable, required runtime DLLs, documentation,
 license notices and both active texture packs. Your settings are created when
 you run the game. It does not include a ROM, `main.bin`, saves, PC music, voices
 or movies.

@@ -40,6 +40,15 @@ bool is(const Row& row, std::string_view s) { return row.visible() && row.text =
 bool has(const Row& row, std::string_view s) {
     return row.visible() && row.text.find(s) != std::string::npos;
 }
+std::string preset_name(const Guest& g) {
+    const unsigned player = g.byte(0x8018BBFDU);
+    if (player >= 4) return {};
+    const unsigned preset = g.byte(0x8018BBF8U + player * 0x7AU + 0x1DU) & 15U;
+    if (preset >= 8) return {};
+    const unsigned index = g.half(0x800DD674U + 6 * 18 + preset * 2);
+    if (index >= 22) return {};
+    return plain_text(g.string(g.word(0x800DD61CU + index * 4)));
+}
 Image thumbnail(const Guest& g) {
     const uint32_t table = g.word(0x8013CE2CU);
     if (!g.valid(table, 320)) return {};
@@ -116,7 +125,9 @@ Screen classify(const std::array<Row, 80>& r) {
     if (has(r[52], "< Cheats >") && is(r[53], "Infinite Health")) return Screen::Schemes;
     if (has(r[52], "Player:") && has(r[55], "Difficulty Setting:") &&
         has(r[56], "Lives") && has(r[60], "Challenge Pts")) return Screen::Summary;
-    if (is(r[76], "Options") && is(r[77], "Rename") && is(r[78], "Clear") &&
+    if (is(r[53], "Overlay Displays") && is(r[55], "Seeker Camera") &&
+        is(r[57], "Sound Effects") && is(r[59], "Music")) return Screen::Options;
+    if ((!r[76].visible() || is(r[76], "Options")) && is(r[77], "Rename") && is(r[78], "Clear") &&
         r[51].visible() && r[52].visible() && r[53].visible() && r[54].visible()) {
         // Only the ordinary picker. Rename, clear-confirmation, difficulty and
         // new-player entry screens must remain native until separately styled.
@@ -126,10 +137,6 @@ Screen classify(const std::array<Row, 80>& r) {
             if (r[i].visible()) return Screen::Native;
         return Screen::Profiles;
     }
-    // Detect from labels, not level/event numbers: the same menu also appears
-    // over paused gameplay. Its values and focus remain native-authoritative.
-    if (is(r[53], "Overlay Displays") && is(r[55], "Seeker Camera") &&
-        is(r[57], "Sound Effects") && is(r[59], "Music")) return Screen::Options;
     return Screen::Native;
 }
 
@@ -175,6 +182,11 @@ Snapshot read_guest(const uint8_t* rdram, size_t size) {
         if (row.x != -1000) row.text = plain_text(g.string(g.word(table + i * 4)));
     }
     out.screen = classify(out.rows);
+    if (out.screen == Screen::Options || out.screen == Screen::Graphics || out.screen == Screen::Schemes)
+        out.preset = preset_name(g);
+    if (out.screen == Screen::Native && g.half(0x8013CE0E) == 2 &&
+        (g.signed_half(0x800DD744) >= 0 ? g.half(0x800DD744) : g.half(0x800DD748)) == 0)
+        out.screen = Screen::Title;
     if (out.screen == Screen::Options) {
         // The cached title-menu rows share the native Options selection.
         const int selection = g.signed_half(0x800DD5E0U);
@@ -229,6 +241,7 @@ Snapshot read_native_options(const uint8_t* rdram, size_t size) {
     if (classify(s.rows) != Screen::Options) return {};
     s.focused_setting = selection;
     s.screen = Screen::Options;
+    s.preset = preset_name(g);
     const uint32_t raw = g.word(0x800D0954U);
     float zoom = 0; std::memcpy(&zoom, &raw, sizeof(zoom));
     if (!(zoom >= .99f && selection == 6)) return s;
@@ -283,9 +296,12 @@ Snapshot read_native_pause(const uint8_t* rdram, size_t size) {
     // These three labels are fixed in the retail ROM. Its string segment is
     // not copied into the RDRAM span supplied to the host-side decoder.
     constexpr const char* labels[] = {"Resume", "Options", "Quit"};
+    constexpr const char* quit_labels[] = {"Return to title?", "Cancel", "Quit to title"};
+    s.pause_quit_confirmation = g.word(0x800D094CU) != 0;
     for (int i = 0; i < 3; ++i) {
         s.rows[70 + i] = {150, 130 + i * 20,
-            i == selection ? 0xC8FFC8FFU : 0x408080FFU, labels[i]};
+            i == selection ? 0xC8FFC8FFU : 0x408080FFU,
+            s.pause_quit_confirmation ? quit_labels[i] : labels[i]};
     }
     s.focused_setting = selection;
     s.screen = Screen::Pause;
@@ -298,6 +314,7 @@ bool native_pause_active(const uint8_t* rdram, size_t size) {
 }
 const char* screen_name(Screen s) {
     switch (s) {
+        case Screen::Title: return "title";
         case Screen::Profiles: return "profiles";
         case Screen::Summary: return "summary";
         case Screen::Pause: return "pause";

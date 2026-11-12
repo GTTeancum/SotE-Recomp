@@ -117,8 +117,12 @@ bool quick_turn_single_was_down = false;
 constexpr float n64_stick_scale = 80.0f / 127.0f;
 
 std::atomic<uint32_t> input_snapshot{0};
+// Polling and guest controller reads have separate clocks. Preserve reserved
+// menu-key edges until a guest read consumes them, even after a short tap ends.
+std::atomic<uint16_t> pending_menu_buttons{0};
 std::atomic<uint32_t> scripted_input_snapshot{0};
 std::atomic<int> diagnostic_vi{0};
+std::atomic<int> diagnostic_game_frame{0};
 std::atomic<bool> physical_input_enabled{true};
 std::atomic<bool> audio_output_enabled{true};
 std::atomic<uint64_t> movie_playback_token{0};
@@ -681,6 +685,7 @@ void set_movie_playback(uint64_t token) {
         return;
     }
     input_snapshot.store(0, std::memory_order_relaxed);
+    pending_menu_buttons.store(0, std::memory_order_relaxed);
     sote::modern_controls::publish({});
     movie_playback_token.store(token, std::memory_order_relaxed);
     (void)open_audio_locked(token != 0 ? 22050 : source_frequency);
@@ -812,6 +817,7 @@ void poll_input() {
             control_bindings::focus_lost();
         sote::modern_controls::publish({});
         input_snapshot.store(0, std::memory_order_relaxed);
+        pending_menu_buttons.store(0, std::memory_order_relaxed);
         static bool reported_ignored_input = false;
         if (std::getenv("SOTE_TRACE_INPUT") != nullptr &&
             !reported_ignored_input) {
@@ -831,8 +837,11 @@ void poll_input() {
     }
 
     control_bindings::PhysicalInput raw_input;
+    const int diagnostic_tick = std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_GAME_CLOCK")
+        ? diagnostic_game_frame.load(std::memory_order_relaxed)
+        : diagnostic_vi.load(std::memory_order_relaxed);
     if (diagnostic_pad) {
-        raw_input = diagnostic_pad_at(diagnostic_vi.load(std::memory_order_relaxed));
+        raw_input = diagnostic_pad_at(diagnostic_tick);
     } else if (!diagnostic_mouse && !diagnostic_keys) {
         for (int vk = 1; vk < 256; ++vk)
             raw_input.keys[vk] = sote::host::key_down(vk);
@@ -846,9 +855,9 @@ void poll_input() {
         }
     }
     if (diagnostic_mouse)
-        diagnostic_mouse_at(diagnostic_vi.load(std::memory_order_relaxed), raw_input);
+        diagnostic_mouse_at(diagnostic_tick, raw_input);
     if (diagnostic_keys)
-        diagnostic_keys_at(diagnostic_vi.load(std::memory_order_relaxed), raw_input);
+        diagnostic_keys_at(diagnostic_tick, raw_input);
     const auto menu = sote::menu_skin::latest();
     if(diagnostic_keys && std::getenv("SOTE_DIAGNOSTIC_MENU_RECOVERY") &&
        diagnostic_vi.load(std::memory_order_relaxed)>=3100) {
@@ -894,28 +903,35 @@ void poll_input() {
         raw_input.keys.fill(0);
         if(key)raw_input.keys[key]=1;
     }
+    const bool picker = sote::graphics_menu::front_end_picker_active();
     const bool page_keys = menu &&
-        (menu->screen == sote::menu_skin::Screen::Profiles ||
-         menu->screen == sote::menu_skin::Screen::Options ||
+        (menu->screen == sote::menu_skin::Screen::Options ||
          menu->screen == sote::menu_skin::Screen::Graphics ||
          menu->screen == sote::menu_skin::Screen::Schemes ||
          (menu->screen == sote::menu_skin::Screen::Controls && !menu->binding_editing));
     const bool binding_screen = menu && menu->screen == sote::menu_skin::Screen::Controls && menu->rebinding;
     const auto now_ms = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count());
-    const int menu_action = control_bindings::handle_menu(raw_input, binding_screen, now_ms, bool(menu));
+    const int menu_action = control_bindings::handle_menu(raw_input, binding_screen, now_ms, bool(menu) || picker);
     if (menu_action != 0) {
         sote::modern_controls::publish({});
-        input_snapshot.store(menu_action == 2 ? n64_b : menu_action == 3 ? n64_start : 0, std::memory_order_relaxed);
+        if (menu_action == 2 || menu_action == 3)
+            pending_menu_buttons.fetch_or(menu_action == 2 ? n64_b : n64_start,
+                std::memory_order_relaxed);
+        input_snapshot.store(0, std::memory_order_relaxed);
         return;
     }
-    if(menu) {
+    if(menu || picker) {
         // Menus must not inherit aim, triggers, gameplay remaps or sensitivity.
         sote::modern_controls::publish({});
-        const bool start_confirmation=menu->screen==sote::menu_skin::Screen::Profiles ||
-            menu->screen==sote::menu_skin::Screen::Summary ||
-            menu->screen==sote::menu_skin::Screen::Pause;
-        input_snapshot.store(control_bindings::menu_input(raw_input,start_confirmation),std::memory_order_relaxed);
+        const bool start_confirmation = picker || (menu && menu->screen == sote::menu_skin::Screen::Pause);
+        uint32_t input = control_bindings::menu_input(raw_input, start_confirmation);
+        if (page_keys) input &= ~(n64_l | n64_r);
+        if (page_keys || (menu && menu->screen == sote::menu_skin::Screen::Title)) {
+            if (control_bindings::value(raw_input, control_bindings::axis(4)) > 0.5f) input |= n64_l;
+            if (control_bindings::value(raw_input, control_bindings::axis(5)) > 0.5f) input |= n64_r;
+        }
+        input_snapshot.store(input, std::memory_order_relaxed);
         return;
     }
     mapped_input = menu ? control_bindings::menu_navigation(raw_input) :
@@ -950,7 +966,7 @@ void poll_input() {
             return mapped_button(controller, button) != 0;
         };
         if (classic_foot_pad) {
-            // PC joystick buttons 1–4: Fire, Jump, Duck, Strafe/Activate.
+            // PC joystick buttons 1â€“4: Fire, Jump, Duck, Strafe/Activate.
             // Resolve their actions through the active N64 preset; Ord's
             // Fire/Jump bits differ from the Escape opening's bits.
             uint16_t face = 0;
@@ -1345,6 +1361,7 @@ void set_physical_input_enabled(bool enabled) {
     if (!enabled) {
         sote::modern_controls::publish({});
         input_snapshot.store(0, std::memory_order_relaxed);
+        pending_menu_buttons.store(0, std::memory_order_relaxed);
     }
 }
 
@@ -1422,7 +1439,8 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
             }
         }
     }
-    *buttons = static_cast<uint16_t>(snapshot | scripted);
+    *buttons = static_cast<uint16_t>(snapshot | scripted |
+        pending_menu_buttons.exchange(0, std::memory_order_relaxed));
     const int8_t scripted_x = static_cast<int8_t>(scripted >> 16);
     const int8_t scripted_y = static_cast<int8_t>(scripted >> 24);
     *x = (scripted_x != 0 ? scripted_x : static_cast<int8_t>(snapshot >> 16)) /
@@ -1499,8 +1517,9 @@ void set_movie_guest_start(bool pressed) {
     movie_guest_start.store(pressed, std::memory_order_relaxed);
 }
 
-void set_scripted_input(int vi, uint16_t buttons, int8_t x, int8_t y) {
+void set_scripted_input(int vi, uint16_t buttons, int8_t x, int8_t y, uint64_t game_frame) {
     diagnostic_vi.store(vi, std::memory_order_relaxed);
+    diagnostic_game_frame.store(static_cast<int>(game_frame), std::memory_order_relaxed);
     scripted_input_snapshot.store(
         buttons |
             (static_cast<uint32_t>(static_cast<uint8_t>(x)) << 16) |

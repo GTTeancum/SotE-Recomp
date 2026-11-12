@@ -1,6 +1,57 @@
 # Live menu revamp — source integration / Windows test candidate
 
-## Current Windows update (October 2026)
+## November 3 navigation correction
+
+Back from the level card now returns to the selected save exactly once. The
+retail handler also interprets B as confirmation, so the host consumes that
+press through the transition instead of passing it into the destination menu.
+Escape events are retained until the guest controller read consumes them;
+an intervening input poll can no longer discard a short tap.
+
+Pause and basic Options selection now respond to discrete directional presses.
+Directional input repeats after a delay; Confirm and Back do not repeat.
+Quit displays its actual confirmation choices, Cancel and Quit to title.
+Cancelling returns to Pause with Quit selected. Returning from an Options
+page restores Options on its parent menu, and leaving Edit Bindings restores
+that row on the Controls page. Time in title Options no longer accumulates
+an attract-demo timeout.
+
+The save picker centers each name, difficulty, Rename and Clear using the
+visible glyph bounds, including font bearings. This applies to both Original
+and Modern fonts. Navigation validation uses process-local physical keyboard
+and controller snapshots against the built executable, with ordinary taps for
+Confirm/Back and sustained directions for repeat checks. Save creation and
+deletion tests use private copies of the save file. No desktop input or screen
+captures are used.
+
+The runtime matrix covers all four save slots and ten level cards; Rename,
+Clear and new-save dialogs; all four Options pages from both title and Pause;
+every editable row, Apply/Reset and return footer; both binding columns,
+scrolling, capture, defaults and conflict acceptance/cancellation; and Pause
+Resume, Quit, Cancel and return to title. Keyboard arrows and controller
+D-pad, left stick, triggers, A/B and Start pass through the production input
+mapper. The extra keyboard movement aliases are checked as well. Echo Base
+tests advance its two opening communicator pages before attempting to pause.
+
+November 3 validation: a fresh Windows Release executable passed 32 runtime
+scenarios with 1,461 navigation checks, 26 glyph-box centering checks across
+both fonts, and two native difficulty-value checks. All eight CTest suites
+passed (188 checks in the menu harness). No transition timed out. The tested
+executable SHA-256 is
+`3470f81337a5542b01300248c555fabf67db3d0b415c6208ddb1d0df4a59b8b7`.
+Compact evidence is retained under `.local/menu-audit`; disposable executable,
+DLL and ROM test copies are removed after validation. These were code/log
+checks with muted audio and no images, not visual or physical-device review.
+
+Save and level selection retain the selected save on Back. Quit now returns
+to the title rather than the native level-card destination, and the confirming
+tap cannot immediately launch that level again. These changes do not close
+the separate intermittent Traditional-preset report (#14).
+
+Current cutscene playback reads SAN files directly. References to cached video
+and older diagnostic builds in the October history below are historical.
+
+## Earlier Windows update (October 2026)
 
 Pause now has a translucent overlay with native Resume, Options, and Quit
 focus over the live paused level. The game's player, difficulty, time, and
@@ -130,17 +181,17 @@ frontend, not embedded as static web screenshots:
   defaults and persistent assignments. See `CONTROL_REBINDING.md` for details.
 
 The graphics-settings and Modern/Classic scheme pages retain their styling.
-The native Controls row initially remains a reference/preset page: Left/Right
-changes preset and Up/Down navigates Options. Enter/A explicitly opens binding
-editing, where Up/Down selects actions and Left/Right selects device columns.
-Back leaves editing and returns to native settings navigation. Shared native
-actions are shown together rather than presented as independently assignable.
+The Control Bindings action opens the editor. Inside the editor, Up/Down
+selects actions and Left/Right selects device columns.
 
-Rename, new-player name entry, difficulty selection and delete-confirmation
-prompts deliberately remain native, as do title screens, cutscenes and gameplay
-HUDs. The overlay never covers those dialogs. No gameplay widescreen or geometry
-changes are included. Menu layouts use a centered 16:9 design and preserve shape
-with black bars in other window aspects.
+The title presents **Start Game** and **Options**. The profile picker retains
+Rename and Clear. Escape/B returns from level selection to the selected save
+and from the save picker to the title.
+
+From either the title or Pause, Left/Right, LT/RT, the D-pad or the left stick
+cycle through Options, Graphics, Controls and Cheats. Up/Down selects a row.
+Enter/A starts adjusting a value, horizontal input changes it, and Enter/A
+or Escape/B finishes adjustment. For action rows, Enter/A confirms directly.
 
 ## Original font and per-element replacements
 
@@ -173,7 +224,8 @@ Useful IDs (zero-based profile indexes):
 
 | Page | Widget/role examples |
 |---|---|
-| Profile | `profile.prompt`, `profile.name.0` through `.3`, `profile.difficulty.0`, `profile.action.0` (Options), `.1` (Rename), `.2` (Clear), `profile.hint` |
+| Title | `title.start`, `title.options` |
+| Profile | `profile.prompt`, `profile.name.0` through `.3`, `profile.difficulty.0`, `profile.action.1` (Rename), `.2` (Clear), `profile.hint` |
 | Summary | `summary.player`, `summary.level`, `summary.difficulty`, `summary.label.lives`, `summary.value.lives`, `summary.label.time`, `summary.value.time`, `summary.label.challenge`, `summary.value.challenge` |
 | Options | `options.return`, `options.label.53` / `options.value.53` (Overlay), `55` (Seeker Camera), `57` (SFX), `59` (Music), `61` (Panning), `63` (Controls), `65` (appended category), `options.hint` |
 | Controls guide | `controls.heading`, `controls.columns.action`, `.keyboard`, `.pad`, `controls.foot.heading`, `controls.foot.action.0`, `.key.0`, `.pad.0`, `controls.preset.label`, `.value`, `controls.scroll_hint` |

@@ -11,7 +11,7 @@
 #include <vector>
 
 namespace sote::menu_skin {
-enum class Screen { Native, Profiles, Summary, Pause, Options, Controls, Graphics, Schemes };
+enum class Screen { Native, Profiles, Summary, Pause, Options, Controls, Graphics, Schemes, Title };
 struct Row {
     int x = -1000, y = 0;
     uint32_t color = 0;
@@ -46,6 +46,9 @@ struct Snapshot {
     bool pc_cutscenes_available = true;
     bool compatibility = false;
     bool pause_background = false;
+    bool pause_quit_confirmation = false;
+    bool title_options = false;
+    bool adjusting = false;
     std::string option_help;
     int binding_group = 0, binding_row = 0, binding_column = 0, binding_phase = 0;
     std::string binding_title, binding_detail, binding_hint, binding_status;

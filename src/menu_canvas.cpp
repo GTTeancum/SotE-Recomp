@@ -204,7 +204,7 @@ public:
     // x is a left edge for align=0, center for 1, right edge for 2.
     // Each independently addressable widget resolves its font at draw time.
     void text(std::string str, const std::string& role, float x, float y, float height,
-              Color color, float max_width = 800, int align = 0) {
+              Color color, float max_width = 800, int align = 0, float box_height = 0) {
         if (str.empty() || max_width <= 0) return;
         FontFace* face = face_for(role);
         std::istringstream lines(str); std::string line;
@@ -213,11 +213,56 @@ public:
             const float width = measure(line, face, pixels);
             if (width > max_width * scale) pixels *= max_width * scale / width;
             pixels = std::max(1.0f, pixels);
+            if (face) pixels = std::max(1.0f, std::floor(pixels));
             float pen = offset_x + x * scale;
             const float measured = measure(line, face, pixels);
             if (align == 1) pen -= measured / 2;
             else if (align == 2) pen -= measured;
-            const float top = offset_y + y * scale;
+            float top = offset_y + y * scale;
+            if (box_height > 0) {
+                // Align the visible glyph bounds inside the box. Font ascent,
+                // side bearings and advances differ between Original and Modern.
+                float advance = 0, left = 1e9f, right = -1e9f, upper = 1e9f, lower = -1e9f;
+                for (unsigned char c : line) {
+                    if (c < 32 || c > 126) continue;
+                    if (face) {
+                        const auto& g = glyph(*face, c, int(pixels));
+                        if (g.w && g.h) {
+                            left = std::min(left, advance + g.x);
+                            right = std::max(right, advance + g.x + g.w);
+                            upper = std::min(upper, float(g.y));
+                            lower = std::max(lower, float(g.y + g.h));
+                        }
+                        advance += g.advance;
+                    } else {
+                        const auto& g = font.glyphs[c - 32];
+                        const float k = pixels / font.line_height;
+                        if (g.x >= 0 && g.width && g.height) {
+                            left = std::min(left, advance - g.bearing_x * k);
+                            right = std::max(right, advance + (g.width - g.bearing_x) * k);
+                            upper = std::min(upper, -g.bearing_y * k);
+                            lower = std::max(lower, (g.height - g.bearing_y) * k);
+                        }
+                        advance += g.advance * k;
+                    }
+                }
+                if (right >= left) {
+                    pen = offset_x + x * scale - (left + right) / 2;
+                    top += (box_height * scale - upper - lower) / 2;
+                    if (std::getenv("SOTE_TRACE_MENU_LAYOUT")) {
+                        static std::map<std::string, std::string> reported;
+                        const std::string signature = line + std::to_string(pixels) + (face ? "modern" : "original");
+                        if (reported[role] != signature) {
+                            reported[role] = signature;
+                            std::printf("[sote][menu-layout] role=%s font=%s center=%.2f,%.2f ink=%.2f,%.2f,%.2f,%.2f max_width=%.2f box_height=%.2f text=%s\n",
+                                role.c_str(), face ? "modern" : "original",
+                                offset_x + x * scale, offset_y + (y + box_height / 2) * scale,
+                                pen + left, top + upper, pen + right, top + lower,
+                                max_width * scale, box_height * scale, line.c_str());
+                        }
+                    }
+                }
+            }
             for (unsigned char c : line) {
                 if (c < 32 || c > 126) continue;
                 if (face) {
@@ -266,9 +311,34 @@ public:
 bool selected(const Row& r) {
     return ((r.color >> 24) & 255) >= 0xA0 && ((r.color >> 16) & 255) >= 0xD0 && ((r.color >> 8) & 255) >= 0xA0;
 }
+void return_footer(Canvas& c, const Row& row, const char* role, bool focused) {
+    if (focused) {
+        c.rect(254, 507, 452, 31, 0x17383CFF);
+        c.border(254, 507, 452, 31, cyan);
+    }
+    c.text(row.text, role, 480, 510, 24, focused ? cyan : teal, 432, 1);
+}
+void title(Canvas& c, const Snapshot& s) {
+    constexpr const char* labels[] = {"START GAME", "OPTIONS"};
+    constexpr const char* roles[] = {"title.start", "title.options"};
+    // Keep the two lines around the original Press Start position.
+    constexpr float outline = 1.5f;
+    for (int i = 0; i < 2; ++i) {
+        const float y = 404.0f + i * 24;
+        for (int dy = -1; dy <= 1; ++dy) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                if (dx || dy)
+                    c.text(labels[i], roles[i], 480 + dx * outline, y + dy * outline,
+                        27, 0x000000FF, 270, 1);
+            }
+        }
+        c.text(labels[i], roles[i], 480, y, 27,
+            s.focused_setting == i ? 0xF2FFFFFF : 0xADB7B9FF, 270, 1);
+    }
+}
 void profiles(Canvas& c, const Snapshot& s) {
     c.stars();
-    c.text("Press Start to select", "profile.prompt", 480, 48, 28, gold, 760, 1);
+    c.text("Enter / A: select game", "profile.prompt", 480, 48, 28, gold, 760, 1);
     for (int i = 0; i < 4; ++i) {
         const float y = 107.0f + i * 59;
         const bool active = ((s.rows[51 + i].color >> 16) & 255) >= 160;
@@ -277,20 +347,21 @@ void profiles(Canvas& c, const Snapshot& s) {
         const Color ink = active ? green : filled ? 0x2F7160FF : 0x28564CFF;
         c.rect(88, y, 545, 47, 0x000000C0); c.rect(654, y, 218, 47, 0x000000C0);
         c.border(88, y, 545, 47, frame, active ? 2 : 1); c.border(654, y, 218, 47, frame, active ? 2 : 1);
-        c.text(s.rows[51 + i].text, "profile.name." + std::to_string(i), 106, y + 10, 27, ink, 508);
-        c.text(s.rows[70 + i].text, "profile.difficulty." + std::to_string(i), 763, y + 10, 25, ink, 182, 1);
+        c.text(s.rows[51 + i].text, "profile.name." + std::to_string(i), 360.5f, y, 27, ink, 508, 1, 47);
+        c.text(s.rows[70 + i].text, "profile.difficulty." + std::to_string(i), 763, y, 25, ink, 182, 1, 47);
     }
     c.rect(183, 364, 594, 2, 0x2C7A35FF);
-    c.border(182, 391, 596, 48, 0x1F4D2EFF, 2);
-    for (int i = 0; i < 3; ++i) {
+    c.border(282, 391, 396, 48, 0x1F4D2EFF, 2);
+    for (int i = 1; i < 3; ++i) {
         const auto& row = s.rows[76 + i];
         const bool focus = ((row.color >> 16) & 255) > 150;
-        const float x = 281.0f + i * 199;
-        if (focus) c.border(x - 98, 391, 197, 48, 0x3FDD4AFF, 2);
-        c.text(row.text, "profile.action." + std::to_string(i), x, 402, 25, focus ? green : 0x34783FFF, 183, 1);
+        const float x = 183.0f + i * 198;
+        if (focus) c.border(x - 99, 391, 198, 48, 0x3FDD4AFF, 2);
+        c.text(row.text, "profile.action." + std::to_string(i), x, 391, 25, focus ? green : 0x34783FFF, 183, 1, 48);
     }
     c.rect(348, 458, 264, 2, 0x2C7A35FF);
-    c.text(s.rows[68].text, "profile.hint", 480, 478, 24, gold, 750, 1);
+    c.text("Up/Down: select save   Left/Right: Rename / Clear   Esc/B: back",
+        "profile.hint", 480, 478, 21, gold, 850, 1);
 }
 void summary(Canvas& c, const Snapshot& s) {
     c.stars(); c.rect(106, 31, 748, 2, 0x149CB9FF); c.rect(202, 96, 556, 2, 0x149CB9FF);
@@ -319,7 +390,8 @@ void menu_background(Canvas& c, const Snapshot& s) {
 void options(Canvas& c, const Snapshot& s) {
     menu_background(c,s);
     c.heading("Options", "options.heading");
-    c.text("Main   < Options >   Graphics   Controls   Cheats", "options.tabs",
+    c.text(s.title_options ? "< Options >   Graphics   Controls   Cheats" :
+        "Main   < Options >   Graphics   Controls   Cheats", "options.tabs",
         480, 84, 18, 0x697388FF, 820, 1);
     int index = 0;
     for (int row = 53; row <= 67; row += 2) {
@@ -335,13 +407,10 @@ void options(Canvas& c, const Snapshot& s) {
     }
     c.rect(92, 430, 776, 2, purple);
     c.text(s.option_help,"options.help",480,450,16,0x98B6D0FF,776,1);
-    c.text("Q/E or LB/RB: page   Up/Down: select   Left/Right: adjust   Enter/A: confirm   Esc/B: back",
+    c.text(s.adjusting ? "Left/Right or LT/RT: adjust   Enter/A or Esc/B: done" :
+        "Left/Right or LT/RT: page   Up/Down: select   Enter/A: adjust or confirm   Esc/B: back",
         "options.navigation",480,480,14,0xB1BDE3FF,850,1);
-    if (s.focused_setting == 0 || selected(s.rows[52])) {
-        c.rect(254,507,452,31,0x17383CFF); c.border(254,507,452,31,cyan);
-    }
-    c.text(s.rows[52].text, "options.return", 480, 510, 24,
-        (s.focused_setting == 0 || selected(s.rows[52])) ? cyan : teal, 745, 1);
+    return_footer(c, s.rows[52], "options.return", s.focused_setting == 0 || selected(s.rows[52]));
 }
 void pause(Canvas& c, const Snapshot& s) {
     menu_background(c,s);
@@ -378,10 +447,10 @@ void graphics(Canvas& c, const Snapshot& s) {
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 411, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
     c.rect(92, 443, 776, 2, purple);
     c.text(s.option_help,"graphics.help",480,459,16,0x98B6D0FF,776,1);
-    c.text("Q/E or LB/RB: page   Up/Down: select   Left/Right: adjust   Enter/A: confirm   Esc/B: back",
+    c.text(s.adjusting ? "Left/Right or LT/RT: adjust   Enter/A or Esc/B: done" :
+        "Left/Right or LT/RT: page   Up/Down: select   Enter/A: adjust or confirm   Esc/B: back",
         "graphics.navigation",480,483,14,0xB1BDE3FF,850,1);
-    if (selected(s.rows[64])) { c.rect(254,507,452,31,0x17383CFF); c.border(254,507,452,31,cyan); }
-    c.text(s.rows[64].text, "graphics.return", 480, 510, 24, selected(s.rows[64]) ? cyan : teal, 740, 1);
+    return_footer(c, s.rows[64], "graphics.return", selected(s.rows[64]));
 }
 void binding_column(Canvas& c, const std::vector<Binding>& rows, float x, float top, float width, float spacing,
                     const std::string& prefix, float font_size) {
@@ -526,18 +595,26 @@ void schemes(Canvas& c, const Snapshot& s) {
             520,
             2);
     }
-    c.rect(92, 448, 776, 2, purple);
-    c.text(s.option_help,"schemes.help",480,467,16,0x98B6D0FF,776,1);
-    c.text("Q/E or LB/RB: page   Up/Down: select   Left/Right: adjust   Enter/A: confirm   Esc/B: back",
+    c.rect(92, 445, 776, 2, purple);
+    c.text(s.option_help,"schemes.help",480,472,16,0x98B6D0FF,776,1);
+    c.text(s.adjusting ? "Left/Right or LT/RT: adjust   Enter/A or Esc/B: done" :
+        "Left/Right or LT/RT: page   Up/Down: select   Enter/A: adjust or confirm   Esc/B: back",
         "schemes.navigation",480,490,14,0xB1BDE3FF,850,1);
     const int action_rows[] = {75,76,77};
-    for (int i=0;i<3;++i) {
+    for (int i=1;i<3;++i) {
         const auto& row=s.rows[action_rows[i]];
         if (row.text.empty()) continue;
-        const float x=250.0f+i*260;
-        if (selected(row)) { c.rect(x-124,512,248,27,0x17383CFF); c.border(x-124,512,248,27,cyan); }
-        c.text(row.text,"schemes.action."+std::to_string(i),x,515,19,selected(row)?cyan:teal,240,1);
+        const float x = i == 1 ? 335.0f : 625.0f;
+        constexpr float y = 449.0f;
+        constexpr float width = 240.0f;
+        if (selected(row)) {
+            c.rect(x - width / 2, y, width, 26, 0x17383CFF);
+            c.border(x - width / 2, y, width, 26, cyan);
+        }
+        c.text(row.text, "schemes.action." + std::to_string(i), x, y + 3,
+            19, selected(row) ? cyan : teal, width - 10, 1);
     }
+    return_footer(c, s.rows[75], "schemes.action.0", selected(s.rows[75]));
 }
 } // namespace
 
@@ -789,8 +866,9 @@ Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
     if (snapshot.screen == Screen::Native || !snapshot.original || !snapshot.original->valid ||
         width < 320 || height < 180 || width > 3840 || height > 2160) return {};
     std::lock_guard lock(font_mutex);
-    Canvas c(width, height, *snapshot.original, snapshot.pause_background || snapshot.screen == Screen::Pause);
+    Canvas c(width, height, *snapshot.original, snapshot.pause_background || snapshot.screen == Screen::Pause || snapshot.screen == Screen::Title);
     switch (snapshot.screen) {
+        case Screen::Title: title(c, snapshot); break;
         case Screen::Profiles: profiles(c, snapshot); break;
         case Screen::Summary: summary(c, snapshot); break;
         case Screen::Pause: pause(c, snapshot); break;

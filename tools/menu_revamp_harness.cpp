@@ -159,35 +159,12 @@ void press(uint16_t buttons) {
     sote::graphics_menu::filter_input(&buttons, &x, &y);
 }
 
-void pump_transition(Memory& memory, bool& options_focused,
-                     bool& native_options, int milliseconds = 500) {
-    uint16_t previous = 0;
-    for (int elapsed = 0; elapsed < milliseconds; elapsed += 10) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        uint16_t buttons = 0;
-        float x = 0.0f, y = 0.0f;
-        sote::graphics_menu::filter_input(&buttons, &x, &y);
-        const uint16_t rising = buttons & static_cast<uint16_t>(~previous);
-        if ((rising & 0x2000) != 0) {
-            options_focused = !options_focused;
-            memory.profiles(options_focused);
-        } else if ((rising & 0x8000) != 0 && native_options) {
-            memory.profiles(true);
-            options_focused = true;
-            native_options = false;
-        } else if ((rising & 0x8000) != 0 && options_focused) {
-            memory.native_options();
-            native_options = true;
-        } else if ((rising & 0x4000) != 0) {
-            memory.profiles(true);
-            options_focused = true;
-            native_options = false;
-        }
-        if (native_options) sote_capture_native_options(memory.bytes.data());
-        else sote_capture_menu(memory.bytes.data());
-        previous = buttons;
-    }
+void adjust_right() {
+    press(0x8000);
+    press(0x0100);
+    press(0x4000);
 }
+
 
 const sote::menu_skin::Snapshot& latest_snapshot() {
     const auto latest = sote::menu_skin::latest();
@@ -403,17 +380,17 @@ int main(int argc, char** argv) {
     sote::menu_skin::set_renderer_available(true);
 
     Memory memory;
-    bool options_focused = false;
-    bool native_options = false;
-    memory.profiles(options_focused);
+    memory.profiles(false);
     sote_capture_menu(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Profiles),
-        "starts on the profile picker");
-
+        "profile picker is still presented");
     press(0x0010);
-    pump_transition(memory, options_focused, native_options);
-    check(native_options && latest_screen_is(sote::menu_skin::Screen::Options),
-        "R shoulder opens real Options from profiles");
+    check(latest_screen_is(sote::menu_skin::Screen::Profiles),
+        "profile shoulder input does not enter Options");
+
+    memory.native_options();
+    sote::graphics_menu::observe_other_screen(true);
+    sote_capture_native_options(memory.bytes.data());
 
     check(!latest_snapshot().option_help.empty(), "native Options has contextual help");
     {
@@ -434,7 +411,7 @@ int main(int argc, char** argv) {
         check(view.option_help=="Adjust sound effects volume.","cached Options describes the selected row");
     }
 
-    press(0x0010);
+    press(0x0100);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Graphics),
         "R shoulder moves Options to Graphics");
@@ -442,11 +419,16 @@ int main(int argc, char** argv) {
         latest_snapshot().rows[52].text.find("< Graphics >") != std::string::npos,
         "Graphics page title is selected");
 
-    for (int index = 0; index < 6; ++index) press(0x0400);
+    for (int index = 0; index < 5; ++index) press(0x0400);
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[65].text == "PC",
         "Graphics starts with PC FMV cutscenes");
-    press(0x0100);
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check(latest_snapshot().adjusting && latest_snapshot().rows[65].text == "PC",
+        "Enter opens adjust mode without changing the selected value");
+    press(0x4000);
+    adjust_right();
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[65].text == "N64",
         "Cutscene mode changes through the menu");
@@ -466,7 +448,7 @@ int main(int argc, char** argv) {
     // Apply is row 10; compatibility is row 8. Keep the normal 4x AA preference.
     check(!sote::graphics_menu::compatibility_enabled(), "compatibility defaults off");
     press(0x0800); press(0x0800); // Up past HD Textures to compatibility.
-    press(0x8000);
+    adjust_right();
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[72].text == "On" && latest_snapshot().rows[60].text == "OFF",
         "compatibility preview shows On and disables AA");
@@ -474,7 +456,7 @@ int main(int argc, char** argv) {
         "compatibility footer explains restart");
     check(!sote::graphics_menu::compatibility_enabled(), "compatibility waits for Apply");
     for(int i=0;i<4;++i) press(0x0800);
-    press(0x0100); // Attempt to edit AA while compatibility preview is on.
+    adjust_right(); // Attempt to edit AA while compatibility preview is on.
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[60].text == "OFF", "AA is locked while compatibility is on");
     for(int i=0;i<6;++i) press(0x0400);
@@ -490,8 +472,8 @@ int main(int argc, char** argv) {
     // Re-enter Graphics after initialize resets navigation state.
     memory.native_options();sote_capture_native_options(memory.bytes.data());
     press(0x0010);
-    for(int i=0;i<8;++i)press(0x0400);
-    press(0x8000);
+    for(int i=0;i<7;++i)press(0x0400);
+    adjust_right();
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[72].text == "Off" && latest_snapshot().rows[60].text == "4x MSAA",
         "disabling compatibility restores the normal AA preview");
@@ -502,7 +484,7 @@ int main(int argc, char** argv) {
 
     check(sote::graphics_menu::hd_textures_enabled(), "existing settings default to HD textures On");
     press(0x0800); // Apply -> HD Textures.
-    press(0x8000);
+    adjust_right();
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[73].text == "HD Textures" && latest_snapshot().rows[74].text == "Off",
         "HD texture row previews original textures");
@@ -522,7 +504,7 @@ int main(int argc, char** argv) {
     sote::graphics_menu::sync_from_renderer(normal);
     check(!sote::graphics_menu::hd_textures_enabled(), "saved Off survives restart and renderer sync");
     memory.native_options();sote_capture_native_options(memory.bytes.data());press(0x0010);
-    for(int i=0;i<9;++i)press(0x0400);
+    for(int i=0;i<8;++i)press(0x0400);
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[74].text == "Off", "reopened Graphics shows the saved texture choice");
     press(0x0400);press(0x0400);press(0x8000); // Reset.
@@ -536,13 +518,12 @@ int main(int argc, char** argv) {
     press(0x0010);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Schemes),
-        "R shoulder moves Graphics to Controls");
+        "Right trigger moves Graphics to Controls");
     check(
         latest_snapshot().rows[52].text.find("< Controls >") != std::string::npos,
         "Controls page title is selected");
 
-    press(0x0400);
-    press(0x0100);
+    adjust_right();
     sote_capture_native_options(memory.bytes.data());
     check(
         latest_snapshot().rows[54].text == "Modern",
@@ -550,7 +531,7 @@ int main(int argc, char** argv) {
     const auto before_slider = latest_snapshot().rows[58].text;
     press(0x0400);
     press(0x0400);
-    press(0x0100);
+    adjust_right();
     sote_capture_native_options(memory.bytes.data());
     check(
         latest_snapshot().rows[58].text != before_slider,
@@ -564,8 +545,8 @@ int main(int argc, char** argv) {
     check(latest_snapshot().rows[52].text.find("< Cheats >") != std::string::npos,
         "Controls advances to Cheats");
     for (int row=1;row<=9;++row) {
-        press(0x0400);
-        press(0x0100);
+        if (row > 1) press(0x0400);
+        adjust_right();
         sote_capture_native_options(memory.bytes.data());
         check(!latest_snapshot().rows[53+(row-1)*2].text.empty(),"cheat row has a label");
     }
@@ -574,33 +555,62 @@ int main(int argc, char** argv) {
     check(cheats_text.find("infinite_health = 1")!=std::string::npos &&
         cheats_text.find("rapid_fire_rate = 5")!=std::string::npos,
         "Cheats page persists toggles and rate");
-    press(0x0010);
-    pump_transition(memory, options_focused, native_options);
-    check(!native_options && latest_screen_is(sote::menu_skin::Screen::Profiles),
-        "R shoulder wraps Cheats back to profiles");
-    check(!options_focused,
-        "return restores focus to the original profile item");
-
-    press(0x0020);
-    pump_transition(memory, options_focused, native_options);
-    check(native_options && latest_screen_is(sote::menu_skin::Screen::Schemes),
-        "L shoulder wraps profiles back to Cheats");
-    check(latest_snapshot().rows[52].text.find("< Cheats >")!=std::string::npos,"reverse entry selects Cheats");
     press(0x0020);
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[52].text.find("< Controls >")!=std::string::npos,"Cheats returns to Controls");
     press(0x0020);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Graphics),
-        "L shoulder moves Controls to Graphics");
+        "Left trigger moves Controls to Graphics");
     press(0x0020);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Options),
-        "L shoulder moves Graphics to Options");
-    press(0x0020);
-    pump_transition(memory, options_focused, native_options);
-    check(!native_options && latest_screen_is(sote::menu_skin::Screen::Profiles),
-        "L shoulder returns Options to profiles");
+        "Left trigger moves Graphics to Options");
+
+    {
+        Memory title;
+        title.profiles(false);
+        title.half(0x8013ce0e, 2);
+        title.half(0x800dd748, 0xffff);
+        title.half(0x800dd744, 0);
+        for (int row = 0; row < 80; ++row)
+            title.half(0x80111110 + row * 4, 0xfc18);
+        sote_capture_menu(title.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Title), "native title publishes two-choice menu");
+        press(0x0400);
+        sote_capture_menu(title.bytes.data());
+        check(latest_snapshot().focused_setting == 1, "Down highlights title Options");
+        press(0x8000);
+        sote_update_graphics_menu(title.bytes.data());
+        title.native_options();
+        sote_capture_native_options(title.bytes.data());
+        press(0);
+        check(latest_snapshot().title_options, "title Options retains its origin");
+        press(0x0100);
+        sote_capture_native_options(title.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Graphics), "Right advances title Options to Graphics");
+        check(latest_snapshot().rows[64].text == "Return to previous menu" &&
+            latest_snapshot().option_help.find("output resolution") != std::string::npos,
+            "Graphics starts on Resolution and uses the common footer");
+        press(0x0200);
+        sote_capture_native_options(title.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Options), "Left returns to title game settings");
+        press(0x0100);
+        sote_capture_native_options(title.bytes.data());
+        press(0x0800);
+        press(0x8000);
+        title.profiles(false);
+        for (int row = 0; row < 80; ++row)
+            title.half(0x80111110 + row * 4, 0xfc18);
+        sote_update_graphics_menu(title.bytes.data());
+        sote_capture_menu(title.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Title) &&
+            latest_snapshot().focused_setting == 1,
+            "Graphics footer returns directly to the title with Options highlighted");
+        press(0);
+        sote::graphics_menu::observe_other_screen();
+        sote_capture_native_options(memory.bytes.data());
+    }
 
     Memory pause_memory;
     pause_memory.word(0x800d0948, 1);
@@ -884,12 +894,11 @@ int main(int argc, char** argv) {
         { std::ofstream options(scratch / "sote_options.json"); options << "{\"pcCutscenes\":true}"; }
         sote::graphics_menu::initialize(scratch);
         check(!sote::graphics_menu::pc_cutscenes_enabled(),"missing SAN files override saved PC preference");
-        Memory absent;bool focus=false,native=false;absent.profiles(focus);
-        sote_capture_menu(absent.bytes.data());
-        press(0x0010);pump_transition(absent,focus,native);
+        Memory absent; absent.native_options();
+        sote_capture_native_options(absent.bytes.data());
         press(0x0010);sote_capture_native_options(absent.bytes.data());
-        for(int i=0;i<6;++i)press(0x0400);
-        press(0x0100);press(0x8000);
+        for(int i=0;i<5;++i)press(0x0400);
+        adjust_right();
         sote_capture_native_options(absent.bytes.data());
         check(latest_snapshot().rows[65].text=="N64" && !latest_snapshot().pc_cutscenes_available,
             "missing files lock N64 against directional and confirm input");
@@ -912,26 +921,29 @@ int main(int argc, char** argv) {
         options.native_options();
         sote::graphics_menu::observe_other_screen(true);
         sote_capture_native_options(options.bytes.data());
-        check(latest_snapshot().rows[52].text=="Return to Pause Menu",
-            "in-game Options names its Pause destination");
-        sote::graphics_menu::observe_main_menu(0);
+        check(latest_snapshot().rows[52].text == "Return to previous menu",
+            "pause Options uses the common return label");
+        options.half(0x800dd5e0, 3);
         sote_capture_native_options(options.bytes.data());
-        check(latest_snapshot().rows[52].text=="Return to Main Menu",
-            "front-end Options names its Main Menu destination");
-        options.half(0x800dd5e0,3);
+        press(0x4000);
+        uint16_t buttons = 0;
+        float x = 0, y = 0;
+        sote::graphics_menu::filter_input(&buttons, &x, &y);
+        check(buttons == 0 && x == 0 && y == 0,
+            "Back waits for guest focus without sending navigation pulses");
         sote_capture_native_options(options.bytes.data());
-        press(0x0020);
-        uint16_t buttons=0;float x=0,y=0;
-        sote::graphics_menu::filter_input(&buttons,&x,&y);
-        check((buttons&0x0800) && !(buttons&0xc000),
-            "return navigates toward Return without adjusting an option");
-        sote::graphics_menu::observe_native_options(0);
-        buttons=0;sote::graphics_menu::filter_input(&buttons,&x,&y);
-        buttons=0;sote::graphics_menu::filter_input(&buttons,&x,&y);
-        check(buttons==0x8000,"return activates native Return row with A");
-        sote::graphics_menu::observe_other_screen();
-        buttons=0x1000;sote::graphics_menu::filter_input(&buttons,&x,&y);
-        check(buttons==0x1000,"arrival at Pause releases transition input immediately");
+        buttons = 0;
+        sote::graphics_menu::filter_input(&buttons, &x, &y);
+        buttons = 0;
+        sote::graphics_menu::filter_input(&buttons, &x, &y);
+        check(buttons == 0x8000, "Back activates the native Return row");
+        options.word(0x800dd5e4, 0);
+        options.word(0x800d0948, 1);
+        options.half(0x800d0944, 0);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Pause) &&
+            latest_snapshot().focused_setting == 1, "Pause returns with Options highlighted");
+
     }
     {
         sote::graphics_menu::initialize(scratch);
@@ -949,6 +961,7 @@ int main(int argc, char** argv) {
         press(0x0010);
         sote_capture_native_options(options.bytes.data());
         press(0x0800);
+        press(0x0800);
         sote_capture_native_options(options.bytes.data());
         check(latest_snapshot().rows[77].text == "Edit Bindings", "paused Controls exposes bindings directly");
         press(0x8000);
@@ -963,6 +976,104 @@ int main(int argc, char** argv) {
         input.keys[27]=1;
         sote::control_bindings::handle_menu(input,true,101,true);
         check(!sote::control_bindings::editor_view().editing, "Escape leaves direct binding editor");
+        sote_capture_native_options(options.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Schemes) &&
+            latest_snapshot().focused_setting == 4 + sote::controls_menu::tuning_menu_row_count(),
+            "leaving paused binding editor returns to Controls with Edit Bindings focused");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        Memory memory;
+        memory.word(0x800d0948, 1);
+        memory.half(0x800d0944, 0);
+        sote_capture_native_options(memory.bytes.data());
+        for (int expected : {1, 2, 0}) {
+            press(0x0400);
+            sote_capture_native_options(memory.bytes.data());
+            check(latest_snapshot().focused_setting == expected,
+                "a single Down tap changes Pause selection, including wrap");
+        }
+        press(0x0800);
+        sote_capture_native_options(memory.bytes.data());
+        check(latest_snapshot().focused_setting == 2, "Pause Up wraps to Quit");
+        memory.word(0x800d094c, 1);
+        memory.half(0x800d0944, 1);
+        sote_capture_native_options(memory.bytes.data());
+        check(latest_snapshot().pause_quit_confirmation &&
+            latest_snapshot().rows[71].text == "Cancel" &&
+            latest_snapshot().rows[72].text == "Quit to title",
+            "Quit confirmation displays its real actions instead of Options/Resume");
+        press(0x0400);
+        sote_capture_native_options(memory.bytes.data());
+        check(latest_snapshot().focused_setting == 2, "Quit confirmation selects Quit");
+        press(0x0400);
+        sote_capture_native_options(memory.bytes.data());
+        check(latest_snapshot().focused_setting == 1, "Quit confirmation wraps to Cancel");
+        press(0x4000);
+        sote_capture_native_options(memory.bytes.data());
+        check(!latest_snapshot().pause_quit_confirmation &&
+            latest_snapshot().focused_setting == 2,
+            "Back cancels Quit and restores its parent selection without resuming");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        Memory memory;
+        memory.profiles(false);
+        memory.half(0x8013ce0e, 2);
+        memory.half(0x800dd744, 2);
+        memory.half(0x800dd748, 0xffff);
+        sote_update_graphics_menu(memory.bytes.data());
+        sote_capture_menu(memory.bytes.data());
+        press(0x4000);
+        sote_update_graphics_menu(memory.bytes.data());
+        sote_capture_menu(memory.bytes.data());
+        press(0);
+        check(sote::menu_skin::read_guest(memory.bytes.data(), memory.bytes.size()).screen ==
+            sote::menu_skin::Screen::Profiles,
+            "Back from level selection returns to the save picker");
+        press(0x0100);
+        sote_update_graphics_menu(memory.bytes.data());
+        check(memory.bytes[(0x000dd751U)^3U] == 1,
+            "Right reaches Rename without a separate shoulder-button action");
+        press(0x0100);
+        sote_update_graphics_menu(memory.bytes.data());
+        check(memory.bytes[(0x000dd751U)^3U] == 2, "Right advances to Clear");
+        memory.half(0x800dd750, 3);
+        sote_update_graphics_menu(memory.bytes.data());
+        press(0x4000);
+        sote_update_graphics_menu(memory.bytes.data());
+        check(memory.bytes[(0x000dd751U)^3U] == 2, "Back cancels Clear confirmation");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        Memory memory;
+        memory.native_options();
+        memory.half(0x800dd5e0, 1);
+        sote_capture_native_options(memory.bytes.data());
+        for (int expected : {2, 3, 4, 5, 6, 0, 1}) {
+            press(0x0400);
+            sote_capture_native_options(memory.bytes.data());
+            check(latest_snapshot().focused_setting == expected,
+                "native Options advances once for a short Down tap and wraps");
+        }
+        press(0x0800);
+        sote_capture_native_options(memory.bytes.data());
+        check(latest_snapshot().focused_setting == 0,
+            "native Options Up reaches the return footer");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        Memory memory;
+        memory.word(0x800d0948, 1);
+        memory.word(0x800d094c, 1);
+        memory.half(0x800d0944, 2);
+        sote_capture_native_options(memory.bytes.data());
+        press(0x8000);
+        memory.half(0x8013ce0e, 2);
+        memory.half(0x800dd744, 2);
+        sote_update_graphics_menu(memory.bytes.data());
+        check(memory.bytes[0x000dd745U ^ 3U] == 0,
+            "confirmed Quit selects the title instead of re-entering the level card");
     }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

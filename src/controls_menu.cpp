@@ -681,7 +681,7 @@ bool tuning_menu_row(int index, TuningMenuRow& row) {
     return true;
 }
 
-void adjust_tuning_menu_row(int index, int direction) {
+void adjust_tuning_menu_row(int index, int direction, bool cycle) {
     std::lock_guard lock{state.mutex};
     reload_tuning_if_changed_locked();
     if (index < 0 || index >= tuning_menu_row_count() || direction == 0) {
@@ -689,6 +689,10 @@ void adjust_tuning_menu_row(int index, int direction) {
     }
     const TuningRowSpec& spec = tuning_rows[index];
     const float current = get_tuning_field(state.tuning, spec.field);
+    if (cycle && direction > 0 && current >= spec.maximum) {
+        set_tuning_field(state.tuning, spec.field, spec.minimum);
+        return;
+    }
     const float adjusted = std::clamp(
         current + spec.step * static_cast<float>(direction),
         spec.minimum,

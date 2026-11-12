@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$Version = "0.9.7",
+    [string]$Version = "0.9.8",
     [string]$OutputDirectory = ".\build\release",
     [string]$TexturePackRoot = ".\SotE_Recompiled\textures",
     [string]$CrtDirectory = ""
