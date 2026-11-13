@@ -49,53 +49,6 @@ std::string preset_name(const Guest& g) {
     if (index >= 22) return {};
     return plain_text(g.string(g.word(0x800DD61CU + index * 4)));
 }
-Image thumbnail(const Guest& g) {
-    const uint32_t table = g.word(0x8013CE2CU);
-    if (!g.valid(table, 320)) return {};
-    // Rows 40..49 are the ten level thumbnails. The carousel moves adjacent
-    // cards through y=-60/70/200 and changes their alpha. Select the visible
-    // card nearest the native center, not the first loaded sprite (Hoth).
-    int card = -1, distance = 10000;
-    for (unsigned i = 40; i < 50; ++i) {
-        const int x = g.signed_half(0x80111110U + i * 4);
-        const int y = g.signed_half(0x80111112U + i * 4);
-        if (x == -1000 || !(g.word(0x80111250U + i * 4) & 255)) continue;
-        const int d = std::abs(y - 70);
-        if (d < distance) { distance = d; card = int(i); }
-    }
-    if (card < 0) return {};
-    const uint32_t s = g.word(table + unsigned(card) * 4);
-    if (!g.valid(s, 40)) return {};
-    const unsigned w = g.half(s + 4), h = g.half(s + 6);
-    const unsigned count = g.half(s + 28);
-    const uint32_t palette = g.word(s + 24), tiles = g.word(s + 36);
-    if (w != 160 || h != 120 || count != 12 || g.byte(s + 32) != 2 ||
-        g.byte(s + 33) != 1 || !g.valid(palette, 512) || !g.valid(tiles, count * 8)) return {};
-    Image out{w, h, std::vector<uint8_t>(size_t(w) * h * 4)};
-    unsigned ox = 0, oy = 0, row_height = 0;
-    for (unsigned i = 0; i < count; ++i) {
-        const uint32_t t = tiles + i * 8;
-        const unsigned tw = g.half(t), th = g.half(t + 2);
-        const uint32_t p = g.word(t + 4);
-        if (!tw || tw % 8 || !th || tw > w || th > h || ox + tw > w ||
-            oy + th > h || !g.valid(p, size_t(tw) * th)) return {};
-        if (ox && row_height != th) return {};
-        row_height = th;
-        for (unsigned y = 0; y < th; ++y) for (unsigned x = 0; x < tw; ++x) {
-            // These CI8 sprite tiles are pre-swapped for RDP odd scanlines.
-            const unsigned index = (y * tw + x) ^ ((y & 1) ? 4U : 0U);
-            const uint16_t c = g.half(palette + g.byte(p + index) * 2U);
-            const size_t q = (size_t(oy + y) * w + ox + x) * 4;
-            out.rgba[q] = uint8_t(((c >> 11) & 31) * 255 / 31);
-            out.rgba[q + 1] = uint8_t(((c >> 6) & 31) * 255 / 31);
-            out.rgba[q + 2] = uint8_t(((c >> 1) & 31) * 255 / 31);
-            out.rgba[q + 3] = (c & 1) ? 255 : 0;
-        }
-        ox += tw;
-        if (ox == w) { ox = 0; oy += row_height; }
-    }
-    return oy == h && ox == 0 ? out : Image{};
-}
 } // namespace
 
 std::string plain_text(const std::string& raw) {
@@ -195,11 +148,6 @@ Snapshot read_guest(const uint8_t* rdram, size_t size) {
     if (out.screen != Screen::Native) {
         out.original = read_original_font(rdram, size);
         if (!out.original || !out.original->valid) out.screen = Screen::Native;
-        if (out.screen == Screen::Summary) {
-            out.thumbnail = thumbnail(g);
-            // A broken/unknown sprite should not erase a useful native card.
-            if (!out.thumbnail.valid()) out.screen = Screen::Native;
-        }
     }
     return out;
 }

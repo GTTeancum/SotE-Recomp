@@ -191,9 +191,15 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
         }
         const auto movie_frame = san_movies::latest_frame();
         phase.set(2);
-        const auto snapshot = menu_skin::latest();
+        const auto menu_state = menu_skin::latest();
+        // The level carousel must retain its retail animation, availability
+        // tint, captions and RT64 texture replacements. Only substitute glyphs.
+        // Keep its snapshot available to navigation, but never cover it with
+        // the static host menu surface.
+        const bool native_summary = menu_state && menu_state->screen == menu_skin::Screen::Summary;
+        const auto snapshot = native_summary ? nullptr : menu_state;
         const auto native = movie_frame.valid() ? nullptr : menu_skin::latest_native_text();
-        const bool reticle = !movie_frame.valid() && !snapshot &&
+        const bool reticle = !movie_frame.valid() && !menu_state &&
             modern_controls::reticle_visible();
 
         auto& r = *resources;
@@ -207,7 +213,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
         // The retail pause renderer alternates clears and partial display lists.
         // Retain the last complete gameplay presentation, before host UI, and
         // blend the translucent pause surface over that stable image.
-        if (!movie_frame.valid() && !snapshot && gameplay && output) {
+        if (!movie_frame.valid() && !menu_state && gameplay && output) {
             if (!r.scene || r.scene_width != fw || r.scene_height != fh) {
                 r.scene = r.device->createTexture(RenderTextureDesc::Texture2D(fw, fh, 1, RenderFormat::B8G8R8A8_UNORM));
                 r.scene_descriptor = std::make_unique<TextureSet>(r.device);
@@ -221,7 +227,7 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
             list->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(output, RenderTextureLayout::COLOR_WRITE));
             list->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(r.scene.get(), RenderTextureLayout::SHADER_READ));
             r.scene_valid = true;
-        } else if (movie_frame.valid() || (snapshot && (snapshot->screen == menu_skin::Screen::Profiles || snapshot->screen == menu_skin::Screen::Summary))) {
+        } else if (movie_frame.valid() || native_summary || (snapshot && snapshot->screen == menu_skin::Screen::Profiles)) {
             r.scene_valid = false;
         }
         if (paused && r.scene_valid) {

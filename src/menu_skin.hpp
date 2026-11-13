@@ -38,7 +38,6 @@ struct Snapshot {
     Screen screen = Screen::Native;
     std::array<Row, 80> rows{};
     std::shared_ptr<const OriginalFont> original;
-    Image thumbnail;
     std::vector<Binding> on_foot, bike;
     std::array<std::vector<Binding>, 5> native_controls{};
     std::string preset;

@@ -363,22 +363,6 @@ void profiles(Canvas& c, const Snapshot& s) {
     c.text("Up/Down: select save   Left/Right: Rename / Clear   Esc/B: back",
         "profile.hint", 480, 478, 21, gold, 850, 1);
 }
-void summary(Canvas& c, const Snapshot& s) {
-    c.stars(); c.rect(106, 31, 748, 2, 0x149CB9FF); c.rect(202, 96, 556, 2, 0x149CB9FF);
-    c.text(s.rows[52].text, "summary.player", 480, 51, 32, 0x4FD4E8FF, 740, 1);
-    c.picture(s.thumbnail, 98, 139, 440, 330);
-    c.border(95, 136, 446, 336, 0xC9A24AFF, 3);
-    for (int i = 0; i < 80; ++i) c.rect(98, 389.0f + i, 440, 1, uint32_t(i * 220 / 80));
-    const bool multiline = s.rows[50].text.find('\n') != std::string::npos;
-    c.text(s.rows[50].text, "summary.level", 318, multiline ? 409.0f : 437.0f, 25, 0xE7C564FF, 408, 1);
-    c.text(s.rows[55].text, "summary.difficulty", 318, 491, 23, 0xC5A04BFF, 475, 1);
-    c.text(s.rows[56].text, "summary.label.lives", 610, 204, 26, 0x3F8F74FF, 160);
-    c.text(s.rows[57].text, "summary.value.lives", 851, 204, 28, 0x4DDD5EFF, 83, 2);
-    c.text(s.rows[58].text, "summary.label.time", 610, 273, 26, 0x3F8F74FF, 250);
-    c.text(s.rows[59].text, "summary.value.time", 610, 310, 30, 0x4DDD5EFF, 265);
-    c.text(s.rows[60].text, "summary.label.challenge", 610, 376, 26, 0x3F8F74FF, 274);
-    c.text(s.rows[61].text, "summary.value.challenge", 610, 413, 30, 0x4DDD5EFF, 265);
-}
 void menu_background(Canvas& c, const Snapshot& s) {
     if (!s.pause_background && s.screen != Screen::Pause) { c.stars(); return; }
     // 75% black, including aspect-ratio margins; shared by Pause and subpages.
@@ -863,14 +847,13 @@ void composite_native_text(Image& image,const NativeText& text) {
     }
 }
 Image render(const Snapshot& snapshot, unsigned width, unsigned height) {
-    if (snapshot.screen == Screen::Native || !snapshot.original || !snapshot.original->valid ||
+    if (snapshot.screen == Screen::Native || snapshot.screen == Screen::Summary || !snapshot.original || !snapshot.original->valid ||
         width < 320 || height < 180 || width > 3840 || height > 2160) return {};
     std::lock_guard lock(font_mutex);
     Canvas c(width, height, *snapshot.original, snapshot.pause_background || snapshot.screen == Screen::Pause || snapshot.screen == Screen::Title);
     switch (snapshot.screen) {
         case Screen::Title: title(c, snapshot); break;
         case Screen::Profiles: profiles(c, snapshot); break;
-        case Screen::Summary: summary(c, snapshot); break;
         case Screen::Pause: pause(c, snapshot); break;
         case Screen::Options: options(c, snapshot); break;
         case Screen::Controls: controls(c, snapshot); break;

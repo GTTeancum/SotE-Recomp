@@ -34,7 +34,6 @@ uint64_t fingerprint(const Snapshot& s) {
     }
     for (const auto& b : s.on_foot) { string(b.action); string(b.pad); string(b.keyboard); }
     for (const auto& b : s.bike) { string(b.action); string(b.pad); string(b.keyboard); }
-    for (uint8_t v : s.thumbnail.rgba) byte(v);
     string(s.preset);
     string(s.option_help);
     byte(s.compatibility); byte(s.pc_cutscenes_available); byte(s.pause_background); byte(s.title_options); byte(s.adjusting);
@@ -163,6 +162,17 @@ void capture(const uint8_t* rdram) {
         }
         if (snapshot.title_options)
             control_bindings::observe_menu(rdram, 0x800000);
+        if (snapshot.screen == Screen::Summary && std::getenv("SOTE_TRACE_LEVEL_MENU")) {
+            static uint64_t frame = 0;
+            if (++frame % 10 == 0) {
+                std::printf("[sote][level-menu]");
+                for (int i = 40; i < 62; ++i) {
+                    const auto& row = snapshot.rows[i];
+                    std::printf(" row%d=(%d,%d,%08X,%s)", i, row.x, row.y, row.color, row.text.c_str());
+                }
+                std::printf("\n");
+            }
+        }
         phase.set(4);
         publish_snapshot(std::move(snapshot));
     } catch (...) { failed_capture(); }

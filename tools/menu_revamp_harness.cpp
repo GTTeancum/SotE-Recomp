@@ -1075,6 +1075,25 @@ int main(int argc, char** argv) {
         check(memory.bytes[0x000dd745U ^ 3U] == 0,
             "confirmed Quit selects the title instead of re-entering the level card");
     }
+    {
+        Memory memory;
+        constexpr uint32_t table = 0x80230000;
+        memory.word(0x8013ce30, table);
+        for (unsigned i = 0; i < 80; ++i) memory.half(0x80111110 + i * 4, -1000);
+        for (auto [row, label] : std::vector<std::pair<unsigned, const char*>>{
+                 {52, "Player: TEST"}, {55, "Difficulty Setting: Medium"},
+                 {56, "Lives:"}, {60, "Challenge Pts"}}) {
+            memory.word(table + row * 4, memory.text(label));
+            memory.half(0x80111110 + row * 4, 160);
+        }
+        const auto before = memory.bytes;
+        auto summary = sote::menu_skin::read_guest(memory.bytes.data(), memory.bytes.size());
+        check(summary.screen == sote::menu_skin::Screen::Summary,
+            "level selector identified without extracting a low-resolution thumbnail");
+        check(!sote::menu_skin::render(summary).valid(),
+            "level selector cannot replace native animated and locked-level visuals");
+        check(memory.bytes == before, "level selector capture preserves guest state");
+    }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";
     return failures == 0 ? 0 : 1;

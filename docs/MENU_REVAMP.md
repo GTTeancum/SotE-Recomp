@@ -1,5 +1,24 @@
 # Live menu revamp â€” source integration / Windows test candidate
 
+## November 13 — native level carousel (#28)
+
+Level selection now keeps the retail renderer instead of replacing it with a
+static host summary. The native scrolling/fading cards, level captions and
+row 51's `Access Denied` indicator remain visible. Thumbnails pass through
+RT64's normal HD replacement path instead of a separate 160x120 CPU decoder.
+Modern mode replaces only the native text glyphs; Original keeps retail glyphs.
+The Summary snapshot remains available for navigation and cannot produce an
+opaque host canvas. Pause scene caching and the gameplay reticle stay disabled
+on this menu.
+
+Validation: fresh Windows Release build, all eight CTest suites; four isolated
+keyboard/controller scenarios with 53 navigation assertions, including all ten
+entries in both directions, Back/re-entry and rejection of a locked level.
+Native captures were inspected in both fonts with locked and unlocked states;
+logs confirm HD map-icon replacements and moving carousel coordinates/alpha.
+Unlocked testing used diagnostic completion flags in a private save copy.
+Audio was muted. Evidence: `.local/issue28/validation.json`.
+
 ## November 3 navigation correction
 
 Back from the level card now returns to the selected save exactly once. The

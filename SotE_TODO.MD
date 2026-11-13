@@ -48,6 +48,12 @@ The reporter confirmed rebinding works on 0.9.7 and still reported erratic Back 
 - [ ] Track the requested NXDK port for 0.9.9. Requirements are 30 FPS, textures up to 512×512, 4:3 480i and 16:9 480p/720p, with support for PC SAN movies and OGG audio upgrades.
   November 12: Xbox work was rolled back from the active PC/Linux tree at the user's request. Earlier work remains in Git history; the port is not part of 0.9.8.
 
+### [#28 - Level-select animation and missing labels](https://github.com/GTTeancum/SotE-Recomp/issues/28)
+
+- [ ] User review: restored the native animated carousel, HD thumbnail rendering,
+  level captions and `Access Denied` indicator. Both font modes and keyboard/controller
+  navigation verified in the local November 13 build. Not yet published.
+
 ## Working boundaries
 
 - Preserve the dirty main-repository and nested-submodule changes during work;

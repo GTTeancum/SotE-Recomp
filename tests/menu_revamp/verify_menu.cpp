@@ -68,8 +68,8 @@ int main(int argc,char**argv){
  capture(m.b.data());auto live=latest();check(live&&live->screen==Screen::Profiles,"published profile");auto serial=live?live->serial:0;capture(m.b.data());check(latest()&&latest()->serial==serial,"static snapshot upload cache");
  std::this_thread::sleep_for(std::chrono::milliseconds(170));check(!latest(),"stale snapshot timeout");
  Memory summary;summary.row(52,"Player: TEST");summary.row(55,"Difficulty Setting: Medium");summary.row(56,"Lives:");summary.row(57,"4");summary.row(58,"Time");summary.row(59,"0:01:23");summary.row(60,"Challenge Pts");summary.row(61,"8 of 12");summary.row(50,"Selected Level");summary.thumb(40,0);summary.thumb(45,1);summary.half(0x80111112+40*4,200);
- auto sum=summary.snapshot();check(sum.screen==Screen::Summary&&sum.thumbnail.valid(),"summary dynamic thumbnail");check(sum.thumbnail.valid()&&sum.thumbnail.rgba[1]==255&&sum.thumbnail.rgba[0]==0,"selected carousel thumbnail, not Hoth");check(render(sum).valid(),"summary raster");
- summary.half(0x80111110+45*4,-1000);sum=summary.snapshot();check(sum.thumbnail.valid()&&sum.thumbnail.rgba[0]==255,"carousel follows another visible card");
+ auto sum=summary.snapshot();check(sum.screen==Screen::Summary,"summary remains identifiable for navigation");check(!render(sum).valid(),"native carousel is not covered by host raster");
+ summary.half(0x80111110+45*4,-1000);sum=summary.snapshot();check(sum.screen==Screen::Summary,"carousel identification independent of decoded thumbnail");
  Memory options;options.native_options();
  for(int player=0;player<4;player++)for(int selection=0;selection<=6;selection++){
   options.byte(0x8018bbfd,player);options.half(0x800dd5e0,selection);
