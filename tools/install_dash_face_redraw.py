@@ -23,6 +23,8 @@ PREVIOUS_SIDE_REDRAW = '6aa946bb2e3349404561aec17f8c6f9132289e3af92b586c3ef937f0
 FIRST_JAW_PASS = '9d9f45e1cf7a6509434cbd7ab5b8c08e0a8ddf9a6e251e9f2fba7181d84c10ff'
 SEAMLESS_JAW_PASS = 'e0c26502fd88bfb1b7d025b5ff031928b4dde1662e720202d4071d138bfa2fae'
 PREVIOUS_FRONT_REDRAW = '14aa57d8426c0a6eac6a0f91e7e8e5151714672fdcd21009bf9be0df77caa7ca'
+FAINT_FRONT_STUBBLE = '104770c27042f861449988873d1443bd75e370dda42855afa6fa31171e2c65c4'
+FAINT_SIDE_STUBBLE = '92833a837d0ad887e73921facc84a8c9de3c8863f7543c61c3c360d05a599893'
 ARM = 'sote_2FB135BC_0_2_rgb.png'
 SKIN = 'sote_AD69E57F_0_2_rgb.png'
 
@@ -32,12 +34,18 @@ def digest(path):
 
 
 def stubble(im,mask):
-    """Strengthen existing fine dark hairs, not a new solid beard silhouette."""
+    """Add readable short stubble at texture resolution, including its filtered tone."""
     rgb=np.asarray(im.convert('RGB'),dtype=float)
     soft=np.asarray(im.convert('RGB').filter(ImageFilter.GaussianBlur(.8)),dtype=float)
     dark=np.maximum(soft.mean(axis=2)-rgb.mean(axis=2),0)
     strength=np.asarray(mask,dtype=float)/255
-    delta=strength*(2.0+np.minimum(dark*1.8,16))
+    # The previous 2-level lift of fine detail disappeared under RT64's linear
+    # filtering. Short follicle marks plus a mild broad shadow survive that
+    # reduction; the soft mask avoids the original hard, solid beard patch.
+    rng=np.random.default_rng(64017)
+    follicles=(rng.random(rgb.shape[:2])<.23).astype('uint8')*255
+    follicles=np.asarray(Image.fromarray(follicles).filter(ImageFilter.GaussianBlur(.45)),dtype=float)/255
+    delta=strength*(12.0+np.minimum(dark*2.4,22)+follicles*25)
     return Image.fromarray(np.rint(np.clip(rgb-delta[...,None],0,255)).astype('uint8'))
 
 
@@ -175,8 +183,10 @@ def main():
                     accepted.add(PREVIOUS_SIDE_REDRAW)
                     accepted.add(FIRST_JAW_PASS)
                     accepted.add(SEAMLESS_JAW_PASS)
+                    accepted.add(FAINT_SIDE_STUBBLE)
                 if name == FACE:
                     accepted.add(PREVIOUS_FRONT_REDRAW)
+                    accepted.add(FAINT_FRONT_STUBBLE)
                 if digest(pack/row['file']) not in accepted:
                     raise ValueError('Independent edit at '+str(pack/row['file']))
             b = backup/name

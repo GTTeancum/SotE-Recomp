@@ -120,3 +120,19 @@ mirrored-preview symmetry, repeatability, restore behavior, and unchanged
 non-target pack files. All seven edited textures and the face comparison were
 visually inspected. In-game lighting, model seams, and appearance in motion
 remain unverified; no desktop interaction or game build was performed.
+
+
+## Visible stubble follow-up
+
+The earlier stubble was too faint after game filtering. The redraw installer
+now adds stronger masked beard shadow and deterministic fine follicles to the
+front and side jaw textures. It preserves the mouth exclusion and feathered
+mask edges. The upper face, eyes, hair, alpha, and matched arm textures are
+unchanged; pixel checks are recorded in
+`.local/dash-face-rebuild/stubble-validation.json`.
+
+The native `game-proof/visible-stubble/frames/present_3600.png` capture was
+visually inspected: chin and mouth stubble remains visible in Echo Base under
+native lighting. `face-crop.png` is an unscaled crop of that frame. This is a
+single-angle appearance check, not an animation review. The overlay ZIP and
+both local texture-pack installations include this follow-up.
