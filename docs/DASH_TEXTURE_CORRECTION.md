@@ -173,3 +173,25 @@ The final native frame was visually inspected: the upper cheek is clearer
 and the beard boundary is softer. The low-poly jaw/neck color boundary remains
 visible; a zero mask at UV edges does not remove native geometry or lighting.
 The final crop is unscaled and has no color or lighting edits.
+
+
+## Green eyes and native skin audit
+
+Front and side iris recoloring preserves source luminance, excludes warm eyelid
+pixels, and protects the dark pupil and bright catchlight. The front still uses
+one mirrored half. `green-eye-validation.json` confirms only 260 front and 122
+side iris pixels changed; skin, stubble, hair, arms and alpha are unchanged.
+Both installed packs and the overlay ZIP contain the green irises.
+
+Native Echo Base captures: `green-eyes-skin-lit` (-35 degrees, distance 2.4)
+and `green-eyes-skin-shade` (+35 degrees, distance 2.8). This audit checks actual
+rendered appearance, not only source texture medians. The lit view shows green
+eyes, a neck that reads paler/flatter than the face, and a sharp upper-arm to
+forearm tone boundary. Consequently, the skin match must not be marked passed.
+These eye edits intentionally do not change skin while assessing the mismatch.
+The shaded view also retains the upper-arm/forearm discontinuity. The neck
+is less conspicuous in shade but still flatter than the head. Lighting changes
+the severity; these views do not isolate texture color from vertex lighting or
+material differences, so the root cause remains unverified. The audit fails
+visual consistency and does not claim a skin correction. Both full frames were
+inspected. The lit-view crop preserves native pixels without retouching.

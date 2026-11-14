@@ -31,6 +31,8 @@ SHAPED_FRONT_STUBBLE = '3b63cdd1d5ffb601646a93919370457a2f884c5722b2b32332fb3951
 SHAPED_SIDE_STUBBLE = '02bb55c52e6d9660080713ee677efd03ec4e48f8bc914ba7fe3a68071b354049'
 CHEEK_FRONT_STUBBLE = '28f0125b3ed8ecea58ec8ed503f53f54dd24b96edc914acc08a22fa0943b6a55'
 CHEEK_SIDE_STUBBLE = '2abfb808233cb819e3e9cf5d59bb3465dcb890cf798e175a14ae1b66deb52912'
+APPROVED_FRONT_STUBBLE = '5a3b3e6163734896c905b9f1450afdb834163e2fbe99a7cbc9ba5be43298a517'
+APPROVED_SIDE_STUBBLE = '4cf06175ec518ddb6fd080148f9fdcf04acabc7f27e4b8ef4ed110d42b81536b'
 ARM = 'sote_2FB135BC_0_2_rgb.png'
 SKIN = 'sote_AD69E57F_0_2_rgb.png'
 
@@ -71,6 +73,22 @@ def jaw_fade(mask,side=False):
     return Image.fromarray(np.rint(a).astype('uint8'))
 
 
+def green_iris(im,center,radii):
+    """Recolor only the visible iris, retaining luminance, pupil and catchlight."""
+    rgb=np.asarray(im.convert('RGB'),dtype=float)
+    yy,xx=np.indices(rgb.shape[:2])
+    cx,cy=center;rx,ry=radii
+    radial=((xx-cx)/rx)**2+((yy-cy)/ry)**2
+    mask=np.clip((1-radial)*5,0,1)
+    # Exclude warm eyelid pixels, the black pupil and bright catchlights.
+    lum=rgb@np.array([.2126,.7152,.0722])
+    mask*=np.clip((1.25-rgb[:,:,0]/np.maximum(rgb[:,:,1],1))/.15,0,1)
+    mask*=np.clip((lum-28)/20,0,1)*np.clip((155-lum)/25,0,1)
+    tint=np.array([.76,1.13,.57]);tint/=tint@np.array([.2126,.7152,.0722])
+    result=rgb*(1-mask[:,:,None])+lum[:,:,None]*tint*mask[:,:,None]
+    return Image.fromarray(np.rint(np.clip(result,0,255)).astype('uint8'))
+
+
 def match_skin(im,target,armor_columns=0):
     rgb=np.asarray(im.convert('RGB'),dtype=float)/255
     median=np.median(rgb[:,armor_columns:].reshape(-1,3),axis=0)
@@ -99,7 +117,7 @@ def prepare():
         d.polygon([(0,211),(30,223),(48,248),(80,275),(105,286),(124,257),(155,250),(191,250),(191,383),(0,383)],fill=255)
         d.ellipse((85,277,240,307),fill=0)  # Leave the lips unchanged.
         beard_mask=jaw_fade(beard_mask.filter(ImageFilter.GaussianBlur(10)))
-        face=stubble(half,beard_mask).transpose(Image.Transpose.ROTATE_180)
+        face=green_iris(stubble(half,beard_mask),(107,151),(16,10)).transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/SIDE) as base:
         upright = base.convert('RGB').transpose(Image.Transpose.ROTATE_180)
         with Image.open(WORK/'generated-side.png') as generated:
@@ -137,7 +155,7 @@ def prepare():
             (95,269),(128,293),(163,310),(191,320),(191,383),(0,383)],fill=255)
         side_beard=jaw_fade(side_beard.filter(ImageFilter.GaussianBlur(11)),side=True)
         side_upright=stubble(side_upright,side_beard,boost=1.15)
-        side = side_upright.transpose(Image.Transpose.ROTATE_180)
+        side = green_iris(side_upright,(173,162),(10,6)).transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/ARM) as base:
         arm=match_skin(base,approved_tone,134)
         assert np.array_equal(np.asarray(arm)[:,:134],np.asarray(base.convert('RGB'))[:,:134])
@@ -213,12 +231,14 @@ def main():
                     accepted.add(VISIBLE_SIDE_STUBBLE)
                     accepted.add(CHEEK_SIDE_STUBBLE)
                     accepted.add(SHAPED_SIDE_STUBBLE)
+                    accepted.add(APPROVED_SIDE_STUBBLE)
                 if name == FACE:
                     accepted.add(PREVIOUS_FRONT_REDRAW)
                     accepted.add(FAINT_FRONT_STUBBLE)
                     accepted.add(VISIBLE_FRONT_STUBBLE)
                     accepted.add(CHEEK_FRONT_STUBBLE)
                     accepted.add(SHAPED_FRONT_STUBBLE)
+                    accepted.add(APPROVED_FRONT_STUBBLE)
                 if digest(pack/row['file']) not in accepted:
                     raise ValueError('Independent edit at '+str(pack/row['file']))
             b = backup/name
