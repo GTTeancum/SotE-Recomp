@@ -153,3 +153,23 @@ are saved under `game-proof/cheek-stubble-right` and `cheek-stubble-left`.
 Both native frames were visually inspected: cheek/jaw follicles are visible
 and the crosshair is absent. The accompanying face crops are unscaled, with
 no lighting or color edits. Native polygon edges remain visible.
+
+
+## Shaped stubble with clean edges
+
+Following the user's drawn outline, the beard boundary descends from the
+sideburn into a lower cheek hollow and rises around the mouth. Both mirrored
+front UV and side UV masks are softly feathered. A smooth fade reaches zero
+added stubble at the bottom jaw UV boundary; the rear side-jaw boundary has
+its own fade to avoid retaining a dark diagonal edge. Interior density stays
+at the accepted stronger setting. Protected pixels, alpha and unchanged arms
+are recorded in `shaped-stubble-validation.json`.
+
+Native diagnostic captures retain the crosshair suppression. Initial left and
+right views are in `shaped-stubble-left` and `shaped-stubble-right`; the final,
+wider jaw fade is captured in `shaped-stubble-final`. Earlier views are
+iteration evidence, not the final installed appearance.
+The final native frame was visually inspected: the upper cheek is clearer
+and the beard boundary is softer. The low-poly jaw/neck color boundary remains
+visible; a zero mask at UV edges does not remove native geometry or lighting.
+The final crop is unscaled and has no color or lighting edits.

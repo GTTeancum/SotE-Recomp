@@ -27,6 +27,10 @@ FAINT_FRONT_STUBBLE = '104770c27042f861449988873d1443bd75e370dda42855afa6fa31171
 FAINT_SIDE_STUBBLE = '92833a837d0ad887e73921facc84a8c9de3c8863f7543c61c3c360d05a599893'
 VISIBLE_FRONT_STUBBLE = 'f29d912208bbdbe8109c59351ae740a9f710f66c64682cee3eccb1be578b75b6'
 VISIBLE_SIDE_STUBBLE = '66af6a2a0051521e717ec68d74a5e64a58c76bb333d6fee240387ffe50114c1c'
+SHAPED_FRONT_STUBBLE = '3b63cdd1d5ffb601646a93919370457a2f884c5722b2b32332fb39513983c3a7'
+SHAPED_SIDE_STUBBLE = '02bb55c52e6d9660080713ee677efd03ec4e48f8bc914ba7fe3a68071b354049'
+CHEEK_FRONT_STUBBLE = '28f0125b3ed8ecea58ec8ed503f53f54dd24b96edc914acc08a22fa0943b6a55'
+CHEEK_SIDE_STUBBLE = '2abfb808233cb819e3e9cf5d59bb3465dcb890cf798e175a14ae1b66deb52912'
 ARM = 'sote_2FB135BC_0_2_rgb.png'
 SKIN = 'sote_AD69E57F_0_2_rgb.png'
 
@@ -49,6 +53,22 @@ def stubble(im,mask,boost=1.0):
     follicles=np.asarray(Image.fromarray(follicles).filter(ImageFilter.GaussianBlur(.45)),dtype=float)/255
     delta=strength*boost*(16.0+np.minimum(dark*2.8,26)+follicles*36)
     return Image.fromarray(np.rint(np.clip(rgb-delta[...,None],0,255)).astype('uint8'))
+
+
+def jaw_fade(mask,side=False):
+    """Fade to bare skin at the lower jaw UV edge, rather than a solid cutoff."""
+    a=np.asarray(mask,dtype=float)
+    t=np.clip((mask.height-1-np.arange(mask.height))/65.0,0,1)
+    t=t*t*(3-2*t)
+    a=a*t[:,None]
+    if side:
+        # The side UV's left boundary wraps down the rear jaw silhouette.
+        # Fade that edge too; fading only the bottom misses the sloping jaw.
+        x=np.clip(np.arange(mask.width)/38.0,0,1)
+        x=x*x*(3-2*x)
+        y=np.clip((np.arange(mask.height)-210)/50.0,0,1)
+        a*=1-y[:,None]*(1-x[None,:])
+    return Image.fromarray(np.rint(a).astype('uint8'))
 
 
 def match_skin(im,target,armor_columns=0):
@@ -76,9 +96,9 @@ def prepare():
         approved_tone=np.median(np.asarray(half)[182:213,45:125].reshape(-1,3),axis=0)
         beard_mask=Image.new('L',half.size)
         d=ImageDraw.Draw(beard_mask)
-        d.polygon([(0,199),(48,210),(80,235),(125,258),(191,250),(191,383),(0,383)],fill=255)
+        d.polygon([(0,211),(30,223),(48,248),(80,275),(105,286),(124,257),(155,250),(191,250),(191,383),(0,383)],fill=255)
         d.ellipse((85,277,240,307),fill=0)  # Leave the lips unchanged.
-        beard_mask=beard_mask.filter(ImageFilter.GaussianBlur(5))
+        beard_mask=jaw_fade(beard_mask.filter(ImageFilter.GaussianBlur(10)))
         face=stubble(half,beard_mask).transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/SIDE) as base:
         upright = base.convert('RGB').transpose(Image.Transpose.ROTATE_180)
@@ -113,9 +133,9 @@ def prepare():
         assert np.array_equal(np.asarray(side_upright)[120:175,110:],
                               accepted_side[120:175,110:])
         side_beard = Image.new('L',upright.size)
-        ImageDraw.Draw(side_beard).polygon([(0,176),(70,177),(83,201),
-            (108,224),(148,245),(191,250),(191,383),(0,383)],fill=255)
-        side_beard=side_beard.filter(ImageFilter.GaussianBlur(6))
+        ImageDraw.Draw(side_beard).polygon([(0,181),(47,181),(60,202),(72,239),
+            (95,269),(128,293),(163,310),(191,320),(191,383),(0,383)],fill=255)
+        side_beard=jaw_fade(side_beard.filter(ImageFilter.GaussianBlur(11)),side=True)
         side_upright=stubble(side_upright,side_beard,boost=1.15)
         side = side_upright.transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/ARM) as base:
@@ -191,10 +211,14 @@ def main():
                     accepted.add(SEAMLESS_JAW_PASS)
                     accepted.add(FAINT_SIDE_STUBBLE)
                     accepted.add(VISIBLE_SIDE_STUBBLE)
+                    accepted.add(CHEEK_SIDE_STUBBLE)
+                    accepted.add(SHAPED_SIDE_STUBBLE)
                 if name == FACE:
                     accepted.add(PREVIOUS_FRONT_REDRAW)
                     accepted.add(FAINT_FRONT_STUBBLE)
                     accepted.add(VISIBLE_FRONT_STUBBLE)
+                    accepted.add(CHEEK_FRONT_STUBBLE)
+                    accepted.add(SHAPED_FRONT_STUBBLE)
                 if digest(pack/row['file']) not in accepted:
                     raise ValueError('Independent edit at '+str(pack/row['file']))
             b = backup/name
