@@ -10,8 +10,8 @@ recoloring the old face. The separate auburn hair correction remains in place.
 
 `tools/install_dash_face_redraw.py` prepares the generated art at the original
 texture dimensions and orientations, using only one front-face half for exact
-mirror symmetry. The side is composited only within the exposed skin patch;
-surrounding hair and background pixels outside its feathered mask are unchanged.
+mirror symmetry. The side is composited within its exposed skin and jaw patches;
+the surrounding hair outside the feathered masks is unchanged.
 Alpha and texture filenames/bindings are preserved. No mesh geometry is changed.
 
 ```powershell
@@ -19,21 +19,65 @@ python -B tools/install_dash_face_redraw.py --install
 python -B tools/install_dash_face_redraw.py --restore
 ```
 
-The redraw's `--restore` returns both faces to the previous color pass; after
+The redraw's `--restore` returns its four edited textures to the previous color pass; after
 that, the older correction tool's `--restore` can return all seven textures to
 the original pack. Independent destination edits are rejected. Preview-only
 generation is the default when neither flag is supplied.
 
 Private source art, overlay, comparisons, seven-texture ZIP and backups remain
 under `.local/dash-face-rebuild/`. `redraw-validation.json` records the install,
-repeatability and restoration checks. Only the two facial textures change in
+repeatability and restoration checks. Two facial and two skin textures change in
 each of the working and 0.9.8 packs. Prompts are saved in
 `docs/DASH_FACE_REDRAW_PROMPT.txt`. The earlier landmark projection script is a
 rejected experiment, not the installed redraw.
 
-The final mirrored and side texture previews were visually inspected. These are
-flat texture previews, not game renders. Model fit, seams, lighting and motion
-still require in-game inspection; the user canceled the earlier render check.
+## Jaw, skin matching and native proof camera
+
+The user's in-game side view exposed a dark polygon under the chin. The lower
+brown part of `36559C93` is mapped onto the side jaw, not unused background.
+A third generated image supplies continuous skin through that area, blended
+past the old oval cheek outline. The accepted front-face features and auburn
+hair are preserved. Existing fine stubble is slightly strengthened without
+adding a full-beard silhouette. The `2FB135BC` and `AD69E57F` skin textures are
+matched to the approved front cheek's median RGB using bounded monotonic curves;
+armor columns 0-133 remain pixel-identical and painted shading is retained.
+
+`src/texture_proof_camera.hpp` provides a process-local inspection camera,
+enabled only by both `SOTE_DIAGNOSTIC_OFFSCREEN` and
+`SOTE_TEXTURE_PROOF_CAMERA=angle:distance:eyeHeight:targetHeight`. It reuses the
+native camera and collision path, with coordinates relative to Dash's head
+anchor. Normal gameplay is unchanged when the variables are absent. It does
+not alter geometry, actor position, lighting or texture coordinates.
+
+```powershell
+cmake --build build/runtime --config Release --target sote_recomp -j 1
+python -B tools/capture_dash_texture_proof.py close-face --angle 35 --distance 2.4 --target-height 0 --eye-height 0
+```
+
+Use a new output name each run. The launcher enters gameplay through the
+native menus, explicitly requests native event 4 (Echo Base) at VI 3000 to
+avoid depending on the user's last selected level, advances communicator
+messages with process-local A presses, and captures one actual RT64 frame.
+The diagnostic camera reselects native slot 5 after a same-level reload.
+It copies settings/save data, redirects caches into the repository,
+and imposes a 150-second watchdog. It does not send desktop input or stage the
+diagnostic executable over the user's installed game. Captures/logs/texture
+hashes remain under `.local/dash-face-rebuild/game-proof/`.
+
+The wider `close-three-quarter` capture, centered `close-head-and-arms`
+capture and opposite profile `close-opposite` show the repaired jaw, stronger stubble, and matched upper-arm tone
+under native gameplay lighting. The earlier `close-verified` capture confirms
+the texture appearance but aims too high for presentation. Failed menu/camera
+or communicator-obscured trials are not acceptance evidence. All deliverable
+captures must be visually inspected, not accepted from render counters alone.
+These checks are local Echo Base appearance tests, not a full gameplay or
+animation review. The normal Modern controls/aim harnesses pass with the
+diagnostic override disabled. `jaw-arm-validation.json` records unchanged
+armor, exact repeat generation, installed-file hashes and skin median matching.
+Both final close views were visually inspected in full: the communicator no
+longer obscures the face, the large dark side-jaw patch is absent, and the game
+renders the updated face and arm assets. Ordinary polygonal model edges and
+directional lighting remain. These are native frames, not imagegen renders.
 
 ## Earlier color pass
 

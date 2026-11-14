@@ -1,4 +1,5 @@
 #include "modern_controls.hpp"
+#include "texture_proof_camera.hpp"
 #include "controls_menu.hpp"
 
 #include <algorithm>
@@ -246,7 +247,10 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
         active = false; return;
     }
     last_aiming_ms.store(now, std::memory_order_relaxed);
-    if (!camera_initialized) {
+    const bool proof_camera_reselect = std::getenv("SOTE_TEXTURE_PROOF_CAMERA") &&
+        std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") &&
+        read<int16_t>(ram,0x8018DDE8) != 5;
+    if (!camera_initialized || proof_camera_reselect) {
         // Activate native camera slot 5/mode 6 through 8006A214. Our 69404
         // hooks adapt its overhead placement to a shoulder view.
         camera_requested = true;
@@ -412,5 +416,10 @@ extern "C" void sote_modern_camera_offset(uint8_t* ram, uint32_t object, uint32_
         // Look ahead along the weapon direction instead of at Dash's body.
         write<float>(ram, cameras + 6*128 + 0x6C + axis*4,
             read<float>(ram, object + 0x118 + axis*4)*20.0f);
+    }
+    if (sote::texture_proof::apply(ram,object,stack)) {
+        // 80069454 adds Modern's 1.2-unit shoulder lift immediately after
+        // this hook; cancel it for the explicitly positioned proof camera.
+        write<float>(ram,stack+0x94,read<float>(ram,stack+0x94)-1.2f);
     }
 }

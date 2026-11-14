@@ -11,6 +11,10 @@ not explicit user aesthetic approval.
 
 BRIEF:
 
+JAW REPAIR PROMPT:
+Precise game UV texture correction. Image1 is the SIDE FACE texture edit target (tall 1:2), image2 is the approved FRONT FACE color/stubble reference only. Critical correction: the muddy dark brown area below and to the LEFT of the cheek in image1 IS NOT BACKGROUND. It is mapped onto the SIDE OF THE JAW AND UNDER THE CHIN in the 3D mesh. Replace that ENTIRE brown area with continuous fair warm skin albedo matching the cheek and image2. Remove the oval lower cheek outline completely: skin must continue seamlessly through that old outline all the way to the bottom and both side edges. Subtle fine light auburn stubble below the cheek, but NO dark full beard, NO jaw silhouette, NO cast shadows, NO dark background, NO gray patch. The only non-skin region is the existing copper HAIR in the upper left. Preserve that hair exactly and preserve the already good eye, brow and upper cheek exactly. Do not draw another face, chin silhouette, mouth, ear or neck outline. This is an unwrapped continuous surface patch, not a portrait. Skin gently varies but stays the same fair warm peach family throughout. Keep identical 1:2 framing and UV placement, no text. Only repair the dark area under and left of the existing cheek into seamlessly continuous skin.
+
+
 Edit target: .local/dash-face-rebuild/uv-template.png
 Primary identity reference: .local/dash-face-rebuild/references/closeup.png
 Supporting reference: .local/dash-face-rebuild/references/artwork.png

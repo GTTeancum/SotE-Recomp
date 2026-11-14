@@ -19,10 +19,39 @@ ROOT = Path(__file__).resolve().parents[1]
 WORK = ROOT / '.local/dash-face-rebuild'
 FACE = 'sote_E0706258_2_1_9C1CEE6C_ciByRGBA.png'
 SIDE = 'sote_36559C93_2_1_7D6416C2_ciByRGBA.png'
+PREVIOUS_SIDE_REDRAW = '6aa946bb2e3349404561aec17f8c6f9132289e3af92b586c3ef937f02da706ff'
+FIRST_JAW_PASS = '9d9f45e1cf7a6509434cbd7ab5b8c08e0a8ddf9a6e251e9f2fba7181d84c10ff'
+SEAMLESS_JAW_PASS = 'e0c26502fd88bfb1b7d025b5ff031928b4dde1662e720202d4071d138bfa2fae'
+PREVIOUS_FRONT_REDRAW = '14aa57d8426c0a6eac6a0f91e7e8e5151714672fdcd21009bf9be0df77caa7ca'
+ARM = 'sote_2FB135BC_0_2_rgb.png'
+SKIN = 'sote_AD69E57F_0_2_rgb.png'
 
 
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def stubble(im,mask):
+    """Strengthen existing fine dark hairs, not a new solid beard silhouette."""
+    rgb=np.asarray(im.convert('RGB'),dtype=float)
+    soft=np.asarray(im.convert('RGB').filter(ImageFilter.GaussianBlur(.8)),dtype=float)
+    dark=np.maximum(soft.mean(axis=2)-rgb.mean(axis=2),0)
+    strength=np.asarray(mask,dtype=float)/255
+    delta=strength*(2.0+np.minimum(dark*1.8,16))
+    return Image.fromarray(np.rint(np.clip(rgb-delta[...,None],0,255)).astype('uint8'))
+
+
+def match_skin(im,target,armor_columns=0):
+    rgb=np.asarray(im.convert('RGB'),dtype=float)/255
+    median=np.median(rgb[:,armor_columns:].reshape(-1,3),axis=0)
+    target=np.asarray(target)/255
+    # A bounded monotonic curve maps the median to the approved head tone
+    # without clipping highlights or flattening the painted muscle shading.
+    gain=(target/(1-target))/(median/(1-median))
+    adjusted=(gain*rgb)/(1-rgb+gain*rgb)
+    result=np.rint(np.clip(adjusted*255,0,255)).astype('uint8')
+    result[:,:armor_columns]=np.asarray(im.convert('RGB'))[:,:armor_columns]
+    return Image.fromarray(result)
 
 
 def prepare():
@@ -33,15 +62,21 @@ def prepare():
             raise ValueError('Expected square front-face art')
         full = generated.convert('RGB').resize((384,384),Image.Resampling.LANCZOS)
         # Use ONE half, never independently drawn halves or a blurred average.
-        face = full.crop((0,0,192,384)).transpose(Image.Transpose.ROTATE_180)
+        half=full.crop((0,0,192,384))
+        approved_tone=np.median(np.asarray(half)[182:213,45:125].reshape(-1,3),axis=0)
+        beard_mask=Image.new('L',half.size)
+        d=ImageDraw.Draw(beard_mask)
+        d.polygon([(0,213),(48,224),(80,250),(125,267),(191,250),(191,383),(0,383)],fill=255)
+        d.ellipse((85,277,240,307),fill=0)  # Leave the lips unchanged.
+        beard_mask=beard_mask.filter(ImageFilter.GaussianBlur(5))
+        face=stubble(half,beard_mask).transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/SIDE) as base:
         upright = base.convert('RGB').transpose(Image.Transpose.ROTATE_180)
         with Image.open(WORK/'generated-side.png') as generated:
             if abs(generated.width/generated.height-.5) > .01:
                 raise ValueError('Expected 1:2 side-face art')
             new_side = generated.convert('RGB').resize(upright.size,Image.Resampling.LANCZOS)
-        # Replace only the exposed skin/eye patch. Retain the accepted auburn
-        # hair and the rest of the UV tile exactly outside the feathered mask.
+        # First preserve the accepted eye/cheek redraw from the initial pass.
         mask = Image.new('L',upright.size)
         ImageDraw.Draw(mask).polygon([(191,43),(163,78),(141,94),(141,116),
             (110,145),(85,174),(76,203),(77,221),(86,242),(104,260),
@@ -51,9 +86,31 @@ def prepare():
         original_pixels = np.asarray(upright)
         assert np.array_equal(np.asarray(side_upright)[np.asarray(mask)==0],
                               original_pixels[np.asarray(mask)==0])
+        # The lower brown area is ALSO face UV: side jaw and under-chin.
+        # Treating it as background produced the dark polygon seen in-game.
+        # Repair that surface while keeping the approved front and eye intact.
+        with Image.open(WORK/'generated-jaw.png') as generated:
+            jaw = generated.convert('RGB').resize(upright.size,Image.Resampling.LANCZOS)
+        jaw_mask = Image.new('L',upright.size)
+        ImageDraw.Draw(jaw_mask).polygon([(0,176),(70,177),(75,210),
+            (90,235),(113,253),(150,266),(191,267),(191,383),(0,383)],fill=255)
+        jaw_mask = jaw_mask.filter(ImageFilter.GaussianBlur(3))
+        accepted_side = np.asarray(side_upright).copy()
+        side_upright = Image.composite(jaw,side_upright,jaw_mask)
+        assert np.array_equal(np.asarray(side_upright)[np.asarray(jaw_mask)==0],
+                              accepted_side[np.asarray(jaw_mask)==0])
+        # The eye and brow are above the new jaw mask and remain exact.
+        assert np.array_equal(np.asarray(side_upright)[120:175,110:],
+                              accepted_side[120:175,110:])
+        side_upright=stubble(side_upright,jaw_mask)
         side = side_upright.transpose(Image.Transpose.ROTATE_180)
+    with Image.open(COLOR_WORK/'overlay/dash'/ARM) as base:
+        arm=match_skin(base,approved_tone,134)
+        assert np.array_equal(np.asarray(arm)[:,:134],np.asarray(base.convert('RGB'))[:,:134])
+    with Image.open(COLOR_WORK/'overlay/dash'/SKIN) as base:
+        skin=match_skin(base,approved_tone)
     records = []
-    for name, edited in ((FACE,face),(SIDE,side)):
+    for name, edited in ((FACE,face),(SIDE,side),(ARM,arm),(SKIN,skin)):
         base_path = COLOR_WORK/'overlay/dash'/name
         with Image.open(base_path) as base:
             result = edited.convert('RGBA')
@@ -87,14 +144,15 @@ def prepare():
         d.text((6,8),'Previous side',fill='white')
         d.text((198,8),'Redrawn side',fill='white')
         board.save(WORK/'redraw-side-comparison.png')
-    manifest = {'method':'Built-in image_gen redraw; one half mirrored; skin-only side composite',
+    manifest = {'method':'Built-in image_gen redraw; one half mirrored; continuous side-jaw skin',
                 'generated_face_sha256':digest(WORK/'generated-face.png'),
                 'generated_side_sha256':digest(WORK/'generated-side.png'),
+                'generated_jaw_sha256':digest(WORK/'generated-jaw.png'),
                 'files':records,'in_game_verified':False}
     (WORK/'redraw-manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     with zipfile.ZipFile(WORK/'Dash-redrawn-face-and-auburn-hair.zip','w',zipfile.ZIP_DEFLATED) as archive:
         for f in sorted((COLOR_WORK/'overlay/dash').glob('*.png')):
-            archive.write(out/f.name if f.name in (FACE,SIDE) else f,'dash/'+f.name)
+            archive.write(out/f.name if f.name in (FACE,SIDE,ARM,SKIN) else f,'dash/'+f.name)
     return records
 
 
@@ -112,7 +170,14 @@ def main():
         for row in records:
             name = Path(row['file']).name
             for pack in PACKS:
-                if digest(pack/row['file']) not in (row['before'],row['after']):
+                accepted = {row['before'],row['after']}
+                if name == SIDE:
+                    accepted.add(PREVIOUS_SIDE_REDRAW)
+                    accepted.add(FIRST_JAW_PASS)
+                    accepted.add(SEAMLESS_JAW_PASS)
+                if name == FACE:
+                    accepted.add(PREVIOUS_FRONT_REDRAW)
+                if digest(pack/row['file']) not in accepted:
                     raise ValueError('Independent edit at '+str(pack/row['file']))
             b = backup/name
             if b.exists() and digest(b) != row['before']:
