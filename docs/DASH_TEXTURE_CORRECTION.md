@@ -136,3 +136,20 @@ visually inspected: chin and mouth stubble remains visible in Echo Base under
 native lighting. `face-crop.png` is an unscaled crop of that frame. This is a
 single-angle appearance check, not an animation review. The overlay ZIP and
 both local texture-pack installations include this follow-up.
+
+
+## Cheek and jaw coverage
+
+Raised and feathered the cheek beard boundary, increased follicle contrast and
+shadow, and gave the side-jaw texture an additional 15 percent strength. The
+approved upper-face and arm pixels remain unchanged, checked against the
+previous pass in `cheek-stubble-validation.json`. Both installed packs and the
+overlay ZIP contain the stronger version.
+
+The offscreen texture-proof camera suppresses the modern reticle so it cannot
+obscure the face. Normal gameplay reticle behavior is unchanged. The rebuilt
+modern-controls harness passes. Native Echo Base views at +55 and -55 degrees
+are saved under `game-proof/cheek-stubble-right` and `cheek-stubble-left`.
+Both native frames were visually inspected: cheek/jaw follicles are visible
+and the crosshair is absent. The accompanying face crops are unscaled, with
+no lighting or color edits. Native polygon edges remain visible.

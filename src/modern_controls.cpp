@@ -126,6 +126,8 @@ bool on_foot_active() {
 }
 bool aiming_active() { return active; }
 bool reticle_visible() {
+    if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") &&
+        std::getenv("SOTE_TEXTURE_PROOF_CAMERA")) return false;
     const int64_t age = milliseconds() - last_aiming_ms.load(std::memory_order_relaxed);
     return age >= 0 && age < 150;
 }

@@ -25,6 +25,8 @@ SEAMLESS_JAW_PASS = 'e0c26502fd88bfb1b7d025b5ff031928b4dde1662e720202d4071d138bf
 PREVIOUS_FRONT_REDRAW = '14aa57d8426c0a6eac6a0f91e7e8e5151714672fdcd21009bf9be0df77caa7ca'
 FAINT_FRONT_STUBBLE = '104770c27042f861449988873d1443bd75e370dda42855afa6fa31171e2c65c4'
 FAINT_SIDE_STUBBLE = '92833a837d0ad887e73921facc84a8c9de3c8863f7543c61c3c360d05a599893'
+VISIBLE_FRONT_STUBBLE = 'f29d912208bbdbe8109c59351ae740a9f710f66c64682cee3eccb1be578b75b6'
+VISIBLE_SIDE_STUBBLE = '66af6a2a0051521e717ec68d74a5e64a58c76bb333d6fee240387ffe50114c1c'
 ARM = 'sote_2FB135BC_0_2_rgb.png'
 SKIN = 'sote_AD69E57F_0_2_rgb.png'
 
@@ -33,7 +35,7 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def stubble(im,mask):
+def stubble(im,mask,boost=1.0):
     """Add readable short stubble at texture resolution, including its filtered tone."""
     rgb=np.asarray(im.convert('RGB'),dtype=float)
     soft=np.asarray(im.convert('RGB').filter(ImageFilter.GaussianBlur(.8)),dtype=float)
@@ -45,7 +47,7 @@ def stubble(im,mask):
     rng=np.random.default_rng(64017)
     follicles=(rng.random(rgb.shape[:2])<.23).astype('uint8')*255
     follicles=np.asarray(Image.fromarray(follicles).filter(ImageFilter.GaussianBlur(.45)),dtype=float)/255
-    delta=strength*(12.0+np.minimum(dark*2.4,22)+follicles*25)
+    delta=strength*boost*(16.0+np.minimum(dark*2.8,26)+follicles*36)
     return Image.fromarray(np.rint(np.clip(rgb-delta[...,None],0,255)).astype('uint8'))
 
 
@@ -74,7 +76,7 @@ def prepare():
         approved_tone=np.median(np.asarray(half)[182:213,45:125].reshape(-1,3),axis=0)
         beard_mask=Image.new('L',half.size)
         d=ImageDraw.Draw(beard_mask)
-        d.polygon([(0,213),(48,224),(80,250),(125,267),(191,250),(191,383),(0,383)],fill=255)
+        d.polygon([(0,199),(48,210),(80,235),(125,258),(191,250),(191,383),(0,383)],fill=255)
         d.ellipse((85,277,240,307),fill=0)  # Leave the lips unchanged.
         beard_mask=beard_mask.filter(ImageFilter.GaussianBlur(5))
         face=stubble(half,beard_mask).transpose(Image.Transpose.ROTATE_180)
@@ -110,7 +112,11 @@ def prepare():
         # The eye and brow are above the new jaw mask and remain exact.
         assert np.array_equal(np.asarray(side_upright)[120:175,110:],
                               accepted_side[120:175,110:])
-        side_upright=stubble(side_upright,jaw_mask)
+        side_beard = Image.new('L',upright.size)
+        ImageDraw.Draw(side_beard).polygon([(0,176),(70,177),(83,201),
+            (108,224),(148,245),(191,250),(191,383),(0,383)],fill=255)
+        side_beard=side_beard.filter(ImageFilter.GaussianBlur(6))
+        side_upright=stubble(side_upright,side_beard,boost=1.15)
         side = side_upright.transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/ARM) as base:
         arm=match_skin(base,approved_tone,134)
@@ -184,9 +190,11 @@ def main():
                     accepted.add(FIRST_JAW_PASS)
                     accepted.add(SEAMLESS_JAW_PASS)
                     accepted.add(FAINT_SIDE_STUBBLE)
+                    accepted.add(VISIBLE_SIDE_STUBBLE)
                 if name == FACE:
                     accepted.add(PREVIOUS_FRONT_REDRAW)
                     accepted.add(FAINT_FRONT_STUBBLE)
+                    accepted.add(VISIBLE_FRONT_STUBBLE)
                 if digest(pack/row['file']) not in accepted:
                     raise ValueError('Independent edit at '+str(pack/row['file']))
             b = backup/name
