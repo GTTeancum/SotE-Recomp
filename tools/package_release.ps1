@@ -74,6 +74,9 @@ foreach ($doc in @('CONTROL_REBINDING.md','PC_VOICES.md','EXTERNAL_MUSIC.md','OP
 foreach ($item in Get-ChildItem -LiteralPath $staging -Recurse -File) {
     if ($item.Name -eq 'main.bin' -or $item.Extension -in @('.z64','.n64','.v64','.wav','.ogg','.san','.pcm','.tmem','.log')) { throw "Unexpected release file: $($item.FullName)" }
 }
+# Preserve the approved Dash assets in every newly staged release.
+Get-ChildItem -LiteralPath "$activeTextures\SotE_V1_HD\dash" -Recurse -File |
+    ForEach-Object { $_.IsReadOnly = $true }
 Compress-Archive -Path "$staging\*" -DestinationPath $zipPath -CompressionLevel Optimal
 $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
 [IO.File]::WriteAllText("$zipPath.sha256", "$hash  $([IO.Path]::GetFileName($zipPath))`n")

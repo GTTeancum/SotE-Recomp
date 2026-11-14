@@ -144,6 +144,8 @@ exec "$APP_DIR/sote_recomp" "$@"
         member.uid = member.gid = 0
         member.uname = member.gname = ''
         member.mode = 0o755 if member.isdir() or Path(member.name).name in {'Play.sh', 'sote_recomp'} else 0o644
+        if member.isfile() and '/textures/SotE_V1_HD/dash/' in member.name:
+            member.mode = 0o444
         return member
     print('Packaging Linux build; required symbols:', versions, flush=True)
     with tarfile.open(archive, 'w:gz', compresslevel=6) as tar:
