@@ -35,6 +35,13 @@ APPROVED_FRONT_STUBBLE = '5a3b3e6163734896c905b9f1450afdb834163e2fbe99a7cbc9ba5b
 APPROVED_SIDE_STUBBLE = '4cf06175ec518ddb6fd080148f9fdcf04acabc7f27e4b8ef4ed110d42b81536b'
 ARM = 'sote_2FB135BC_0_2_rgb.png'
 SKIN = 'sote_AD69E57F_0_2_rgb.png'
+LATE_ARM_TRIAL = '8a8742b811e7b33711e20d75f03237db455d514eed258f6a00e30acf127c618c'
+GAMMA_ARM_TRIAL = '17ca7439f7d60192bb1833be23057a559d2777b94c19b32e69722cb0209d3e04'
+EARLY_ARM_FADE = 'fa855b9287cb3c785ede86c0c9d97c50ab4aa6756ae28710f822f67186b02bbd'
+WIDE_ARM_FADE = '4f4fbbabb267dfd745c60618d7991c471bc25139255f326a3f59f14c7573a139'
+FLAT_ARM_TRIAL = 'b1b4a06d6b8f6630b12eda540bbc20e452267554de6e1fa023ab147fb859185b'
+PREVIOUS_ARM = 'c1ab7f01a73f88ed4a84aad23bf21ce39ec311d041403dde88bddcc59650e5ee'
+PALE_SKIN = '4a65ffb90eb443317840c252e493e80e2211af19cf5700b10d0dcf30d7c79ddc'
 
 
 def digest(path):
@@ -158,9 +165,23 @@ def prepare():
         side = green_iris(side_upright,(173,162),(10,6)).transpose(Image.Transpose.ROTATE_180)
     with Image.open(COLOR_WORK/'overlay/dash'/ARM) as base:
         arm=match_skin(base,approved_tone,134)
+        pixels=np.asarray(arm).copy()
+        region=pixels[:,134:].astype(float)
+        center=np.median(region.reshape(-1,3),axis=0)
+        # Reduce the old baked-in bright/dark muscle bands that meet at the UV seam.
+        pixels[:,134:]=np.rint(np.clip(center+(region-center)*.65,0,255)).astype('uint8')
+        # Coordinate-color native proof locates the brighter forearm strip
+        # beyond U ~= 280 (fitting exact reference/probe RGB ratios); compensate its material brightness locally.
+        t=np.clip((np.arange(pixels.shape[1])-272)/12,0,1)
+        t=t*t*(3-2*t)
+        gain=1-t[:,None]*(1-np.array([.72,.70,.69]))
+        pixels[:,134:]=np.rint(pixels[:,134:]*gain[None,134:,:]).astype('uint8')
+        arm=Image.fromarray(pixels)
         assert np.array_equal(np.asarray(arm)[:,:134],np.asarray(base.convert('RGB'))[:,:134])
     with Image.open(COLOR_WORK/'overlay/dash'/SKIN) as base:
-        skin=match_skin(base,approved_tone)
+        # Native neck material appears brighter than the painted head.
+        # Match its rendered tone, not the source median alone.
+        skin=match_skin(base,approved_tone*np.array([.74,.74,.74]))
     records = []
     for name, edited in ((FACE,face),(SIDE,side),(ARM,arm),(SKIN,skin)):
         base_path = COLOR_WORK/'overlay/dash'/name
@@ -223,6 +244,15 @@ def main():
             name = Path(row['file']).name
             for pack in PACKS:
                 accepted = {row['before'],row['after']}
+                if name == SKIN:
+                    accepted.add(PALE_SKIN)
+                if name == ARM:
+                    accepted.add(PREVIOUS_ARM)
+                    accepted.add(FLAT_ARM_TRIAL)
+                    accepted.add(WIDE_ARM_FADE)
+                    accepted.add(EARLY_ARM_FADE)
+                    accepted.add(GAMMA_ARM_TRIAL)
+                    accepted.add(LATE_ARM_TRIAL)
                 if name == SIDE:
                     accepted.add(PREVIOUS_SIDE_REDRAW)
                     accepted.add(FIRST_JAW_PASS)

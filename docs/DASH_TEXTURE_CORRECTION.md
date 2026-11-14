@@ -195,3 +195,33 @@ the severity; these views do not isolate texture color from vertex lighting or
 material differences, so the root cause remains unverified. The audit fails
 visual consistency and does not claim a skin correction. Both full frames were
 inspected. The lit-view crop preserves native pixels without retouching.
+
+
+## Native skin-match correction
+
+The neck texture AD69E57F is now matched to 74 percent of the earlier source
+median target. The native lit-view neck sample changes from RGB 193/143/111
+to 145/107/82, closer to the adjacent un-bearded cheek sample 136/95/69.
+These are local screenshot measurements under different surface normals,
+not a claim that all skin should have identical rendered RGB values.
+
+The neck adjustment did not affect the forearms. A temporary coordinate-color
+arm texture established that the forearm samples a different strip of 2FB135BC,
+beyond approximately U=280 by fitting exact reference/probe RGB ratios, and has higher rendered brightness. The normal
+texture was restored after that isolated diagnostic run. The final correction
+feathers a local RGB gain of 0.72/0.70/0.69 into U=272..284 and keeps 65 percent
+of the original arm texture contrast. The shoulder armor columns 0..133 remain
+pixel-identical. Face, eyes, stubble, alpha, dimensions and modes are preserved;
+checks are recorded in `skin-match-validation.json`. Both local installations
+and the seven-texture overlay ZIP contain the correction.
+
+`skin-matched-lit` and `skin-matched-shade` are the final native comparison views;
+`skin-match-*` and `skin-arm-blend-*` are intermediate trials. The diagnostic
+coordinate-color frame is evidence for mapping only, not appearance approval.
+
+Both final frames were visually inspected. The pale neck and broad forearm
+mismatch are reduced; the native polygon/lighting boundary remains visible,
+especially in the shaded view. At the lit-view arm join (x=590, y=851/853),
+the before RGB jump was 29/26/24 and the final jump is 3/2/0. This local metric
+supports the visual comparison, not a claim of seamless skin in every pose.
+The final crops contain unscaled native pixels with no color or lighting edits.
