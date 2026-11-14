@@ -1,0 +1,35 @@
+Built-in image_gen edit; opaque square output.
+
+EXACT FRONT PROMPT:
+Use case: identity-preserve / game texture redraw. INPUT 1 is the EDIT TARGET: a square 384x384 mirrored UV facial texture preview for Dash Rendar, NOT an ordinary portrait. INPUT 2 is the PRIMARY IDENTITY REFERENCE (N64 cutscene closeup). INPUT 3 is supporting classic character artwork. Fully repaint the facial features of input 1 to restore Dash's recognizable rugged handsome 1990s Kevin Costner / Don Johnson-like face seen in reference 2: thoughtful narrow blue-gray eyes, believable eyelids, strong but natural brows, straight refined nose, natural thin closed lips, strong chin, subtle light reddish stubble instead of a full beard. Fair lightly weathered skin, not dark bronze. Remove the ugly heavy charcoal beard and exaggerated stern facial planes of input 1. This is a substantial facial reconstruction, NOT recoloring the existing face. Use reference 2's identity and classic illustrated realism, but do NOT copy its pixelation, smile, dramatic light stripes, shadows or armor. Neutral closed-mouth expression with a hint of confidence. Soft neutral even diffuse albedo illumination, hand-authored high-quality game texture with crisp natural features; no glossy portrait studio lighting, no gradients of cast shadow. Critical UV invariants: output exactly a square edge-to-edge facial texture, no margin, no text, no background, no ears, no shoulders. Preserve input 1's framing and feature POSITIONS: center axis x=50%, eyes at x=28% and72% y=41%, eyebrow height35%, nose tip y=59%, mouth center y=74%, chin y=96%. Keep side facial skin extending to left and right canvas edges. Keep the existing top auburn/copper hair strip and its overall border at y~17%-30%, but allow refined natural strand texture. Do NOT zoom out to show a whole head or hairstyle. Face must be bilaterally symmetrical because the engine mirrors ONE half: no asymmetric lighting, parting, smile or details. Result must look like a professionally REDRAWN face texture of the reference character, not a pasted warped photograph. The UV stretching in input 1 is intentional: follow it. Opaque RGB image.
+
+SIDE PROMPT:
+Game texture editing, exact UV layout. IMAGE 1 is the edit target, a tall 1:2 ratio SIDE FACE texture fragment, not an ordinary portrait. IMAGE 2 is the newly approved front face appearance reference. Redraw ONLY the exposed oval skin/temple/cheek area and the partial eye visible near the right edge of IMAGE 1 to match image 2's fair skin, blue-gray eye, eyelids, brow character and fine light auburn stubble. Match the original eye position x=89%, y=42%; preserve the clipped partial eye and partial eyebrow at the right edge. The skin patch bounds and all the UV positions must stay exactly where they are. Preserve the existing copper hair strands above/left, and the entire brown area below and left outside the skin patch. Keep original portrait 1:2 dimensions and edge-to-edge UV texture. Absolutely no new full face, no extra eye, no ears, no background, no text, no border. Even soft albedo lighting like image2; remove the old yellow eye-area hotspot. Skin should blend naturally into adjacent copper hair. Preserve exact framing and skin/hair boundary of target image1.
+
+The side prompt's 'approved' means selected by the agent after inspection,
+not explicit user aesthetic approval.
+
+BRIEF:
+
+Edit target: .local/dash-face-rebuild/uv-template.png
+Primary identity reference: .local/dash-face-rebuild/references/closeup.png
+Supporting reference: .local/dash-face-rebuild/references/artwork.png
+
+Fully repaint the facial features to restore Dash's recognizable rugged
+1990s Kevin Costner / Don Johnson-like face in the cutscene reference:
+thoughtful narrow blue-gray eyes, believable eyelids, strong natural brows,
+straight refined nose, natural thin closed lips, strong chin, subtle light
+reddish stubble instead of a full beard. Fair lightly weathered skin, not
+dark bronze. Substantial facial reconstruction, not recoloring. Use the
+reference identity and classic illustrated realism without its pixelation,
+smile, dramatic light stripes, shadows, or armor. Neutral closed-mouth
+expression with a hint of confidence. Even diffuse albedo illumination.
+
+Square edge-to-edge facial UV texture: no margin, text, background, ears,
+or shoulders. Preserve feature positions: center x=50%; eyes x=28%/72%,
+y=41%; brows y=35%; nose tip y=59%; mouth center y=74%; chin y=96%.
+Side skin extends to the canvas edges. Retain the top copper/auburn hair
+strip and its border at y approximately 17-30%, with refined strands.
+Do not zoom out. Bilateral symmetry: the engine mirrors one half.
+No asymmetric lighting, parting, smile, or details. Follow the intentional
+UV stretching rather than pasting a warped photograph.

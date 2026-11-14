@@ -1,5 +1,42 @@
 # Dash HD texture color correction
 
+## Subsequent face redraw
+
+The user rejected color correction as insufficient for the face and authorized
+built-in image generation, including its temporary output location. Two new
+images redraw the front face and side eye/cheek patch from the supplied character
+references. They replace the facial features and heavy beard rather than only
+recoloring the old face. The separate auburn hair correction remains in place.
+
+`tools/install_dash_face_redraw.py` prepares the generated art at the original
+texture dimensions and orientations, using only one front-face half for exact
+mirror symmetry. The side is composited only within the exposed skin patch;
+surrounding hair and background pixels outside its feathered mask are unchanged.
+Alpha and texture filenames/bindings are preserved. No mesh geometry is changed.
+
+```powershell
+python -B tools/install_dash_face_redraw.py --install
+python -B tools/install_dash_face_redraw.py --restore
+```
+
+The redraw's `--restore` returns both faces to the previous color pass; after
+that, the older correction tool's `--restore` can return all seven textures to
+the original pack. Independent destination edits are rejected. Preview-only
+generation is the default when neither flag is supplied.
+
+Private source art, overlay, comparisons, seven-texture ZIP and backups remain
+under `.local/dash-face-rebuild/`. `redraw-validation.json` records the install,
+repeatability and restoration checks. Only the two facial textures change in
+each of the working and 0.9.8 packs. Prompts are saved in
+`docs/DASH_FACE_REDRAW_PROMPT.txt`. The earlier landmark projection script is a
+rejected experiment, not the installed redraw.
+
+The final mirrored and side texture previews were visually inspected. These are
+flat texture previews, not game renders. Model fit, seams, lighting and motion
+still require in-game inspection; the user canceled the earlier render check.
+
+## Earlier color pass
+
 The first pass lightens the HD pack's bronze skin, shifts brown hair toward
 copper/auburn, and softens the heavy beard shading toward lighter stubble.
 The user's supplied artwork and cutscene close-up guide the appearance; their
