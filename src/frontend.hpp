@@ -17,6 +17,8 @@ void queue_movie_audio(const int16_t* samples, size_t sample_count);
 bool movie_skip_pressed(uint64_t token, int vi);
 
 void poll_input();
+void set_communicator_prompt(bool active);
+bool take_communicator_advance();
 bool mouse_capture_requested();
 // Called only from the game window's WM_INPUT handler.
 void add_mouse_delta(int x, int y);

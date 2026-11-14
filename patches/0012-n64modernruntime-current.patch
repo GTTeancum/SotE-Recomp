@@ -1,0 +1,198 @@
+diff --git a/librecomp/include/librecomp/game.hpp b/librecomp/include/librecomp/game.hpp
+index 6df55ee..371364e 100644
+--- a/librecomp/include/librecomp/game.hpp
++++ b/librecomp/include/librecomp/game.hpp
+@@ -20,6 +20,9 @@ namespace recomp {
+ 
+     struct GameEntry {
+         uint64_t rom_hash;
++        // Dumps that differ from `rom_hash` only outside the recompiled
++        // code sections, and so run identically. Accepted alongside it.
++        std::vector<uint64_t> alternate_rom_hashes;
+         std::string internal_name;
+         std::u8string game_id;
+         std::string mod_game_id;
+diff --git a/librecomp/src/ai.cpp b/librecomp/src/ai.cpp
+index 0195f2b..34a20a6 100644
+--- a/librecomp/src/ai.cpp
++++ b/librecomp/src/ai.cpp
+@@ -1,4 +1,6 @@
+ #include "recomp.h"
++#include <atomic>
++#include <cstdlib>
+ #include <cstdio>
+ #include <string>
+ #include <ultramodern/ultra64.h>
+@@ -6,6 +8,10 @@
+ 
+ #define VI_NTSC_CLOCK 48681812
+ 
++static std::atomic<uint32_t> last_audio_buffer_bytes = 0;
++static std::atomic<uint64_t> audio_submit_count = 0;
++static std::atomic<uint64_t> audio_status_count = 0;
++
+ extern "C" void osAiSetFrequency_recomp(uint8_t* rdram, recomp_context* ctx) {
+     uint32_t freq = ctx->r4;
+     // This makes actual audio frequency more accurate to console, but may not be desirable
+@@ -16,6 +22,16 @@ extern "C" void osAiSetFrequency_recomp(uint8_t* rdram, recomp_context* ctx) {
+ }
+ 
+ extern "C" void osAiSetNextBuffer_recomp(uint8_t* rdram, recomp_context* ctx) {
++    last_audio_buffer_bytes = ctx->r5;
++    const uint64_t submit = ++audio_submit_count;
++    if (std::getenv("SOTE_TRACE_AUDIO_AI") != nullptr &&
++        (submit <= 10 || submit % 30 == 0)) {
++        std::printf(
++            "[sote] AI submit=%llu bytes=%u\n",
++            static_cast<unsigned long long>(submit),
++            static_cast<uint32_t>(ctx->r5));
++        std::fflush(stdout);
++    }
+     ultramodern::queue_audio_buffer(rdram, ctx->r4, ctx->r5);
+     ctx->r2 = 0;
+ }
+@@ -25,5 +41,27 @@ extern "C" void osAiGetLength_recomp(uint8_t* rdram, recomp_context* ctx) {
+ }
+ 
+ extern "C" void osAiGetStatus_recomp(uint8_t* rdram, recomp_context* ctx) {
+-    ctx->r2 = 0x00000000; // Pretend the audio DMAs finish instantly
++    const uint32_t buffer_bytes = last_audio_buffer_bytes.load();
++    const uint32_t remaining_bytes =
++        ultramodern::get_remaining_audio_bytes();
++    // AI_STATUS_FIFO_FULL is the sign bit. The host queue represents the
++    // active DMA plus the one-entry AI FIFO, so report full once at least one
++    // complete guest buffer remains. This prevents games from enqueueing an
++    // unbounded catch-up burst after a host-side stall.
++    const bool fifo_full =
++        buffer_bytes != 0 && remaining_bytes >= buffer_bytes
++            ? true
++            : false;
++    ctx->r2 = fifo_full ? 0x80000000U : 0x00000000U;
++    const uint64_t status = ++audio_status_count;
++    if (std::getenv("SOTE_TRACE_AUDIO_AI") != nullptr &&
++        (status <= 20 || status % 60 == 0)) {
++        std::printf(
++            "[sote] AI status=%llu last=%u remaining=%u full=%d\n",
++            static_cast<unsigned long long>(status),
++            buffer_bytes,
++            remaining_bytes,
++            fifo_full ? 1 : 0);
++        std::fflush(stdout);
++    }
+ }
+diff --git a/librecomp/src/recomp.cpp b/librecomp/src/recomp.cpp
+index ea17675..bf1f193 100644
+--- a/librecomp/src/recomp.cpp
++++ b/librecomp/src/recomp.cpp
+@@ -154,6 +154,19 @@ bool check_hash(const std::vector<uint8_t>& rom_data, uint64_t expected_hash) {
+     return calculated_hash == expected_hash;
+ }
+ 
++// Accepts the canonical hash or any alternate dump the game declares.
++bool check_entry_hash(const std::vector<uint8_t>& rom_data, const recomp::GameEntry& game_entry) {
++    if (check_hash(rom_data, game_entry.rom_hash)) {
++        return true;
++    }
++    for (uint64_t alternate : game_entry.alternate_rom_hashes) {
++        if (check_hash(rom_data, alternate)) {
++            return true;
++        }
++    }
++    return false;
++}
++
+ static std::vector<uint8_t> read_file(const std::filesystem::path& path) {
+     std::vector<uint8_t> ret;
+ 
+@@ -185,7 +198,7 @@ bool write_file(const std::filesystem::path& path, const std::vector<uint8_t>& d
+ bool check_stored_rom(const recomp::GameEntry& game_entry) {
+     std::vector stored_rom_data = read_file(config_path / game_entry.stored_filename());
+ 
+-    if (!check_hash(stored_rom_data, game_entry.rom_hash)) {
++    if (!check_entry_hash(stored_rom_data, game_entry)) {
+         // Incorrect hash, remove the stored ROM file if it exists.
+         std::filesystem::remove(config_path / game_entry.stored_filename());
+         return false;
+@@ -217,7 +230,7 @@ bool recomp::load_stored_rom(std::u8string& game_id) {
+     
+     std::vector<uint8_t> stored_rom_data = read_file(config_path / find_it->second.stored_filename());
+ 
+-    if (!check_hash(stored_rom_data, find_it->second.rom_hash)) {
++    if (!check_entry_hash(stored_rom_data, find_it->second)) {
+         // The ROM no longer has the right hash, delete it.
+         std::filesystem::remove(config_path / find_it->second.stored_filename());
+         return false;
+@@ -378,7 +391,7 @@ recomp::RomValidationError recomp::select_rom(const std::filesystem::path& rom_p
+             break;
+     }
+ 
+-    if (!check_hash(rom_data, game_entry.rom_hash)) {
++    if (!check_entry_hash(rom_data, game_entry)) {
+         const std::string_view name{ reinterpret_cast<const char*>(rom_data.data()) + 0x20, game_entry.internal_name.size()};
+         if (name == game_entry.internal_name) {
+             return recomp::RomValidationError::IncorrectVersion;
+diff --git a/librecomp/src/ultra_translation.cpp b/librecomp/src/ultra_translation.cpp
+index e0d367e..6669f53 100644
+--- a/librecomp/src/ultra_translation.cpp
++++ b/librecomp/src/ultra_translation.cpp
+@@ -70,7 +70,9 @@ extern "C" void osViSetEvent_recomp(uint8_t * rdram, recomp_context * ctx) {
+ }
+ 
+ extern "C" void osGetCount_recomp(uint8_t * rdram, recomp_context * ctx) {
+-    ctx->r2 = osGetCount();
++    // MFC0 returns a sign-extended 32-bit word in the guest 64-bit GPR.
++    // Zero extension breaks SOTE's comparison with its LW-loaded previous count.
++    ctx->r2 = static_cast<int32_t>(osGetCount());
+ }
+ 
+ extern "C" void osSetCount_recomp(uint8_t * rdram, recomp_context * ctx) {
+diff --git a/ultramodern/src/events.cpp b/ultramodern/src/events.cpp
+index 518529d..fc9d6a0 100644
+--- a/ultramodern/src/events.cpp
++++ b/ultramodern/src/events.cpp
+@@ -68,6 +68,10 @@ static struct {
+         void update_vi() {
+             ViState* next_state = get_next_state();
+             const OSViMode* next_mode = next_state->mode;
++            if (next_mode == nullptr) {
++                return;
++            }
++
+             const OSViCommonRegs* common_regs = &next_mode->comRegs;
+             const OSViFieldRegs* field_regs = &next_mode->fldRegs[field];
+             PTR(void) framebuffer = osVirtualToPhysical(next_state->framebuffer);
+@@ -209,19 +213,23 @@ void vi_thread_func() {
+         }
+         total_vis = new_total_vis;
+ 
+-        // If the game hasn't started yet, set a dummy VI mode and origin.
+-        if (!ultramodern::is_game_started()) {
+-            static bool odd = false;
+-            set_dummy_vi(odd);
+-            odd = !odd;
+-        }
++        {
++            std::lock_guard lock{ events_context.message_mutex };
+ 
+-        // Queue a screen update for the graphics thread with the current VI register state.
+-        // Doing this before the VI update is equivalent to updating the screen after the previous frame's scanout finished.
+-        events_context.action_queue.enqueue(ScreenUpdateAction{ events_context.vi.regs });
++            // If the game hasn't started yet, set a dummy VI mode and origin.
++            if (!ultramodern::is_game_started()) {
++                static bool odd = false;
++                set_dummy_vi(odd);
++                odd = !odd;
++            }
++
++            // Queue a screen update for the graphics thread with the current VI register state.
++            // Doing this before the VI update is equivalent to updating the screen after the previous frame's scanout finished.
++            events_context.action_queue.enqueue(ScreenUpdateAction{ events_context.vi.regs });
+ 
+-        // Update VI registers and swap VI modes.
+-        events_context.vi.update_vi();
++            // Update VI registers and swap VI modes.
++            events_context.vi.update_vi();
++        }
+ 
+         // If the game has started, handle sending VI and AI events.
+         if (ultramodern::is_game_started()) {

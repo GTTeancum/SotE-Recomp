@@ -11,7 +11,9 @@ stubs = []
 ignored = []
 renamed = []
 hook = [
-    { func = "func_80019294", before_vram = 0x80019294, text = "sote_trace_story_load(rdram, (uint32_t)ctx->r4, (uint32_t)ctx->r31);" },
+    { func = "func_80007A04", before_vram = 0x80007A04, text = "sote_communicator_input_state(rdram);" },
+    { func = "func_80007A04", before_vram = 0x80007AB4, text = "if (sote_take_communicator_advance()) ctx->r15 = 1;" },
+    { func = "func_80019294", before_vram = 0x80019294, text = "sote_before_story_load(rdram, (uint32_t)ctx->r4, (uint32_t)ctx->r31);" },
     { func = "func_80009088", before_vram = 0x80009088, text = "sote_hide_communicator_slot((uint32_t)(int16_t)ctx->r4, (int16_t)ctx->r5);" },
     { func = "func_8001CE98", before_vram = 0x8001CE98, text = "if (sote_intro_story_sprite(rdram, (uint32_t)ctx->r4) || sote_draw_hud_without_label(rdram, ctx)) return;" },
     # All native text uses these two font atlases, including HUD and communications.
@@ -59,11 +61,12 @@ hook = [
     # sweep runs after our offset and its look-at follows the weapon direction.
     { func = "func_80069404", before_vram = 0x80069404, text = "if (sote_modern_camera_active()) { ctx->r5 = 0x3F99999A; ctx->r6 = 0x41000000; }" },
     { func = "func_80069404", before_vram = 0x80069454, text = "sote_modern_camera_offset(rdram, (uint32_t)ctx->r16, (uint32_t)ctx->r29);" },
+    { func = "func_80069404", before_vram = 0x80069570, text = "sote_modern_camera_resolve(rdram, ctx);" },
     # Extend the game's own 80-entry UI table immediately before its native
     # text renderer walks it. This keeps Graphics inside the original Options
     # screen and uses the retail font, colors, panel, and draw path.
     { func = "func_8001FC90", before_vram = 0x800216D4, text = "sote_capture_native_options(rdram);" },
-    { func = "func_80008778", before_vram = 0x80008778, text = "sote_update_graphics_menu(rdram); sote_capture_menu(rdram);" },
+    { func = "func_80008778", before_vram = 0x80008778, text = "sote_update_graphics_menu(rdram); sote_menu_sound_frame(rdram, ctx); sote_capture_menu(rdram);" },
     # The recomp loop otherwise runs as fast as the host can submit display
     # lists. Limit it to one gameplay iteration per 60 Hz VI.
     { func = "func_80017CC8", before_vram = 0x80017EE4, text = "sote_wait_for_game_frame();" },

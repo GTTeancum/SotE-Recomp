@@ -1,0 +1,127 @@
+diff --git a/plume_d3d12.cpp b/plume_d3d12.cpp
+index 2cdcf18..172a434 100644
+--- a/plume_d3d12.cpp
++++ b/plume_d3d12.cpp
+@@ -2312,7 +2312,10 @@ namespace plume {
+ 
+         const D3D12_TEXTURE_COPY_LOCATION copyDstLocation = toD3D12(dstLocation);
+         const D3D12_TEXTURE_COPY_LOCATION copySrcLocation = toD3D12(srcLocation);
+-        setSamplePositions(dstLocation.texture);
++        setSamplePositions(
++            (dstLocation.texture != nullptr)
++                ? dstLocation.texture
++                : srcLocation.texture);
+         d3d->CopyTextureRegion(&copyDstLocation, dstX, dstY, dstZ, &copySrcLocation, (srcBox != nullptr) ? &copyBox : nullptr);
+         resetSamplePositions();
+     }
+diff --git a/plume_render_interface.h b/plume_render_interface.h
+index 2048557..6606d2b 100644
+--- a/plume_render_interface.h
++++ b/plume_render_interface.h
+@@ -100,6 +100,7 @@ namespace plume {
+         virtual bool acquireTexture(RenderCommandSemaphore *signalSemaphore, uint32_t *textureIndex) = 0;
+         virtual RenderWindow getWindow() const = 0;
+         virtual bool isEmpty() const = 0;
++        virtual bool supportsReadback() const { return true; }
+ 
+         // Only valid if displayTiming is enabled in capabilities.
+         virtual uint32_t getRefreshRate() const = 0;
+diff --git a/plume_vulkan.cpp b/plume_vulkan.cpp
+index f1dd503..d37d7c5 100644
+--- a/plume_vulkan.cpp
++++ b/plume_vulkan.cpp
+@@ -909,6 +909,16 @@ namespace plume {
+             return nullptr;
+         }
+ 
++        if (desc.heapType == RenderHeapType::READBACK) {
++            // Non-coherent host memory needs invalidation after GPU completion.
++            res = vmaInvalidateAllocation(device->allocator, allocation, 0, VK_WHOLE_SIZE);
++            if (res != VK_SUCCESS) {
++                vmaUnmapMemory(device->allocator, allocation);
++                fprintf(stderr, "vmaInvalidateAllocation failed with error code 0x%X.\n", res);
++                return nullptr;
++            }
++        }
++
+         return data;
+     }
+ 
+@@ -2339,6 +2349,9 @@ namespace plume {
+         createInfo.imageExtent.height = height;
+         createInfo.imageArrayLayers = 1;
+         createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
++        // Native screenshots read back swap-chain images when supported.
++        if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
++            createInfo.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+         createInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+         createInfo.compositeAlpha = pickedAlphaFlag;
+@@ -3229,6 +3242,32 @@ namespace plume {
+             imageCopy.imageExtent.depth = srcLocation.placedFootprint.depth;
+             vkCmdCopyBufferToImage(vk, srcBuffer->vk, dstTexture->vk, toImageLayout(dstTexture->textureLayout), 1, &imageCopy);
+         }
++        else if ((dstLocation.type == RenderTextureCopyType::PLACED_FOOTPRINT) && (srcLocation.type == RenderTextureCopyType::SUBRESOURCE)) {
++            assert(dstBuffer != nullptr);
++            assert(srcTexture != nullptr);
++            // Texture readback (including native swapchain captures).
++            const uint32_t blockWidth = RenderFormatBlockWidth(srcTexture->desc.format);
++            const auto &footprint = dstLocation.placedFootprint;
++            VkBufferImageCopy imageCopy = {};
++            imageCopy.bufferRowLength = ((footprint.rowWidth + blockWidth - 1) / blockWidth) * blockWidth;
++            imageCopy.bufferImageHeight = ((footprint.height + blockWidth - 1) / blockWidth) * blockWidth;
++            const uint32_t blockSize = RenderFormatSize(srcTexture->desc.format);
++            imageCopy.bufferOffset = footprint.offset +
++                (uint64_t(dstZ) * (imageCopy.bufferImageHeight / blockWidth) * (imageCopy.bufferRowLength / blockWidth) +
++                 uint64_t(dstY / blockWidth) * (imageCopy.bufferRowLength / blockWidth) + dstX / blockWidth) * blockSize;
++            imageCopy.imageSubresource.aspectMask = toAspectFlags(srcTexture->desc.format, srcTexture->desc.flags);
++            imageCopy.imageSubresource.baseArrayLayer = srcLocation.subresource.arrayIndex;
++            imageCopy.imageSubresource.layerCount = 1;
++            imageCopy.imageSubresource.mipLevel = srcLocation.subresource.mipLevel;
++            if (srcBox != nullptr) {
++                imageCopy.imageOffset = { int32_t(srcBox->left), int32_t(srcBox->top), int32_t(srcBox->front) };
++                imageCopy.imageExtent = { uint32_t(srcBox->right - srcBox->left), uint32_t(srcBox->bottom - srcBox->top), uint32_t(srcBox->back - srcBox->front) };
++            }
++            else {
++                imageCopy.imageExtent = { footprint.width, footprint.height, footprint.depth };
++            }
++            vkCmdCopyImageToBuffer(vk, srcTexture->vk, toImageLayout(srcTexture->textureLayout), dstBuffer->vk, 1, &imageCopy);
++        }
+         else {
+             VkImageCopy imageCopy = {};
+             imageCopy.srcSubresource.aspectMask = toAspectFlags(srcTexture->desc.format, srcTexture->desc.flags);
+@@ -4007,10 +4046,19 @@ namespace plume {
+             queueFamilyUsed[familyIndex] = true;
+         };
+ 
+-        // Pick the family queues for each type of command list.
++        // Buffers and images use EXCLUSIVE sharing, and barriers do not emit
++        // queue-family ownership transfers. Keep upload, compute and graphics
++        // workers in one capable family; separate queues within it can still
++        // run concurrently. A semaphore/fence alone does not transfer ownership
++        // from a dedicated transfer family to the graphics family.
+         pickFamilyQueue(RenderCommandListType::DIRECT, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+-        pickFamilyQueue(RenderCommandListType::COMPUTE, VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT);
+-        pickFamilyQueue(RenderCommandListType::COPY, VK_QUEUE_TRANSFER_BIT);
++        const uint32_t sharedFamily = queueFamilyIndices[toFamilyIndex(RenderCommandListType::DIRECT)];
++        queueFamilyIndices[toFamilyIndex(RenderCommandListType::COMPUTE)] = sharedFamily;
++        queueFamilyIndices[toFamilyIndex(RenderCommandListType::COPY)] = sharedFamily;
++        if (std::getenv("SOTE_TRACE_VULKAN_QUEUES")) {
++            std::fprintf(stderr, "[sote][vulkan-queues] graphics=%u compute=%u copy=%u exclusive_resources=1\n",
++                sharedFamily, sharedFamily, sharedFamily);
++        }
+ 
+         // Create the struct to store the virtual queues.
+         queueFamilies.resize(queueFamilyCount);
+diff --git a/plume_vulkan.h b/plume_vulkan.h
+index 0a1edbe..4cd70bf 100644
+--- a/plume_vulkan.h
++++ b/plume_vulkan.h
+@@ -257,6 +257,7 @@ namespace plume {
+         bool acquireTexture(RenderCommandSemaphore *signalSemaphore, uint32_t *textureIndex) override;
+         RenderWindow getWindow() const override;
+         bool isEmpty() const override;
++        bool supportsReadback() const override { return (createInfo.imageUsage & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) != 0; }
+         uint32_t getRefreshRate() const override;
+         void getWindowSize(uint32_t &dstWidth, uint32_t &dstHeight) const;
+         void releaseSwapChain();

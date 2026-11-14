@@ -14,6 +14,10 @@ def main():
     if not root.is_relative_to(ROOT):
         parser.error('Pack directory must be inside the repository')
     bindings = json.loads((ROOT/'config/cutscene_texture_bindings.json').read_text())['bindings']
+    menu_bindings = json.loads((ROOT/'config/level_menu_texture_bindings.json').read_text())['bindings']
+    bindings += [dict(row, pack='SotE_V1_HD') for row in menu_bindings]
+    gameplay_bindings = json.loads((ROOT/'config/gameplay_texture_bindings.json').read_text())['bindings']
+    bindings += [dict(row, pack='SotE_V1_HD') for row in gameplay_bindings]
     pending = {}
     for row in bindings:
         pack = (root/row['pack']).resolve()
@@ -37,7 +41,7 @@ def main():
     for pack, (db, slots) in pending.items():
         (pack/'rt64.json').write_text(json.dumps(db, indent=2)+'\n')
         (pack/'sote_slots.json').write_text(json.dumps(slots, indent=2)+'\n')
-    print(f'Installed {len(bindings)} verified cutscene bindings in {len(pending)} packs.')
+    print(f'Installed {len(bindings)} verified cutscene/menu/gameplay bindings in {len(pending)} packs.')
 
 if __name__ == '__main__':
     main()

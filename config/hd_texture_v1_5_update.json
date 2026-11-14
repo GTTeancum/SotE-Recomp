@@ -6441,9 +6441,40 @@
     {
       "source": "v1-5/menus/map icons/1 hoth/Shadow of the Empire#417D5AC1#3#0#D7B75B43_ciByRGBA.png",
       "sha256": "70f3048934b53cfaab96dd3826d9b44d6077ec6de6adc45ec7b4c9dcdc170a17",
-      "action": "unmatched",
+      "action": "add",
       "rice": "417d5ac1#3#0#d7b75b43",
-      "reason": "No exact identity in scanned native records or saved runtime dumps"
+      "target": "menus/map icons/1 hoth/sote_417D5AC1_3_0_D7B75B43_ciByRGBA.png",
+      "bindings": [
+        {
+          "rt64": "73122feb4c74ff95",
+          "evidence": {
+            "native_source": [
+              "Main Menu",
+              1813480
+            ],
+            "slot": [
+              2,
+              1813480,
+              32,
+              32,
+              2,
+              1,
+              4,
+              0,
+              0,
+              32768,
+              1,
+              0,
+              0,
+              2,
+              2,
+              1,
+              1803752
+            ],
+            "review": "Verified supplied image against Hoth card tile; filename format/padding differs"
+          }
+        }
+      ]
     },
     {
       "source": "v1-5/menus/map icons/1 hoth/Shadow of the Empire#47E77DF2#2#1#9838B9F4_ciByRGBA.png",
@@ -6490,9 +6521,40 @@
     {
       "source": "v1-5/menus/map icons/1 hoth/Shadow of the Empire#AA3E4B0E#2#1#02BFBDB2_ciByRGBA.png",
       "sha256": "6789189ec6f8ef35bf01be6fe5febf5b2e173cc67ba302d421e422564b589a28",
-      "action": "unmatched",
+      "action": "add",
       "rice": "aa3e4b0e#2#1#02bfbdb2",
-      "reason": "No exact identity in scanned native records or saved runtime dumps"
+      "target": "menus/map icons/1 hoth/sote_AA3E4B0E_2_1_02BFBDB2_ciByRGBA.png",
+      "bindings": [
+        {
+          "rt64": "1d59b094d8c87406",
+          "evidence": {
+            "native_source": [
+              "Main Menu",
+              1822696
+            ],
+            "slot": [
+              2,
+              1822696,
+              32,
+              32,
+              2,
+              1,
+              4,
+              0,
+              0,
+              32768,
+              1,
+              0,
+              0,
+              2,
+              2,
+              1,
+              1803752
+            ],
+            "review": "Verified supplied image against Hoth card tile; filename format/padding differs"
+          }
+        }
+      ]
     },
     {
       "source": "v1-5/menus/map icons/1 hoth/Shadow of the Empire#C8EC4417#2#1#CD756B71_ciByRGBA.png",

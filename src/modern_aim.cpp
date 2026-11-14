@@ -13,6 +13,12 @@ extern "C" void func_800654A0(uint8_t*, recomp_context*);
 namespace {
 struct Vec { float x, y, z; };
 struct ShotObservation { uint32_t projectile=0; Vec target{}; };
+struct CameraArmState {
+    uint32_t owner=0;
+    int16_t event=-1;
+    Vec anchor{};
+    float distance=0;
+} camera_arm;
 ShotObservation observed_shots[256];
 unsigned next_observation=0;
 Vec operator+(Vec a, Vec b) { return {a.x+b.x,a.y+b.y,a.z+b.z}; }
@@ -32,9 +38,11 @@ template<class T> void write(uint8_t* ram, uint32_t a,T v) {
     std::memcpy(ram+((a&0x7fffff)^(sizeof(T)==2?2:0)),&v,sizeof(T));
 }
 struct Hit { float distance; uint32_t object; };
+enum class TraceKind { Projectile, Camera };
 // Native endpoint/start trace, excluding the shooter's collision object. Use
 // a private guest stack and copied registers; never disturb the spawn's ABI.
-Hit trace(uint8_t* ram, const recomp_context& caller, Vec from, Vec to, uint32_t ignore) {
+Hit trace(uint8_t* ram, const recomp_context& caller, Vec from, Vec to, uint32_t ignore,
+          TraceKind kind=TraceKind::Projectile) {
     auto ctx=caller;
     // The odd-register view must refer to this copy, not the caller's FPRs.
     ctx.f_odd=ctx.mips3_float_mode ? &ctx.f1.u32l : &ctx.f0.u32h;
@@ -45,7 +53,11 @@ Hit trace(uint8_t* ram, const recomp_context& caller, Vec from, Vec to, uint32_t
     ctx.r4=(int32_t)(sp+0x40); ctx.r5=(int32_t)(sp+0x50);
     ctx.r6=(int32_t)ignore; ctx.r7=(int32_t)(sp+0x60);
     write<uint32_t>(ram,sp+0x10,sp+0x64);
-    write<float>(ram,sp+0x14,0.0f); write<uint32_t>(ram,sp+0x18,1);
+    write<float>(ram,sp+0x14,0.0f);
+    // Match the retail camera's 8006947C argument. Its world/dynamic sweep
+    // excludes the player. Projectile queries additionally scan 80112830
+    // through 80026480; that extra pass does not inherit the ignored object.
+    write<uint32_t>(ram,sp+0x18,kind==TraceKind::Camera ? 0 : 1);
     func_800654A0(ram,&ctx);
     return {ctx.f0.fl,read<uint32_t>(ram,sp+0x60)};
 }
@@ -63,6 +75,10 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     const uint32_t sp=uint32_t(ctx.r29);
     if (!address(sp,0x6c) || !address(sp-0x1800U,0x1800)) return;
     const uint32_t shooter=read<uint32_t>(ram,sp+0x68);
+    if (std::getenv("SOTE_TRACE_PROJECTILE_SPAWNS")) {
+        std::printf("[sote][projectile-spawn] shooter=%08X modern_player=%d\n",
+            shooter,sote::modern_controls::owns_player(shooter));
+    }
     if (!sote::modern_controls::owns_player(shooter) || !address(shooter,0x250)) return;
     const auto settings=sote::controls_menu::modern_controls_tuning().on_foot;
     const int camera_slot=read<int16_t>(ram,0x8018DDE8);
@@ -190,5 +206,88 @@ extern "C" void sote_modern_impact(uint8_t* ram, void* context) {
         std::printf("[sote][aim-impact] projectile=%08X target=%.4f,%.4f,%.4f hit=%.4f,%.4f,%.4f error=%.6f\n",
             projectile,shot.target.x,shot.target.y,shot.target.z,hit.x,hit.y,hit.z,length(hit-shot.target));
         shot.projectile=0;
+    }
+}
+
+extern "C" void sote_modern_camera_resolve(uint8_t* ram, void* context) {
+    const auto& ctx=*static_cast<recomp_context*>(context);
+    const uint32_t object=uint32_t(ctx.r16), stack=uint32_t(ctx.r29);
+    if (!sote::modern_controls::owns_player(object) || !address(object,0x150) ||
+        !address(stack,0xa0) || !address(stack-0x1800U,0x1800)) {
+        camera_arm={};
+        return;
+    }
+    const Vec anchor=read<Vec>(ram,object+0x138);
+    Vec original=read<Vec>(ram,stack+0x8c);
+    // Process-local renderer reproduction: hold a previously logged camera
+    // direction while moving around its location. Never active in normal play.
+    if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN")) {
+        if (const char* pose=std::getenv("SOTE_DIAGNOSTIC_CAMERA_ARM")) {
+            Vec diagnostic{};
+            if (std::sscanf(pose,"%f:%f:%f",&diagnostic.x,&diagnostic.y,&diagnostic.z)==3 &&
+                finite(diagnostic) && length(diagnostic)>0.1f && length(diagnostic)<40.0f)
+                original=anchor+diagnostic;
+        }
+    }
+    const Vec arm=original-anchor;
+    const float distance=length(arm);
+    const uint32_t ignore=read<uint32_t>(ram,object+0x70);
+    if (!finite(anchor) || !finite(original) || !address(ignore,0x20) || distance<0.001f) return;
+    // The retail ray backs off one unit ALONG the arm. At a grazing angle
+    // that leaves almost no perpendicular clearance for the visible near
+    // plane. Sweep a one-unit box around the eye, shortening the same arm.
+    // All traces start around Dash's head, ignore his collision object, and
+    // use original world/dynamic collision. Classic never enters this path.
+    float safe=distance;
+    for (int x : {-1,1}) for (int y : {-1,1}) for (int z : {-1,1}) {
+        const Vec offset{float(x),float(y),float(z)};
+        const Hit hit=trace(ram,ctx,anchor+offset,original+offset,ignore,TraceKind::Camera);
+        if (std::isfinite(hit.distance) && hit.distance>=0 && hit.distance<=distance)
+            safe=std::min(safe,std::max(0.0f,hit.distance-0.05f));
+    }
+    if (std::getenv("SOTE_TRACE_CAMERA_QUERY_COMPARE")) {
+        static unsigned comparison_tick=0;
+        if (++comparison_tick%30==0) {
+            float projectile_limit=distance;
+            uint32_t hit_object=0;
+            for (int x : {-1,1}) for (int y : {-1,1}) for (int z : {-1,1}) {
+                const Vec offset{float(x),float(y),float(z)};
+                const Hit hit=trace(ram,ctx,anchor+offset,original+offset,ignore);
+                if (std::isfinite(hit.distance) && hit.distance>=0 && hit.distance<projectile_limit) {
+                    projectile_limit=std::max(0.0f,hit.distance-0.05f);
+                    hit_object=hit.object;
+                }
+            }
+            if (safe-projectile_limit>.5f)
+                std::printf("[sote][camera-query] anchor=%.3f,%.3f,%.3f camera_limit=%.3f projectile_limit=%.3f hit=%08X tag=%08X ignored=%08X\n",
+                    anchor.x,anchor.y,anchor.z,safe,projectile_limit,hit_object,
+                    address(hit_object,4) ? read<uint32_t>(ram,hit_object) : 0,ignore);
+        }
+    }
+    const float collision_limit=safe;
+    const int16_t event=read<int16_t>(ram,0x8013CE0E);
+    // Corner rays can briefly clear a crate edge while Dash slides against
+    // it. Do not turn a single clear result into a full-distance camera cut.
+    // Retract immediately for real geometry; only limit outward recovery.
+    // New actors, levels and teleports discard the previous obstruction.
+    if (camera_arm.owner==object && camera_arm.event==event &&
+        length(anchor-camera_arm.anchor)<4.0f) {
+        const uint64_t bits=(uint64_t(read<uint32_t>(ram,0x8018E998))<<32) |
+            read<uint32_t>(ram,0x8018E99C);
+        double dt;
+        std::memcpy(&dt,&bits,sizeof(dt));
+        if (std::isfinite(dt) && dt>=0)
+            safe=std::min(safe,camera_arm.distance+12.0f*float(std::min(dt,1.0/30.0)));
+    }
+    camera_arm={object,event,anchor,safe};
+    const Vec eye=anchor+arm*(safe/distance);
+    write(ram,stack+0x8c,eye);
+    if (std::getenv("SOTE_TRACE_CAMERA_COLLISION")) {
+        static unsigned tick=0;
+        if (++tick%30==0 || std::getenv("SOTE_TRACE_FRAME_COMMANDS")) {
+            const Hit up=trace(ram,ctx,eye,eye+Vec{0,0,2},ignore,TraceKind::Camera);
+            std::printf("[sote][camera-clearance] tick=%u anchor=%.3f,%.3f,%.3f original=%.3f,%.3f,%.3f eye=%.3f,%.3f,%.3f arm=%.3f safe=%.3f collision_limit=%.3f ceiling_gap=%.3f\n",
+                tick,anchor.x,anchor.y,anchor.z,original.x,original.y,original.z,eye.x,eye.y,eye.z,distance,safe,collision_limit,up.distance);
+        }
     }
 }

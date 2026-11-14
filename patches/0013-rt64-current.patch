@@ -1,0 +1,1514 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 79dfc38..1d3ab12 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -524,6 +524,7 @@ build_compute_shader(rt64 "src/shaders/HistogramClearCS.hlsl")
+ build_compute_shader(rt64 "src/shaders/HistogramSetCS.hlsl")
+ build_compute_shader(rt64 "src/shaders/IdleCS.hlsl")
+ build_compute_shader(rt64 "src/shaders/LuminanceHistogramCS.hlsl")
++build_compute_shader(rt64 "src/shaders/RegionalLuminanceCS.hlsl")
+ build_pixel_shader(  rt64 "src/shaders/PostBlendDitherNoisePS.hlsl" "src/shaders/PostBlendDitherNoiseAddPS.hlsl" "-D ADD_MODE")
+ build_pixel_shader(  rt64 "src/shaders/PostBlendDitherNoisePS.hlsl" "src/shaders/PostBlendDitherNoiseSubPS.hlsl" "-D SUB_MODE")
+ build_pixel_shader(  rt64 "src/shaders/PostBlendDitherNoisePS.hlsl" "src/shaders/PostBlendDitherNoiseSubNegativePS.hlsl" "-D SUB_MODE" "-D NEGATIVE_MODE")
+diff --git a/src/gbi/rt64_gbi.cpp b/src/gbi/rt64_gbi.cpp
+index 7006549..f891b53 100644
+--- a/src/gbi/rt64_gbi.cpp
++++ b/src/gbi/rt64_gbi.cpp
+@@ -160,7 +160,7 @@ namespace RT64 {
+     // 
+     //                  Length      Hash                    Known instances               
+     //     
+-    static std::array<GBISegment, 94> textSegments = {
++    static std::array<GBISegment, 95> textSegments = {
+             GBISegment{ 0x1408,     0x9C0926F5E466BE70ULL,  { &F3D_SDK_E } }, // Needs confirmation.
+             GBISegment{ 0x1400,     0x34EAA6E921BCF1B2ULL,  { &F3D_SDK_F, &F3D_SDK_UNKNOWN_G, &F3D_SDK_UNKNOWN_H } }, // Needs confirmation.
+             GBISegment{ 0x1408,     0x3E05E9BBE814C700ULL,  { &F3D_FIFO_SDK_E } }, // Needs confirmation.
+@@ -175,6 +175,7 @@ namespace RT64 {
+             GBISegment{ 0x1418,     0xAEBF9966DD0486DDULL,  { &F3D_PD } },
+             GBISegment{ 0x1420,     0xEDA47A4C2B7E69F8ULL,  { &F3D_GOLDEN } }, // Needs confirmation.
+             GBISegment{ 0x1430,     0x547A4F6CEDE3C737ULL,  { &F3D_WAVE } }, // Needs confirmation.
++            GBISegment{ 0x1430,     0xD33F14DF63CEA3ACULL,  { &F3D_WAVE } }, // Star Wars: Shadows of the Empire (U) (v1.2).
+             GBISegment{ 0x13E0,     0x28825EEF49EE29CFULL,  { &F3DEX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x1410,     0xF1CC01CCC3607D27ULL,  { &F3DLX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x13A0,     0x2DAE911B08F94FCFULL,  { &F3DEX_0_96, &F3DEX_1_00 } }, // Needs confirmation.
+@@ -257,7 +258,7 @@ namespace RT64 {
+             GBISegment{ 0x10B0,     0xE8028E4BC6529E6EULL,  { &ZSORTP_0_33 } }, // Needs confirmation.
+     };
+ 
+-    static std::array<GBISegment, 105> dataSegments = {
++    static std::array<GBISegment, 106> dataSegments = {
+             GBISegment{ 0x800,      0xEEB10D73400213B3ULL,  { &F3D_SDK_E } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x49651E384B48F694ULL,  { &F3D_SDK_F } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x1A736198F90E81C5ULL,  { &F3D_SDK_UNKNOWN_G } }, // Needs confirmation.
+@@ -275,6 +276,7 @@ namespace RT64 {
+             GBISegment{ 0x800,      0x72AD2373CEC74AA7ULL,  { &F3D_PD } },
+             GBISegment{ 0x800,      0xB2152361A81ED3B0ULL,  { &F3D_GOLDEN } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x3E7A693EA9A18E45ULL,  { &F3D_WAVE } }, // Needs confirmation.
++            GBISegment{ 0x800,      0xBD0BAAE05C1B4EE0ULL,  { &F3D_WAVE } }, // Star Wars: Shadows of the Empire (U) (v1.2).
+             GBISegment{ 0x800,      0x4BB61D72241EFD23ULL,  { &F3DEX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x58641378A6D4FF0CULL,  { &F3DLX_0_95 } }, // Needs confirmation.
+             GBISegment{ 0x800,      0x1D53DE103B933358ULL,  { &F3DEX_0_96 } }, // Needs confirmation.
+@@ -558,4 +560,4 @@ namespace RT64 {
+     GBIFunction GBIManager::getExtendedFunction() const {
+         return &GBI_EXTENDED::extendedOp;
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/gbi/rt64_gbi_f3dwave.cpp b/src/gbi/rt64_gbi_f3dwave.cpp
+index 3b4530f..6714937 100644
+--- a/src/gbi/rt64_gbi_f3dwave.cpp
++++ b/src/gbi/rt64_gbi_f3dwave.cpp
+@@ -32,10 +32,14 @@ namespace RT64 {
+             state->rsp->drawIndexedTri(v0, v2, v3);
+         }
+ 
++        void perspNormalize(State *state, DisplayList **dl) {
++            state->rsp->setPerspNorm((*dl)->w1);
++        }
++
+         void setup(GBI *gbi) {
+             GBI_F3D::setup(gbi);
+ 
+-            gbi->map[F3DWAVE_G_UNKNOWN] = nullptr; // FIXME: Replaces a function set by base F3D with nothing until it's figured out.
++            gbi->map[F3DWAVE_G_PERSPNORM] = &perspNormalize;
+             gbi->map[F3DWAVE_G_RDPHALF_1] = &GBI_F3D::rdpHalf1;
+             gbi->map[F3DWAVE_G_RDPHALF_2] = &GBI_F3D::rdpHalf2;
+             gbi->map[F3D_G_VTX] = vertex;
+@@ -44,4 +48,4 @@ namespace RT64 {
+             gbi->map[F3D_G_QUAD] = quad;
+         }
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/gbi/rt64_gbi_f3dwave.h b/src/gbi/rt64_gbi_f3dwave.h
+index 693f01b..a49f589 100644
+--- a/src/gbi/rt64_gbi_f3dwave.h
++++ b/src/gbi/rt64_gbi_f3dwave.h
+@@ -6,13 +6,14 @@
+ 
+ #include "rt64_gbi.h"
+ 
+-#define F3DWAVE_G_UNKNOWN       0xB4
++#define F3DWAVE_G_PERSPNORM     0xB4
+ #define F3DWAVE_G_RDPHALF_1     0xB3
+ #define F3DWAVE_G_RDPHALF_2     0xB2
+ #define F3DWAVE_G_TRI2          0xB1
+ 
+ namespace RT64 {
+     namespace GBI_F3DWAVE {
++        void perspNormalize(State *state, DisplayList **dl);
+         void setup(GBI *ucode);
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_framebuffer_pair.cpp b/src/hle/rt64_framebuffer_pair.cpp
+index c944393..ca17fab 100644
+--- a/src/hle/rt64_framebuffer_pair.cpp
++++ b/src/hle/rt64_framebuffer_pair.cpp
+@@ -70,6 +70,14 @@ namespace RT64 {
+     }
+     
+     bool FramebufferPair::earlyPresentCandidate() const {
++        // SotE submits clears separately from the world display list. Advancing
++        // presentation to a buffer after only its clear exposes the background
++        // for a frame. Keep native VI presentation available, but do not promote
++        // clear-only work through SkipBuffering/PresentEarly or interpolation.
++        if (fillRectOnly) {
++            return false;
++        }
++
+         // Some games might use screen framebuffers as temporary output for some operations that are clearly
+         // not intended to be presented to the user. This function includes some cases commonly found in games.
+         const bool singleGameCall = (gameCallCount == 1);
+@@ -101,4 +109,4 @@ namespace RT64 {
+ 
+         return true;
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
+index 3227ab1..a98309f 100644
+--- a/src/hle/rt64_present_queue.cpp
++++ b/src/hle/rt64_present_queue.cpp
+@@ -8,8 +8,384 @@
+ #include "rhi/rt64_render_hooks.h"
+ 
+ #include "rt64_workload_queue.h"
++#include "render/rt64_descriptor_sets.h"
++
++#include <algorithm>
++#include <cstdio>
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <memory>
++#include <string>
++#include <vector>
+ 
+ namespace RT64 {
++    namespace {
++        // Diagnostic scalar telemetry, independent of screenshot capture. Only
++        // Histogram counters cross from GPU to CPU; no image is saved/read back.
++        struct BrightnessState {
++            uint32_t width = 0, height = 0;
++            uint32_t columns = 1, rows = 1;
++            std::unique_ptr<RenderTexture> texture;
++            std::unique_ptr<RenderBuffer> histogram, zeros, readback;
++            std::unique_ptr<LuminanceHistogramDescriptorSet> descriptors;
++        };
++        BrightnessState &brightnessState() { static BrightnessState value; return value; }
++        bool queueBrightness(RenderDevice *device, RenderCommandList *list,
++                RenderTexture *output, uint32_t width, uint32_t height,
++                const ShaderLibrary *library, bool supported) {
++            static const bool enabled = std::getenv("SOTE_TRACE_GPU_BRIGHTNESS") != nullptr;
++            static const bool regional = std::getenv("SOTE_TRACE_GPU_BRIGHTNESS_GRID") != nullptr;
++            if (!enabled || !supported || !width || !height) return false;
++            auto &s = brightnessState();
++            if (s.width != width || s.height != height) {
++                s = {};
++                s.columns = regional ? 16 : 1;
++                s.rows = regional ? 9 : 1;
++                const uint32_t bytes = 256 * s.columns * s.rows;
++                s.texture = device->createTexture(RenderTextureDesc::Texture2D(width, height, 1, RenderFormat::B8G8R8A8_UNORM));
++                s.histogram = device->createBuffer(RenderBufferDesc::DefaultBuffer(bytes, RenderBufferFlag::STORAGE | RenderBufferFlag::UNORDERED_ACCESS));
++                s.zeros = device->createBuffer(RenderBufferDesc::UploadBuffer(bytes));
++                s.readback = device->createBuffer(RenderBufferDesc::ReadbackBuffer(bytes));
++                if (!s.texture || !s.histogram || !s.zeros || !s.readback) { s = {}; return false; }
++                auto *zeros = static_cast<uint32_t *>(s.zeros->map());
++                if (!zeros) { s = {}; return false; }
++                std::fill(zeros, zeros + bytes / 4, 0);
++                s.zeros->unmap();
++                s.descriptors = std::make_unique<LuminanceHistogramDescriptorSet>(device);
++                s.descriptors->setTexture(s.descriptors->HDRTexture, s.texture.get(), RenderTextureLayout::SHADER_READ);
++                s.descriptors->setBuffer(s.descriptors->LuminanceHistogram, s.histogram.get(), bytes);
++                s.width = width; s.height = height;
++            }
++            list->barriers(RenderBarrierStage::COPY, RenderTextureBarrier(output, RenderTextureLayout::COPY_SOURCE));
++            list->barriers(RenderBarrierStage::COPY, RenderTextureBarrier(s.texture.get(), RenderTextureLayout::COPY_DEST));
++            list->copyTexture(s.texture.get(), output);
++            list->barriers(RenderBarrierStage::COPY, RenderBufferBarrier(s.histogram.get(), RenderBufferAccess::WRITE));
++            const uint32_t bytes = 256 * s.columns * s.rows;
++            list->copyBufferRegion(s.histogram.get(), s.zeros.get(), bytes);
++            list->barriers(RenderBarrierStage::COMPUTE, RenderTextureBarrier(s.texture.get(), RenderTextureLayout::SHADER_READ));
++            list->barriers(RenderBarrierStage::COMPUTE, RenderBufferBarrier(s.histogram.get(), RenderBufferAccess::WRITE));
++            struct Constants { uint32_t width, height; float minimum, inverseRange; } constants{width, height, 0.0f, 1.0f};
++            const auto &shader = regional ? library->regionalLuminance : library->luminanceHistogram;
++            list->setPipeline(shader.pipeline.get());
++            list->setComputePipelineLayout(shader.pipelineLayout.get());
++            uint32_t gridConstants[] = {width, height, s.columns, s.rows};
++            list->setComputePushConstants(0, regional ? static_cast<const void *>(gridConstants) : static_cast<const void *>(&constants));
++            list->setComputeDescriptorSet(s.descriptors->get(), 0);
++            list->dispatch(((width + s.columns - 1) / s.columns + 7) / 8,
++                ((height + s.rows - 1) / s.rows + 7) / 8, s.columns * s.rows);
++            list->barriers(RenderBarrierStage::COPY, RenderBufferBarrier(s.histogram.get(), RenderBufferAccess::READ));
++            list->copyBufferRegion(s.readback.get(), s.histogram.get(), bytes);
++            return true;
++        }
++        void logBrightness(uint64_t presentId) {
++            auto &s = brightnessState();
++            RenderRange range{0, 256 * s.columns * s.rows};
++            const auto *regionalBins = static_cast<const uint32_t *>(s.readback->map(0, &range));
++            if (!regionalBins) return;
++            uint32_t bins[64] = {};
++            std::string means, whites;
++            uint32_t invalidCells = 0;
++            for (uint32_t cell = 0; cell < s.columns * s.rows; ++cell) {
++                uint64_t count = 0, weight = 0, white = 0;
++                for (uint32_t i = 0; i < 64; ++i) {
++                    const auto n = regionalBins[cell * 64 + i];
++                    bins[i] += n;
++                    count += n;
++                    if (i) weight += uint64_t(n) * (i - 1);
++                    if (i >= 60) white += n;
++                }
++                const uint32_t cx = cell % s.columns, cy = cell / s.columns;
++                const uint64_t expected = uint64_t((cx + 1) * s.width / s.columns - cx * s.width / s.columns) *
++                    ((cy + 1) * s.height / s.rows - cy * s.height / s.rows);
++                invalidCells += count != expected;
++                if (cell) { means += ','; whites += ','; }
++                means += std::to_string(count ? weight * 10000 / (62 * count) : 0);
++                whites += std::to_string(count ? white * 10000 / count : 0);
++            }
++            uint64_t total = 0, bright = 0, weighted = 0;
++            for (unsigned i = 0; i < 64; ++i) {
++                total += bins[i];
++                if (i >= 60) bright += bins[i];
++                if (i) weighted += uint64_t(bins[i]) * (i - 1);
++            }
++            char header[384];
++            std::snprintf(header, sizeof(header), "[sote][gpu-brightness] present=%llu pixels=%llu expected=%llu black=%u white=%u bright=%llu mean_lower=%.6f bins=",
++                static_cast<unsigned long long>(presentId), static_cast<unsigned long long>(total),
++                static_cast<unsigned long long>(uint64_t(s.width)*s.height), bins[0], bins[63],
++                static_cast<unsigned long long>(bright), total ? double(weighted)/(62.0*total) : 0.0);
++            std::string line(header);
++            for (unsigned i = 0; i < 64; ++i) {
++                if (i) line += ',';
++                line += std::to_string(bins[i]);
++            }
++            std::printf("%s\n", line.c_str());
++            if (s.columns > 1) {
++                std::printf("[sote][gpu-brightness-grid] present=%llu columns=%u rows=%u invalid_cells=%u mean_10000=%s bright_10000=%s\n",
++                    (unsigned long long)presentId, s.columns, s.rows, invalidCells, means.c_str(), whites.c_str());
++            }
++            s.readback->unmap();
++        }
++        constexpr uint32_t SwapChainBytesPerPixel = 4;
++        constexpr uint32_t TextureDataPitchAlignment = 256;
++
++        struct VisibleCapture {
++            std::unique_ptr<RenderBuffer> readbackBuffer;
++            std::filesystem::path output;
++            uint64_t presentId = 0;
++            uint32_t width = 0;
++            uint32_t height = 0;
++            uint32_t rowPitch = 0;
++            bool watch = false;
++        };
++
++        struct VisibleCaptureState {
++            bool initialized = false;
++            bool enabled = false;
++            std::filesystem::path directory;
++            std::vector<uint64_t> presentIds;
++            size_t nextPresentId = 0;
++            unsigned long long watchStart = 0, watchEnd = 0;
++            std::vector<uint8_t> previousPixels;
++            uint64_t previousPresent = 0;
++            double previousWhite = 0, previousMean = 0;
++            unsigned candidates = 0;
++            bool saveNext = false;
++            std::ofstream metrics;
++        };
++
++        VisibleCaptureState &visibleCaptureState() {
++            static VisibleCaptureState state;
++            if (state.initialized) {
++                return state;
++            }
++
++            state.initialized = true;
++            if (const char *watch = std::getenv("SOTE_WHITE_FLASH_WATCH")) {
++                if (std::sscanf(watch, "%llu:%llu", &state.watchStart, &state.watchEnd) != 2)
++                    state.watchStart = state.watchEnd = 0;
++            }
++            const char *capturePath = std::getenv("SOTE_VISIBLE_CAPTURE_PATH");
++            const char *capturePresents =
++                std::getenv("SOTE_VISIBLE_CAPTURE_PRESENTS");
++            if ((capturePath == nullptr) || (capturePath[0] == '\0') ||
++                (capturePresents == nullptr) || (capturePresents[0] == '\0')) {
++                return state;
++            }
++
++            const char *cursor = capturePresents;
++            while (*cursor != '\0') {
++                char *end = nullptr;
++                const unsigned long long value =
++                    std::strtoull(cursor, &end, 10);
++                if (end == cursor) {
++                    ++cursor;
++                    continue;
++                }
++                if (value > 0) {
++                    state.presentIds.emplace_back(uint64_t(value));
++                }
++                cursor = end;
++            }
++
++            std::sort(state.presentIds.begin(), state.presentIds.end());
++            state.presentIds.erase(
++                std::unique(state.presentIds.begin(), state.presentIds.end()),
++                state.presentIds.end());
++            if (state.presentIds.empty()) {
++                return state;
++            }
++
++            state.directory = std::filesystem::path(capturePath);
++            std::error_code ec;
++            std::filesystem::create_directories(state.directory, ec);
++            state.enabled = !ec;
++            if (state.enabled) {
++                std::printf(
++                    "[sote][visible-capture] path=%s count=%zu\n",
++                    state.directory.string().c_str(),
++                    state.presentIds.size());
++                std::fflush(stdout);
++            }
++
++            return state;
++        }
++
++        bool shouldCaptureVisible(uint64_t presentId) {
++            VisibleCaptureState &state = visibleCaptureState();
++            if (!state.enabled) {
++                return false;
++            }
++            if (state.watchStart && presentId >= state.watchStart && presentId <= state.watchEnd)
++                return true;
++
++            while ((state.nextPresentId < state.presentIds.size()) &&
++                   (state.presentIds[state.nextPresentId] < presentId)) {
++                ++state.nextPresentId;
++            }
++
++            return (state.nextPresentId < state.presentIds.size()) &&
++                (state.presentIds[state.nextPresentId] == presentId);
++        }
++
++        VisibleCapture queueVisibleCapture(
++            RenderDevice *device,
++            RenderCommandList *commandList,
++            RenderTexture *swapChainTexture,
++            uint64_t presentId,
++            uint32_t width,
++            uint32_t height,
++            bool supportsReadback) {
++            VisibleCapture capture;
++            if ((device == nullptr) || (commandList == nullptr) ||
++                (swapChainTexture == nullptr) || (width == 0) ||
++                (height == 0) || !shouldCaptureVisible(presentId)) {
++                return capture;
++            }
++
++            VisibleCaptureState &state = visibleCaptureState();
++            capture.watch = state.watchStart && presentId >= state.watchStart && presentId <= state.watchEnd;
++            if (state.nextPresentId < state.presentIds.size() && state.presentIds[state.nextPresentId] == presentId)
++                ++state.nextPresentId;
++            if (!supportsReadback) {
++                static bool warned = false;
++                if (!warned) {
++                    std::fprintf(stderr, "[sote][capture] Surface does not support readback; skipping native captures.\n");
++                    warned = true;
++                }
++                return capture;
++            }
++            const uint32_t rowPitch =
++                ((width * SwapChainBytesPerPixel +
++                    TextureDataPitchAlignment - 1) /
++                    TextureDataPitchAlignment) *
++                TextureDataPitchAlignment;
++            const uint32_t rowWidth = rowPitch / SwapChainBytesPerPixel;
++            const uint64_t byteCount = uint64_t(rowPitch) * height;
++            capture.readbackBuffer =
++                device->createBuffer(RenderBufferDesc::ReadbackBuffer(byteCount));
++            capture.output =
++                state.directory /
++                ("present_" + std::to_string(presentId) + ".ppm");
++            capture.presentId = presentId;
++            capture.width = width;
++            capture.height = height;
++            capture.rowPitch = rowPitch;
++
++            commandList->barriers(
++                RenderBarrierStage::COPY,
++                RenderTextureBarrier(
++                    swapChainTexture,
++                    RenderTextureLayout::COPY_SOURCE));
++            commandList->copyTextureRegion(
++                RenderTextureCopyLocation::PlacedFootprint(
++                    capture.readbackBuffer.get(),
++                    RenderFormat::B8G8R8A8_UNORM,
++                    width,
++                    height,
++                    1,
++                    rowWidth),
++                RenderTextureCopyLocation::Subresource(swapChainTexture));
++
++            return capture;
++        }
++
++        void writeVisibleCapture(const VisibleCapture &capture) {
++            if (capture.readbackBuffer == nullptr || capture.width == 0 ||
++                capture.height == 0 || capture.rowPitch == 0) {
++                return;
++            }
++
++            const uint64_t byteCount =
++                uint64_t(capture.rowPitch) * capture.height;
++            RenderRange readRange = { 0, byteCount };
++            const uint8_t *readbackData =
++                reinterpret_cast<const uint8_t *>(
++                    capture.readbackBuffer->map(0, &readRange));
++            if (readbackData == nullptr) {
++                return;
++            }
++
++            std::vector<uint8_t> pixels(size_t(capture.width) * capture.height * 3);
++            uint64_t brightness = 0;
++            uint64_t lavender = 0;
++            uint64_t black = 0;
++            uint64_t white = 0;
++            const uint64_t pixelCount =
++                uint64_t(capture.width) * uint64_t(capture.height);
++            for (uint32_t y = 0; y < capture.height; ++y) {
++                const uint8_t *row =
++                    readbackData + uint64_t(y) * capture.rowPitch;
++                for (uint32_t x = 0; x < capture.width; ++x) {
++                    const uint8_t b = row[x * 4 + 0];
++                    const uint8_t g = row[x * 4 + 1];
++                    const uint8_t r = row[x * 4 + 2];
++                    const size_t offset = (size_t(y) * capture.width + x) * 3;
++                    pixels[offset] = r; pixels[offset + 1] = g; pixels[offset + 2] = b;
++                    brightness += unsigned(r) + unsigned(g) + unsigned(b);
++                    if (b > r + 8 && b > g + 8 && r > 80 && g > 80) {
++                        ++lavender;
++                    }
++                    if (r < 8 && g < 8 && b < 8) {
++                        ++black;
++                    }
++                    if (r > 248 && g > 248 && b > 248) {
++                        ++white;
++                    }
++                }
++            }
++            capture.readbackBuffer->unmap();
++
++            auto save = [&](const std::filesystem::path &path, const std::vector<uint8_t> &data) {
++                std::ofstream file(path, std::ios::binary);
++                file << "P6\n" << capture.width << " " << capture.height << "\n255\n";
++                file.write(reinterpret_cast<const char *>(data.data()), data.size());
++            };
++            if (capture.watch) {
++                auto &state = visibleCaptureState();
++                const double fraction = double(white) / pixelCount;
++                const double mean = double(brightness) / (pixelCount * 3);
++                if (!state.metrics.is_open()) {
++                    state.metrics.open(state.directory / "white-watch.csv");
++                    state.metrics << "present,white_fraction,mean_rgb,brightness_jump,candidate\n";
++                }
++                const bool candidate = state.previousPixels.size() == pixels.size() && state.candidates < 8 &&
++                    ((fraction > 0.5 && state.previousWhite < 0.2) ||
++                     (mean > 220 && mean - state.previousMean > 60));
++                state.metrics << capture.presentId << ',' << fraction << ',' << mean << ','
++                    << mean - state.previousMean << ',' << candidate << '\n';
++                if (candidate || capture.presentId % 60 == 0) state.metrics.flush();
++                const bool keep = candidate || state.saveNext;
++                if (candidate) {
++                    ++state.candidates;
++                    save(state.directory / ("present_" + std::to_string(state.previousPresent) + ".ppm"), state.previousPixels);
++                    std::printf("[sote][white-watch] candidate=%llu white=%.3f mean=%.3f previous=%.3f\n",
++                        static_cast<unsigned long long>(capture.presentId), fraction, mean, state.previousMean);
++                    std::fflush(stdout);
++                }
++                state.previousWhite = fraction; state.previousMean = mean;
++                state.previousPresent = capture.presentId;
++                state.saveNext = candidate;
++                if (keep) save(capture.output, pixels);
++                state.previousPixels = std::move(pixels);
++                return;
++            }
++            save(capture.output, pixels);
++
++            std::printf(
++                "[sote][visible-capture] present=%llu wrote=%s "
++                "size=%ux%u lavender=%.3f%% black=%.3f%% white=%.3f%%\n",
++                static_cast<unsigned long long>(capture.presentId),
++                capture.output.string().c_str(),
++                capture.width,
++                capture.height,
++                double(lavender) * 100.0 / double(pixelCount),
++                double(black) * 100.0 / double(pixelCount),
++                double(white) * 100.0 / double(pixelCount));
++            std::fflush(stdout);
++        }
++    }
++
+     // PresentQueue
+ 
+     PresentQueue::PresentQueue() {
+@@ -33,6 +409,7 @@ namespace RT64 {
+         writeCursor = 0;
+         barrierCursor = 0;
+         presentId = 0;
++        lastCompletedPresentationAddress = 0;
+     }
+ 
+     void PresentQueue::advanceToNextPresent() {
+@@ -115,6 +492,9 @@ namespace RT64 {
+         }
+ 
+         RenderTarget *colorTarget = nullptr;
++        const char *sotePresentSource = "none";
++        uint32_t sotePresentFbAddress = 0;
++        uint64_t sotePresentWrite = 0;
+         int32_t framesToPresent = 1;
+         bool lockedWorkloadMutex = false;
+         InterpolatedFrameCounters &frameCounters = ext.sharedResources->interpolatedFrames[ext.sharedResources->interpolatedFramesIndex];
+@@ -139,6 +519,12 @@ namespace RT64 {
+         // Attempt to find the matching framebuffer for the VI based on the origin address.
+         // If that fails, we look at the shared storage.
+         if (present.screenVI.visible()) {
++            // At native refresh, select and read the framebuffer under the same
++            // lock. It must not be cleared between eligibility checks and use.
++            if (refreshRate == UserConfiguration::RefreshRate::Original) {
++                ext.sharedResources->workloadMutex.lock();
++                lockedWorkloadMutex = true;
++            }
+             Framebuffer *viFb = nullptr;
+             if (!viewRDRAM) {
+                 viFb = fbManager.find(present.screenVI.fbAddress());
+@@ -155,7 +541,31 @@ namespace RT64 {
+             }
+             
+             if ((presentFb != nullptr) && (viFb != nullptr)) {
+-                for (uint32_t colorAddress : ext.sharedResources->colorImageAddressVector) {
++                sotePresentSource = "rt64-framebuffer";
++                std::vector<uint32_t> colorAddresses;
++                std::unordered_set<uint32_t> pendingClears;
++                {
++                    std::scoped_lock<std::mutex> lock(ext.sharedResources->managerMutex);
++                    colorAddresses = ext.sharedResources->colorImageAddressVector;
++                    pendingClears = ext.sharedResources->pendingColorClears;
++                }
++                // The VI can change between SotE's clear and scene tasks too.
++                // Preserve a compatible completed buffer during that interval.
++                // If no completed history exists, retain native presentation
++                // (e.g. boot/intentional blanking); never stall the guest thread.
++                if (!present.debuggerFramebuffer.view && pendingClears.count(presentFb->addressStart)) {
++                    for (const auto &entry : viHistory.history) {
++                        if (pendingClears.count(entry.vi.fbAddress()) || !entry.vi.compatibleWith(present.screenVI)) continue;
++                        Framebuffer *completed = fbManager.find(entry.vi.fbAddress());
++                        if (completed && completed->width == viFb->width && completed->siz == viFb->siz) {
++                            presentFb = completed;
++                            sotePresentSource = "rt64-complete-history";
++                            break;
++                        }
++                    }
++                }
++                for (uint32_t colorAddress : colorAddresses) {
++                    if (pendingClears.count(colorAddress)) continue;
+                     Framebuffer *colorFb = fbManager.find(colorAddress);
+                     if (colorFb == nullptr) {
+                         continue;
+@@ -186,14 +596,53 @@ namespace RT64 {
+                     }
+                 }
+ 
+-                if (presentFb->interpolationEnabled) {
++                // SkipBuffering may show a completed frame ahead of the VI.
++                // If the next task only clears another buffer, colorAddresses
++                // is empty. Falling back to the VI then shows an older frame
++                // after the newer one (especially visible during light flashes).
++                // Keep the newest completed, compatible presentation buffer.
++                if (!present.debuggerFramebuffer.view &&
++                    presentationMode == EnhancementConfiguration::Presentation::Mode::SkipBuffering &&
++                    refreshRate == UserConfiguration::RefreshRate::Original) {
++                    const auto considerCompleted = [&](uint32_t address, const VI &vi) {
++                        if (!vi.compatibleWith(present.screenVI) || pendingClears.count(address)) return;
++                        Framebuffer *candidate = fbManager.find(address);
++                        if (candidate && candidate->width == viFb->width && candidate->siz == viFb->siz &&
++                            candidate->lastWriteType == Framebuffer::Type::Color &&
++                            (pendingClears.count(presentFb->addressStart) || candidate->lastWriteTimestamp > presentFb->lastWriteTimestamp)) {
++                            presentFb = candidate;
++                            sotePresentSource = "rt64-newest-complete";
++                        }
++                    };
++                    for (const auto &entry : viHistory.history) {
++                        considerCompleted(entry.vi.fbAddress(), entry.vi);
++                    }
++                    // A fast-forwarded buffer need not yet appear in the last
++                    // three guest VIs. Retain our actual presentation as well.
++                    if (lastCompletedPresentationAddress) {
++                        considerCompleted(lastCompletedPresentationAddress, lastCompletedPresentationVI);
++                    }
++                }
++
++                if (presentFb->interpolationEnabled &&
++                    (refreshRate != UserConfiguration::RefreshRate::Original)) {
+                     framesToPresent = frameCounters.count;
+                 }
+-                else {
++                else if (!lockedWorkloadMutex) {
+                     lockedWorkloadMutex = true;
+                     ext.sharedResources->workloadMutex.lock();
+                 }
+ 
++                sotePresentFbAddress = presentFb->addressStart;
++                sotePresentWrite = presentFb->lastWriteTimestamp;
++                if (std::getenv("SOTE_TRACE_PRESENT_SOURCE")) {
++                    std::scoped_lock<std::mutex> lock(ext.sharedResources->managerMutex);
++                    if (ext.sharedResources->pendingColorClears.count(sotePresentFbAddress)) {
++                        std::printf("[sote][present-incomplete] present=%llu workload=%llu fb=%08X snapshot_pending=%u locked=%u\n",
++                            (unsigned long long)present.presentId, (unsigned long long)present.workloadId,
++                            sotePresentFbAddress, unsigned(pendingClears.count(sotePresentFbAddress)), unsigned(lockedWorkloadMutex));
++                    }
++                }
+                 RenderTargetKey colorTargetKey(presentFb->addressStart, presentFb->width, presentFb->siz, Framebuffer::Type::Color);
+                 colorTarget = &targetManager.get(colorTargetKey, true);
+                 if (!colorTarget->isEmpty()) {
+@@ -202,6 +651,7 @@ namespace RT64 {
+                         RenderTargetKey otherColorTargetKey(presentFb->addressStart, presentFb->width, presentFb->siz, presentFb->lastWriteType);
+                         RenderTarget &otherColorTarget = targetManager.get(otherColorTargetKey, true);
+                         if (!otherColorTarget.isEmpty()) {
++                            sotePresentSource = "rt64-depth-converted";
+                             const FixedRect &r = presentFb->lastWriteRect;
+                             RenderWorkerExecution workerExecution(ext.presentGraphicsWorker);
+                             colorTarget->copyFromTarget(ext.presentGraphicsWorker, &otherColorTarget, r.left(false), r.top(false), r.width(false, true), r.height(false, true), ext.shaderLibrary);
+@@ -218,6 +668,8 @@ namespace RT64 {
+             }
+             else {
+                 uint32_t fbAddress = present.screenVI.fbAddress();
++                sotePresentSource = "rdram-scratch";
++                sotePresentFbAddress = fbAddress;
+ 
+                 // Use a scratch framebuffer to upload the RAM to the render target.
+                 hlslpp::uint2 fbSize = present.screenVI.fbSize();
+@@ -226,8 +678,24 @@ namespace RT64 {
+                 scratchFb.height = fbSize.y;
+                 scratchFb.siz = present.screenVI.fbSiz();
+ 
+-                lockedWorkloadMutex = true;
+-                ext.sharedResources->workloadMutex.lock();
++                // Inspect the already queued CPU bytes only: no GPU readback,
++                // captures or changes to the framebuffer being presented.
++                if (std::getenv("SOTE_TRACE_PRESENT_SOURCE") != nullptr) {
++                    size_t zeroBytes = 0, ffBytes = 0;
++                    for (uint8_t byte : present.storage) {
++                        zeroBytes += (byte == 0);
++                        ffBytes += (byte == 255);
++                    }
++                    std::printf("[sote][present-ram] present=%llu fb=%08X size=%ux%u siz=%u bytes=%zu zero=%zu ff=%zu\n",
++                        static_cast<unsigned long long>(present.presentId), fbAddress,
++                        scratchFb.width, scratchFb.height, unsigned(scratchFb.siz),
++                        present.storage.size(), zeroBytes, ffBytes);
++                }
++
++                if (!lockedWorkloadMutex) {
++                    ext.sharedResources->workloadMutex.lock();
++                    lockedWorkloadMutex = true;
++                }
+ 
+                 RenderTargetKey colorTargetKey(fbAddress, scratchFb.width, scratchFb.siz, Framebuffer::Type::Color);
+                 colorTarget = &targetManager.get(colorTargetKey, true);
+@@ -288,6 +756,7 @@ namespace RT64 {
+                 if (i < framesToPresent) {
+                     uint32_t targetIndex = usingMSAA ? i : (i - 1);
+                     colorTarget = ext.sharedResources->interpolatedColorTargets[targetIndex].get();
++                    sotePresentSource = "interpolated";
+                 }
+                 else {
+                     colorTarget = nullptr;
+@@ -341,7 +810,7 @@ namespace RT64 {
+                 }
+                 
+                 commandList->setFramebuffer(swapChainFramebuffer);
+-                commandList->clearColor();
++                commandList->clearColor(0, RenderColor(0.0f, 0.0f, 0.0f, 1.0f));
+ 
+                 if (renderParams.texture != nullptr) {
+                     commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(renderParams.texture, RenderTextureLayout::SHADER_READ));
+@@ -350,7 +819,7 @@ namespace RT64 {
+ 
+                 RenderHookDraw *drawHook = GetRenderHookDraw();
+                 if (drawHook != nullptr) {
+-                    drawHook(commandList, swapChainFramebuffer);
++                    drawHook(commandList, swapChainFramebuffer, swapChainTexture);
+                 }
+ 
+                 {
+@@ -359,6 +828,35 @@ namespace RT64 {
+                         inspector->draw(commandList);
+                     }
+                     
++                    VisibleCapture visibleCapture = queueVisibleCapture(
++                        ext.device,
++                        commandList,
++                        swapChainTexture,
++                        present.presentId,
++                        ext.swapChain->getWidth(),
++                        ext.swapChain->getHeight(),
++                        ext.swapChain->supportsReadback());
++                    const bool brightnessQueued = queueBrightness(ext.device, commandList, swapChainTexture,
++                        ext.swapChain->getWidth(), ext.swapChain->getHeight(), ext.shaderLibrary,
++                        ext.swapChain->supportsReadback());
++                    if (std::getenv("SOTE_TRACE_PRESENT_SOURCE") != nullptr) {
++                        std::printf(
++                            "[sote][present-source] present=%llu frame=%d/%d "
++                            "source=%s fb=%08X color_target=%s "
++                            "visible=%d vi_fb=%08X refresh=%d write=%llu workload=%llu ops=%zu\n",
++                            static_cast<unsigned long long>(present.presentId),
++                            i + 1,
++                            framesToPresent,
++                            sotePresentSource,
++                            sotePresentFbAddress,
++                            colorTarget != nullptr ? "yes" : "no",
++                            present.screenVI.visible() ? 1 : 0,
++                            present.screenVI.fbAddress(),
++                            static_cast<int>(refreshRate),
++                            static_cast<unsigned long long>(sotePresentWrite),
++                            static_cast<unsigned long long>(present.workloadId), present.fbOperations.size());
++                        std::fflush(stdout);
++                    }
+                     commandList->barriers(RenderBarrierStage::NONE, RenderTextureBarrier(swapChainTexture, RenderTextureLayout::PRESENT));
+                     commandList->end();
+                     const RenderCommandList *commandList = ext.presentGraphicsWorker->commandList.get();
+@@ -366,6 +864,14 @@ namespace RT64 {
+                     RenderCommandSemaphore *signalSemaphore = drawSemaphores[swapChainIndex].get();
+                     ext.presentGraphicsWorker->commandQueue->executeCommandLists(&commandList, 1, &waitSemaphore, 1, &signalSemaphore, 1, ext.presentGraphicsWorker->commandFence.get());
+                     ext.presentGraphicsWorker->wait();
++                    if (colorTarget && sotePresentWrite && !present.debuggerFramebuffer.view &&
++                        refreshRate == UserConfiguration::RefreshRate::Original &&
++                        presentationMode == EnhancementConfiguration::Presentation::Mode::SkipBuffering) {
++                        lastCompletedPresentationAddress = sotePresentFbAddress;
++                        lastCompletedPresentationVI = present.screenVI;
++                    }
++                    if (brightnessQueued) logBrightness(present.presentId);
++                    writeVisibleCapture(visibleCapture);
+                 }
+             }
+ 
+@@ -532,6 +1038,7 @@ namespace RT64 {
+             }
+         }
+ 
++        brightnessState() = {};
+         // Transition the active swap chain render target out of the present state to avoid live references to the resource.
+         uint32_t swapChainIndex = 0;
+         if (!ext.swapChain->isEmpty() && ext.swapChain->acquireTexture(acquiredSemaphore.get(), &swapChainIndex)) {
+diff --git a/src/hle/rt64_present_queue.h b/src/hle/rt64_present_queue.h
+index e08b02c..2549ad8 100644
+--- a/src/hle/rt64_present_queue.h
++++ b/src/hle/rt64_present_queue.h
+@@ -56,6 +56,8 @@ namespace RT64 {
+         ProfilingTimer presentProfiler = ProfilingTimer(120);
+         Timestamp presentTimestamp;
+         VIHistory viHistory;
++        VI lastCompletedPresentationVI;
++        uint32_t lastCompletedPresentationAddress = 0;
+         bool presentWaitEnabled = false;
+ 
+         PresentQueue();
+@@ -73,4 +75,4 @@ namespace RT64 {
+         void threadAdvanceBarrier();
+         void threadLoop();
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_rdp_tmem.cpp b/src/hle/rt64_rdp_tmem.cpp
+index 6051f4e..7d076ff 100644
+--- a/src/hle/rt64_rdp_tmem.cpp
++++ b/src/hle/rt64_rdp_tmem.cpp
+@@ -52,30 +52,48 @@ namespace RT64 {
+     uint64_t TextureManager::uploadTexture(State *state, const LoadTile &loadTile, TextureCache *textureCache, uint64_t creationFrame, uint16_t width, uint16_t height, uint32_t tlut) {
+         const uint8_t *TMEM = reinterpret_cast<const uint8_t *>(state->rdp->TMEM);
+         uint64_t hash = TMEMHasher::hash(TMEM, loadTile, width, height, tlut, TMEMHasher::CurrentHashVersion);
++        const uint64_t contentHash = hash;
++        uint64_t sourceHash = 0;
++        if (sourceReplacement) {
++            sourceHash = sourceReplacement(replacementContext ? replacementContext() : 0,
++                state->rdp->rice.lastLoadOpByTMEM[loadTile.tmem], loadTile, width, height, tlut,
++                tlut ? state->rdp->rice.lastLoadOpByTMEM[256 + (loadTile.siz == 0 ? loadTile.palette * 16 : 0)].texture.address : 0);
++            if (sourceHash != 0) {
++                // Scope the cache entry as well as the replacement lookup.
++                // Keep changing texels in the key: missing replacements must
++                // continue animating, and identical images in different
++                // source slots must not share the wrong replacement.
++                const uint64_t key[] = { contentHash, sourceHash };
++                hash = XXH3_64bits(key, sizeof(key));
++            }
++        }
+         if (hashSet.find(hash) == hashSet.end()) {
+             hashSet.insert(hash);
+-            textureCache->queueGPUUploadTMEM(hash, creationFrame, TMEM, RDP_TMEM_BYTES, width, height, tlut, loadTile, true);
++            textureCache->queueGPUUploadTMEM(hash, creationFrame, TMEM, RDP_TMEM_BYTES, width, height, tlut, loadTile, true, contentHash, sourceHash);
+         }
+ 
+         // Dump memory contents into a file if the process is active.
+         if (!state->dumpingTexturesDirectory.empty()) {
+-            dumpTexture(hash, state, loadTile, width, height, tlut);
++            dumpTexture(contentHash, state, loadTile, width, height, tlut);
+         }
+ 
+         return hash;
+     }
+ 
+     void TextureManager::dumpTexture(uint64_t hash, State *state, const LoadTile &loadTile, uint16_t width, uint16_t height, uint32_t tlut) {
+-        if (dumpedSet.find(hash) != dumpedSet.end()) {
+-            return;
+-        }
+-
+-        // Insert into set regardless of whether the dump is successful or not.
+-        dumpedSet.insert(hash);
++        const LoadOperation &sourceOp = state->rdp->rice.lastLoadOpByTMEM[loadTile.tmem];
++        const uint32_t context = replacementContext ? replacementContext() : 0;
++        const uint64_t dumpKey[] = { hash, context, sourceOp.texture.address,
++            sourceOp.texture.width, sourceOp.tile.uls, sourceOp.tile.ult,
++            sourceOp.texture.fmt, sourceOp.texture.siz, uint32_t(sourceOp.type),
++            width, height, loadTile.fmt, loadTile.siz, loadTile.line, loadTile.tmem,
++            loadTile.palette, tlut, tlut ? state->rdp->rice.lastLoadOpByTMEM[256 + (loadTile.siz == 0 ? loadTile.palette * 16 : 0)].texture.address : 0 };
++        const uint64_t dumpIdentity = XXH3_64bits(dumpKey, sizeof(dumpKey));
++        if (!dumpedSet.insert(dumpIdentity).second) return;
+         
+         // Dump the entirety of TMEM.
+         char baseName[64];
+-        snprintf(baseName, sizeof(baseName), "%016" PRIx64 ".v%u", hash, TMEMHasher::CurrentHashVersion);
++        snprintf(baseName, sizeof(baseName), "%016" PRIx64 ".v%u.s%016" PRIx64, hash, TMEMHasher::CurrentHashVersion, dumpIdentity);
+         std::filesystem::path dumpTmemPath = state->dumpingTexturesDirectory / (std::string(baseName) + ".tmem");
+         std::ofstream dumpTmemStream(dumpTmemPath, std::ios::binary);
+         if (dumpTmemStream.is_open()) {
+@@ -172,6 +190,8 @@ namespace RT64 {
+             jroot["tile"] = loadTile;
+             jroot["width"] = width;
+             jroot["height"] = height;
++            jroot["paletteAddress"] = tlut ? state->rdp->rice.lastLoadOpByTMEM[256 + (loadTile.siz == 0 ? loadTile.palette * 16 : 0)].texture.address : 0;
++            if (replacementContext) jroot["sourceContext"] = replacementContext();
+ 
+             // Serialize the TLUT into an enum instead.
+             if (tlut == G_TT_RGBA16) {
+@@ -194,4 +214,4 @@ namespace RT64 {
+             hashSet.erase(hash);
+         }
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_rdp_tmem.h b/src/hle/rt64_rdp_tmem.h
+index 3708220..38e0aa6 100644
+--- a/src/hle/rt64_rdp_tmem.h
++++ b/src/hle/rt64_rdp_tmem.h
+@@ -5,6 +5,7 @@
+ #pragma once
+ 
+ #include <set>
++#include <functional>
+ 
+ #include "hle/rt64_draw_call.h"
+ #include "render/rt64_texture_cache.h"
+@@ -15,6 +16,9 @@ namespace RT64 {
+     struct TextureManager {
+         std::set<uint64_t> hashSet;
+         std::set<uint64_t> dumpedSet;
++        // Optional host-defined source identity, independent of texel contents.
++        std::function<uint32_t()> replacementContext;
++        std::function<uint64_t(uint32_t, const LoadOperation &, const LoadTile &, uint16_t, uint16_t, uint32_t, uint32_t)> sourceReplacement;
+ 
+         void uploadEmpty(State *state, TextureCache *textureCache, uint64_t creationFrame, uint16_t width, uint16_t height, uint64_t replacementHash);
+         uint64_t uploadTMEM(State *state, const LoadTile &loadTile, TextureCache *textureCache, uint64_t creationFrame, uint16_t byteOffset, uint16_t byteCount, uint16_t width, uint16_t height, uint32_t tlut);
+@@ -22,4 +26,4 @@ namespace RT64 {
+         void dumpTexture(uint64_t hash, State *state, const LoadTile &loadTile, uint16_t width, uint16_t height, uint32_t tlut);
+         void removeHashes(const std::vector<uint64_t> &hashes);
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_shared_queue_resources.h b/src/hle/rt64_shared_queue_resources.h
+index 8858dac..99feb28 100644
+--- a/src/hle/rt64_shared_queue_resources.h
++++ b/src/hle/rt64_shared_queue_resources.h
+@@ -51,6 +51,9 @@ namespace RT64 {
+         uint32_t viOriginalRate = 0;
+         std::vector<uint32_t> colorImageAddressVector;
+         std::unordered_set<uint32_t> colorImageAddressSet;
++        // Latest content at each address is only a full-screen clear, awaiting
++        // a subsequent drawing workload. Protected by managerMutex.
++        std::unordered_set<uint32_t> pendingColorClears;
+         std::vector<std::unique_ptr<RenderTarget>> interpolatedColorTargets;
+         InterpolatedFrameCounters interpolatedFrames[2];
+         uint32_t interpolatedFramesIndex = 0;
+@@ -107,4 +110,4 @@ namespace RT64 {
+         }
+ #   endif
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_state.cpp b/src/hle/rt64_state.cpp
+index 2970e71..c1da6f9 100644
+--- a/src/hle/rt64_state.cpp
++++ b/src/hle/rt64_state.cpp
+@@ -6,6 +6,9 @@
+ 
+ #include <cassert>
+ #include <cinttypes>
++#include <cstdlib>
++#include <cmath>
++#include <cstring>
+ 
+ #include "im3d/im3d.h"
+ #include "im3d/im3d_math.h"
+@@ -61,6 +64,16 @@ namespace RT64 {
+         rsp = std::make_unique<RSP>(this);
+         rdp = std::make_unique<RDP>(this);
+ 
++        if (const char *textureDumpPath = std::getenv("SOTE_TEXTURE_DUMP_PATH")) {
++            if (textureDumpPath[0] != '\0') {
++                dumpingTexturesDirectory = std::filesystem::u8path(textureDumpPath);
++                std::filesystem::create_directories(dumpingTexturesDirectory);
++                textureManager.dumpedSet.clear();
++                fprintf(stderr, "[rt64][texture-dump] dumping textures to %s\n", dumpingTexturesDirectory.string().c_str());
++                fflush(stderr);
++            }
++        }
++
+         reset();
+     }
+ 
+@@ -473,6 +486,19 @@ namespace RT64 {
+         drawCall.drawStatusChanges = drawStatus.changed;
+         drawCall.callIndex = workload.gameCallCount++;
+ 
++        static const bool traceFrameCommands = std::getenv("SOTE_TRACE_FRAME_COMMANDS") != nullptr;
++        if (traceFrameCommands && fbPair.inProjection(0, Projection::Type::Rectangle) && !drawCall.rect.isEmpty() &&
++            drawCall.rect.width(true, true) >= 160 && drawCall.rect.height(true, true) >= 120) {
++            const auto &p = drawCall.rdpParams.primColor;
++            std::printf("[sote][large-rect] workload=%llu call=%u color=%08X depth=%08X rect=%d,%d,%d,%d fill=%08X mode=%08X,%08X combine=%08X,%08X prim=%.4f,%.4f,%.4f,%.4f textured=%u\n",
++                static_cast<unsigned long long>(workloadId + 1), drawCall.callIndex,
++                fbPair.colorImage.address, fbPair.depthImage.address,
++                drawCall.rect.ulx, drawCall.rect.uly, drawCall.rect.lrx, drawCall.rect.lry,
++                drawCall.fillColor, drawCall.otherMode.H, drawCall.otherMode.L,
++                drawCall.colorCombiner.H, drawCall.colorCombiner.L,
++                p.x, p.y, p.z, p.w, unsigned(drawCall.textureOn));
++        }
++
+         // Add the draw call to the FB pair.
+         GameCall gameCall;
+         gameCall.callDesc = drawCall;
+@@ -777,6 +803,41 @@ namespace RT64 {
+                         rdpTileCursor++;
+                     }
+                 }
++
++                // Trace every cylinder draw, including draws that reuse an
++                // uploaded tile. Sampling uploads alone can miss a later pass.
++                static const bool traceCylinderMaterial = std::getenv("SOTE_TRACE_CYLINDER_MATERIAL") != nullptr;
++                if (traceCylinderMaterial) {
++                    const auto &dc = gameCall.callDesc;
++                    for (uint32_t t = 0; t < dc.tileCount; t++) {
++                        const auto &ct = workload.drawData.callTiles[dc.tileIndex + t];
++                        if (ct.tmemHashOrID != 0x52ab613b804bc4f1ULL && ct.tmemHashOrID != 0x8676029b822bcedcULL) {
++                            continue;
++                        }
++                        uint32_t alphaMin = 255, alphaMax = 0, vertices = 0, fogVertices = 0;
++                        if (proj.usesViewport()) {
++                            for (uint32_t i = 0; i < dc.triangleCount * 3; i++) {
++                                const auto vi = workload.drawData.faceIndices[gameCall.meshDesc.faceIndicesStart + i];
++                                const uint32_t a = workload.drawData.normColBytes[vi * 4 + 3];
++                                alphaMin = std::min(alphaMin, a);
++                                alphaMax = std::max(alphaMax, a);
++                                fogVertices += workload.drawData.fogIndices[vi] != 0;
++                                vertices++;
++                            }
++                        }
++                        const auto &pc = dc.rdpParams.primColor;
++                        const auto &ec = dc.rdpParams.envColor;
++                        const auto &om = dc.otherMode;
++                        std::printf("[sote][cylinder-material] frame=%llu call=%u hash=%016llx mode=%08X,%08X shader_mode=%08X,%08X combine=%08X,%08X prim=%.4f,%.4f,%.4f,%.4f env=%.4f,%.4f,%.4f,%.4f geometry=%08X triangles=%u vertex_alpha=%u,%u vertices=%u fog_vertices=%u alpha_blend=%u force_blend=%u z_update=%u z_mode=%u cvg_x_alpha=%u alpha_cvg_sel=%u\n",
++                            (unsigned long long)workload.submissionFrame, dc.callIndex, (unsigned long long)ct.tmemHashOrID,
++                            om.H, om.L, gameCall.shaderDesc.otherMode.H, gameCall.shaderDesc.otherMode.L,
++                            dc.colorCombiner.H, dc.colorCombiner.L, pc.x,pc.y,pc.z,pc.w,ec.x,ec.y,ec.z,ec.w,
++                            dc.geometryMode, dc.triangleCount, alphaMin, alphaMax, vertices, fogVertices,
++                            uint32_t(interop::Blender::usesAlphaBlend(om)), uint32_t(om.forceBlend()), uint32_t(om.zUpd()),
++                            om.zMode(), uint32_t(om.cvgXAlpha()), uint32_t(om.alphaCvgSel()));
++                        break;
++                    }
++                }
+             }
+         }
+     }
+@@ -2656,6 +2717,28 @@ namespace RT64 {
+ 
+     void State::advanceWorkload(Workload &workload, bool paused) {
+         workload.workloadId = ++workloadId;
++        static const bool traceFrameCommands = std::getenv("SOTE_TRACE_FRAME_COMMANDS") != nullptr;
++        if (traceFrameCommands) {
++            size_t invalidPositions = 0, invalidMatrices = 0;
++            for (float v : workload.drawData.posFloats) invalidPositions += !std::isfinite(v);
++            for (float v : workload.drawData.triPosFloats) invalidPositions += !std::isfinite(v);
++            const auto checkMatrices = [&](const auto &matrices) {
++                for (const auto &matrix : matrices) {
++                    float values[16];
++                    static_assert(sizeof(matrix) == sizeof(values));
++                    std::memcpy(values, &matrix, sizeof(values));
++                    for (float v : values) invalidMatrices += !std::isfinite(v);
++                }
++            };
++            checkMatrices(workload.drawData.worldTransforms);
++            checkMatrices(workload.drawData.viewTransforms);
++            checkMatrices(workload.drawData.projTransforms);
++            checkMatrices(workload.drawData.viewProjTransforms);
++            std::printf("[sote][frame-commands] workload=%llu present=%llu calls=%u pairs=%u vertices=%zu rect_vertices=%zu invalid_positions=%zu invalid_matrices=%zu paused=%d\n",
++                static_cast<unsigned long long>(workload.workloadId), static_cast<unsigned long long>(presentId),
++                workload.gameCallCount, workload.fbPairCount, workload.drawData.posFloats.size()/3,
++                workload.drawData.triPosFloats.size()/4, invalidPositions, invalidMatrices, int(paused));
++        }
+         workload.presentId = presentId;
+         workload.debuggerCamera = debuggerInspector.camera;
+         workload.debuggerRenderer = debuggerInspector.renderer;
+@@ -2801,4 +2884,4 @@ namespace RT64 {
+             break;
+         }
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/hle/rt64_workload_queue.cpp b/src/hle/rt64_workload_queue.cpp
+index 5a331aa..70ebfe2 100644
+--- a/src/hle/rt64_workload_queue.cpp
++++ b/src/hle/rt64_workload_queue.cpp
+@@ -812,6 +812,18 @@ namespace RT64 {
+                     }
+ 
+                     const uint64_t writeTimestamp = fbManager.nextWriteTimestamp();
++                    if (std::getenv("SOTE_TRACE_FRAME_COMPLETION")) {
++                        std::printf("[sote][frame-pair] workload=%llu write=%llu color=%08X depth=%08X calls=%u fill=%u zread=%u zwrite=%u color_target=%u depth_target=%u start_ops=%zu end_ops=%zu rect=%d,%d,%d,%d zcopy=%u zram=%u zformat=%u size=%u,%u\n",
++                            (unsigned long long)workload.workloadId, (unsigned long long)writeTimestamp,
++                            colorImg.address, depthImg.address, fbPair.gameCallCount,
++                            unsigned(fbPair.fillRectOnly), unsigned(fbPair.depthRead), unsigned(fbPair.depthWrite),
++                            unsigned(colorTarget!=nullptr), unsigned(depthTarget!=nullptr),
++                            fbPair.startFbOperations.size(), fbPair.endFbOperations.size(),
++                            fbPair.drawColorRect.left(false), fbPair.drawColorRect.top(false),
++                            fbPair.drawColorRect.right(false), fbPair.drawColorRect.bottom(false),
++                            unsigned(depthFormatUpdated), unsigned(depthFbChanged), unsigned(depthImg.formatChanged),
++                            rtWidth,rtHeight);
++                    }
+                     FixedRect depthFbRect;
+                     if (colorFb != nullptr) {
+                         colorFb->lastWriteRect.merge(fbPair.drawColorRect.scaled(fixedResScale.x, fixedResScale.y));
+@@ -842,6 +854,24 @@ namespace RT64 {
+             framebufferRenderer->waitForUploaders();
+             ext.workloadGraphicsWorker->execute();
+             ext.workloadGraphicsWorker->wait();
++            // Publish clear/draw completion only after the GPU finished. The
++            // present queue reads this while holding workloadMutex: publishing
++            // a queued draw earlier can expose the preceding clear as complete.
++            {
++                std::scoped_lock<std::mutex> lock(ext.sharedResources->managerMutex);
++                for (uint32_t f = 0; f < workload.fbPairCount; ++f) {
++                    const auto &pair = workload.fbPairs[f];
++                    if (pair.drawColorRect.isEmpty()) continue;
++                    if (!pair.fillRectOnly) {
++                        ext.sharedResources->pendingColorClears.erase(pair.colorImage.address);
++                    }
++                    else if (!pair.scissorRect.isNull() &&
++                        pair.scissorRect.width(true, true) >= pair.colorImage.width &&
++                        pair.scissorRect.fullyInside(pair.drawColorRect)) {
++                        ext.sharedResources->pendingColorClears.insert(pair.colorImage.address);
++                    }
++                }
++            }
+             workerMutex.unlock();
+ 
+             // Update the GPU profiler with the results from the timestamps of the frame.
+@@ -1221,4 +1251,4 @@ namespace RT64 {
+             }
+         }
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/render/rt64_render_target.cpp b/src/render/rt64_render_target.cpp
+index 81917bc..da66605 100644
+--- a/src/render/rt64_render_target.cpp
++++ b/src/render/rt64_render_target.cpp
+@@ -96,6 +96,7 @@ namespace RT64 {
+             resolvedTextureView = resolvedTexture->createTextureView(RenderTextureViewDesc::Texture2D(format));
+             resolvedTexture->setName("Render Target Color Resolved #" + std::to_string(addressForName));
+         }
++
+     }
+ 
+     void RenderTarget::setupDepth(RenderWorker *worker, uint32_t width, uint32_t height) {
+@@ -512,4 +513,4 @@ namespace RT64 {
+     RenderFormat RenderTarget::depthBufferFormat() {
+         return RenderFormat::D32_FLOAT;
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/src/render/rt64_render_target.h b/src/render/rt64_render_target.h
+index 82d8a36..3937fc9 100644
+--- a/src/render/rt64_render_target.h
++++ b/src/render/rt64_render_target.h
+@@ -75,4 +75,4 @@ namespace RT64 {
+         static RenderFormat colorBufferFormat(bool usesHDR);
+         static RenderFormat depthBufferFormat();
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/render/rt64_shader_library.cpp b/src/render/rt64_shader_library.cpp
+index d1c5273..774a1a4 100644
+--- a/src/render/rt64_shader_library.cpp
++++ b/src/render/rt64_shader_library.cpp
+@@ -25,6 +25,7 @@
+ #include "shaders/HistogramSetCS.hlsl.spirv.h"
+ #include "shaders/IdleCS.hlsl.spirv.h"
+ #include "shaders/LuminanceHistogramCS.hlsl.spirv.h"
++#include "shaders/RegionalLuminanceCS.hlsl.spirv.h"
+ #include "shaders/RSPModifyCS.hlsl.spirv.h"
+ #include "shaders/RSPProcessCS.hlsl.spirv.h"
+ #include "shaders/RSPSmoothNormalCS.hlsl.spirv.h"
+@@ -71,6 +72,7 @@
+ #   include "shaders/HistogramSetCS.hlsl.dxil.h"
+ #   include "shaders/IdleCS.hlsl.dxil.h"
+ #   include "shaders/LuminanceHistogramCS.hlsl.dxil.h"
++#   include "shaders/RegionalLuminanceCS.hlsl.dxil.h"
+ #   include "shaders/RSPModifyCS.hlsl.dxil.h"
+ #   include "shaders/RSPProcessCS.hlsl.dxil.h"
+ #   include "shaders/RSPSmoothNormalCS.hlsl.dxil.h"
+@@ -116,6 +118,7 @@
+ #   include "shaders/HistogramSetCS.hlsl.metal.h"
+ #   include "shaders/IdleCS.hlsl.metal.h"
+ #   include "shaders/LuminanceHistogramCS.hlsl.metal.h"
++#   include "shaders/RegionalLuminanceCS.hlsl.metal.h"
+ #   include "shaders/RSPModifyCS.hlsl.metal.h"
+ #   include "shaders/RSPProcessCS.hlsl.metal.h"
+ #   include "shaders/RSPSmoothNormalCS.hlsl.metal.h"
+@@ -493,6 +496,19 @@ namespace RT64 {
+             luminanceHistogram.pipeline = device->createComputePipeline(pipelineDesc);
+         }
+ 
++        // Regional presentation diagnostics (same resource layout as luminance).
++        {
++            LuminanceHistogramDescriptorSet descriptorSet;
++            layoutBuilder.begin();
++            layoutBuilder.addPushConstant(0, 0, sizeof(uint32_t) * 4, RenderShaderStageFlag::COMPUTE);
++            layoutBuilder.addDescriptorSet(descriptorSet);
++            layoutBuilder.end();
++            regionalLuminance.pipelineLayout = layoutBuilder.create(device);
++            std::unique_ptr<RenderShader> computeShader = device->createShader(CREATE_SHADER_INPUTS(RegionalLuminanceCSBlobDXIL, RegionalLuminanceCSBlobSPIRV, RegionalLuminanceCSBlobMSL, "CSMain", shaderFormat));
++            RenderComputePipelineDesc pipelineDesc(regionalLuminance.pipelineLayout.get(), computeShader.get(), 8, 8, 1);
++            regionalLuminance.pipeline = device->createComputePipeline(pipelineDesc);
++        }
++
+         // RSP Modify.
+         {
+             RSPModifyDescriptorSet descriptorSet;
+diff --git a/src/render/rt64_shader_library.h b/src/render/rt64_shader_library.h
+index 641f3ec..3dec01e 100644
+--- a/src/render/rt64_shader_library.h
++++ b/src/render/rt64_shader_library.h
+@@ -40,6 +40,7 @@ namespace RT64 {
+         ShaderRecord im3dPoint;
+         ShaderRecord im3dTriangle;
+         ShaderRecord luminanceHistogram;
++        ShaderRecord regionalLuminance;
+         ShaderRecord postProcess;
+         ShaderRecord rspModify;
+         ShaderRecord rspProcess;
+diff --git a/src/render/rt64_texture.h b/src/render/rt64_texture.h
+index 95618bc..6e38193 100644
+--- a/src/render/rt64_texture.h
++++ b/src/render/rt64_texture.h
+@@ -10,6 +10,8 @@
+ namespace RT64 {
+     struct Texture {
+         uint64_t creationFrame = 0;
++        uint64_t contentHash = 0;
++        uint64_t sourceHash = 0;
+         std::unique_ptr<RenderTexture> texture;
+         std::unique_ptr<RenderTexture> tmem;
+         RenderFormat format = RenderFormat::UNKNOWN;
+diff --git a/src/render/rt64_texture_cache.cpp b/src/render/rt64_texture_cache.cpp
+index 0848f3e..efda95d 100644
+--- a/src/render/rt64_texture_cache.cpp
++++ b/src/render/rt64_texture_cache.cpp
+@@ -20,6 +20,12 @@
+ 
+ #include "rt64_texture_cache.h"
+ 
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <iomanip>
++#include <unordered_set>
++
+ #define ONLY_USE_LOW_MIP_CACHE 0
+ 
+ namespace RT64 {
+@@ -29,6 +35,48 @@ namespace RT64 {
+     static const uint32_t TextureDataPitchAlignment = 256;
+     static const uint32_t TextureDataPlacementAlignment = 512;
+ 
++    static bool traceTextureReplacements() {
++        const char *trace = std::getenv("SOTE_TEXTURE_REPLACEMENT_TRACE");
++        return (trace != nullptr) && (trace[0] != '\0') && (trace[0] != '0');
++    }
++
++    static void logTextureHashUse(uint64_t hash, uint64_t submissionFrame, uint32_t textureIndex, const interop::float3 &dimensions, bool replaced) {
++        const char *logPath = std::getenv("SOTE_TEXTURE_HASH_LOG");
++        if ((logPath == nullptr) || (logPath[0] == '\0')) {
++            return;
++        }
++
++        static std::ofstream log;
++        static std::unordered_set<uint64_t> seenHashes;
++        if (!log.is_open()) {
++            const std::filesystem::path path = std::filesystem::u8path(logPath);
++            const std::filesystem::path parent = path.parent_path();
++            if (!parent.empty()) {
++                std::filesystem::create_directories(parent);
++            }
++
++            log.open(path, std::ios::out | std::ios::trunc);
++            if (log.is_open()) {
++                log << "hash\tfirst_submission_frame\ttexture_index\twidth\theight\tmips\treplaced\n";
++            }
++        }
++
++        if (!log.is_open() || !seenHashes.insert(hash).second) {
++            return;
++        }
++
++        log << std::hex << std::setw(16) << std::setfill('0') << hash
++            << std::dec << std::setfill(' ')
++            << '\t' << submissionFrame
++            << '\t' << textureIndex
++            << '\t' << static_cast<uint32_t>(dimensions.x)
++            << '\t' << static_cast<uint32_t>(dimensions.y)
++            << '\t' << static_cast<uint32_t>(dimensions.z)
++            << '\t' << (replaced ? 1 : 0)
++            << '\n';
++        log.flush();
++    }
++
+     ReplacementMap::ReplacementMap() {
+         // Empty constructor.
+     }
+@@ -313,6 +361,13 @@ namespace RT64 {
+             textureDimensions = cachedTextureDimensions[textureIndex];
+         }
+ 
++        logTextureHashUse(
++            hash,
++            submissionFrame,
++            textureIndex,
++            cachedTextureDimensions[textureIndex],
++            textureReplaced);
++
+         // Remove the existing entry from the list if it exists.
+         AccessList::iterator listIt = listIterators[textureIndex];
+         if (listIt != accessList.end()) {
+@@ -435,12 +490,22 @@ namespace RT64 {
+                 textureCache->addStreamLoadTime(elapsedTimer.elapsedMicroseconds());
+ 
+                 if (fileLoaded) {
++                    if (traceTextureReplacements()) {
++                        fprintf(stderr, "[rt64][replacement] stream load path=%s bytes=%zu\n", streamDesc.relativePath.c_str(), replacementBytes.size());
++                        fflush(stderr);
++                    }
++
+                     worker->commandList->begin();
+                     Texture *texture = TextureCache::loadTextureFromBytes(worker->device, worker->commandList.get(), replacementBytes, uploadResource);
+                     worker->commandList->end();
+ 
+                     // Only execute the command list and wait if the texture was loaded successfully.
+                     if (texture != nullptr) {
++                        if (traceTextureReplacements()) {
++                            fprintf(stderr, "[rt64][replacement] stream decoded path=%s size=%ux%u mips=%u format=%u\n", streamDesc.relativePath.c_str(), texture->width, texture->height, texture->mipmaps, uint32_t(texture->format));
++                            fflush(stderr);
++                        }
++
+                         worker->execute();
+                         worker->wait();
+                         textureCache->uploadQueueMutex.lock();
+@@ -448,6 +513,14 @@ namespace RT64 {
+                         textureCache->uploadQueueMutex.unlock();
+                         textureCache->uploadQueueChanged.notify_all();
+                     }
++                    else if (traceTextureReplacements()) {
++                        fprintf(stderr, "[rt64][replacement] stream decode failed path=%s\n", streamDesc.relativePath.c_str());
++                        fflush(stderr);
++                    }
++                }
++                else if (traceTextureReplacements()) {
++                    fprintf(stderr, "[rt64][replacement] stream missing path=%s\n", streamDesc.relativePath.c_str());
++                    fflush(stderr);
+                 }
+             }
+         }
+@@ -1076,6 +1149,8 @@ namespace RT64 {
+                     newTexture->loadTile = upload.loadTile;
+                     newTexture->tlut = upload.tlut;
+                     newTexture->decodeTMEM = upload.decodeTMEM;
++                    newTexture->contentHash = upload.contentHash;
++                    newTexture->sourceHash = upload.sourceHash;
+ 
+                     if (!upload.bytesTMEM.empty()) {
+                         void *dstData = tmemUploadResources[i]->map();
+@@ -1112,7 +1187,7 @@ namespace RT64 {
+                         beforeDecodeBarriers.emplace_back(dstTexture->texture.get(), RenderTextureLayout::GENERAL);
+                     }
+ 
+-                    addResolvedPaths(upload.hash, upload.width, upload.height, upload.tlut, upload.loadTile, upload.bytesTMEM, upload.decodeTMEM, resolvedPathQueueCopy);
++                    addResolvedPaths(upload.hash, upload.width, upload.height, upload.tlut, upload.loadTile, upload.bytesTMEM, upload.decodeTMEM, resolvedPathQueueCopy, 0, upload.contentHash, upload.sourceHash);
+                 }
+ 
+                 replacementMapAdditions.clear();
+@@ -1142,6 +1217,11 @@ namespace RT64 {
+                             // Make sure the replacement map hasn't queued or loaded the relative path already.
+                             auto &streamSet = textureMap.replacementMap.fileSystemStreamSets[resolvedPath.fileSystemIndex];
+                             if (streamSet.find(resolvedPath.relativePath) == streamSet.end()) {
++                                if (traceTextureReplacements()) {
++                                    fprintf(stderr, "[rt64][replacement] match hash=%016llx path=%s op=stream\n", static_cast<unsigned long long>(resolvedPath.textureHash), resolvedPath.relativePath.c_str());
++                                    fflush(stderr);
++                                }
++
+                                 streamSet.insert(resolvedPath.relativePath);
+ 
+                                 // Push to the streaming queue.
+@@ -1160,8 +1240,22 @@ namespace RT64 {
+                         }
+                         // Load the texture directly on this thread (operation was defined as Stall).
+                         else if (textureMap.replacementMap.fileSystems[resolvedPath.fileSystemIndex]->load(resolvedPath.relativePath, replacementBytes)) {
++                            if (traceTextureReplacements()) {
++                                fprintf(stderr, "[rt64][replacement] match hash=%016llx path=%s op=stall bytes=%zu\n", static_cast<unsigned long long>(resolvedPath.textureHash), resolvedPath.relativePath.c_str(), replacementBytes.size());
++                                fflush(stderr);
++                            }
++
+                             replacementUploadResources.emplace_back();
+                             replacementTexture = TextureCache::loadTextureFromBytes(copyWorker->device, copyWorker->commandList.get(), replacementBytes, replacementUploadResources.back());
++                            if (replacementTexture == nullptr) {
++                                if (traceTextureReplacements()) {
++                                    fprintf(stderr, "[rt64][replacement] stall decode failed path=%s\n", resolvedPath.relativePath.c_str());
++                                    fflush(stderr);
++                                }
++
++                                continue;
++                            }
++
+                             textureMapMutex.lock();
+                             textureMap.replacementMap.addLoadedTexture(replacementTexture, resolvedPath.fileSystemIndex, resolvedPath.relativePath, true);
+                             textureMapMutex.unlock();
+@@ -1258,11 +1352,13 @@ namespace RT64 {
+         }
+     }
+ 
+-    void TextureCache::queueGPUUploadTMEM(uint64_t hash, uint64_t creationFrame, const uint8_t *bytes, int bytesCount, int width, int height, uint32_t tlut, const LoadTile &loadTile, bool decodeTMEM) {
++    void TextureCache::queueGPUUploadTMEM(uint64_t hash, uint64_t creationFrame, const uint8_t *bytes, int bytesCount, int width, int height, uint32_t tlut, const LoadTile &loadTile, bool decodeTMEM, uint64_t contentHash, uint64_t sourceHash) {
+         assert(!decodeTMEM || ((width > 0) && (height > 0)));
+ 
+         TextureUpload newUpload;
+         newUpload.hash = hash;
++        newUpload.contentHash = contentHash;
++        newUpload.sourceHash = sourceHash;
+         newUpload.creationFrame = creationFrame;
+         newUpload.width = width;
+         newUpload.height = height;
+@@ -1286,7 +1382,7 @@ namespace RT64 {
+         });
+     }
+ 
+-    void TextureCache::addResolvedPaths(uint64_t hash, uint32_t width, uint32_t height, uint32_t tlut, const LoadTile &loadTile, const std::vector<uint8_t> &bytesTMEM, bool decodeTMEM, std::vector<ReplacementResolvedPath> &resolvedPaths, uint64_t exclusiveDbHash) {
++    void TextureCache::addResolvedPaths(uint64_t hash, uint32_t width, uint32_t height, uint32_t tlut, const LoadTile &loadTile, const std::vector<uint8_t> &bytesTMEM, bool decodeTMEM, std::vector<ReplacementResolvedPath> &resolvedPaths, uint64_t exclusiveDbHash, uint64_t contentHash, uint64_t sourceHash) {
+         uint64_t hashes[TMEMHasher::CurrentHashVersion + 1] = {};
+         for (uint32_t v : textureMap.replacementMap.resolvedHashVersions) {
+             if (decodeTMEM && v < TMEMHasher::CurrentHashVersion) {
+@@ -1294,7 +1390,7 @@ namespace RT64 {
+                 hashes[v] = TMEMHasher::hash(bytesTMEM.data(), loadTile, width, height, tlut, v);
+             }
+             else {
+-                hashes[v] = hash;
++                hashes[v] = contentHash ? contentHash : hash;
+             }
+         }
+ 
+@@ -1302,10 +1398,12 @@ namespace RT64 {
+             const auto &fsResolvedPaths = textureMap.replacementMap.fileSystemResolvedPaths[i];
+             uint32_t hashVersion = textureMap.replacementMap.fileSystemHashVersions[i];
+             if ((exclusiveDbHash == 0) || (exclusiveDbHash == hashes[hashVersion])) {
+-                auto it = fsResolvedPaths.find(hashes[hashVersion]);
++                auto it = sourceHash ? fsResolvedPaths.find(sourceHash) : fsResolvedPaths.end();
++                if (it == fsResolvedPaths.end()) it = fsResolvedPaths.find(hashes[hashVersion]);
+                 if (it != fsResolvedPaths.end()) {
+                     // Stop searching for replacements as soon as we find one.
+                     resolvedPaths.emplace_back(it->second);
++                    resolvedPaths.back().textureHash = hash;
+                     break;
+                 }
+             }
+@@ -1447,7 +1545,7 @@ namespace RT64 {
+             for (size_t i = 0; i < textureMap.textures.size(); i++) {
+                 if (textureMap.textures[i] != nullptr) {
+                     Texture *texture = textureMap.textures[i];
+-                    addResolvedPaths(textureMap.hashes[i], texture->width, texture->height, texture->tlut, texture->loadTile, texture->bytesTMEM, texture->decodeTMEM, resolvedPathQueue, exclusiveDbHash);
++                    addResolvedPaths(textureMap.hashes[i], texture->width, texture->height, texture->tlut, texture->loadTile, texture->bytesTMEM, texture->decodeTMEM, resolvedPathQueue, exclusiveDbHash, texture->contentHash, texture->sourceHash);
+                 }
+             }
+         }
+diff --git a/src/render/rt64_texture_cache.h b/src/render/rt64_texture_cache.h
+index 9131697..2b90cb1 100644
+--- a/src/render/rt64_texture_cache.h
++++ b/src/render/rt64_texture_cache.h
+@@ -37,6 +37,8 @@ namespace interop {
+ namespace RT64 {
+     struct TextureUpload {
+         uint64_t hash;
++        uint64_t contentHash = 0;
++        uint64_t sourceHash = 0;
+         uint64_t creationFrame;
+         uint32_t width;
+         uint32_t height;
+@@ -233,9 +235,9 @@ namespace RT64 {
+         TextureCache(RenderWorker *directWorker, RenderWorker *copyWorker, uint32_t threadCount, const ShaderLibrary *shaderLibrary);
+         ~TextureCache();
+         void uploadThreadLoop();
+-        void queueGPUUploadTMEM(uint64_t hash, uint64_t creationFrame, const uint8_t *bytes, int bytesCount, int width, int height, uint32_t tlut, const LoadTile &loadTile, bool decodeTMEM);
++        void queueGPUUploadTMEM(uint64_t hash, uint64_t creationFrame, const uint8_t *bytes, int bytesCount, int width, int height, uint32_t tlut, const LoadTile &loadTile, bool decodeTMEM, uint64_t contentHash = 0, uint64_t sourceHash = 0);
+         void waitForGPUUploads();
+-        void addResolvedPaths(uint64_t hash, uint32_t width, uint32_t height, uint32_t tlut, const LoadTile &loadTile, const std::vector<uint8_t> &bytesTMEM, bool decodeTMEM, std::vector<ReplacementResolvedPath> &resolvedPaths, uint64_t exclusiveDbHash = 0);
++        void addResolvedPaths(uint64_t hash, uint32_t width, uint32_t height, uint32_t tlut, const LoadTile &loadTile, const std::vector<uint8_t> &bytesTMEM, bool decodeTMEM, std::vector<ReplacementResolvedPath> &resolvedPaths, uint64_t exclusiveDbHash = 0, uint64_t contentHash = 0, uint64_t sourceHash = 0);
+         bool useTexture(uint64_t hash, uint64_t submissionFrame, uint32_t &textureIndex, interop::float2 &textureScale, interop::float3 &textureDimensions, bool &textureReplaced, bool &hasMipmaps, bool &shiftedByHalf);
+         bool useTexture(uint64_t hash, uint64_t submissionFrame, uint32_t &textureIndex);
+         bool addReplacement(uint64_t hash, const std::string &relativePath, ReplacementShift shift);
+@@ -265,4 +267,4 @@ namespace RT64 {
+         static bool setLowMipCache(RenderDevice *device, RenderCommandList *commandList, const uint8_t *bytes, size_t byteCount, std::unique_ptr<RenderBuffer> &dstUploadResource, std::unordered_map<std::string, LowMipCacheTexture> &dstTextureMap, uint64_t &totalMemory);
+         static Texture *loadTextureFromBytes(RenderDevice *device, RenderCommandList *commandList, const std::vector<uint8_t> &fileBytes, std::unique_ptr<RenderBuffer> &dstUploadResource, RenderPool *resourcePool = nullptr, std::mutex *uploadResourcePoolMutex = nullptr);
+     };
+-};
+\ No newline at end of file
++};
+diff --git a/src/rhi/rt64_render_hooks.h b/src/rhi/rt64_render_hooks.h
+index be01701..0ce8980 100644
+--- a/src/rhi/rt64_render_hooks.h
++++ b/src/rhi/rt64_render_hooks.h
+@@ -8,7 +8,7 @@
+ 
+ namespace RT64 {
+     using RenderHookInit = void(RenderInterface *rhi, RenderDevice *device);
+-    using RenderHookDraw = void(RenderCommandList *list, RenderFramebuffer *swapChainFramebuffer);
++    using RenderHookDraw = void(RenderCommandList *list, RenderFramebuffer *swapChainFramebuffer, RenderTexture *swapChainTexture);
+     using RenderHookDeinit = void();
+ 
+     RenderHookInit *GetRenderHookInit();
+diff --git a/src/shaders/RegionalLuminanceCS.hlsl b/src/shaders/RegionalLuminanceCS.hlsl
+new file mode 100644
+index 0000000..495d779
+--- /dev/null
++++ b/src/shaders/RegionalLuminanceCS.hlsl
+@@ -0,0 +1,31 @@
++// Opt-in presentation diagnostics. Read back regional counters, never pixels.
++#define BINS 64
++struct Constants {
++    uint width;
++    uint height;
++    uint columns;
++    uint rows;
++};
++[[vk::push_constant]] ConstantBuffer<Constants> gConstants : register(b0);
++Texture2D<float3> InputTexture : register(t1);
++RWByteAddressBuffer Histograms : register(u2);
++groupshared uint bins[BINS];
++
++[numthreads(8, 8, 1)]
++void CSMain(uint index : SV_GroupIndex, uint3 tid : SV_DispatchThreadID, uint3 gid : SV_GroupID) {
++    bins[index] = 0;
++    GroupMemoryBarrierWithGroupSync();
++    uint2 cell = uint2(gid.z % gConstants.columns, gid.z / gConstants.columns);
++    uint2 divisions = uint2(gConstants.columns, gConstants.rows);
++    uint2 size = uint2(gConstants.width, gConstants.height);
++    uint2 begin = cell * size / divisions;
++    uint2 end = (cell + 1) * size / divisions;
++    uint2 pixel = begin + tid.xy;
++    if (all(pixel < end)) {
++        float luminance = dot(InputTexture.Load(int3(pixel, 0)), float3(0.2127, 0.7152, 0.0722));
++        uint bin = luminance < 1e-6 ? 0 : uint(saturate(luminance) * 62.0 + 1.0);
++        InterlockedAdd(bins[bin], 1);
++    }
++    GroupMemoryBarrierWithGroupSync();
++    Histograms.InterlockedAdd((gid.z * BINS + index) * 4, bins[index]);
++}

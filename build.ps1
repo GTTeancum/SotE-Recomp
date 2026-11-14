@@ -128,33 +128,16 @@ try {
         'submodule', 'update', '--init', '--recursive')
 
     Write-Host '[2/7] Applying runtime patches...'
+    # Cumulative patches include the earlier numbered fixes and current playtest corrections.
     Ensure-Patch `
         -Submodule 'third_party/N64ModernRuntime' `
-        -Patch 'patches/0001-n64modernruntime-sote-audio-fifo.patch'
-    Ensure-Patch `
-        -Submodule 'third_party/N64ModernRuntime' `
-        -Patch 'patches/0004-n64modernruntime-alternate-rom-hashes.patch'
-    Ensure-Patch `
-        -Submodule 'third_party/N64ModernRuntime' `
-        -Patch 'patches/0007-n64modernruntime-count-sign-extension.patch'
+        -Patch 'patches/0012-n64modernruntime-current.patch'
     Ensure-Patch `
         -Submodule 'third_party/rt64' `
-        -Patch 'patches/0002-rt64-sote-f3dbeta.patch'
-    Ensure-Patch `
-        -Submodule 'third_party/rt64' `
-        -Patch 'patches/0006-rt64-texture-slots-native-capture.patch'
+        -Patch 'patches/0013-rt64-current.patch'
     Ensure-Patch `
         -Submodule 'third_party/rt64/src/contrib/plume' `
-        -Patch 'patches/0003-plume-d3d12-copy-sample-positions.patch'
-    Ensure-Patch `
-        -Submodule 'third_party/rt64' `
-        -Patch 'patches/0008-rt64-present-diagnostics.patch'
-    Ensure-Patch `
-        -Submodule 'third_party/rt64/src/contrib/plume' `
-        -Patch 'patches/0009-plume-vulkan-capture.patch'
-    Ensure-Patch `
-        -Submodule 'third_party/rt64' `
-        -Patch 'patches/0011-rt64-pause-frame-and-textures.patch'
+        -Patch 'patches/0014-plume-current.patch'
 
     if ($Clean) {
         foreach ($target in @(

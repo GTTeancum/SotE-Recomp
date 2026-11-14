@@ -10,12 +10,17 @@
 
 extern "C" uint32_t sote_is_bike_stage_active() { return 0; }
 extern "C" void sote_modern_projectile(uint8_t*,void*);
+extern "C" void sote_modern_camera_resolve(uint8_t*,void*);
 namespace {
 struct Vec { float x,y,z; };
 template<class T> void put(uint8_t* r,uint32_t a,T v) { std::memcpy(r+((a&0x7fffff)^(sizeof(T)==2?2:0)),&v,sizeof(v)); }
 template<class T> T get(uint8_t* r,uint32_t a) { T v;std::memcpy(&v,r+((a&0x7fffff)^(sizeof(T)==2?2:0)),sizeof(v));return v; }
 int failures=0, calls=0;
 float wall=100;
+bool ceiling_test=false;
+bool camera_query_test=false;
+float extra_object_distance=-1;
+float camera_world_distance=-1;
 bool blocked_target=false;
 constexpr uint32_t player=0x80200000, collision=0x80201000, camera=0x80202000,
     bolt=0x80203000, pos=bolt+0x50, vel=bolt+0xa0, target=0x80204000, pool=0x80205000, stack=0x80300000;
@@ -31,7 +36,13 @@ extern "C" void func_800654A0(uint8_t* ram,recomp_context* c) {
     const Vec delta{to.x-from.x,to.y-from.y,to.z-from.z};
     float fraction=delta.y>0 ? (wall-from.y)/delta.y : -1;
     if(blocked_target && to.x>0.1f) fraction=0.5f;
+    if(ceiling_test) fraction=delta.z>0 ? (8.0f-from.z)/delta.z : -1;
     c->f0.fl=(fraction>=0 && fraction<=1) ? norm(delta)*fraction : -1;
+    const uint32_t extra_objects=get<uint32_t>(ram,uint32_t(c->r29)+0x18);
+    check(extra_objects==uint32_t(!(ceiling_test||camera_query_test)),
+        "camera uses the native camera query, projectiles retain the extra-object pass");
+    if(extra_objects && extra_object_distance>=0)c->f0.fl=extra_object_distance;
+    if(camera_query_test && camera_world_distance>=0)c->f0.fl=camera_world_distance;
     put<uint32_t>(ram,uint32_t(c->r7),0);
     // Destroy scratch registers to verify no changes leak into the spawn.
     c->r4=0; c->r16=0; c->f12.fl=999;
@@ -120,8 +131,61 @@ int main(int argc,char** argv) {
     sote::modern_controls::publish({{},{},true});sote_modern_begin(ram,player);
     configure(0,false);put(ram,vel,Vec{0,20,0});calls=0;sote_modern_projectile(ram,&c);
     check(calls==0 && get<Vec>(ram,vel).x==0,"INI disables convergence without traces");
+    ceiling_test=true;
+    c.r16=player; put(ram,player+0x138,Vec{0,0,5.5f});
+    for (float height : {6.7f,7.0f,7.4f,7.67f,9.0f}) {
+        put(ram,stack+0x8c,Vec{0,-6,height});
+        const auto before=c;
+        sote_modern_camera_resolve(ram,&c);
+        const Vec eye=get<Vec>(ram,stack+0x8c);
+        check(eye.z<=7.001f,"grazing ceiling keeps one-unit eye clearance");
+        check(eye.z>=5.5f && eye.y>=-6 && eye.y<=0,"camera retracts along existing arm");
+        check(c.r16==before.r16 && c.r29==before.r29,"camera trace preserves caller registers");
+        if(height==6.7f)check(eye.y==-6,"clear corridor keeps camera distance");
+    }
+    ceiling_test=false;
+    camera_query_test=true;
+    const double camera_dt=1.0/60.0;
+    uint64_t camera_dt_bits;std::memcpy(&camera_dt_bits,&camera_dt,sizeof(camera_dt));
+    put<uint32_t>(ram,0x8018E998,uint32_t(camera_dt_bits>>32));
+    put<uint32_t>(ram,0x8018E99C,uint32_t(camera_dt_bits));
+    // Start a fresh camera after the preceding ceiling collision fixture.
+    sote::modern_controls::publish({{},{},false});sote_modern_begin(ram,player);
+    sote_modern_camera_resolve(ram,&c);
+    sote::modern_controls::publish({{},{},true});sote_modern_begin(ram,player);
+    auto camera_step=[&](float hit) {
+        extra_object_distance=hit;
+        put(ram,stack+0x8c,Vec{0,-8,5.5f});
+        sote_modern_camera_resolve(ram,&c);
+        return -get<Vec>(ram,stack+0x8c).y;
+    };
+    for(int i=0;i<30;++i) {
+        check(camera_step(.3f)==8,"extra-object hit cannot collapse the camera arm");
+        check(camera_step(-1)==8,"extra-object change cannot cause camera flicker");
+    }
+    for(int i=0;i<30;++i) {
+        camera_world_distance=.3f;
+        check(camera_step(-1)<=.251f,"world obstruction retracts immediately");
+        camera_world_distance=-1;
+        check(camera_step(-1)<=.451f,"one clear frame cannot jump to full camera distance");
+    }
+    float previous=camera_step(-1);
+    for(int i=0;i<60;++i) {
+        const float current=camera_step(-1);
+        check(current>=previous && current-previous<=.201f,"clear camera returns smoothly");
+        previous=current;
+    }
+    check(std::abs(previous-8)<.001f,"clear camera regains full distance");
+    camera_world_distance=.3f;camera_step(-1);camera_world_distance=-1;
+    put(ram,player+0x138,Vec{20,0,5.5f});put(ram,stack+0x8c,Vec{20,-8,5.5f});
+    sote_modern_camera_resolve(ram,&c);
+    check(get<Vec>(ram,stack+0x8c).y==-8,"teleport discards old camera obstruction");
+    camera_query_test=false;extra_object_distance=-1;
     configure(1); sote::controls_menu::cycle_scheme(sote::controls_menu::SchemeSlot::OnFoot,1);
     sote_modern_begin(ram,player);calls=0;sote_modern_projectile(ram,&c);
     check(calls==0 && get<Vec>(ram,vel).x==0,"Classic is untouched");
+    calls=0; put(ram,stack+0x8c,Vec{0,-6,7.67f});
+    sote_modern_camera_resolve(ram,&c);
+    check(calls==0 && get<Vec>(ram,stack+0x8c).z==7.67f,"Classic camera is unchanged");
     std::cout<<"modern aim failures="<<failures<<'\n';return failures?1:0;
 }

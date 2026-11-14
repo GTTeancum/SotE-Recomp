@@ -1,0 +1,31 @@
+{
+  "bindings": [
+    {
+      "source_name": "Shadow of the Empire#4812D6F5#2#0#208EFF3D_ciByRGBA.png",
+      "sha256": "d4181b7bd6b8e4e295239aeadbaac4ae8cf327fe6b23a281ab01124fc806d1f5",
+      "path": "maps/echo base/sote_4812D6F5_2_0_208EFF3D_ciByRGBA",
+      "rt64": "8676029b822bcedc",
+      "slot": [
+        4,
+        2886624,
+        64,
+        32,
+        2,
+        0,
+        4,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        2887656
+      ],
+      "alias": "88f6d833fb6f6ce9",
+      "evidence": "Echo Base native cylinder texture; runtime source bytes match ROM global pool 0x19bc0; live palette produces a different content hash from static extraction."
+    }
+  ]
+}

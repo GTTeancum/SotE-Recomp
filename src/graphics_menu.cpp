@@ -82,6 +82,7 @@ int submenu_item_count(TopCategory category) {
 struct MenuState {
     std::mutex mutex;
     bool initialized = false;
+    bool menu_sound_pending = false;
     bool adjusting = false;
     int front_end_mode = -1;
     bool profile_dialog = false;
@@ -989,6 +990,7 @@ void initialize(const std::filesystem::path& data_directory) {
     state.submenu_active = false;
     state.transition = MenuTransition::None;
     state.previous_navigation = 0;
+    state.menu_sound_pending = false;
     state.adjusting = false;
     state.front_end_mode = -1;
     state.repeat_direction = 0;
@@ -1107,6 +1109,31 @@ bool take_window_request(Settings& settings) {
 bool front_end_picker_active() {
     std::lock_guard lock{state.mutex};
     return state.front_end_mode == 2 || state.front_end_mode == 3;
+}
+
+void observe_story_event(int event) {
+    std::lock_guard lock{state.mutex};
+    // The cached-row draw hook stops running when the front end exits.
+    // Invalidate its input ownership from the game frame, not another UI draw.
+    if (event == 2 || state.front_end_mode < 0) return;
+    state.front_end_mode = -1;
+    state.title_options = state.options_visible = state.submenu_active = false;
+    state.submenu_bindings = state.adjusting = false;
+    state.requested_title_mode = -1;
+    state.transition = MenuTransition::None;
+    state.previous_navigation = state.repeat_direction = 0;
+}
+
+void queue_menu_sound() {
+    std::lock_guard lock{state.mutex};
+    state.menu_sound_pending = true;
+}
+
+bool take_menu_sound() {
+    std::lock_guard lock{state.mutex};
+    const bool pending = state.menu_sound_pending;
+    state.menu_sound_pending = false;
+    return pending;
 }
 
 void filter_input(uint16_t* buttons, float* x, float* y) {
@@ -1243,6 +1270,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         // The retail Pause handler treats B as confirmation of the focused row.
         state.transition_started = now;
         if (view->pause_quit_confirmation) {
+            state.menu_sound_pending = true;
             state.cancel_pause_quit = true;
             set_transition_locked(MenuTransition::WaitPause);
         } else {
@@ -1256,6 +1284,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
             const int first = view->pause_quit_confirmation ? 1 : 0;
             const int count = 3 - first;
             const int delta = (pressed & n64_dd) ? 1 : -1;
+            state.menu_sound_pending = true;
             state.requested_pause_focus = first +
                 (view->focused_setting - first + delta + count) % count;
         }
@@ -1268,13 +1297,16 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if (!(navigation & (n64_a | n64_start))) state.title_start_release = false;
     if (view && view->screen == Screen::Title) {
         consume_menu_input();
+        const int old_selection = state.title_selection;
         if (pressed & (n64_du | n64_dl | n64_l)) state.title_selection = 0;
         if (pressed & (n64_dd | n64_dr | n64_r)) state.title_selection = 1;
+        if (old_selection != state.title_selection) state.menu_sound_pending = true;
         if (pressed & (n64_a | n64_start)) {
             if (state.title_selection == 0) {
                 *buttons |= n64_start;
                 state.title_start_release = true;
             } else {
+                state.menu_sound_pending = true;
                 state.title_options = true;
                 state.editing = state.applied;
                 state.requested_title_mode = 4;
@@ -1290,6 +1322,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
             return;
         }
         if (pressed & n64_b) {
+            state.menu_sound_pending = true;
             if (state.front_end_mode == 2) {
                 state.requested_title_mode = 3;
                 state.transition_started = now;
@@ -1321,6 +1354,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
             const bool left = (pressed & (n64_dl | n64_l)) != 0;
             const bool right = (pressed & (n64_dr | n64_r)) != 0;
             if (left != right) {
+                state.menu_sound_pending = true;
                 state.profile_action_direction = right ? 1 : -1;
                 state.requested_profile_action = state.profile_action_index < 0
                     ? (right ? 1 : 2) : (state.profile_action_index == 1 ? 2 : 1);
@@ -1354,10 +1388,13 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if (state.adjusting) {
         consume_menu_input();
         if (confirm || (pressed & n64_b)) {
+            state.menu_sound_pending = true;
             state.adjusting = false;
         } else if (horizontal != 0) {
-            if (state.submenu_active)
+            if (state.submenu_active) {
+                state.menu_sound_pending = true;
                 adjust_selected_setting_locked(horizontal);
+            }
             else
                 *x = horizontal * (80.0f / 127.0f);
         }
@@ -1366,6 +1403,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     *buttons &= static_cast<uint16_t>(~(n64_dl | n64_dr | n64_l | n64_r));
     *x = 0.0f;
     if (horizontal != 0) {
+        state.menu_sound_pending = true;
         switch_page_locked(horizontal);
         consume_menu_input();
         return;
@@ -1374,6 +1412,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if ((pressed & n64_b) ||
         ((pressed & (n64_a | n64_start)) &&
             (state.submenu_active ? state.submenu_selection == 0 : state.original_selection == 52))) {
+        state.menu_sound_pending = true;
         return_to_main_locked();
         consume_menu_input();
         return;
@@ -1381,6 +1420,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
 
     if (state.submenu_active) {
         consume_menu_input();
+        if (confirm || (pressed & (n64_du | n64_dd))) state.menu_sound_pending = true;
         const int item_count = submenu_item_count(state.category);
         if ((pressed & n64_du) != 0) {
             state.submenu_selection =
@@ -1422,6 +1462,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
         const int selection = state.original_selection == 52 ? 0 :
             (state.original_selection - 51) / 2;
         const int delta = (pressed & n64_dd) ? 1 : -1;
+        state.menu_sound_pending = true;
         state.requested_options_focus = (selection + delta + count) % count;
     }
     *buttons &= static_cast<uint16_t>(~(n64_du | n64_dd));
@@ -1429,6 +1470,7 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if (state.original_selection != 63) {
         *buttons &= static_cast<uint16_t>(~(n64_a | n64_start));
         if (confirm) {
+            state.menu_sound_pending = true;
             state.adjusting = true;
             consume_menu_input();
         }

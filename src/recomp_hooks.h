@@ -9,6 +9,9 @@ extern "C" {
 #endif
 void sote_diagnostic_skyhook_damage(uint8_t* rdram, void* context);
 void sote_diagnostic_hoth_trip(uint8_t* rdram, void* context, int initialize);
+void sote_communicator_input_state(uint8_t* rdram);
+uint32_t sote_take_communicator_advance(void);
+void sote_menu_sound_frame(uint8_t* rdram, void* context);
 void sote_diagnostic_communicators(uint8_t* rdram, void* context);
 void sote_diagnostic_palace_ray(uint8_t* rdram, uint32_t object);
 void sote_modern_projectile(uint8_t* rdram, void* context);
@@ -129,8 +132,9 @@ void sote_outrider_object(uint8_t* rdram, uint32_t object);
 void sote_diagnostic_vehicle(uint8_t* rdram, uint32_t object, int context);
 void sote_capture_native_options(uint8_t* rdram);
 int sote_intro_story_sprite(uint8_t* rdram, uint32_t sprite);
-void sote_trace_story_load(uint8_t* rdram, uint32_t event, uint32_t caller);
+void sote_before_story_load(uint8_t* rdram, uint32_t event, uint32_t caller);
 void sote_hide_communicator_slot(uint32_t slot, int32_t x);
+void sote_modern_camera_resolve(uint8_t* rdram, void* context);
 #ifdef __cplusplus
 }
 #endif

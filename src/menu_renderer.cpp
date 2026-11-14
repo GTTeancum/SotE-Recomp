@@ -54,6 +54,7 @@ struct Resources {
 };
 std::unique_ptr<Resources> resources;
 std::atomic<bool> game_ready{false};
+std::atomic<bool> cockpit_view{false};
 RT64::RenderHookInit* previous_init = nullptr;
 RT64::RenderHookDraw* previous_draw = nullptr;
 RT64::RenderHookDeinit* previous_deinit = nullptr;
@@ -242,6 +243,20 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
             list->setVertexBuffers(0, nullptr, 0, nullptr);
             list->drawInstanced(3, 1, 0, 0);
         }
+        // Cockpit art is a fixed 4:3 surface. Mask only its side extensions,
+        // without changing the player's widescreen preference or projection.
+        const bool cockpit = cockpit_view.load(std::memory_order_relaxed) &&
+            !movie_frame.valid() && (!menu_state || paused);
+        auto mask_cockpit = [&] {
+            const unsigned inner = std::min(fw, unsigned(uint64_t(fh) * 4 / 3));
+            const unsigned left = (fw - inner) / 2, right = left + inner;
+            if (!cockpit || !left) return;
+            const RenderRect bars[] = {RenderRect(0, 0, int32_t(left), int32_t(fh)),
+                RenderRect(int32_t(right), 0, int32_t(fw), int32_t(fh))};
+            list->setFramebuffer(framebuffer);
+            list->clearColor(0, RenderColor(0, 0, 0, 1), bars, 2);
+        };
+        mask_cockpit();
         if (!movie_frame.valid() && !snapshot && !reticle && !native) return;
         // Preserve window aspect, but cap CPU work at a 1920x1080 surface.
         const double scale = std::min({1.0, 1920.0 / fw, 1080.0 / fh});
@@ -296,6 +311,9 @@ void draw(RenderCommandList* list, RenderFramebuffer* framebuffer, RenderTexture
         list->setScissors(RenderRect(0, 0, int32_t(fw), int32_t(fh)));
         list->setVertexBuffers(0, nullptr, 0, nullptr);
         list->drawInstanced(3, 1, 0, 0);
+        // Keep native HUD glyphs inside the cockpit too; host pause UI may
+        // still use the full window, over the already masked frozen scene.
+        if (!snapshot) mask_cockpit();
     } catch (const std::exception& e) { disable(e.what()); }
       catch (...) { disable("draw failure"); }
 }
@@ -306,6 +324,7 @@ void deinitialize() {
 }
 }
 void game_display_list_ready() { game_ready.store(true, std::memory_order_release); }
+void set_cockpit_view(bool active) { cockpit_view.store(active, std::memory_order_relaxed); }
 void install() {
     if (RT64::GetRenderHookInit() == initialize) return;
     previous_init = RT64::GetRenderHookInit();

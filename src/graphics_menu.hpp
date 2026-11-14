@@ -45,6 +45,9 @@ void sync_window_mode(bool borderless);
 bool take_renderer_request(Settings& settings);
 bool take_window_request(Settings& settings);
 bool front_end_picker_active();
+void observe_story_event(int event);
+void queue_menu_sound();
+bool take_menu_sound();
 void filter_input(uint16_t* buttons, float* x, float* y);
 // Direct-drawn native options (func_8001FC90), separate from cached UI rows.
 void synchronize_guest_focus(uint8_t* rdram);

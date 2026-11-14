@@ -287,7 +287,8 @@ extern "C" void sote_modern_begin(uint8_t* ram, uint32_t object) {
             static_cast<float>(mouse_x) * tuning.mouse_sensitivity,
             -30.0f, 30.0f) / static_cast<float>(std::max(dt, 1.0 / 240.0));
     }
-    if (std::getenv("SOTE_TRACE_MODERN_CONTROLS") && frame_number % 30 == 0) {
+    if (std::getenv("SOTE_TRACE_MODERN_CONTROLS") &&
+        (frame_number % 30 == 0 || std::getenv("SOTE_TRACE_FRAME_COMMANDS"))) {
         std::printf("[sote][modern] frame=%llu event=%d move=%.4f,%.4f look=%.4f,%.4f yaw_rate=%.3f pitch=%.3f dt=%.6f heading=%.3f\n",
             static_cast<unsigned long long>(frame_number), event,
             frame.move.x, frame.move.y, frame.look.x, frame.look.y,

@@ -1,0 +1,56 @@
+{
+  "bindings": [
+    {
+      "source_name": "Shadow of the Empire#417D5AC1#3#0#D7B75B43_ciByRGBA.png",
+      "sha256": "70f3048934b53cfaab96dd3826d9b44d6077ec6de6adc45ec7b4c9dcdc170a17",
+      "path": "menus/map icons/1 hoth/sote_417D5AC1_3_0_D7B75B43_ciByRGBA",
+      "rt64": "73122feb4c74ff95",
+      "slot": [
+        2,
+        1813480,
+        32,
+        32,
+        2,
+        1,
+        4,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1803752
+      ],
+      "alias": "3a912c26cba3d560"
+    },
+    {
+      "source_name": "Shadow of the Empire#AA3E4B0E#2#1#02BFBDB2_ciByRGBA.png",
+      "sha256": "6789189ec6f8ef35bf01be6fe5febf5b2e173cc67ba302d421e422564b589a28",
+      "path": "menus/map icons/1 hoth/sote_AA3E4B0E_2_1_02BFBDB2_ciByRGBA",
+      "rt64": "1d59b094d8c87406",
+      "slot": [
+        2,
+        1822696,
+        32,
+        32,
+        2,
+        1,
+        4,
+        0,
+        0,
+        32768,
+        1,
+        0,
+        0,
+        2,
+        2,
+        1,
+        1803752
+      ],
+      "alias": "25aa4e1480d13e0c"
+    }
+  ]
+}

@@ -829,7 +829,11 @@ void open_editor() {
 void focus_lost() {
     std::lock_guard lock(state.mutex);
     if(state.editor.editing&&state.editor.phase!=Phase::Browse)settle("Focus lost; pending change cancelled.");
-    state.entrance_release=true;state.external_block=true;state.previous={};state.repeat_direction=0;
+    // Focus loss cancels an unfinished edit, but is not a menu transition.
+    // A global release gate here traps gameplay input whenever the player
+    // returns already holding movement (or another unrelated key/button).
+    // Keep the editor's own release guard; gameplay and Pause recover directly.
+    state.entrance_release=true;state.external_block=false;state.previous={};state.repeat_direction=0;
 }
 void scroll(int rows) {std::lock_guard lock(state.mutex);if(state.editor.phase==Phase::Browse&&state.menu_valid)move_selection(rows);}
 bool capturing() {std::lock_guard lock(state.mutex);return state.editor.editing&&state.editor.phase!=Phase::Browse&&state.editor.phase!=Phase::Settle;}

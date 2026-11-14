@@ -1,3 +1,4 @@
+#include "communicator_input.hpp"
 #include "controls_menu.hpp"
 #include "control_bindings.hpp"
 #include "graphics_menu.hpp"
@@ -577,9 +578,14 @@ int main(int argc, char** argv) {
             title.half(0x80111110 + row * 4, 0xfc18);
         sote_capture_menu(title.bytes.data());
         check(latest_screen_is(sote::menu_skin::Screen::Title), "native title publishes two-choice menu");
+        sote::graphics_menu::take_menu_sound();
         press(0x0400);
         sote_capture_menu(title.bytes.data());
         check(latest_snapshot().focused_setting == 1, "Down highlights title Options");
+        check(sote::graphics_menu::take_menu_sound(), "title selection queues retail sound");
+        check(!sote::graphics_menu::take_menu_sound(), "menu cue drains exactly once");
+        press(0x0400);
+        check(!sote::graphics_menu::take_menu_sound(), "unchanged title selection is silent");
         press(0x8000);
         sote_update_graphics_menu(title.bytes.data());
         title.native_options();
@@ -1093,6 +1099,55 @@ int main(int argc, char** argv) {
         check(!sote::menu_skin::render(summary).valid(),
             "level selector cannot replace native animated and locked-level visuals");
         check(memory.bytes == before, "level selector capture preserves guest state");
+    }
+    {
+        sote::CommunicatorInput input;
+        check(!input.update(false, true).consume, "gameplay A unchanged outside prompts");
+        auto held = input.update(true, true);
+        check(held.consume && !held.advance, "preheld A cannot skip newly opened prompt");
+        input.update(true, false);
+        auto tap = input.update(true, true);
+        check(tap.consume && tap.advance, "fresh prompt A advances and is consumed");
+        check(!input.update(true, true).advance, "held A advances only once");
+        check(input.update(false, true).consume, "dismissal retains A until release");
+        check(!input.update(false, false).consume, "release ends prompt ownership");
+        check(!input.update(false, true).consume, "new gameplay press restored");
+        input.update(true, false);
+        check(input.update(true, true).advance, "next prompt accepts a new press");
+    }
+    {
+        namespace b = sote::control_bindings;
+        Memory memory; memory.native_options();
+        memory.half(0x800e6808 + 6, 0x1000);
+        b::initialize(scratch);
+        b::observe_context(memory.bytes.data(), memory.bytes.size(), b::Context::OnFoot);
+        b::PhysicalInput raw{};
+        raw.keys['W'] = 1;
+        b::focus_lost();
+        check(b::handle_menu(raw, false, 30000, false) == 0,
+            "focus return permits movement without requiring every key released");
+        raw.keys[27] = 1;
+        check(b::handle_menu(raw, false, 30001, false) == 3,
+            "Escape pauses after focus return while movement remains held");
+        raw.keys[27] = 0;
+        raw.connected = true; raw.instance = 42; raw.buttons[6] = 1;
+        check(b::handle_menu(raw, false, 30002, false) == 0,
+            "controller Start passes through after focus return with keyboard movement held");
+    }
+    {
+        sote::graphics_menu::initialize(scratch);
+        Memory memory; memory.profiles(false);
+        memory.half(0x8013ce0e, 2);
+        memory.half(0x800dd744, 3);
+        sote_update_graphics_menu(memory.bytes.data());
+        check(sote::graphics_menu::front_end_picker_active(),
+            "save selection owns menu input in the front end");
+        sote::graphics_menu::observe_story_event(7);
+        check(!sote::graphics_menu::front_end_picker_active(),
+            "chapter transition releases picker input without another menu draw");
+        sote::graphics_menu::observe_story_event(8);
+        check(!sote::graphics_menu::front_end_picker_active(),
+            "Ord Mantell cannot inherit save-picker input ownership");
     }
     std::cout << "Menu revamp checks: " << checks
               << "; failures: " << failures << "\n";

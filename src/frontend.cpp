@@ -1,3 +1,4 @@
+#include "communicator_input.hpp"
 #include "rapid_fire.hpp"
 #define SDL_MAIN_HANDLED
 
@@ -782,6 +783,18 @@ bool movie_skip_pressed(uint64_t token, int vi) {
     return false;
 }
 
+std::atomic<bool> communicator_prompt{false};
+std::atomic<bool> communicator_advance{false};
+sote::CommunicatorInput communicator_button;
+
+void set_communicator_prompt(bool active) {
+    communicator_prompt.store(active, std::memory_order_release);
+    if (!active) communicator_advance.store(false, std::memory_order_release);
+}
+bool take_communicator_advance() {
+    return communicator_advance.exchange(false, std::memory_order_acq_rel);
+}
+
 void poll_input() {
     if (movie_playback_token.load(std::memory_order_relaxed) != 0) {
         input_snapshot.store(0, std::memory_order_relaxed);
@@ -809,7 +822,18 @@ void poll_input() {
     const bool focused = !diagnostic_pad && !diagnostic_mouse &&
         !diagnostic_keys &&
         process_owns_foreground_window();
-    if (!input_enabled ||
+    // Exercise the real focus-loss path without sending host window events.
+    const bool diagnostic_focus_lost = [&] {
+        const char* range = std::getenv("SOTE_DIAGNOSTIC_FOCUS_LOSS");
+        if (!range || !std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN")) return false;
+        int begin = 0, end = 0;
+        if (std::sscanf(range, "%d:%d", &begin, &end) != 2) return false;
+        const int tick = std::getenv("SOTE_DIAGNOSTIC_PHYSICAL_GAME_CLOCK")
+            ? diagnostic_game_frame.load(std::memory_order_relaxed)
+            : diagnostic_vi.load(std::memory_order_relaxed);
+        return tick >= begin && tick < end;
+    }();
+    if (!input_enabled || diagnostic_focus_lost ||
         (!focused && !diagnostic_pad && !diagnostic_mouse && !diagnostic_keys)) {
         // The process-local binding probe has no foreground window. Its
         // scripted pad still exercises the editor through get_input().
@@ -904,6 +928,12 @@ void poll_input() {
         if(key)raw_input.keys[key]=1;
     }
     const bool picker = sote::graphics_menu::front_end_picker_active();
+    const bool raw_a = raw_input.connected && raw_input.buttons[SDL_CONTROLLER_BUTTON_A];
+    const auto communicator = communicator_button.update(
+        communicator_prompt.load(std::memory_order_acquire) && !menu && !picker &&
+            movie_playback_token.load(std::memory_order_relaxed) == 0, raw_a);
+    if (communicator.consume) raw_input.buttons[SDL_CONTROLLER_BUTTON_A] = 0;
+    if (communicator.advance) communicator_advance.store(true, std::memory_order_release);
     const bool page_keys = menu &&
         (menu->screen == sote::menu_skin::Screen::Options ||
          menu->screen == sote::menu_skin::Screen::Graphics ||
@@ -912,7 +942,36 @@ void poll_input() {
     const bool binding_screen = menu && menu->screen == sote::menu_skin::Screen::Controls && menu->rebinding;
     const auto now_ms = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
         std::chrono::steady_clock::now().time_since_epoch()).count());
+    const auto editor_before = binding_screen ? control_bindings::editor_view() : control_bindings::EditorView{};
     const int menu_action = control_bindings::handle_menu(raw_input, binding_screen, now_ms, bool(menu) || picker);
+    if (std::getenv("SOTE_TRACE_INPUT")) {
+        static bool previous_recovery = false;
+        const bool recovery = raw_input.keys[VK_ESCAPE] ||
+            raw_input.buttons[SDL_CONTROLLER_BUTTON_START];
+        if (recovery && !previous_recovery) {
+            std::printf("[sote][input-recovery] frame=%d picker=%d menu=%d action=%d foot=%d escape=%d start=%d\n",
+                diagnostic_tick, picker, bool(menu), menu_action,
+                control_bindings::context_active(control_bindings::Context::OnFoot),
+                raw_input.keys[VK_ESCAPE], raw_input.buttons[SDL_CONTROLLER_BUTTON_START]);
+            std::fflush(stdout);
+        }
+        previous_recovery = recovery;
+    }
+    if (binding_screen) {
+        const auto after = control_bindings::editor_view();
+        const auto& before = editor_before;
+        // Release gates run without user actions; only selections, editing
+        // decisions and completed binding changes should make a sound.
+        const bool decision = after.phase == control_bindings::Phase::Release ||
+            after.phase == control_bindings::Phase::ConflictRelease ||
+            after.phase == control_bindings::Phase::DefaultsRelease ||
+            after.phase == control_bindings::Phase::Settle;
+        if (before.visible && after.visible &&
+            (before.editing != after.editing || before.group != after.group ||
+             before.row != after.row || before.column != after.column ||
+             before.status != after.status || (decision && before.phase != after.phase)))
+            sote::graphics_menu::queue_menu_sound();
+    }
     if (menu_action != 0) {
         sote::modern_controls::publish({});
         if (menu_action == 2 || menu_action == 3)
@@ -1324,6 +1383,17 @@ void poll_input() {
             raw_ry);
         std::fflush(stdout);
     }
+    if (std::getenv("SOTE_TRACE_COMMUNICATOR_INPUT")) {
+        static int previous = -1;
+        const int status = int(raw_a) | (int(communicator.consume) << 1) |
+            (int(communicator.advance) << 2) | (int(communicator_prompt.load()) << 3);
+        if (status != previous) {
+            std::printf("[sote][communicator-input] frame=%d raw-A=%d consume=%d advance=%d prompt=%d buttons=%04X\n",
+                diagnostic_game_frame.load(), raw_a, communicator.consume,
+                communicator.advance, communicator_prompt.load(), buttons);
+            previous = status;
+        }
+    }
     input_snapshot.store(
         buttons |
             (static_cast<uint32_t>(static_cast<uint8_t>(sx)) << 16) |
@@ -1505,7 +1575,13 @@ bool get_input(int port, uint16_t* buttons, float* x, float* y) {
         *x = std::clamp(*x + mouse.x * n64_stick_scale, -n64_stick_scale, n64_stick_scale);
         *y = std::clamp(*y + mouse.y * n64_stick_scale, -n64_stick_scale, n64_stick_scale);
     }
+    const uint16_t before_menu_filter = *buttons;
     sote::graphics_menu::filter_input(buttons, x, y);
+    if (std::getenv("SOTE_TRACE_INPUT") && (before_menu_filter & n64_start)) {
+        std::printf("[sote][input-recovery-filter] before=%04X after=%04X\n",
+            before_menu_filter, *buttons);
+        std::fflush(stdout);
+    }
     return true;
 }
 
