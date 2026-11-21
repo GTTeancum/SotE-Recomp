@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "runtime.h"
 #include "recomp_hooks.h"
 /* Desktop-only forced damage, collision relocation and switch-ray injections
@@ -49,5 +51,34 @@ void sote_diagnostic_active_player(uint8_t* rdram,uint32_t object) {
         for(unsigned i=0;i<3;i++)row[5+i]=MEM_W(0x50+i*4,(int32_t)object);
         row[8]=MEM_W(0x14,(int32_t)object);row[9]=MEM_W(0x1f0,(int32_t)object);
         last_player_poll=poll;last_buttons=buttons;last_x=x;last_y=y;
+    }
+}
+
+/* Test-only scene selection, matching desktop SOTE_DIAGNOSTIC_EVENT_JUMPS.
+   Called ONLY by the explicitly enabled virtual controller. Uses the native
+   transition request fields, never relocates game assets or claims completion.
+   This fixture requires an isolated disposable save/HDD in the runner. */
+volatile uint32_t sote_scene_fixture_status[4]; /* enabled, jumps, event, poll */
+void xb_diagnostics_tick(uint8_t* rdram,unsigned poll) {
+    static int loaded;static unsigned count,index;
+    static struct {unsigned poll,event;} jumps[32];
+    if(!loaded) {
+        loaded=1;FILE* f=fopen("D:\\xbox-test.cfg","rb");
+        if(f) {char line[96];while(fgets(line,sizeof(line),f)) {
+            unsigned when,event;
+            if(sscanf(line,"scene_jump=%u:%u",&when,&event)==2 &&
+               when && when<=10000000 && event<=30 && count<32 &&
+               (!count || when>jumps[count-1].poll)) {
+                jumps[count].poll=when;jumps[count++].event=event;
+            }
+        }fclose(f);}
+        sote_scene_fixture_status[0]=count!=0;
+    }
+    if(index<count && poll>=jumps[index].poll) {
+        unsigned event=jumps[index++].event;
+        MEM_H(0,(int32_t)0x800D255C)=event;
+        MEM_B(0,(int32_t)0x800D2558)=2;
+        sote_scene_fixture_status[1]++;sote_scene_fixture_status[2]=event;
+        sote_scene_fixture_status[3]=poll;
     }
 }

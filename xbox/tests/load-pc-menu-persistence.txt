@@ -1,0 +1,6 @@
+# Reboot check only: show saved health/lives, no setting changes.
+900 1000 0 0
+1000 0400 0 0
+1200 8000 0 0
+1500 0100 0 0
+1700 0100 0 0

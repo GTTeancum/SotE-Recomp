@@ -1,3 +1,4 @@
+#include "rdram_guard.h"
 #include <hal/video.h>
 #include <hal/debug.h>
 #include <windows.h>
@@ -8,6 +9,12 @@
 #include "recomp.h"
 #include "funcs.h"
 #include "rom_identity.h"
+#include "rom_io.h"
+#include "console_budget.h"
+#include "asset_file.h"
+#include "menu_settings.h"
+#include "display_mode.h"
+#include "aspect_xbox.h"
 #include "multiply_vectors.h"
 #include "runtime.h"
 
@@ -24,6 +31,9 @@ volatile struct {
     uint32_t math_checks;
     uint32_t rsp_checks;
 } sote_xbox_status = {0x534F5445,1};
+/* Once-per-second live physical memory trend, not a startup-only snapshot.
+ * samples, current bytes, minimum observed bytes, query failures. */
+volatile uint32_t sote_memory_status[4];
 static xb_thread* retail_idle;
 static uint32_t retail_idle_address;
 static struct {uint32_t guest;xb_thread* native;} guest_threads[16];
@@ -52,6 +62,20 @@ static uint32_t crc_update(uint32_t crc,const uint8_t* data,size_t size) {
 }
 static uint32_t be32(const uint8_t* p) {
     return ((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];
+}
+void xb_unsupported(uint32_t id) __attribute__((noreturn));
+unsigned xb_rdram_committed_limit=XB_RDRAM_RESERVED;
+/* stages: valid full boot span, immediately pre/post decommit avail pages,
+   live span; then first bad access kind, offset lo/hi, width. */
+volatile uint32_t sote_rdram_experiment[9];
+static unsigned xb_rdram_phys_available(void) {
+    MM_STATISTICS m={0};m.Length=sizeof(m);
+    return MmQueryStatistics(&m)<0?UINT32_MAX:m.AvailablePages;
+}
+void xb_rdram_bounds_fault(uint32_t kind,uint64_t offset,uint32_t bytes) {
+    sote_rdram_experiment[5]=kind;sote_rdram_experiment[6]=(uint32_t)offset;
+    sote_rdram_experiment[7]=(uint32_t)(offset>>32);sote_rdram_experiment[8]=bytes;
+    xb_unsupported(0xE8000001u);
 }
 static void fail(uint32_t error) {
     sote_xbox_status.error=error;
@@ -83,7 +107,8 @@ void osInitialize_recomp(uint8_t* rdram,recomp_context* ctx) {
     MEM_W(0,(int32_t)0x80000300)=1;
     MEM_W(0,(int32_t)0x80000308)=0xB0000000u;
     MEM_W(0,(int32_t)0x8000030C)=0;
-    MEM_W(0,(int32_t)0x80000318)=0x800000;
+    /* Match the stock N64 hardware after high bootstrap fixtures retire. */
+    MEM_W(0,(int32_t)0x80000318)=xb_rdram_committed_limit;
     MEM_W(0,(int32_t)0x800E7C70)=0;
     MEM_W(4,(int32_t)0x800E7C70)=46875000;
     sote_xbox_status.stage=5;
@@ -136,7 +161,7 @@ void osViBlack_recomp(uint8_t* rdram,recomp_context* ctx) {
     InterlockedExchange(&vi_black,ctx->r4!=0);
     /* Before a renderer is connected the only display is this diagnostic FB.
        Blanking really clears it; it does not pretend to present guest pixels. */
-    if(vi_black) {
+    if(vi_black && !(xb_display_bpp==16 && xb_display_width==1280)) {
         VIDEO_MODE mode=XVideoGetMode();
         memset(XVideoGetFB(),0,(size_t)mode.width*mode.height*(mode.bpp/8));
         XVideoFlushFB();
@@ -148,8 +173,15 @@ void osCreatePiManager_recomp(uint8_t* rdram,recomp_context* ctx) {
     sote_xbox_status.pi_queue=(uint32_t)ctx->r5;
 }
 int main(void) {
-    XVideoSetMode(640,480,32,REFRESH_DEFAULT);
+    xb_budget_init();
+    xb_asset_io_init();
+    /* Mount/read the settings journal before renderer/input threads can first use it.
+       Physical texture ownership is still decided lazily, before the native cache. */
+    if(!xb_display_boot(xb_hd_textures_preferred()))fail(18);
+    xb_budget_mark(XB_BUDGET_DISPLAY,xb_display_width*xb_display_height*(xb_display_bpp/8));
+    xb_video_set_widescreen(xb_display_wide);
     xb_video_init();
+    xb_budget_mark(XB_BUDGET_PBKIT,0);
     debugPrint("Shadows of the Empire - Xbox bootstrap\n");
     debugPrint("Development milestone; not yet playable.\n");
     sote_xbox_status.stage=1;
@@ -163,11 +195,18 @@ int main(void) {
         if(lo!=v[2]||hi!=v[3]||(uint64_t)sl!=v[4]||(uint64_t)sh!=v[5])fail(1);
         sote_xbox_status.arithmetic_checks+=2;
     }
-    uint8_t* rdram=calloc(1,0x800000);
-    if(!rdram) fail(2);
+    uint8_t* rdram=(uint8_t*)VirtualAlloc(NULL,XB_RDRAM_RESERVED,
+                                           MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+    if(!rdram)fail(2);
+    xb_budget_mark(XB_BUDGET_RDRAM,XB_RDRAM_RESERVED);
+    sote_rdram_experiment[0]=XB_RDRAM_RESERVED;
+    sote_rdram_experiment[1]=MEM_COMMIT;
     sote_xbox_status.rdram_address=(uint32_t)(uintptr_t)rdram;
     xb_runtime_init(rdram);
     xb_services_init();
+    int rom_result=xb_rom_open(); /* validated size; CRC still checked below */
+    if(rom_result)fail(rom_result==XB_ROM_NO_FILE?3:4);
+    if(atexit(xb_rom_close)!=0){xb_rom_close();fail(3);}
     sote_xbox_status.runtime_checks=xb_runtime_selftest(rdram);
     if(!sote_xbox_status.runtime_checks)fail(10);
     sote_xbox_status.service_checks=xb_services_selftest(rdram);
@@ -179,37 +218,25 @@ int main(void) {
     xb_bike_selftest();
     xb_safeguards_selftest();
     if(!sote_xbox_status.service_checks)fail(16);
-    FILE* rom=fopen("D:\\sote.us.v1.2.z64","rb");
-    if(!rom) fail(3);
     uint8_t buffer[4096],header[16];
-    uint32_t crc=~0u; size_t count,total=0;
-    while((count=fread(buffer,1,sizeof(buffer),rom))!=0) {
-        crc=crc_update(crc,buffer,count);total+=count;
+    uint32_t crc=~0u;
+    for(uint32_t pos=0;pos<XB_ROM_BYTES;pos+=sizeof(buffer)) {
+        if(xb_rom_raw(pos,buffer,sizeof(buffer))){xb_rom_close();fail(4);}
+        crc=crc_update(crc,buffer,sizeof(buffer));
     }
     sote_xbox_status.rom_crc=~crc;
-    if(ferror(rom)||total!=0xC00000 || ~crc!=SOTE_ROM_CRC) fail(4);
-    if(fseek(rom,0x1F30,SEEK_SET)||fread(header,1,16,rom)!=16||memcmp(header,"Ogre",4)) fail(4);
+    if(~crc!=SOTE_ROM_CRC || xb_rom_raw(0x1F30,header,sizeof(header)) || memcmp(header,"Ogre",4)) {
+        xb_rom_close();fail(4);
+    }
     uint32_t start=be32(header+8),end=be32(header+12);
-    if(start<=0x1F30||end<=start||end>total||end-start>0x500000) fail(4);
+    if(start<=0x1F30||end<=start||end>XB_ROM_BYTES||end-start>0x500000){xb_rom_close();fail(4);}
     /* IPL3 also loads the tables between the boot code and compressed image.
        Running the decompressor with zeroed tables corrupts its output. */
-    if(start-0x1000>0x2FFC00 || fseek(rom,0x1000,SEEK_SET))fail(4);
-    for(uint32_t pos=0;pos<start-0x1000;) {
-        size_t size=start-0x1000-pos;
-        if(size>sizeof(buffer))size=sizeof(buffer);
-        if(fread(buffer,1,size,rom)!=size)fail(4);
-        for(size_t i=0;i<size;i++)rdram[(0x400+pos+i)^3]=buffer[i];
-        pos+=(uint32_t)size;
+    if(start-0x1000>0x2FFC00 ||
+       xb_rom_guest(rdram,0x1000,0x400,start-0x1000) ||
+       xb_rom_guest(rdram,start,0x300000,end-start)) {
+        xb_rom_close();fail(4);
     }
-    if(fseek(rom,start,SEEK_SET)) fail(4);
-    for(uint32_t pos=0;pos<end-start;) {
-        size_t size=end-start-pos;
-        if(size>sizeof(buffer))size=sizeof(buffer);
-        if(fread(buffer,1,size,rom)!=size)fail(4);
-        for(size_t i=0;i<size;i++)rdram[(0x300000+pos+i)^3]=buffer[i];
-        pos+=(uint32_t)size;
-    }
-    fclose(rom);
     sote_xbox_status.stage=2;
     static recomp_context ctx;
     ctx.f_odd=&ctx.f0.u32h;
@@ -228,6 +255,19 @@ int main(void) {
     if(~crc!=SOTE_IMAGE_CRC)fail(6);
     sote_xbox_status.rsp_checks=xb_rsp_selftest(rdram);
     if(!sote_xbox_status.rsp_checks)fail(18);
+    /* Every upper fixture (including RSP) is synchronous and now complete.
+       Keep the VA span, but let the kernel return its upper physical pages. */
+    sote_rdram_experiment[2]=xb_rdram_phys_available();
+    if(!VirtualFree(rdram+XB_RDRAM_LIVE,XB_RDRAM_RESERVED-XB_RDRAM_LIVE,MEM_DECOMMIT))fail(20);
+    MEMORY_BASIC_INFORMATION lower={0},upper={0};
+    if(!VirtualQuery(rdram,&lower,sizeof(lower)) ||
+       !VirtualQuery(rdram+XB_RDRAM_LIVE,&upper,sizeof(upper)) ||
+       lower.State!=MEM_COMMIT || upper.State!=MEM_RESERVE ||
+       lower.RegionSize<XB_RDRAM_LIVE || upper.RegionSize<XB_RDRAM_RESERVED-XB_RDRAM_LIVE)fail(21);
+    xb_rdram_committed_limit=XB_RDRAM_LIVE;
+    xb_budget_mark(XB_BUDGET_RDRAM,XB_RDRAM_LIVE);
+    sote_rdram_experiment[3]=xb_rdram_phys_available();
+    sote_rdram_experiment[4]=XB_RDRAM_LIVE;
     sote_xbox_status.stage=3;
     debugPrint("Original ROM and decompressed executable verified.\n");
     memset(rdram+0xEE740,0,0x113440-0xEE740);
@@ -241,5 +281,15 @@ int main(void) {
     sote_xbox_status.available_bytes=memory.AvailablePages*4096u;
     /* Retail idle is now executing on the Xbox scheduler. Its next unresolved
        entrypoint is reported by osCreateThread; never mark this playable. */
-    for(;;){sote_xbox_status.heartbeat++;Sleep(1000);}
+    for(;;){
+        memory.Length=sizeof(memory);
+        if(MmQueryStatistics(&memory)>=0) {
+            xb_budget_heartbeat(&memory);
+            uint32_t bytes=memory.AvailablePages*4096u;
+            sote_xbox_status.available_bytes=bytes;
+            if(!sote_memory_status[0] || bytes<sote_memory_status[2])sote_memory_status[2]=bytes;
+            sote_memory_status[1]=bytes;sote_memory_status[0]++;
+        } else {sote_memory_status[3]++;xb_budget_heartbeat(NULL);}
+        sote_xbox_status.heartbeat++;Sleep(1000);
+    }
 }

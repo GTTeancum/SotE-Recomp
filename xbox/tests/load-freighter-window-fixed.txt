@@ -1,0 +1,5 @@
+# Isolated event22; no claim of natural preceding-section progression.
+# Saved UI health/lives assist. Manual controller traversal after boot.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0

@@ -1,10 +1,15 @@
+#include "rdram_guard.h"
 #define SDL_MAIN_HANDLED
 #include <SDL.h>
 #include <string.h>
 #include "runtime.h"
+#include "console_budget.h"
 void xb_unsupported(uint32_t id) __attribute__((noreturn));
 void xb_post_event(unsigned event);
 static SDL_AudioDeviceID device;
+/* This subsystem and its single DMA worker live for the XBE lifetime.
+ * Frequency changes reopen a device, not another subsystem reference. */
+static int audio_initialized;
 static SDL_Thread* dma_worker;
 static int service_dma(void* unused) {
     extern void xb_audio_dma_service(void);
@@ -33,8 +38,11 @@ void osAiSetFrequency_recomp(uint8_t* rdram,recomp_context* ctx) {
     (void)rdram;unsigned frequency=(uint32_t)ctx->r4;
     if(frequency<8000 || frequency>48000){ctx->r2=-1;return;}
     if(device && frequency==sote_audio_status.frequency){ctx->r2=frequency;return;}
-    if(device){SDL_CloseAudioDevice(device);device=0;}
-    if(SDL_InitSubSystem(SDL_INIT_AUDIO)<0)xb_unsupported(0xE3000001);
+    if(device){SDL_CloseAudioDevice(device);device=0;xb_budget_mark(XB_BUDGET_AUDIO_CLOSE,sote_audio_status.frequency);}
+    if(!audio_initialized) {
+        if(SDL_InitSubSystem(SDL_INIT_AUDIO)<0)xb_unsupported(0xE3000001);
+        audio_initialized=1;
+    }
     SDL_AudioSpec desired={0},obtained={0};
     desired.freq=frequency;desired.format=AUDIO_S16LSB;desired.channels=2;
     desired.samples=512;desired.callback=consume;
@@ -44,6 +52,7 @@ void osAiSetFrequency_recomp(uint8_t* rdram,recomp_context* ctx) {
     if(!device)xb_unsupported(0xE3000002);
     if(!dma_worker)dma_worker=SDL_CreateThread(service_dma,"SotE AC97 service",NULL);
     if(!dma_worker)xb_unsupported(0xE3000004);
+    xb_budget_mark(XB_BUDGET_AUDIO_OPEN,frequency);
     if(obtained.freq!=(int)frequency || obtained.format!=AUDIO_S16LSB || obtained.channels!=2)
         xb_unsupported(0xE3000003);
     sote_audio_status.frequency=frequency;ctx->r2=frequency;
@@ -54,6 +63,7 @@ void osAiSetNextBuffer_recomp(uint8_t* rdram,recomp_context* ctx) {
     if(!device || (address&7) || (size&7) || !size || size>65536 || address>0x800000-size) {
         ctx->r2=-1;return;
     }
+    xb_rdram_offset(address,size,XB_RDRAM_AI);
     SDL_LockAudioDevice(device);
     if(count==2){SDL_UnlockAudioDevice(device);ctx->r2=-1;return;}
     unsigned index=(head+count)%2;

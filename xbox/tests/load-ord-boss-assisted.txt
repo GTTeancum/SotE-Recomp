@@ -1,0 +1,7 @@
+# Diagnostic scene entry, not a natural train-to-boss transition.
+# Disposable profile has menu-enabled nonlethal-health/lives assistance.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0
+2400 4000 0 0 0 -1 250
+2750 0000 0 60 0 -1 40

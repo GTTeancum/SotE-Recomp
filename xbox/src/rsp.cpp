@@ -1,3 +1,4 @@
+#include "rdram_guard.h"
 #include <cassert>
 #include <cstring>
 #include "librecomp/rsp.hpp"
@@ -25,6 +26,8 @@ extern "C" void xb_rsp_audio(uint8_t* rdram,const uint32_t* task) {
     if(task[0]!=2 || (task[4]&0x1fffffff)!=0xCF890)xb_unsupported(0xE4000001);
     uint32_t data=task[6]&0x1fffffff;
     if(data>0x800000-0xF80)xb_unsupported(0xE4000002);
+    xb_rdram_offset(data,0xF80,XB_RDRAM_SP);
+    xb_rdram_offset(task[12]&0x1fffffff, task[13], XB_RDRAM_SP);
     std::memcpy(dmem+0xFC0,task,64);
     dma_rdram_to_dmem(rdram,0,data,0xF80-1);
     if(aspMain(rdram,task[4])!=RspExitReason::Broke)xb_unsupported(0xE4000003);

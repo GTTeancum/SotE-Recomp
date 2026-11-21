@@ -47,6 +47,7 @@ volatile LONG recoveredBuffers;
 static unsigned nextCompletion;
 static CRITICAL_SECTION dma_lock;
 static int lock_initialized;
+static int descriptor_pages_locked;
 volatile uint32_t sote_dma_status[8]; /* polls, queued, consumed, halts, CIV, LVI, SR, pending */
 
 // global reference to the ac97 device
@@ -84,7 +85,12 @@ void XAudioInit(int sampleSizeInBits, int numChannels, XAudioCallback callback, 
 	// Hack to prevent an assertion in MmGetPhysicalAddress by locking the memory.
 	// A future API redesign should use proper allocation
 	// (MmAllocateContiguousMemory) instead.
-	MmLockUnlockBufferPages((PVOID)pac97device, sizeof(AC97_DEVICE), FALSE);
+	/* SDL also calls XAudioInit when closing a device. The static descriptor
+	   ring lives for the XBE lifetime; acquire its page locks only once. */
+	if(!descriptor_pages_locked) {
+		MmLockUnlockBufferPages((PVOID)pac97device, sizeof(AC97_DEVICE), FALSE);
+		descriptor_pages_locked=1;
+	}
 
 	pac97device->mmio = (unsigned int *)0xfec00000;
 	pac97device->nextDescriptor = 0;

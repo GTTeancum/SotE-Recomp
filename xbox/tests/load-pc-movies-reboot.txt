@@ -1,0 +1,6 @@
+# Inspect saved preference only; no adjustment input.
+900 1000 0 0
+1000 0400 0 0
+1200 8000 0 0
+1500 0800 0 0
+1700 0800 0 0

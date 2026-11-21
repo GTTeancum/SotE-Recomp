@@ -1,3 +1,4 @@
+#include "rdram_guard.h"
 #include <windows.h>
 #include <xboxkrnl/xboxkrnl.h>
 #include <nxdk/mount.h>
@@ -82,12 +83,14 @@ void osEepromProbe_recomp(uint8_t* rdram,recomp_context* ctx) {
 void osEepromLongRead_recomp(uint8_t* rdram,recomp_context* ctx) {
     unsigned offset,count,address;ctx->r2=-1;
     if(!initialize() || !bounds(ctx,&offset,&count,&address)){sote_save_status.errors++;return;}
+    xb_rdram_offset(address,count,XB_RDRAM_EEPROM);
     for(unsigned i=0;i<count;i++)rdram[(address+i)^3]=game.image.bytes[offset+i];
     ctx->r2=0;sote_save_status.reads++;sote_save_status.generation=game.image.generation;
 }
 void osEepromLongWrite_recomp(uint8_t* rdram,recomp_context* ctx) {
     unsigned offset,count,address;ctx->r2=-1;
     if(!initialize() || !bounds(ctx,&offset,&count,&address)){sote_save_status.errors++;return;}
+    xb_rdram_offset(address,count,XB_RDRAM_EEPROM);
     uint8_t next[512];memcpy(next,game.image.bytes,512);
     for(unsigned i=0;i<count;i++)next[offset+i]=rdram[(address+i)^3];
     if(count && !commit(&game,next)){sote_save_status.errors++;return;}

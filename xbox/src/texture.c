@@ -1,3 +1,4 @@
+#include "rdram_guard.h"
 #include "texture.h"
 #include <string.h>
 void xb_unsupported(uint32_t id) __attribute__((noreturn));
@@ -38,7 +39,26 @@ uint32_t xb_texture_fingerprint(void) {
 }
 xb_tile xb_tiles[8];
 uint32_t xb_texture_generation;
-static unsigned image_address,image_width,image_size;
+static unsigned image_address,image_width,image_size,image_format;
+static uint8_t* texture_rdram;
+static unsigned palette_sources[512];
+/* A render tile may differ from the load tile. Keep provenance by TMEM word. */
+static struct {unsigned address,width,fmt,siz,uls,ult,type,valid;} provenance[512];
+unsigned xb_texture_scene(void) {
+    uint16_t event=0;
+    if(texture_rdram)memcpy(&event,texture_rdram+(0x13CE0E^2),2);
+    return event;
+}
+int xb_texture_slot_key(unsigned tile,unsigned tlut,unsigned w,unsigned h,uint32_t key[17]) {
+    if(tile>=8 || !texture_rdram)return 0;
+    xb_tile* t=&xb_tiles[tile];unsigned i=t->tmem&511;
+    if(!provenance[i].valid)return 0;
+    unsigned event=xb_texture_scene();
+    unsigned values[17]={event,provenance[i].address,w,h,t->format,t->size,t->line,t->tmem,t->palette,
+        tlut<<14,provenance[i].width,provenance[i].uls,provenance[i].ult,provenance[i].fmt,provenance[i].siz,
+        provenance[i].type,(t->format==2)?palette_sources[256+(t->size==0?t->palette*16:0)]:0};
+    memcpy(key,values,sizeof(values));return 1;
+}
 volatile struct {uint32_t images,loads,texels,format,size;} sote_texture_status;
 static uint8_t source(uint8_t* ram,unsigned address) {
     if(address>=0x800000)xb_unsupported(0xE5020001);
@@ -53,9 +73,9 @@ static void load_word(uint8_t* ram,unsigned src,unsigned dst,unsigned swap,int r
     } else for(unsigned i=0;i<8;i++)tmem[((dst+i)^swap)&4095]=source(ram,src+(palette?(i&1):i));
 }
 int xb_texture_command(uint8_t* ram,uint32_t w0,uint32_t w1) {
-    unsigned op=w0>>24,index=(w1>>24)&7;xb_tile* t=&xb_tiles[index];
+    texture_rdram=ram;unsigned op=w0>>24,index=(w1>>24)&7;xb_tile* t=&xb_tiles[index];
     if(op==0xFD) {
-        image_address=w1;image_size=(w0>>19)&3;image_width=(w0&4095)+1;
+        image_address=w1;image_format=(w0>>21)&7;image_size=(w0>>19)&3;image_width=(w0&4095)+1;
         sote_texture_status.images++;return 1;
     }
     if(op==0xF5) {
@@ -77,12 +97,21 @@ int xb_texture_command(uint8_t* ram,uint32_t w0,uint32_t w1) {
         rows=(bottom>>2)-(top>>2)+1;
         words=palette?(right>>2)-(left>>2)+1:(((right>>2)-(left>>2))>>(4-t->size))+1;
     }
+    xb_rdram_offset(start,(rows-1)*stride+words*(palette?2:8),XB_RDRAM_VIDEO);
     unsigned mask=rgba32?2047:4095,advance=rgba32?4:8;
     unsigned tm_stride=t->line<<(palette?5:3),dst_row=(t->tmem<<3)&mask;
     for(unsigned row=0;row<rows;row++) {
         unsigned src=start+row*stride,dst=dst_row,swap=(row&1)*4,dxt=0;
         for(unsigned i=0;i<words;i++) {
             load_word(ram,src,dst,swap,rgba32,palette);
+            if(palette)palette_sources[(dst&4095)>>3]=image_address;
+            if(!palette) {
+                unsigned at=(dst&4095)>>3;
+                provenance[at].address=image_address;provenance[at].width=image_width;
+                provenance[at].fmt=image_format;provenance[at].siz=image_size;
+                provenance[at].uls=left;provenance[at].ult=top;provenance[at].type=block?1:0;
+                provenance[at].valid=1;
+            }
             if(block){dxt+=bottom;while(dxt>=2048){dst=(dst+tm_stride)&mask;dxt-=2048;swap^=4;}}
             src+=palette?2:8;dst=(dst+advance)&mask;
         }

@@ -52,7 +52,11 @@ for name in sorted(selected):
     address=re.search(r'// 0x([0-9A-Fa-f]{8}):',body)[1]
     traced.append(body.replace('{','{\n    xb_trace(0x'+address+'u);',1))
 retail_source=''.join(traced)
-(OUT/'retail.c').write_text('#include "recomp.h"\n#include "funcs.h"\n#include "recomp_hooks.h"\nvoid xb_trace(uint32_t);\n'+retail_source)
+# Xbox-only display correction; do not overwrite a guest string allocation.
+anchor='sote_native_text_begin(rdram, (uint32_t)ctx->r5);'
+assert retail_source.count(anchor)==1
+retail_source=retail_source.replace(anchor,anchor+' if (xb_native_pause_heading(rdram, (uint32_t)ctx->r5)) return;')
+(OUT/'retail.c').write_text('#include "recomp.h"\n#include "funcs.h"\n#include "recomp_hooks.h"\nvoid xb_trace(uint32_t);\nint xb_native_pause_heading(uint8_t*,uint32_t);\n'+retail_source)
 (OUT/'funcs.h').write_text((ROOT/'generated/RecompiledFuncs/funcs.h').read_text())
 # Temporary fail-fast import boundaries are named and recorded, never successful
 # stubs. They disappear as each real Xbox service is implemented.
@@ -107,6 +111,23 @@ needle='#elif defined(_MSC_VER)\n\n#include <intrin.h>'
 assert header.count(needle)==1
 header=header.replace(needle,'#elif defined(SOTE_XBOX)\n#include "wide_multiply.h"\n\n'+needle)
 (OUT/'recomp.h').write_text(header)
+# Keep generated CPU accessors unchanged; the reserved/decommitted span
+# is the safety barrier. Instrument only the actual RSP bulk DMA boundaries
+# in an Xbox-local header copy, not the third-party checkout.
+rsp=(ROOT/'third_party/N64ModernRuntime/librecomp/include/librecomp/rsp.hpp').read_text()
+rsp=rsp.replace('#include "rsp_vu.hpp"', '#include "librecomp/rsp_vu.hpp"\n#include "rdram_guard.h"')
+for length in ('rd_len','wr_len'):
+    needle=f'    assert(dmem_addr + {length} <= 0x1000);'
+    assert rsp.count(needle)==1
+    rsp=rsp.replace(needle,needle+f'\n    xb_rdram_offset(dram_addr,{length},XB_RDRAM_SP);')
+(OUT/'librecomp').mkdir(exist_ok=True)
+(OUT/'librecomp/rsp.hpp').write_text(rsp)
+# Exact shared cheat logic; native guest pointers receive the same range guard.
+cheats=(ROOT/'src/cheats.hpp').read_text()
+needle='((address&0x7fffff)^(sizeof(T)==2?2:0))'
+assert cheats.count(needle)==2
+cheats='#include "rdram_guard.h"\n'+cheats.replace(needle,'xb_rdram_offset('+needle+',sizeof(T),XB_RDRAM_MENU)')
+(OUT/'cheats.hpp').write_text(cheats)
 rom=ROOT/'SotE_Recompiled/sote.us.v1.2.z64'
 image=ROOT/'generated/main.bin'
 assert rom.stat().st_size==0xC00000 and image.stat().st_size==0xEC880

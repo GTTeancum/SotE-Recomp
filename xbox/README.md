@@ -4,6 +4,11 @@ Started November 5, 2026. This is a separate NXDK target on `main`; the existing
 Windows/Linux build is unchanged. Tool locations were verified against the
 Jedi Power Battles repository.
 
+See [Console efficiency](CONSOLE_EFFICIENCY.md) for current memory ownership,
+the shared ROM reader and graphics upload budgets, verification, and hardware
+limitations. The earlier SDK leak investigation is in
+[Memory cleanup audit](MEMORY_CLEANUP_AUDIT.md).
+
 ## Build and test
 
 From `C:\Programming\GitHub\!!ARCHIVED\N64Recomp`:
@@ -234,3 +239,116 @@ Echo Base behavior. Neither condition writes game progression.
 For short entry tests, `--after-input-seconds 15` ends the run15 seconds after
 all inputs apply, retaining the duration watchdog. This is an observation
 checkpoint, not an automatic visual, gameplay or completion pass.
+
+## Native Linux build entry point
+
+`xbox/tools/build-linux.sh` is the Linux counterpart to the existing Windows
+`build.ps1`/MSYS2 `build.sh`; the Windows entry points are unchanged.
+
+Set `NXDK_DIR` to a built NXDK checkout and put LLVM/Clang/LLD, a native C
+compiler, and Python 3 on `PATH`. Build the NXDK libraries and tools first,
+including SDL2 (`NXDK_ONLY=y NXDK_SDL=y`). Then, from the repository root:
+
+```sh
+NXDK_DIR=/path/to/nxdk bash xbox/tools/build-linux.sh --smoke
+NXDK_DIR=/path/to/nxdk bash xbox/tools/build-linux.sh --check
+NXDK_DIR=/path/to/nxdk bash xbox/tools/build-linux.sh
+```
+
+`--smoke` needs no ROM: it compiles and verifies the screen shader, assembles
+its microcode, and compiles a locally corrected pbkit core under
+`build/xbox/linux-smoke`. It does not build or test the game.
+
+`--check` reports missing tools, SDK libraries, ROM, or generated inputs without
+running game-code preparation. A full build runs the existing `prepare.py`,
+which validates the supported ROM identity, then builds `build/xbox/disc/default.xbe`.
+The same private ROM and generated-source prerequisites documented above still
+apply; this script does not extract or recompile the ROM itself. `PYTHON`,
+`HOST_CC`, and `CGC` can override the corresponding host tools (single executable
+paths, not command strings).
+
+Linux smoke compilation and the full game compile/link/XBE export are verified
+with the supported ROM and staged NXDK/Clang 19 toolchain. The generated XBE
+header and section file bounds pass structural checks. No runtime or hardware
+validation is implied.
+
+For a fresh checkout, the ROM-derived prerequisite generation used on Linux is:
+
+```sh
+# Place your supported ROM at SotE_Recompiled/sote.us.v1.2.z64 first.
+python3 tools/prepare_recomp_rom.py SotE_Recompiled/sote.us.v1.2.z64
+python3 tools/extract_boot_image.py SotE_Recompiled/sote.us.v1.2.z64
+cmake -S third_party/N64Recomp -B build/n64recomp-linux -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build/n64recomp-linux --target N64RecompCLI RSPRecomp --parallel 4
+build/n64recomp-linux/N64Recomp sote.toml
+build/n64recomp-linux/RSPRecomp config/aspMain.toml
+python3 tools/patch_rsp_audio.py
+```
+
+These commands require the recursively initialized N64Recomp and N64ModernRuntime
+submodules and `tools/requirements.txt` Python dependencies. They are for initial
+generation; when deliberately regenerating a prior output set, ensure stale
+`generated/RecompiledFuncs` chunks are removed first as in the Windows build.
+All ROM-derived outputs remain private and ignored by Git.
+
+### Xbox PC-layout menus (isolated development tree)
+
+The title exposes Start Game and Options. Options uses the current PC menu
+structure: Options, Controls, and Cheats tabs; in-game navigation also has Main.
+The original font is retained. PC normalized layout coordinates are fitted to
+640×480's conservative safe rectangle (48,36)–(592,444), with separate horizontal
+and vertical scale so the 4:3 output remains readable. This is structural parity,
+not pixel-identical rendering of the desktop's 16:9 layout.
+
+D-pad left/right or LT/RT changes tabs; up/down selects a row. A enters value
+adjustment, left/right changes it, A/B ends adjustment. B saves and returns.
+Controls exposes Classic/Modern on-foot and speeder-bike schemes, movement/aim
+and trigger tuning, yaw/pitch speeds, Apply, and controller-only Edit Bindings.
+The binding editor groups actions by native context, supports button capture,
+X clear, Y context reset, and B save. Start stays reserved for pause/cancel.
+Cheats exposes the PC health/lives/ammo/missiles/vehicle health, rapid-fire,
+fire-rate, aim-assist and assist-width controls; these use the existing runtime
+cheat implementation rather than decorative switches.
+
+Settings use two checksummed records under E:\UDATA\534f5445\controls0.bin and
+controls1.bin, separate from native game saves. Writes flush and verify the
+inactive record. Save failure keeps the menu open for retry. Version 3 retains
+old controls while ignoring the retired font field, and stores controller
+bindings and extra controls. No settings or canvas pixels occupy guessed guest
+RAM gaps. D:\xbox-controls.cfg remains first-run defaults.
+
+PC graphics/window/texture/font controls, keyboard and mouse UI are omitted.
+No unsupported resolution, texture-pack or widescreen switches are displayed.
+Native sound, display-overlay and seeker-camera controls remain. See MENU_VALIDATION.md for exactly
+which current screenshots and runtime paths have been checked; host tests are
+not a claim that every cheat or custom binding has been exercised on hardware.
+
+### Linux visual sweep fixtures (2026-11-18)
+
+Test input rows retain their existing six fields and accept an optional seventh
+`duration` (1..10000 polls, default 1) for held controls. Rows must not overlap.
+With `virtual_controller=1` only, `xbox-test.cfg` may contain up to 32 ordered
+`scene_jump=POLL:EVENT` entries. These request the original event loader via its
+existing transition fields, matching the desktop diagnostic event-jump fixture.
+They allocate no payload in guessed guest-memory gaps. Use a disposable HDD/save
+overlay. A scene reached this way is fixture visual coverage, **not** proof of
+natural progression, trigger correctness, boss completion, or an unassisted
+playthrough. Never ship `xbox-test.cfg` or `xbox-input.txt` in a release disc.
+
+For scripted visual sweeps, communicator condition `2` consumes the row without
+pressing anything if that communicator/event is absent; condition `1` retains
+the legacy wait-until-present behavior. This permits safe dialogue dismissal
+without accidentally pausing a scene that has no opening instruction.
+
+### Original font only
+
+Per owner direction, Xbox uses only the original game's glyph atlas. The
+experimental Modern font, toggle, replacement data and generator were removed.
+Modern on-foot **controls** remain available and are unrelated to fonts.
+Old v1 controls and experimental v2 records are still accepted; the retired
+font slot is ignored and written as zero without losing any control settings.
+Overlay hints are positioned within the conservative SD safe-area target.
+
+This checkpoint requests only **640×480, 4:3**. There are no supported 720p,
+1080i, widescreen or alternative-resolution selectors to validate here. CRT
+overscan/interlacing and physical hardware readability require hardware tests.

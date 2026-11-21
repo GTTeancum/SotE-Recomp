@@ -1,3 +1,4 @@
+#include "rdram_guard.h"
 #include <string.h>
 #include "runtime.h"
 void xb_unsupported(uint32_t id) __attribute__((noreturn));
@@ -10,6 +11,7 @@ volatile struct {uint32_t loaded,audio,graphics,completed;} sote_sp_status;
 void osSpTaskLoad_recomp(uint8_t* rdram,recomp_context* ctx) {
     uint32_t address=ctx->r4,offset=address&0x1fffffff;
     if((offset&7)||offset>0x800000-64)xb_unsupported(0xE4000004);
+    xb_rdram_offset(offset,64,XB_RDRAM_SP);
     for(unsigned i=0;i<16;i++)sote_sp_task[i]=MEM_W(i*4,(int32_t)address);
     valid=1;sote_sp_status.loaded++;
 }

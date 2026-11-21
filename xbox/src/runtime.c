@@ -3,6 +3,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include "runtime.h"
+#include "console_budget.h"
 
 enum { STOPPED, READY, RUNNING, RECEIVE, SEND, FINISHED, FRAME };
 struct xb_thread {
@@ -88,7 +89,7 @@ xb_thread* xb_thread_create(xb_entry entry,uint32_t arg,uint32_t stack,int prior
     if(!t->gate)fatal();
     t->host=CreateThread(NULL,128*1024,run,t,0,&t->host_id);
     if(!t->host)fatal();
-    LeaveCriticalSection(&lock);return t;
+    LeaveCriticalSection(&lock);xb_budget_mark(XB_BUDGET_THREAD_OPEN,128*1024);return t;
 }
 void xb_thread_start(xb_thread* t) {
     EnterCriticalSection(&lock);
@@ -100,7 +101,7 @@ void xb_thread_join(xb_thread* t) {
     if(WaitForSingleObject(t->host,10000)!=WAIT_OBJECT_0)fatal();
     EnterCriticalSection(&lock);
     CloseHandle(t->host);CloseHandle(t->gate);memset(t,0,sizeof(*t));
-    LeaveCriticalSection(&lock);
+    LeaveCriticalSection(&lock);xb_budget_mark(XB_BUDGET_THREAD_JOIN,128*1024);
 }
 void xb_thread_stop(xb_thread* t) {
     EnterCriticalSection(&lock);

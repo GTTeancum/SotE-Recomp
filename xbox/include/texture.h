@@ -16,3 +16,6 @@ const uint8_t* xb_texture_memory(void);
 uint32_t xb_texture_fingerprint(void);
 int xb_texture_memory_matches(const uint8_t* memory);
 void xb_texture_memory_selftest(void);
+
+unsigned xb_texture_scene(void);
+int xb_texture_slot_key(unsigned tile,unsigned tlut,unsigned w,unsigned h,uint32_t key[17]);

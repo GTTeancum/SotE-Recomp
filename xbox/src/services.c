@@ -1,5 +1,6 @@
+#include "rdram_guard.h"
 #include <windows.h>
-#include <stdio.h>
+#include "rom_io.h"
 #include "runtime.h"
 void xb_unsupported(uint32_t id) __attribute__((noreturn));
 static CRITICAL_SECTION service_lock;
@@ -70,6 +71,7 @@ void osViSetEvent_recomp(uint8_t* rdram,recomp_context* ctx) {
 void osViSetMode_recomp(uint8_t* rdram,recomp_context* ctx) {
     uint32_t mode=ctx->r4,offset=mode&0x1fffffff;
     if((mode&3)||offset>0x800000-80)xb_unsupported(0xE2000001);
+    xb_rdram_offset(offset,80,XB_RDRAM_SI);
     sote_vi_state.mode=mode;sote_vi_state.control=MEM_W(4,(int32_t)mode);
     sote_vi_state.width=MEM_W(8,(int32_t)mode);
 }
@@ -96,18 +98,7 @@ void osInvalDCache_recomp(uint8_t* rdram,recomp_context* ctx){(void)rdram;(void)
 void osWritebackDCache_recomp(uint8_t* rdram,recomp_context* ctx){(void)rdram;(void)ctx;}
 void osWritebackDCacheAll_recomp(uint8_t* rdram,recomp_context* ctx){(void)rdram;(void)ctx;}
 static int rom_read(uint8_t* rdram,uint32_t device,uint32_t target,uint32_t size) {
-    uint32_t offset=device&0x0FFFFFFF,ram=target&0x1FFFFFFF;
-    if(offset>0xC00000 || size>0xC00000-offset || ram>0x800000 || size>0x800000-ram)return -1;
-    FILE* file=fopen("D:\\sote.us.v1.2.z64","rb");if(!file)return -1;
-    if(fseek(file,offset,SEEK_SET)){fclose(file);return -1;}
-    uint8_t data[4096];
-    for(uint32_t pos=0;pos<size;) {
-        uint32_t bytes=size-pos;if(bytes>sizeof(data))bytes=sizeof(data);
-        if(fread(data,1,bytes,file)!=bytes){fclose(file);return -1;}
-        for(uint32_t i=0;i<bytes;i++)rdram[(ram+pos+i)^3]=data[i];
-        pos+=bytes;
-    }
-    fclose(file);return 0;
+    return xb_rom_guest(rdram, device & 0x0fffffffu, target & 0x1fffffffu, size);
 }
 void osPiReadIo_recomp(uint8_t* rdram,recomp_context* ctx) {
     ctx->r2=rom_read(rdram,ctx->r4,ctx->r5,4);

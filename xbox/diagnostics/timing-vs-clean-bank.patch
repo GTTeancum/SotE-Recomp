@@ -1,0 +1,27 @@
+--- a/xbox/src/performance.c
++++ b/xbox/src/performance.c
+@@ -29,4 +29,23 @@
+     sote_perf_scene[2]=now;sote_perf_scene[3]++;
+     sote_perf_scene[5]=xb_perf_enabled;
+ }
+-void xb_perf_present(void){sote_perf_scene[4]++;sote_perf_scene[2]=GetTickCount();}
++/* Private timing-only, same render/cache/CPU code as the clean bank control.
++   No new timer read or fence. Once per completed native E30 pb_finished, hold
++   192 fixed slots, then freeze, for one low-frequency external read after play. */
++extern volatile uint32_t sote_hd_hotset_count, sote_hd_hotset[64][17],
++    sote_hd_prefix_frame[64][5], sote_input_status[8];
++volatile uint32_t sote_fps_frames[192][8],sote_fps_count,sote_fps_mismatch;
++void xb_perf_present(void) {
++    sote_perf_scene[4]++;sote_perf_scene[2]=GetTickCount();
++    if(sote_perf_scene[0]!=30 || sote_fps_count>=192)return;
++    uint32_t n=sote_fps_count,ser=sote_hd_hotset_count;
++    const volatile uint32_t* h=sote_hd_hotset[(ser-1)&63u];
++    const volatile uint32_t* q=sote_hd_prefix_frame[(ser-1)&63u];
++    if(ser==0 || h[0]!=ser || q[0]!=ser || h[1]!=30 || q[1]!=30 || h[3]!=q[2]) {
++        sote_fps_mismatch++;return;
++    }
++    volatile uint32_t* d=sote_fps_frames[n];
++    d[0]=ser;d[1]=sote_perf_scene[2];d[2]=sote_input_status[0];d[3]=sote_perf_scene[4];
++    d[4]=(h[2]?0x80000000u:0u)|h[3];d[5]=q[3];d[6]=h[14];d[7]=h[13];
++    __asm__ volatile("" ::: "memory");sote_fps_count=n+1;
++}
