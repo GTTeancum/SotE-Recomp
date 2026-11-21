@@ -1,0 +1,29 @@
+# Intro skip; Controls; Modern; invert look; save; reopen; reset; save.
+# Each press released explicitly to test edge-triggered navigation.
+900 1000 0 0
+1000 0000 0 0
+1200 0400 0 0
+1250 0000 0 0
+1300 0400 0 0
+1350 0000 0 0
+1400 8000 0 0
+1450 0000 0 0
+1700 0100 0 0
+1750 0000 0 0
+1800 0400 0 0
+1850 0000 0 0
+1900 0100 0 0
+1950 0000 0 0
+2200 4000 0 0
+2250 0000 0 0
+2400 8000 0 0
+2450 0000 0 0
+# Selection retained at invert; two up presses wrap to reset.
+2700 0800 0 0
+2750 0000 0 0
+2800 0800 0 0
+2850 0000 0 0
+2900 8000 0 0
+2950 0000 0 0
+3100 4000 0 0
+3150 0000 0 0

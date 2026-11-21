@@ -1,0 +1,10 @@
+# Fixture direct native-loader entry, then original communicator dismissal.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0
+2200 1000 0 0 1 4
+2300 1000 0 0 1 4
+2400 0000 0 60 0 -1 180
+2600 0000 60 0 0 -1 180
+2800 2000 0 0 0 -1 120
+3000 0002 0 0

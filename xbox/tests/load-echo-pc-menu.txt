@@ -1,0 +1,22 @@
+# Native Echo with matching new PC-layout pause/Options proof.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0
+2000 1000 0 0
+2600 1000 0 0 1 4
+2700 1000 0 0 1 4
+2800 1000 0 0
+2900 0400 0 0
+3000 8000 0 0
+3400 0100 0 0
+3700 0100 0 0
+# Dedicated assisted traversal save: enable health and lives through actual UI.
+3900 8000 0 0
+4000 0100 0 0
+4100 4000 0 0
+4200 0400 0 0
+4300 8000 0 0
+4400 0100 0 0
+4500 4000 0 0
+4800 4000 0 0
+5000 1000 0 0

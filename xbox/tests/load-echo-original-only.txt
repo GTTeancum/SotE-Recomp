@@ -1,0 +1,14 @@
+# Matching first Echo communicator and Options comparison, no movement.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0
+# Saved-font HDD remembers Echo selection; no Down from picker.
+2000 1000 0 0
+2600 1000 0 0 1 4
+2700 1000 0 0 1 4
+2800 1000 0 0
+2900 0400 0 0
+3000 8000 0 0
+# Original-only regression: open Controls then save legacy v2 settings.
+3250 0002 0 0
+3450 4000 0 0

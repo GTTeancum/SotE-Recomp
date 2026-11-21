@@ -1,0 +1,8 @@
+# Exact one-poll controller taps: save rows, name dialog, cancel, title.
+900 1000 0 0
+1500 1000 0 0
+1600 0400 0 0
+1650 0800 0 0
+1700 8000 0 0
+1800 4000 0 0
+1900 4000 0 0

@@ -1,0 +1,20 @@
+// CPU clipping/projection produces native window coordinates and reciprocal W.
+// NV2A performs final surface scaling and perspective texture preparation.
+struct Input {
+    float4 position : POSITION;
+    float4 color : COLOR0;
+    float4 texture : TEXCOORD0;
+};
+struct Output {
+    float4 position : POSITION;
+    float4 color : COLOR0;
+    float4 texture : TEXCOORD0;
+};
+Output main(Input input, uniform float4 position_scale, uniform float4 texture_scale) {
+    Output output;
+    output.position = input.position * position_scale;
+    output.color = input.color;
+    output.texture = input.texture;
+    output.texture.xy = input.texture.xy * input.texture.w * texture_scale.xy;
+    return output;
+}

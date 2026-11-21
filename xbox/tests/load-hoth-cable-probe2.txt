@@ -1,0 +1,4 @@
+# Diagnostic scene entry; explicit subsequent placement beside documented switch.
+900 1000 0 0
+1500 1000 0 0
+1700 1000 0 0

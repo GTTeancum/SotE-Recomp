@@ -1,0 +1,2 @@
+# Input poll, N64 buttons (hex), stick X, stick Y. One poll per tap.
+2100 1000 0 0
