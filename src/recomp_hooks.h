@@ -15,6 +15,13 @@ void sote_menu_sound_frame(uint8_t* rdram, void* context);
 void sote_diagnostic_communicators(uint8_t* rdram, void* context);
 void sote_diagnostic_palace_ray(uint8_t* rdram, uint32_t object);
 void sote_modern_projectile(uint8_t* rdram, void* context);
+// The desktop runtime owns this foreground pass. Xbox consumes the same generated C.
+#ifdef SOTE_XBOX
+#define SOTE_FIRST_PERSON_DRAW(rdram, context) ((void)0)
+#else
+void sote_draw_first_person_blaster(uint8_t* rdram, void* context);
+#define SOTE_FIRST_PERSON_DRAW sote_draw_first_person_blaster
+#endif
 void sote_modern_impact(uint8_t* rdram, void* context);
 
 // Native-command music replacement. Keep effects on the original sound path.

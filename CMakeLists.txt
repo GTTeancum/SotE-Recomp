@@ -70,6 +70,7 @@ set(SOTE_RUNTIME_SOURCES
     src/control_bindings.cpp
     src/modern_controls.cpp
     src/modern_aim.cpp
+    src/first_person_blaster.cpp
     src/frontend.cpp
     src/graphics_menu.cpp
     src/menu_model.cpp

@@ -11,6 +11,8 @@ stubs = []
 ignored = []
 renamed = []
 hook = [
+    # Draw Dash's weapon-bearing arm after the world traversal and before the foreground HUD.
+    { func = "func_800BB11C", before_vram = 0x800BB16C, text = "SOTE_FIRST_PERSON_DRAW(rdram, ctx);" },
     { func = "func_80007A04", before_vram = 0x80007A04, text = "sote_communicator_input_state(rdram);" },
     { func = "func_80007A04", before_vram = 0x80007AB4, text = "if (sote_take_communicator_advance()) ctx->r15 = 1;" },
     { func = "func_80019294", before_vram = 0x80019294, text = "sote_before_story_load(rdram, (uint32_t)ctx->r4, (uint32_t)ctx->r31);" },

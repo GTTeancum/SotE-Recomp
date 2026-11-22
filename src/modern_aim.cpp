@@ -1,4 +1,5 @@
 #include "modern_controls.hpp"
+#include "first_person_blaster.hpp"
 #include "controls_menu.hpp"
 #include "recomp.h"
 
@@ -75,6 +76,10 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     const uint32_t sp=uint32_t(ctx.r29);
     if (!address(sp,0x6c) || !address(sp-0x1800U,0x1800)) return;
     const uint32_t shooter=read<uint32_t>(ram,sp+0x68);
+    if (!address(uint32_t(ctx.r17),4)) return;
+    const uint32_t projectile=read<uint32_t>(ram,uint32_t(ctx.r17))+uint32_t(ctx.r16);
+    if (!address(projectile,0xb0)) return;
+    sote::first_person_blaster::animation.fire(shooter);
     if (std::getenv("SOTE_TRACE_PROJECTILE_SPAWNS")) {
         std::printf("[sote][projectile-spawn] shooter=%08X modern_player=%d\n",
             shooter,sote::modern_controls::owns_player(shooter));
@@ -87,9 +92,6 @@ extern "C" void sote_modern_projectile(uint8_t* ram, void* context) {
     // reticle still belongs to the live view, so converge against that view
     // rather than silently disabling alignment outside shoulder slot 5.
     if (!settings.convergence || camera_slot < 0 || camera_slot > 5) return;
-    if (!address(uint32_t(ctx.r17),4)) return;
-    const uint32_t projectile=read<uint32_t>(ram,uint32_t(ctx.r17))+uint32_t(ctx.r16);
-    if (!address(projectile,0xb0)) return;
     const uint32_t position=projectile+0x50, velocity=projectile+0xa0;
     const uint32_t camera=read<uint32_t>(ram,0x800D08A4);
     if (!address(camera,0x80)) return;

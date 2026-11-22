@@ -1,4 +1,5 @@
 #include "modern_controls.hpp"
+#include "first_person_blaster.hpp"
 #include "controls_menu.hpp"
 #include "recomp.h"
 #include <cmath>
@@ -182,10 +183,42 @@ int main(int argc,char** argv) {
     check(get<Vec>(ram,stack+0x8c).y==-8,"teleport discards old camera obstruction");
     camera_query_test=false;extra_object_distance=-1;
     configure(1); sote::controls_menu::cycle_scheme(sote::controls_menu::SchemeSlot::OnFoot,1);
+    c.r16 = 0; // Projectile-pool offset, after the camera fixture used r16 for Dash.
     sote_modern_begin(ram,player);calls=0;sote_modern_projectile(ram,&c);
     check(calls==0 && get<Vec>(ram,vel).x==0,"Classic is untouched");
     calls=0; put(ram,stack+0x8c,Vec{0,-6,7.67f});
     sote_modern_camera_resolve(ram,&c);
     check(calls==0 && get<Vec>(ram,stack+0x8c).z==7.67f,"Classic camera is unchanged");
+    // Extreme points of the retail glove. A positive lower-plane distance
+    // puts a vertex below the image at the viewmodel's 60-degree vertical FOV.
+    for (float recoil : {0.0f, 0.5f, 1.0f}) {
+        auto wrist = sote::first_person_blaster::wrist_in_view({true, 0, 1, recoil});
+        for (Vec point : {Vec{-23, -7, 1}, Vec{-15, -12, 1}}) {
+            auto component = [&](int axis) {
+                return point.x * wrist[0][axis] + point.y * wrist[1][axis] +
+                       point.z * wrist[2][axis] + wrist[3][axis];
+            };
+            check(-component(1) + 0.5773503f * component(2) > 0,
+                  "the glove stays below frame at peak bob throughout recoil");
+        }
+    }
+    auto& blaster = sote::first_person_blaster::animation;
+    blaster.update(player, 0, 0, true, 1.0/60);
+    put(ram, stack+0x68, target);
+    sote_modern_projectile(ram, &c);
+    put(ram, stack+0x68, player);
+    check(!blaster.current().flash, "enemy fire cannot animate Dash's blaster");
+    sote_modern_projectile(ram, &c);
+    check(blaster.current().flash && blaster.current().recoil == 1, "the player's native shot animates in Classic");
+    for (int i=1; i<=30; ++i) blaster.update(player, i * .15f, 0, true, 1.0/60);
+    const auto walking = blaster.current();
+    check(std::hypot(walking.sway, walking.lift) > .1f && !walking.flash,
+          "walking advances the view bob while the muzzle flash expires");
+    for (int i=0; i<60; ++i) blaster.update(player, 4.5f, 0, true, 1.0/60);
+    const auto idle = blaster.current();
+    check(std::hypot(idle.sway, idle.lift) < .001f, "standing still settles the blaster");
+    blaster.update(0, 0, 0, false, 0);
+    blaster.fire(player);
+    check(!blaster.current().visible && !blaster.current().flash, "unequipping clears the view and ignores shots");
     std::cout<<"modern aim failures="<<failures<<'\n';return failures?1:0;
 }

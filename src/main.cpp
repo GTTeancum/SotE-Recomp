@@ -41,6 +41,7 @@
 #include "diagnostic_progress.hpp"
 #include "menu_skin.hpp"
 #include "menu_renderer.hpp"
+#include "first_person_blaster.hpp"
 #include "hd_audio.hpp"
 #include "hd_music.hpp"
 #include "san_movies.hpp"
@@ -3913,6 +3914,18 @@ extern "C" void sote_diagnostic_vehicle(uint8_t* rdram, uint32_t object, int con
 }
 
 extern "C" void sote_diagnostic_active_player(uint8_t* rdram, uint32_t object) {
+    if (rdram && object >= 0x80000000U && object <= 0x807FFD80U) {
+        const bool equipped = object == read_guest_word(rdram, 0x80112B30U) &&
+            read_guest_word(rdram, 0x800DD2B0U) == 2 &&
+            read_guest_half(rdram, 0x8018DDE8U) == 0 &&
+            read_guest_half(rdram, object + 0xB8U) == 0 &&
+            read_guest_float(rdram, object + 0xB4U) > 0 &&
+            read_guest_float(rdram, 0x800DEB78U) <= 0;
+        sote::first_person_blaster::animation.update(equipped ? object : 0,
+            read_guest_float(rdram, object + 0x50), read_guest_float(rdram, object + 0x54),
+            (read_guest_word(rdram, object + 0x74) & 0x04000000U) != 0,
+            read_guest_double(rdram, 0x8018E998U));
+    }
     if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr ||
         rdram == nullptr || object < 0x80000000U || object > 0x807FFD80U) return;
     const int controller_vi = vi_count.load(std::memory_order_relaxed);
@@ -5372,6 +5385,7 @@ extern "C" void sote_outrider_object(uint8_t*, uint32_t object) {
 }
 
 extern "C" void sote_before_story_load(uint8_t* rdram, uint32_t event, uint32_t caller) {
+    sote::first_person_blaster::animation.update(0, 0, 0, false, 0);
     const int previous=read_guest_half(rdram,0x8013CE0EU);
     if (event==6 && previous!=6 && sote::graphics_menu::pc_cutscenes_enabled() &&
         sote::san_movies::play_movie("L03INTRO.SAN")) {
