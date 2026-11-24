@@ -1,6 +1,6 @@
 """Capture Dash in native Echo Base gameplay with a contained close-up camera.
 
-Requires the diagnostic-enabled local build/runtime/Release/sote_recomp.exe.
+Requires the diagnostic-enabled local build/runtime/Release/Shadows of the Empire.exe.
 No OS input, window control, desktop capture, or user-save writes. One native
 RT64 frame per run; a 150-second watchdog kills only the launched child.
 """
@@ -26,6 +26,8 @@ def main():
     p.add_argument('--distance',type=float,default=2.4)
     p.add_argument('--target-height',type=float,default=0)
     p.add_argument('--eye-height',type=float,default=0)
+    p.add_argument('--texture-pack',type=Path,
+                   help='Repository-local replacement-pack root for isolated texture probes')
     args=p.parse_args()
     base=ROOT/'.local/dash-face-rebuild/game-proof'
     out=(base/args.name).resolve()
@@ -34,7 +36,10 @@ def main():
     out.mkdir(parents=True,exist_ok=False)
     runtime=out/'runtime';runtime.mkdir()
     source=ROOT/'SotE_Recompiled'
-    for name in ['sote_recomp.exe','SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll']:
+    texture_root=(args.texture_pack or source/'textures').resolve()
+    if not texture_root.is_relative_to(ROOT) or not texture_root.is_dir():
+        raise ValueError('Texture pack must be a directory inside this repository')
+    for name in ['Shadows of the Empire.exe','SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll']:
         shutil.copy2(ROOT/'build/runtime/Release'/name,runtime/name)
     os.link(source/'sote.us.v1.2.z64',runtime/'sote.us.v1.2.z64')
     shutil.copy2(source/'rt64.json',runtime/'rt64.json')
@@ -60,16 +65,17 @@ def main():
         SOTE_DIAGNOSTIC_UNLOCK_LEVELS='1',SOTE_TRACE_PLAYER_STATE='1',
         SOTE_SMOKE_GAME_FRAMES='4000',SOTE_SMOKE_VIS='8000',
         SOTE_DIAGNOSTIC_CAPTURE_SYNC='1',SOTE_VISIBLE_CAPTURE_PATH=str(out/'frames'),
-        SOTE_VISIBLE_CAPTURE_PRESENTS='3600',SOTE_TEXTURE_PACK_PATH=str(source/'textures'),
+        SOTE_VISIBLE_CAPTURE_PRESENTS='3600',SOTE_TEXTURE_PACK_PATH=str(texture_root),
         SOTE_TEXTURE_REPLACEMENT_TRACE='1',SOTE_TRACE_FINAL_EVENT='1',
         SOTE_TEXTURE_PROOF_CAMERA=f'{args.angle}:{args.distance}:{args.eye_height}:{args.target_height}')
-    manifest=json.loads((ROOT/'.local/dash-face-rebuild/redraw-manifest.json').read_text())
-    textures={row['file']:hashlib.sha256((source/'textures/SotE_V1_HD'/row['file']).read_bytes()).hexdigest()
-              for row in manifest['files']}
+    textures={f.relative_to(texture_root).as_posix():hashlib.sha256(f.read_bytes()).hexdigest()
+              for f in texture_root.glob('*/dash/*.png')}
+    if not textures:
+        raise ValueError('No Dash textures found in the selected pack')
     started=time.monotonic()
     with (out/'stdout.log').open('w') as stdout,(out/'stderr.log').open('w') as stderr:
         try:
-            child=subprocess.run([str(runtime/'sote_recomp.exe'),'--frontend-smoke','--muted'],
+            child=subprocess.run([str(runtime/'Shadows of the Empire.exe'),'--frontend-smoke','--muted'],
                 cwd=runtime,env=env,stdout=stdout,stderr=stderr,timeout=150,
                 creationflags=subprocess.CREATE_NO_WINDOW)
             result={'exit_code':child.returncode}
@@ -82,7 +88,7 @@ def main():
     log=(out/'stdout.log').read_text(errors='replace')
     camera_states=re.findall(r'\[sote\]\[active-player\].*?event=(\d+).*?camera=(\d+)',log)
     last_camera=camera_states[-1] if camera_states else None
-    textures_after={name:hashlib.sha256((source/'textures/SotE_V1_HD'/name).read_bytes()).hexdigest()
+    textures_after={name:hashlib.sha256((texture_root/name).read_bytes()).hexdigest()
                     for name in textures}
     result.update(seconds=round(time.monotonic()-started,2),frames=frames,
         camera=env['SOTE_TEXTURE_PROOF_CAMERA'],textures=textures,
@@ -90,7 +96,7 @@ def main():
         diagnostic_camera_active='[sote][texture-proof-camera]' in log,
         final_echo_close_camera=last_camera==('4','5'),
         textures_unchanged_during_capture=textures_after==textures,
-        exe_sha256=hashlib.sha256((runtime/'sote_recomp.exe').read_bytes()).hexdigest(),
+        exe_sha256=hashlib.sha256((runtime/'Shadows of the Empire.exe').read_bytes()).hexdigest(),
         note='Native game render with diagnostic camera; inspect image before accepting appearance.')
     (out/'result.json').write_text(json.dumps(result,indent=2)+'\n')
     print(json.dumps(result,indent=2))

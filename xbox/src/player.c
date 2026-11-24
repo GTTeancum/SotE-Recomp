@@ -1,3 +1,4 @@
+#include "blaster_pose.h"
 #include <string.h>
 #include "runtime.h"
 #include "recomp_hooks.h"
@@ -41,6 +42,7 @@ static int allow(life_state* s,int vi,int event,int lives,uint32_t source,uint32
     return 1;
 }
 void sote_enter_player_controller(uint8_t* rdram,uint32_t object,uint32_t controller,uint32_t action) {
+    if(controller==0x800A7D70 && MEM_H(0,(int32_t)0x8013CE0E)==8)xb_update_blaster(rdram,object,1);
     int event=MEM_H(0,(int32_t)0x8013CE0E);
     sote_player_status[0]++;sote_player_status[1]=object;sote_player_status[2]=controller;
     sote_player_status[3]=action;sote_player_status[4]=event;

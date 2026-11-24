@@ -107,9 +107,10 @@ between level selection and native mission dialogue. The same route with a
 persisted Original N64 setting showed the mission dialogue without any PC
 movie. Compact valid JSON values for `pcCutscenes` now reload correctly; both
 directions have restart checks in `menu_revamp_harness`.
-An unskipped PC boot run captured the complete Hoth opening movie handing off
-to the native title screen. SDL's dummy audio device accepted non-silent movie
-PCM and returned to game audio afterward; physical speaker output is untested.
+The Hoth PC opening now plays after confirming Battle of Hoth on the level
+screen, before the mission loads. The pre-title Part I crawl still plays.
+Original N64 mode and installations missing the Hoth film retain the native
+comic at its original point.
 An Asteroid Field comparison shows the short PC ship-approach film returning to
 the native TIE/asteroid briefing and playable Outrider sequence. Original N64
 mode starts with that briefing directly; the PC movie does not repeat native
@@ -203,7 +204,7 @@ The graphics-settings and Modern/Classic scheme pages retain their styling.
 The Control Bindings action opens the editor. Inside the editor, Up/Down
 selects actions and Left/Right selects device columns.
 
-The title presents **Start Game** and **Options**. The profile picker retains
+The desktop title presents **Start Game**, **Options**, and **Exit to Desktop**. The profile picker retains
 Rename and Clear. Escape/B returns from level selection to the selected save
 and from the save picker to the title.
 

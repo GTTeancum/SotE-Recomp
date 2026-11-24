@@ -401,6 +401,8 @@ GeneralFailureTelemetry previous_general_telemetry;
 bool san_logo_started = false;
 std::atomic<int> san_intro_story_pending{-1};
 std::atomic<bool> san_intro_story_attempted{false};
+// Accessed only by the guest story-load and sprite hooks.
+bool hoth_boot_comic_deferred = false;
 int16_t san_last_movie_event = INT16_MIN;
 bool san_game_over_started = false;
 uint64_t san_game_over_movie_token = 0;
@@ -850,10 +852,11 @@ void update_san_movie_triggers(uint8_t* rdram) {
         read_guest_word(rdram, 0x800DD2B0U));
     if (san_pending_story_skip_event != INT16_MIN) {
         const int16_t from_event = san_pending_story_skip_event;
-        san_pending_story_skip_event = INT16_MIN;
         const int16_t destination = san_story_skip_destination(from_event);
-        if (event == from_event && destination != INT16_MIN && result == 2 &&
-            read_guest_byte(rdram, 0x800D2558U) == 0) {
+        if (event != from_event || destination == INT16_MIN) {
+            san_pending_story_skip_event = INT16_MIN;
+        } else if (result == 2 && read_guest_byte(rdram, 0x800D2558U) == 0) {
+            san_pending_story_skip_event = INT16_MIN;
             // Match the native comic exit at 8003CD54/8003CD68. Jumping
             // past its remaining panels must release its pause prohibition;
             // otherwise func_80026010 forces every later Pause request off.
@@ -2125,7 +2128,6 @@ LRESULT CALLBACK window_proc(
         case WM_CLOSE:
             release_game_mouse();
             ultramodern::quit();
-            DestroyWindow(window);
             return 0;
         case WM_DESTROY:
             release_game_mouse();
@@ -2277,13 +2279,34 @@ void log_diagnostic_progress() {
             inputs.load(),input_phase.load(),captures.load(),capture_phase.load(),
             presents.load(),present_phase.load(),vi_phase.load(),frame_phase.load());
         std::fflush(stderr);
+        if (frontend_smoke_test && ultramodern::is_quitting() && last_vi == vi &&
+            !stall_stack_dumped.exchange(true))
+            dump_process_thread_stacks("waiting for shutdown");
         last_vi=vi; next_diagnostic=now+2000;
     }
 }
 
 void update_gfx(void*) {
+    if (sote::graphics_menu::take_exit_request()) {
+        ultramodern::quit();
+        return;
+    }
     if (smoke_test) {
         return;
+    }
+    // Process-local close event for shutdown regression tests.
+    static const char* close_setting = std::getenv("SOTE_DIAGNOSTIC_WINDOW_CLOSE_VI");
+    static const int close_vi = frontend_smoke_test && close_setting && std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN")
+        ? std::atoi(close_setting) : -1;
+    if (close_vi >= 0 && vi_count.load() >= close_vi && !ultramodern::is_quitting()) {
+#ifdef _WIN32
+        window_proc(graphics_window, WM_CLOSE, 0, 0);
+#else
+        SDL_Event close{};
+        close.type = SDL_WINDOWEVENT;
+        close.window.event = SDL_WINDOWEVENT_CLOSE;
+        SDL_PushEvent(&close);
+#endif
     }
     sote::graphics_menu::Settings requested_window{};
     if (sote::graphics_menu::take_window_request(requested_window)) {
@@ -3190,6 +3213,8 @@ CheatSettings cheat_settings;
 sote::cheats::State cheat_state;
 std::filesystem::file_time_type cheat_ini_time{};
 bool cheat_ini_seen = false;
+uint32_t cheat_on_foot_actor = 0;
+int cheat_on_foot_vi = -100000;
 int cheat_last_check_vi = -100000;
 
 bool cheat_parse_bool(std::string value) {
@@ -3239,11 +3264,9 @@ void cheat_reload_settings() {
     if (error || (cheat_ini_seen && time == cheat_ini_time)) {
         return;
     }
-    cheat_ini_seen = true;
-    cheat_ini_time = time;
-
     CheatSettings settings{};
     std::ifstream input{path};
+    if (!input) return;
     std::string line;
     while (std::getline(input, line)) {
         line = cheat_trim(line);
@@ -3258,13 +3281,17 @@ void cheat_reload_settings() {
         for (char& c : key) {
             c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         }
-        const bool value = cheat_parse_bool(cheat_trim(line.substr(equals + 1)));
+        const size_t comment = line.find_first_of(";#", equals + 1);
+        const bool value = cheat_parse_bool(cheat_trim(line.substr(equals + 1, comment - (equals + 1))));
         if (key == "infinite_health") settings.infinite_health = value;
         else if (key == "infinite_lives") settings.infinite_lives = value;
         else if (key == "infinite_ammo") settings.infinite_ammo = value;
         else if (key == "infinite_missiles") settings.infinite_missiles = value;
         else if (key == "infinite_vehicle_health") settings.infinite_vehicle_health = value;
     }
+    if (input.bad()) return;
+    cheat_ini_seen = true;
+    cheat_ini_time = time;
     cheat_settings = settings;
     std::printf(
         "[sote][cheats] loaded SOTE_CHEATS.INI (health=%d lives=%d ammo=%d "
@@ -3311,7 +3338,8 @@ void sote_cheats_frame(uint8_t* rdram) {
     }
     const int16_t event = static_cast<int16_t>(read_guest_half(rdram,0x8013CE0EU));
     cheat_state.apply(rdram,cheat_settings,level_index_for_event(event),
-        sote::control_bindings::context_active(sote::control_bindings::Context::OnFoot),
+        cheat_on_foot_actor == read_guest_word(rdram, sote::cheats::State::cheat_player_address) &&
+            vi - cheat_on_foot_vi <= 4,
         outrider_object.load(std::memory_order_relaxed),
         vi - outrider_object_vi.load(std::memory_order_relaxed) < 30);
 }
@@ -3350,26 +3378,65 @@ extern "C" void sote_palace_boss_movie_cue(uint8_t* rdram, uint32_t actor) {
 }
 
 
+extern "C" uint32_t sote_use_elapsed_game_time() { return 1; }
+
+extern "C" void sote_follow_descending_floor(uint8_t* rdram, uint32_t player,
+    uint32_t previous_sector, float floor_z, const float previous_xy[2]) {
+    constexpr uint32_t grounded = 0x04000000U;
+    constexpr uint32_t jetpack = 0x200U;
+    constexpr float contact_tolerance = 0.02f;
+    const uint32_t flags = read_guest_word(rdram, player + 0x74);
+    if ((flags & (grounded | jetpack)) != grounded || previous_sector == 0 ||
+        read_guest_word(rdram, player + 0x70) != previous_sector ||
+        read_guest_float(rdram, player + 0xA0) > 0.0f) return;
+
+    // The normal on-foot controller keeps its last supporting floor at 800E0EC4.
+    // Only continue a grounded step. A jump or a drop into a lower sector must
+    // take the native airborne path, including fall damage and landing effects.
+    const float feet_z = read_guest_float(rdram, player + 0x10);
+    const float previous_floor = read_guest_float(rdram, 0x800E0EC4U);
+    const float drop = previous_floor - floor_z;
+    if (!(drop > 0.0f && drop <= 0.75f && floor_z < feet_z &&
+          std::abs(feet_z - previous_floor) <= contact_tolerance)) return;
+
+    const float dx = read_guest_float(rdram, player + 0x08) - previous_xy[0];
+    const float dy = read_guest_float(rdram, player + 0x0C) - previous_xy[1];
+    const float travel_squared = dx * dx + dy * dy;
+    // At most a 45-degree descent over the actual horizontal step. Discard
+    // discontinuous position changes such as checkpoint placement.
+    if (!(drop * drop <= travel_squared && travel_squared <= 4.0f)) return;
+
+    uint32_t floor_bits;
+    std::memcpy(&floor_bits, &floor_z, sizeof(floor_bits));
+    write_guest_word(rdram, player + 0x10, floor_bits);
+    write_guest_word(rdram, player + 0xA0, 0);
+}
+
+
 extern "C" void sote_wait_for_game_frame() {
     sote_publish_native_text();
     sote::diagnostics::Phase phase(sote::diagnostics::frame_phase);
-    // HLE can finish two complete gameplay iterations within one 60 Hz VI,
-    // which made movement and timers run far too quickly. Conversely, holding
-    // each iteration for two VIs reduced player and jetpack physics to 30 Hz
-    // and felt visibly slow. Allow exactly one gameplay iteration per VI.
+    // Feed RT64 distinct gameplay poses for interpolation. Titles, comic
+    // panels and input polling keep their VI cadence. The game timer measures
+    // elapsed time independently of the number of presented images.
+    const int event = game_rdram ? static_cast<int16_t>(read_guest_half(game_rdram, 0x8013CE0E)) : -1;
+    const bool gameplay = event >= 3 && (event == 5 || level_index_for_event(event) >= 0) &&
+        san_story_skip_destination(event) == INT16_MIN;
+    const int retraces = rt64_set_gameplay_pacing(gameplay) ? 2 : 1;
     std::unique_lock lock(game_frame_mutex);
     while (sote::san_movies::playback_active() &&
            !san_ending_handoff_active.load(std::memory_order_relaxed) &&
            !san_game_over_handoff_active.load(std::memory_order_relaxed)) {
+        if (ultramodern::is_quitting()) throw ultramodern::thread_terminated{};
         game_frame_cv.wait_for(lock, std::chrono::milliseconds(16));
     }
     int current_vi = vi_count.load(std::memory_order_relaxed);
     phase.set(2);
     if (last_game_frame_vi >= 0) {
-        game_frame_cv.wait(lock, [&] {
-            return vi_count.load(std::memory_order_relaxed) >=
-                last_game_frame_vi + 1;
-        });
+        while (vi_count.load(std::memory_order_relaxed) < last_game_frame_vi + retraces) {
+            if (ultramodern::is_quitting()) throw ultramodern::thread_terminated{};
+            game_frame_cv.wait_for(lock, std::chrono::milliseconds(20));
+        }
         current_vi = vi_count.load(std::memory_order_relaxed);
     }
     last_game_frame_vi = current_vi;
@@ -3914,6 +3981,9 @@ extern "C" void sote_diagnostic_vehicle(uint8_t* rdram, uint32_t object, int con
 }
 
 extern "C" void sote_diagnostic_active_player(uint8_t* rdram, uint32_t object) {
+    // Only the native on-foot controller owns Dash's health and weapon inventory.
+    cheat_on_foot_actor = object;
+    cheat_on_foot_vi = vi_count.load(std::memory_order_relaxed);
     if (rdram && object >= 0x80000000U && object <= 0x807FFD80U) {
         const bool equipped = object == read_guest_word(rdram, 0x80112B30U) &&
             read_guest_word(rdram, 0x800DD2B0U) == 2 &&
@@ -3922,8 +3992,6 @@ extern "C" void sote_diagnostic_active_player(uint8_t* rdram, uint32_t object) {
             read_guest_float(rdram, object + 0xB4U) > 0 &&
             read_guest_float(rdram, 0x800DEB78U) <= 0;
         sote::first_person_blaster::animation.update(equipped ? object : 0,
-            read_guest_float(rdram, object + 0x50), read_guest_float(rdram, object + 0x54),
-            (read_guest_word(rdram, object + 0x74) & 0x04000000U) != 0,
             read_guest_double(rdram, 0x8018E998U));
     }
     if (std::getenv("SOTE_DIAGNOSTIC_OFFSCREEN") == nullptr ||
@@ -3977,6 +4045,15 @@ extern "C" void sote_enter_player_controller(
     uint32_t object,
     uint32_t controller,
     uint32_t action) {
+    if (controller == 0x800A7D70U && rdram && read_guest_half(rdram, 0x8013CE0E) == 8 &&
+        object >= 0x80000000U && object <= 0x807FFD80U) {
+        const uint32_t flags = read_guest_word(rdram, object + 0x74);
+        const bool equipped = read_guest_word(rdram, 0x800DD2B0) == 2 &&
+            read_guest_word(rdram, 0x800D08A8) == 4 && !(flags & 0x400) &&
+            read_guest_word(rdram, object) == 0x48756D54;
+        sote::first_person_blaster::animation.update(equipped ? object : 0,
+            read_guest_double(rdram, 0x8018E998U));
+    }
     // The original game can revisit normal-looking controller actions while
     // it is still unwinding a destroyed player. Human and active telemetry
     // place the first independently plausible respawn death after 1,800 VIs.
@@ -5335,7 +5412,6 @@ int main(int argc, char** argv) {
             std::chrono::milliseconds(start_delay_ms));
         recomp::start_game(game_id);
     });
-    starter.detach();
 
     if (smoke_test || frontend_smoke_test) {
         const int watchdog_seconds =
@@ -5374,7 +5450,16 @@ int main(int argc, char** argv) {
     config.error_handling_callbacks.message_box = message_box;
 
     recomp::start(config);
+    starter.join();
+    // Release the window only after the render thread has retired its surface.
+#ifdef _WIN32
+    if (graphics_window) DestroyWindow(graphics_window);
+#else
+    if (graphics_window) SDL_DestroyWindow(graphics_window);
+    if (SDL_WasInit(SDL_INIT_VIDEO)) SDL_QuitSubSystem(SDL_INIT_VIDEO);
+#endif
     sote::frontend::shutdown();
+    std::puts("[sote] shutdown complete");
     return EXIT_SUCCESS;
 }
 
@@ -5385,20 +5470,39 @@ extern "C" void sote_outrider_object(uint8_t*, uint32_t object) {
 }
 
 extern "C" void sote_before_story_load(uint8_t* rdram, uint32_t event, uint32_t caller) {
-    sote::first_person_blaster::animation.update(0, 0, 0, false, 0);
+    sote::first_person_blaster::animation.update(0, 0);
+    // A restart or save load can reuse both the event number and the actor address.
+    cheat_state = {};
+    cheat_on_foot_actor = 0;
+    cheat_on_foot_vi = -100000;
+    cheat_ini_seen = false;
+    cheat_last_check_vi = -100000;
     const int previous=read_guest_half(rdram,0x8013CE0EU);
-    if (event==6 && previous!=6 && sote::graphics_menu::pc_cutscenes_enabled() &&
-        sote::san_movies::play_movie("L03INTRO.SAN")) {
+    hoth_boot_comic_deferred = false;
+    const char* movie = nullptr;
+    if (previous == 2 && event == 3) {
+        // Event 2 also hosts the title's attract loop. Only the level
+        // selection screen (mode 2) can commit a Hoth mission start.
+        const int16_t override_mode = static_cast<int16_t>(read_guest_half(rdram, 0x800DD744U));
+        const int mode = override_mode >= 0 ? override_mode : read_guest_half(rdram, 0x800DD748U);
+        if (mode == 2) movie = "L01INTRO.SAN";
+    } else if (event == 6 && previous != 6) {
+        movie = "L03INTRO.SAN";
+    }
+    if (movie && sote::graphics_menu::pc_cutscenes_enabled() &&
+        sote::san_movies::play_movie(movie)) {
         const auto frame=game_frame_count.load();
-        std::printf("[sote][san] pre-load movie=L03INTRO.SAN from=%d to=6 VI=%d frame=%llu\n",
-            previous,vi_count.load(),static_cast<unsigned long long>(frame));
+        std::printf("[sote][san] pre-load movie=%s from=%d to=%u VI=%d frame=%llu\n",
+            movie,previous,event,vi_count.load(),static_cast<unsigned long long>(frame));
         // The guest has not loaded the destination level. VI/audio/rendering
         // remain live for playback and skip, while this guest thread waits.
         std::unique_lock lock(game_frame_mutex);
-        while (sote::san_movies::playback_active())
+        while (sote::san_movies::playback_active()) {
+            if (ultramodern::is_quitting()) throw ultramodern::thread_terminated{};
             game_frame_cv.wait_for(lock,std::chrono::milliseconds(16));
-        std::printf("[sote][san] pre-load finished to=6 VI=%d frame=%llu frozen=%d\n",
-            vi_count.load(),static_cast<unsigned long long>(game_frame_count.load()),
+        }
+        std::printf("[sote][san] pre-load finished to=%u VI=%d frame=%llu frozen=%d\n",
+            event,vi_count.load(),static_cast<unsigned long long>(game_frame_count.load()),
             frame==game_frame_count.load());
         std::fflush(stdout);
     }
@@ -5426,6 +5530,7 @@ extern "C" int sote_intro_story_sprite(uint8_t* rdram, uint32_t sprite) {
         }
     }
     if (event != 0 && event != 7) return 0;
+    if (event == 0 && hoth_boot_comic_deferred) return 1;
     const uint32_t table = read_guest_word(rdram, 0x8013CE2CU);
     if (!is_guest_address(table) || !is_guest_address(sprite)) return 0;
     // The title intro's background is slot 4; Part II uses a different
@@ -5442,7 +5547,16 @@ extern "C" int sote_intro_story_sprite(uint8_t* rdram, uint32_t sprite) {
     }
     if (!sote::graphics_menu::pc_cutscenes_enabled() ||
         san_intro_story_attempted.exchange(true, std::memory_order_relaxed)) return 0;
-    const char* movie = event == 0 ? "L01INTRO.SAN" : "L04INTRO.SAN";
+    if (event == 0) {
+        // Preserve the native Part I crawl. Skip its following comic only if
+        // the player's copy of the Hoth film can supply a real opening frame.
+        if (!sote::san_movies::can_play_movie("L01INTRO.SAN")) return 0;
+        hoth_boot_comic_deferred = true;
+        san_intro_story_pending.store(event, std::memory_order_relaxed);
+        std::printf("[sote][san] Hoth comic deferred until level selection\n");
+        return 1;
+    }
+    const char* movie = "L04INTRO.SAN";
     if (!sote::san_movies::play_movie(movie)) return 0;
     san_intro_story_pending.store(event, std::memory_order_relaxed);
     std::printf("[sote][san] event=%d comic replaced with %s after native crawl\n", event, movie);

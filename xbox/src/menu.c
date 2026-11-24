@@ -1,4 +1,5 @@
 #include "runtime.h"
+#include "funcs.h"
 #include "recomp_hooks.h"
 #include "gpu.h"
 #include "menu_canvas_xbox.h"
@@ -121,6 +122,21 @@ static int pc_options_input(uint8_t* rdram,uint16_t* buttons,uint16_t pressed) {
  }
  *buttons=0;return 1;
 }
+static int menu_sound_pending;
+void sote_menu_sound_frame(uint8_t* rdram,void* context) {
+    if(!menu_sound_pending)return;
+    menu_sound_pending=0;
+    recomp_context caller=*(recomp_context*)context;
+    unsigned sp=((unsigned)caller.r29-0x100u)&~15u;
+    if(sp<0x80002000u || sp>0x803fff00u)return;
+    for(unsigned id=0x63;id<=0x65;id+=2){
+        recomp_context sound=caller;
+        sound.f_odd=sound.mips3_float_mode?&sound.f1.u32l:&sound.f0.u32h;
+        sound.r29=(int32_t)sp;sound.r4=id;sound.r5=6;sound.r6=0x3ec00000;sound.r7=0x6590;
+        MEM_W(0x10,(int32_t)sp)=0;
+        func_80007340(rdram,&sound);
+    }
+}
 void xb_menu_input(uint8_t* rdram,uint16_t* buttons,int x,int y) {
     if(MEM_H(0,(int32_t)0x8013CE0E)==2 && front_mode(rdram)==0) {
         if(y>40 || x < -40)*buttons|=0x0800;
@@ -129,7 +145,10 @@ void xb_menu_input(uint8_t* rdram,uint16_t* buttons,int x,int y) {
     uint16_t pressed=*buttons&~previous_buttons;previous_buttons=*buttons;
     int story=MEM_H(0,(int32_t)0x8013CE0E);
     int pause=MEM_W(0,(int32_t)0x800DD2BC)==1;
-    if(pc_options_input(rdram,buttons,pressed))return;
+    if(pc_options_input(rdram,buttons,pressed)){
+        if(pressed&0xff70)menu_sound_pending=1;
+        return;
+    }
     controls_open=0;
     if(back_release) {
         if(*buttons&0x4000)*buttons&=~0x4000;
@@ -140,12 +159,16 @@ void xb_menu_input(uint8_t* rdram,uint16_t* buttons,int x,int y) {
         else confirm_release=0;
     }
     if(MEM_H(0,(int32_t)0x8013CE0E)!=2) {
-        /* Start resumes from the pause rows regardless of the highlighted
-           action. In Options it retains the native return/save behavior. */
+        /* Send B through the native Resume action on the root pause rows. */
         if(MEM_W(0,(int32_t)0x800DD2BC)==1 &&
             MEM_W(0,(int32_t)0x800D0948)!=0 &&
-            MEM_W(0,(int32_t)0x800D094C)==0 && (pressed&0x1000))
+            MEM_W(0,(int32_t)0x800D094C)==0 && (pressed&0x5000)) {
             MEM_H(0,(int32_t)0x800D0944)=0;
+            if(pressed&0x4000) {
+                *buttons=0x1000;
+                back_release=1;
+            }
+        }
         /* 80026124 returns DD2BC: the real pause-active state. 0948 only
            selects the pause rows versus Options and is 1 during gameplay too.
            Retail Options exits through Start (800163F4..80016450), including
@@ -162,6 +185,7 @@ void xb_menu_input(uint8_t* rdram,uint16_t* buttons,int x,int y) {
     int mode=front_mode(rdram);
     if(mode==0) {
         *buttons=0;
+        if(pressed&0x9c30)menu_sound_pending=1;
         if(pressed&0x0820)title_selection=(title_selection+1)%2;
         if(pressed&0x0410)title_selection=(title_selection+1)%2;
         if(pressed&0x9000) {

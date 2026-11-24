@@ -66,17 +66,20 @@ void apply(uint8_t* rdram,const Settings& settings,int level,bool on_foot,uint32
     const int32_t result =
         static_cast<int32_t>(read<uint32_t>(rdram, 0x800DD2B0U));
     if (result != 2) {
-        cheat_last_event = -1;
+        *this = {};
         return;
     }
     const uint32_t player = read<uint32_t>(rdram, cheat_player_address);
     const bool valid_player = on_foot && event != 8 &&
         player >= 0x80000000U && player < 0x80800000U - 0x200U;
-    const bool new_context =
-        event != cheat_last_event || player != cheat_last_player;
+    const bool new_event = event != cheat_last_event;
+    const bool new_context = new_event || player != cheat_last_player;
     cheat_last_event = event;
-    cheat_last_player = player;
-
+    cheat_last_player = valid_player ? player : 0;
+    if (new_context && valid_player) {
+        cheat_health_max = 100.0f;
+        cheat_ammo_max.fill(0.0f);
+    }
 
     if (settings.infinite_vehicle_health) {
         // Hoth (snowspeeder) and Ord Mantell keep a float health at a fixed
@@ -122,9 +125,8 @@ void apply(uint8_t* rdram,const Settings& settings,int level,bool on_foot,uint32
         const uint32_t address = player + cheat_health_offset;
         const float health = cheat_read_float(rdram, address);
         if (std::isfinite(health) && health > 0.0f && health <= 1000.0f) {
-            if (new_context || health > cheat_health_max) {
-                cheat_health_max = health;
-            } else if (health < cheat_health_max) {
+            if (health > cheat_health_max) cheat_health_max = health;
+            if (health < cheat_health_max) {
                 cheat_write_float(rdram, address, cheat_health_max);
             }
         }
@@ -157,7 +159,7 @@ void apply(uint8_t* rdram,const Settings& settings,int level,bool on_foot,uint32
     if (settings.infinite_missiles) {
         const int16_t missiles = static_cast<int16_t>(
             read<uint16_t>(rdram, cheat_missiles_address));
-        if (new_context || missiles > cheat_missiles_max) {
+        if (new_event || missiles > cheat_missiles_max) {
             cheat_missiles_max = missiles;
         } else if (missiles < cheat_missiles_max) {
             write<uint16_t>(

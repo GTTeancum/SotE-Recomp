@@ -342,11 +342,22 @@ Layout make_layout(const NativeTable& t) {
                     {button(2),0x2000}, {button(3),0x10}});
             }
         }
+        if (t.modern_foot && (g == 1 || g == 4)) {
+            // Right-stick look never produces native C-button actions.
+            routes[1].erase(std::remove_if(routes[1].begin(), routes[1].end(),
+                [](const Route& r) { return r.input.kind == Kind::Axis &&
+                    (r.input.code == 2 || r.input.code == 3); }), routes[1].end());
+            routes[1].push_back({button(8), 1}); // RS click: native view change.
+            add_fixed("look_up", "Look Up", {}, axis(3,-1));
+            add_fixed("look_down", "Look Down", {}, axis(3,1));
+            add_fixed("look_left", "Look Left", {}, axis(2,-1));
+            add_fixed("look_right", "Look Right", {}, axis(2,1));
+        }
         if (mf) {
             routes[1] = {{button(0),t.masks[13]},{axis(5),t.masks[12]},
                 {button(1),t.masks[19]},{button(2),t.masks[18]},{button(3),t.masks[20]},
                 {button(9),t.masks[22]},{button(10),t.masks[22]},
-                {button(11),uint16_t(0x0800|t.masks[23])},{button(12),0x0400},
+                {button(11),t.masks[8] ? t.masks[8] : t.masks[23]},{button(12),0x0400},
                 {button(13),0x0200},{button(14),0x0100},{button(6),0x1000}};
         } else if (mb) {
             // Clear the three trigger/button bits without narrowing a
@@ -473,6 +484,15 @@ bool Assignments::load(const std::filesystem::path& path, std::string& error) {
         if((kb||pad) && parse_token(v,token) && allowed(token,kb?Device::Keyboard:Device::Controller)) overrides[k]=token;
     }
     if (in.bad()) { error="Error reading bindings"; return false; }
+    // Older Modern profiles grouped D-pad Up with the view-cycle action.
+    // Preserve user rebindings when those two native actions are separated.
+    for (int preset = 0; preset < 6; ++preset) {
+        const bool cycle_only = preset == 2 || preset == 3;
+        const auto prefix = "p" + std::to_string(preset) + ".modern.foot.action_";
+        auto old = overrides.extract(prefix + (cycle_only ? "4_23.pad" : "8_23.pad"));
+        if (!old.empty())
+            overrides.try_emplace(prefix + (cycle_only ? "23.pad" : "8.pad"), old.mapped());
+    }
     return true;
 }
 bool Assignments::save(const std::filesystem::path& path, std::string& error) const {
@@ -579,7 +599,7 @@ void set_dialog(Phase phase, std::string title,std::string detail,std::string hi
     state.editor.phase=phase;state.editor.title=std::move(title);state.editor.detail=std::move(detail);state.editor.hint=std::move(hint);
 }
 bool same_table(const NativeTable& a,const NativeTable& b) {
-    return a.preset==b.preset&&a.masks==b.masks&&a.labels==b.labels&&
+    return a.event==b.event&&a.preset==b.preset&&a.masks==b.masks&&a.labels==b.labels&&
         a.modern_foot==b.modern_foot&&a.modern_bike==b.modern_bike&&
         a.turret_skyhook==b.turret_skyhook;
 }
@@ -874,6 +894,12 @@ bool context_active(Context context) {
     std::lock_guard lock(state.mutex);
     return state.play_valid && state.context == int(context) &&
         clock_ms() - state.context_time <= 200;
+}
+bool on_foot_camera_cycle_only() {
+    std::lock_guard lock(state.mutex);
+    // The Ord Mantell train controller consumes Cycle View for its own camera.
+    return state.play_valid && state.context == int(Context::OnFoot) &&
+        state.play_table.masks[23] && (state.play_table.event == 8 || !state.play_table.masks[8]);
 }
 uint16_t map_on_foot_buttons(uint16_t canonical) {
     std::lock_guard lock(state.mutex);

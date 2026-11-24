@@ -5,7 +5,13 @@
 #include <string.h>
 #include "../src/menu_canvas_xbox.c"
 static unsigned submits;
-void xb_gpu_canvas(const uint32_t *p,unsigned w,unsigned h,uint32_t background){(void)background;assert(p==pixels&&w==640&&h==480);submits++;}
+unsigned xb_display_height=480;
+void xb_gpu_canvas(const uint32_t *p,unsigned w,unsigned h,uint32_t background,unsigned top,unsigned full_height){
+ (void)background; assert(p==pixels && full_height==xb_display_height);
+ if(full_height==720)assert(w==960 && h==240 && top==(submits-8)*240);
+ else assert(w==640 && h==480 && top==0);
+ submits++;
+}
 static void wb(uint8_t*r,unsigned a,unsigned v){r[(a&0x7fffff)^3]=(uint8_t)v;}
 static void wh(uint8_t*r,unsigned a,unsigned v){wb(r,a,v>>8);wb(r,a+1,v);}
 static void ww(uint8_t*r,unsigned a,unsigned v){wh(r,a,v>>16);wh(r,a+2,v);}
@@ -26,6 +32,7 @@ int main(void){
  s.modal_detail="This action is already assigned to another action.\nChoose whether to swap the assignments or cancel. ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789LongWordContinues";
  s.modal_hint="A: swap   B: cancel";assert(xb_menu_canvas_render(r,&s));
  assert(submits==8);assert(memcmp(copy,r,0x800000)==0);
- wh(r,base+4,0);assert(!xb_menu_canvas_render(r,&s));assert(submits==8);
+ xb_display_height=720;assert(xb_menu_canvas_render(r,&s));assert(submits==11);
+ wh(r,base+4,0);assert(!xb_menu_canvas_render(r,&s));assert(submits==11);
  free(copy);free(r);puts("canvas pages/bounds/invalid-atlas/no-guest-write tests passed");
 }

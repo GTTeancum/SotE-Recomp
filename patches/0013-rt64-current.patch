@@ -10,6 +10,29 @@ index 79dfc38..1d3ab12 100644
  build_pixel_shader(  rt64 "src/shaders/PostBlendDitherNoisePS.hlsl" "src/shaders/PostBlendDitherNoiseAddPS.hlsl" "-D ADD_MODE")
  build_pixel_shader(  rt64 "src/shaders/PostBlendDitherNoisePS.hlsl" "src/shaders/PostBlendDitherNoiseSubPS.hlsl" "-D SUB_MODE")
  build_pixel_shader(  rt64 "src/shaders/PostBlendDitherNoisePS.hlsl" "src/shaders/PostBlendDitherNoiseSubNegativePS.hlsl" "-D SUB_MODE" "-D NEGATIVE_MODE")
+diff --git a/src/common/rt64_math.cpp b/src/common/rt64_math.cpp
+index c20fb51..550a60b 100644
+--- a/src/common/rt64_math.cpp
++++ b/src/common/rt64_math.cpp
+@@ -52,7 +52,17 @@ namespace RT64 {
+         v[2][2] = -vp[2][3];
+         v[3][2] = -vp[3][3];
+ 
+-        p[2][2] = vp[0][2] / v[0][2];
++        // The two depth columns are proportional along the camera basis. A single
++        // component can approach zero as the camera turns, magnifying N64
++        // fixed-point rounding enough to push distant geometry past the far plane.
++        const float vx = v[0][2], vy = v[1][2], vz = v[2][2];
++        const float normSq = vx * vx + vy * vy + vz * vz;
++        if (!(normSq > 0.0f)) {
++            v = hlslpp::float4x4::identity();
++            p = vp;
++            return;
++        }
++        p[2][2] = (vx * vp[0][2] + vy * vp[1][2] + vz * vp[2][2]) / normSq;
+         p[3][2] = vp[3][2] - p[2][2] * v[3][2];
+ 
+         p[0][0] = sqrtf(sqr(vp[0][0]) + sqr(vp[1][0]) + sqr(vp[2][0]));
 diff --git a/src/gbi/rt64_gbi.cpp b/src/gbi/rt64_gbi.cpp
 index 7006549..f891b53 100644
 --- a/src/gbi/rt64_gbi.cpp
@@ -130,11 +153,32 @@ index c944393..ca17fab 100644
 -};
 \ No newline at end of file
 +};
+diff --git a/src/hle/rt64_game_frame.cpp b/src/hle/rt64_game_frame.cpp
+index 87392d0..2d7e76f 100644
+--- a/src/hle/rt64_game_frame.cpp
++++ b/src/hle/rt64_game_frame.cpp
+@@ -478,6 +478,16 @@ namespace RT64 {
+                 }
+                 else {
+                     viewProjMap.mapped = (curProjGroup.matrixId == G_EX_ID_AUTO);
++                    if (viewProjMap.mapped && curProj.type == Projection::Type::Perspective) {
++                        // Track sections can reset the world origin between game frames. Treat a jump
++                        // of more than a quarter of the visible depth as a cut for this camera.
++                        const auto &projection = curWorkload.drawData.projTransforms[curProj.transformsIndex];
++                        const float maxCameraTravel = 0.25f * farPlaneFromProj(projection);
++                        const hlslpp::float4 previousEye = hlslpp::inverse(prevView)[3];
++                        const hlslpp::float3 displacement = hlslpp::mul(previousEye, curView).xyz;
++                        const float travelSquared = hlslpp::dot(displacement, displacement);
++                        viewProjMap.mapped = travelSquared <= maxCameraTravel * maxCameraTravel;
++                    }
+                 }
+ 
+                 if (viewProjMap.mapped) {
 diff --git a/src/hle/rt64_present_queue.cpp b/src/hle/rt64_present_queue.cpp
-index 3227ab1..a98309f 100644
+index 3227ab1..1c19594 100644
 --- a/src/hle/rt64_present_queue.cpp
 +++ b/src/hle/rt64_present_queue.cpp
-@@ -8,8 +8,384 @@
+@@ -8,8 +8,393 @@
  #include "rhi/rt64_render_hooks.h"
  
  #include "rt64_workload_queue.h"
@@ -341,7 +385,7 @@ index 3227ab1..a98309f 100644
 +            return state;
 +        }
 +
-+        bool shouldCaptureVisible(uint64_t presentId) {
++        bool shouldCaptureVisible(uint64_t presentId, bool waitForSubframe) {
 +            VisibleCaptureState &state = visibleCaptureState();
 +            if (!state.enabled) {
 +                return false;
@@ -349,6 +393,9 @@ index 3227ab1..a98309f 100644
 +            if (state.watchStart && presentId >= state.watchStart && presentId <= state.watchEnd)
 +                return true;
 +
++            if (waitForSubframe) {
++                return state.nextPresentId < state.presentIds.size() && state.presentIds[state.nextPresentId] <= presentId;
++            }
 +            while ((state.nextPresentId < state.presentIds.size()) &&
 +                   (state.presentIds[state.nextPresentId] < presentId)) {
 +                ++state.nextPresentId;
@@ -359,6 +406,7 @@ index 3227ab1..a98309f 100644
 +        }
 +
 +        VisibleCapture queueVisibleCapture(
++            int32_t subframe,
 +            RenderDevice *device,
 +            RenderCommandList *commandList,
 +            RenderTexture *swapChainTexture,
@@ -367,15 +415,20 @@ index 3227ab1..a98309f 100644
 +            uint32_t height,
 +            bool supportsReadback) {
 +            VisibleCapture capture;
++            static const int32_t selectedSubframe = [] {
++                const char *value = std::getenv("SOTE_VISIBLE_CAPTURE_SUBFRAME");
++                return value ? std::atoi(value) : 0;
++            }();
++            if (selectedSubframe > 0 && selectedSubframe != subframe) return capture;
 +            if ((device == nullptr) || (commandList == nullptr) ||
 +                (swapChainTexture == nullptr) || (width == 0) ||
-+                (height == 0) || !shouldCaptureVisible(presentId)) {
++                (height == 0) || !shouldCaptureVisible(presentId, selectedSubframe > 0)) {
 +                return capture;
 +            }
 +
 +            VisibleCaptureState &state = visibleCaptureState();
 +            capture.watch = state.watchStart && presentId >= state.watchStart && presentId <= state.watchEnd;
-+            if (state.nextPresentId < state.presentIds.size() && state.presentIds[state.nextPresentId] == presentId)
++            if (state.nextPresentId < state.presentIds.size() && state.presentIds[state.nextPresentId] <= presentId)
 +                ++state.nextPresentId;
 +            if (!supportsReadback) {
 +                static bool warned = false;
@@ -519,7 +572,7 @@ index 3227ab1..a98309f 100644
      // PresentQueue
  
      PresentQueue::PresentQueue() {
-@@ -33,6 +409,7 @@ namespace RT64 {
+@@ -33,6 +418,7 @@ namespace RT64 {
          writeCursor = 0;
          barrierCursor = 0;
          presentId = 0;
@@ -527,7 +580,7 @@ index 3227ab1..a98309f 100644
      }
  
      void PresentQueue::advanceToNextPresent() {
-@@ -115,6 +492,9 @@ namespace RT64 {
+@@ -115,10 +501,19 @@ namespace RT64 {
          }
  
          RenderTarget *colorTarget = nullptr;
@@ -537,20 +590,30 @@ index 3227ab1..a98309f 100644
          int32_t framesToPresent = 1;
          bool lockedWorkloadMutex = false;
          InterpolatedFrameCounters &frameCounters = ext.sharedResources->interpolatedFrames[ext.sharedResources->interpolatedFramesIndex];
-@@ -139,6 +519,12 @@ namespace RT64 {
+ 
++        // Display/Manual can resolve to the native rate (e.g. a 120 Hz
++        // request on a 60 Hz display). A single completed frame needs the
++        // same ordering and clear protection regardless of the menu setting.
++        const bool singleFramePresentation =
++            refreshRate == UserConfiguration::RefreshRate::Original || frameCounters.count <= 1;
++
+         // TODO: There's a possible race condition interactions that can happen while the workload
+         // queue is rendering extra frames and the present event is processed while it's generating
+         // interpolated frames. When the framebuffer manager or the render target manager maps are
+@@ -139,6 +534,12 @@ namespace RT64 {
          // Attempt to find the matching framebuffer for the VI based on the origin address.
          // If that fails, we look at the shared storage.
          if (present.screenVI.visible()) {
 +            // At native refresh, select and read the framebuffer under the same
 +            // lock. It must not be cleared between eligibility checks and use.
-+            if (refreshRate == UserConfiguration::RefreshRate::Original) {
++            if (singleFramePresentation) {
 +                ext.sharedResources->workloadMutex.lock();
 +                lockedWorkloadMutex = true;
 +            }
              Framebuffer *viFb = nullptr;
              if (!viewRDRAM) {
                  viFb = fbManager.find(present.screenVI.fbAddress());
-@@ -155,7 +541,31 @@ namespace RT64 {
+@@ -155,7 +556,31 @@ namespace RT64 {
              }
              
              if ((presentFb != nullptr) && (viFb != nullptr)) {
@@ -583,7 +646,7 @@ index 3227ab1..a98309f 100644
                      Framebuffer *colorFb = fbManager.find(colorAddress);
                      if (colorFb == nullptr) {
                          continue;
-@@ -186,14 +596,53 @@ namespace RT64 {
+@@ -186,14 +611,52 @@ namespace RT64 {
                      }
                  }
  
@@ -595,7 +658,7 @@ index 3227ab1..a98309f 100644
 +                // Keep the newest completed, compatible presentation buffer.
 +                if (!present.debuggerFramebuffer.view &&
 +                    presentationMode == EnhancementConfiguration::Presentation::Mode::SkipBuffering &&
-+                    refreshRate == UserConfiguration::RefreshRate::Original) {
++                    singleFramePresentation) {
 +                    const auto considerCompleted = [&](uint32_t address, const VI &vi) {
 +                        if (!vi.compatibleWith(present.screenVI) || pendingClears.count(address)) return;
 +                        Framebuffer *candidate = fbManager.find(address);
@@ -616,8 +679,7 @@ index 3227ab1..a98309f 100644
 +                    }
 +                }
 +
-+                if (presentFb->interpolationEnabled &&
-+                    (refreshRate != UserConfiguration::RefreshRate::Original)) {
++                if (presentFb->interpolationEnabled && !singleFramePresentation) {
                      framesToPresent = frameCounters.count;
                  }
 -                else {
@@ -639,7 +701,7 @@ index 3227ab1..a98309f 100644
                  RenderTargetKey colorTargetKey(presentFb->addressStart, presentFb->width, presentFb->siz, Framebuffer::Type::Color);
                  colorTarget = &targetManager.get(colorTargetKey, true);
                  if (!colorTarget->isEmpty()) {
-@@ -202,6 +651,7 @@ namespace RT64 {
+@@ -202,6 +665,7 @@ namespace RT64 {
                          RenderTargetKey otherColorTargetKey(presentFb->addressStart, presentFb->width, presentFb->siz, presentFb->lastWriteType);
                          RenderTarget &otherColorTarget = targetManager.get(otherColorTargetKey, true);
                          if (!otherColorTarget.isEmpty()) {
@@ -647,7 +709,7 @@ index 3227ab1..a98309f 100644
                              const FixedRect &r = presentFb->lastWriteRect;
                              RenderWorkerExecution workerExecution(ext.presentGraphicsWorker);
                              colorTarget->copyFromTarget(ext.presentGraphicsWorker, &otherColorTarget, r.left(false), r.top(false), r.width(false, true), r.height(false, true), ext.shaderLibrary);
-@@ -218,6 +668,8 @@ namespace RT64 {
+@@ -218,6 +682,8 @@ namespace RT64 {
              }
              else {
                  uint32_t fbAddress = present.screenVI.fbAddress();
@@ -656,7 +718,7 @@ index 3227ab1..a98309f 100644
  
                  // Use a scratch framebuffer to upload the RAM to the render target.
                  hlslpp::uint2 fbSize = present.screenVI.fbSize();
-@@ -226,8 +678,24 @@ namespace RT64 {
+@@ -226,8 +692,24 @@ namespace RT64 {
                  scratchFb.height = fbSize.y;
                  scratchFb.siz = present.screenVI.fbSiz();
  
@@ -683,7 +745,7 @@ index 3227ab1..a98309f 100644
  
                  RenderTargetKey colorTargetKey(fbAddress, scratchFb.width, scratchFb.siz, Framebuffer::Type::Color);
                  colorTarget = &targetManager.get(colorTargetKey, true);
-@@ -288,6 +756,7 @@ namespace RT64 {
+@@ -288,6 +770,7 @@ namespace RT64 {
                  if (i < framesToPresent) {
                      uint32_t targetIndex = usingMSAA ? i : (i - 1);
                      colorTarget = ext.sharedResources->interpolatedColorTargets[targetIndex].get();
@@ -691,7 +753,7 @@ index 3227ab1..a98309f 100644
                  }
                  else {
                      colorTarget = nullptr;
-@@ -341,7 +810,7 @@ namespace RT64 {
+@@ -341,7 +824,7 @@ namespace RT64 {
                  }
                  
                  commandList->setFramebuffer(swapChainFramebuffer);
@@ -700,7 +762,7 @@ index 3227ab1..a98309f 100644
  
                  if (renderParams.texture != nullptr) {
                      commandList->barriers(RenderBarrierStage::GRAPHICS, RenderTextureBarrier(renderParams.texture, RenderTextureLayout::SHADER_READ));
-@@ -350,7 +819,7 @@ namespace RT64 {
+@@ -350,7 +833,7 @@ namespace RT64 {
  
                  RenderHookDraw *drawHook = GetRenderHookDraw();
                  if (drawHook != nullptr) {
@@ -709,11 +771,12 @@ index 3227ab1..a98309f 100644
                  }
  
                  {
-@@ -359,6 +828,35 @@ namespace RT64 {
+@@ -359,6 +842,38 @@ namespace RT64 {
                          inspector->draw(commandList);
                      }
                      
 +                    VisibleCapture visibleCapture = queueVisibleCapture(
++                        i + 1,
 +                        ext.device,
 +                        commandList,
 +                        swapChainTexture,
@@ -726,12 +789,14 @@ index 3227ab1..a98309f 100644
 +                        ext.swapChain->supportsReadback());
 +                    if (std::getenv("SOTE_TRACE_PRESENT_SOURCE") != nullptr) {
 +                        std::printf(
-+                            "[sote][present-source] present=%llu frame=%d/%d "
++                            "[sote][present-source] present=%llu frame=%d/%d us=%lld "
 +                            "source=%s fb=%08X color_target=%s "
 +                            "visible=%d vi_fb=%08X refresh=%d write=%llu workload=%llu ops=%zu\n",
 +                            static_cast<unsigned long long>(present.presentId),
 +                            i + 1,
 +                            framesToPresent,
++                            static_cast<long long>(std::chrono::duration_cast<std::chrono::microseconds>(
++                                std::chrono::steady_clock::now().time_since_epoch()).count()),
 +                            sotePresentSource,
 +                            sotePresentFbAddress,
 +                            colorTarget != nullptr ? "yes" : "no",
@@ -745,12 +810,12 @@ index 3227ab1..a98309f 100644
                      commandList->barriers(RenderBarrierStage::NONE, RenderTextureBarrier(swapChainTexture, RenderTextureLayout::PRESENT));
                      commandList->end();
                      const RenderCommandList *commandList = ext.presentGraphicsWorker->commandList.get();
-@@ -366,6 +864,14 @@ namespace RT64 {
+@@ -366,6 +881,14 @@ namespace RT64 {
                      RenderCommandSemaphore *signalSemaphore = drawSemaphores[swapChainIndex].get();
                      ext.presentGraphicsWorker->commandQueue->executeCommandLists(&commandList, 1, &waitSemaphore, 1, &signalSemaphore, 1, ext.presentGraphicsWorker->commandFence.get());
                      ext.presentGraphicsWorker->wait();
 +                    if (colorTarget && sotePresentWrite && !present.debuggerFramebuffer.view &&
-+                        refreshRate == UserConfiguration::RefreshRate::Original &&
++                        singleFramePresentation &&
 +                        presentationMode == EnhancementConfiguration::Presentation::Mode::SkipBuffering) {
 +                        lastCompletedPresentationAddress = sotePresentFbAddress;
 +                        lastCompletedPresentationVI = present.screenVI;
@@ -760,7 +825,7 @@ index 3227ab1..a98309f 100644
                  }
              }
  
-@@ -532,6 +1038,7 @@ namespace RT64 {
+@@ -532,6 +1055,7 @@ namespace RT64 {
              }
          }
  
@@ -917,7 +982,7 @@ index 8858dac..99feb28 100644
 \ No newline at end of file
 +};
 diff --git a/src/hle/rt64_state.cpp b/src/hle/rt64_state.cpp
-index 2970e71..c1da6f9 100644
+index 2970e71..ee5fb57 100644
 --- a/src/hle/rt64_state.cpp
 +++ b/src/hle/rt64_state.cpp
 @@ -6,6 +6,9 @@
@@ -1009,7 +1074,31 @@ index 2970e71..c1da6f9 100644
              }
          }
      }
-@@ -2656,6 +2717,28 @@ namespace RT64 {
+@@ -806,6 +867,23 @@ namespace RT64 {
+             flushFramebufferOperations(lastFbPair);
+         }
+         
++        // SotE submits its depth and color clears in a separate task. Keep them
++        // with the scene so replaying a subframe starts from the same buffers.
++        if (combineSceneClear && workload.fbPairCount == 2) {
++            const auto &depth = workload.fbPairs[0];
++            const auto &color = workload.fbPairs[1];
++            auto fullClear = [](const FramebufferPair &p) {
++                return p.fillRectOnly && p.gameCallCount == 1 && !p.drawColorRect.isEmpty() &&
++                    p.drawColorRect.left(false) == 0 && p.drawColorRect.top(false) == 0 &&
++                    p.drawColorRect.right(true) == int32_t(p.colorImage.width) &&
++                    p.scissorRect.fullyInside(p.drawColorRect);
++            };
++            if (fullClear(depth) && fullClear(color) && depth.colorImage.address == color.depthImage.address &&
++                depth.colorImage.address != color.colorImage.address) {
++                return;
++            }
++        }
++
+         // Copy the current state's extended parameters into the workload.
+         workload.extended.ditherNoiseStrength = extended.ditherNoiseStrength;
+         workload.extended.texcoordWrapPoint = extended.texcoordWrapPoint;
+@@ -2656,6 +2734,28 @@ namespace RT64 {
  
      void State::advanceWorkload(Workload &workload, bool paused) {
          workload.workloadId = ++workloadId;
@@ -1038,7 +1127,7 @@ index 2970e71..c1da6f9 100644
          workload.presentId = presentId;
          workload.debuggerCamera = debuggerInspector.camera;
          workload.debuggerRenderer = debuggerInspector.renderer;
-@@ -2801,4 +2884,4 @@ namespace RT64 {
+@@ -2801,4 +2901,4 @@ namespace RT64 {
              break;
          }
      }
@@ -1512,3 +1601,15 @@ index 0000000..495d779
 +    GroupMemoryBarrierWithGroupSync();
 +    Histograms.InterlockedAdd((gid.z * BINS + index) * 4, bins[index]);
 +}
+diff --git a/src/hle/rt64_state.h b/src/hle/rt64_state.h
+index 7a8c13b..58d17d1 100644
+--- a/src/hle/rt64_state.h
++++ b/src/hle/rt64_state.h
+@@ -116,6 +116,7 @@ namespace RT64 {
+         ProfilingTimer viChangedProfiler = ProfilingTimer(120);
+         std::filesystem::path dumpingTexturesDirectory;
+         bool configurationSaveQueued = false;
++        bool combineSceneClear = false;
+         uint64_t workloadId = 0;
+         uint64_t presentId = 0;
+         uint32_t ditherRandomSeed = 0;

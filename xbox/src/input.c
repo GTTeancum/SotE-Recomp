@@ -8,6 +8,7 @@
 void xb_unsupported(uint32_t id) __attribute__((noreturn));
 void xb_post_event(unsigned event);
 void xb_diagnostics_tick(uint8_t* rdram,unsigned poll);
+unsigned xb_dialogue_buttons(uint8_t* rdram,unsigned buttons);
 int xb_menu_captures_stick(void);
 int xb_menu_bindings_active(void);
 void xb_menu_input(uint8_t* rdram,uint16_t* buttons,int x,int y);
@@ -22,7 +23,7 @@ static SDL_GameController* pad;
 static unsigned channels=4;
 static int initialized;
 static int virtual_controller;
-typedef struct {unsigned poll,buttons;int x,y;unsigned wait_communicator;int wait_story;unsigned duration;} test_input;
+typedef struct {unsigned poll,buttons;int x,y;unsigned wait_communicator;int wait_story;unsigned duration; int right_x,right_y;} test_input;
 static test_input script[128];
 static unsigned script_count,script_index,input_poll;
 static unsigned script_delay,hold_until;
@@ -34,19 +35,25 @@ static void load_script(void) {
     while(fgets(line,sizeof(line),file)) {
         if(line[0]=='#' || line[0]=='\n' || line[0]=='\r')continue;
         test_input v={.wait_story=-1,.duration=1};
-        if(sscanf(line,"%u %x %d %d %u %d %u",&v.poll,&v.buttons,&v.x,&v.y,&v.wait_communicator,&v.wait_story,&v.duration)<4 || !v.poll || v.wait_communicator>2 || v.wait_story < -1 || v.wait_story>30 ||
+        if(sscanf(line,"%u %x %d %d %u %d %u %d %d",&v.poll,&v.buttons,&v.x,&v.y,&v.wait_communicator,&v.wait_story,&v.duration,&v.right_x,&v.right_y)<4 || !v.poll || v.wait_communicator>2 || v.wait_story < -1 || v.wait_story>30 ||
             !v.duration || v.duration>10000 || v.poll>10000000 || v.buttons>65535 || v.x < -80 || v.x>80 || v.y < -80 || v.y>80 ||
+            v.right_x < -32768 || v.right_x>32767 || v.right_y < -32768 || v.right_y>32767 ||
             script_count==128 || (script_count && v.poll<script[script_count-1].poll+script[script_count-1].duration))
             xb_unsupported(0xE1000002);
         script[script_count++]=v;
     }
     fclose(file);sote_input_status[4]=script_count;
 }
+static void publish_sticks(float mx,float my,int rx,int ry) {
+    /* SDL axes use positive-down. Modern look owns the Invert Y setting. */
+    xb_modern_publish(1,mx,my,rx/32768.0f,ry/32768.0f);
+}
 static int poll(void) {
     if(!initialized) {
         FILE* config=fopen("D:\\xbox-test.cfg","rb");
         if(config){char line[64]={0};fgets(line,sizeof(line),config);fclose(config);
-            virtual_controller=strcmp(line,"virtual_controller=1\n")==0;}
+            line[strcspn(line,"\r\n")]=0;
+            virtual_controller=strcmp(line,"virtual_controller=1")==0;}
         if(virtual_controller)load_script();
         if(SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER)<0)xb_unsupported(0xE1000001);
         initialized=1;
@@ -108,8 +115,8 @@ void osContGetReadData_recomp(uint8_t* rdram,recomp_context* ctx) {
                 sote_input_status[5]++;
             }
         }
-        xb_modern_publish(1,x/80.0f,y/80.0f,0,0);
-        uint16_t filtered=gameplay_buttons(rdram,buttons);
+        publish_sticks(x/80.0f,y/80.0f,input_poll<hold_until?held.right_x:0,input_poll<hold_until?held.right_y:0);
+        uint16_t filtered=gameplay_buttons(rdram,xb_dialogue_buttons(rdram,buttons));
         if(MEM_H(0,(int32_t)0x8013CE0E)!=2&&MEM_W(0,(int32_t)0x800DD2BC)!=1&&!xb_menu_captures_stick())filtered=xb_rapid_fire(filtered);xb_menu_input(rdram,&filtered,x,y);buttons=filtered;if(xb_menu_captures_stick())x=y=0;
         MEM_H(0,(int32_t)out)=buttons;MEM_B(2,(int32_t)out)=x;MEM_B(3,(int32_t)out)=y;
         sote_input_status[1]=buttons;sote_input_status[2]=x;sote_input_status[3]=y;sote_input_status[6]=script_index;
@@ -130,9 +137,10 @@ void osContGetReadData_recomp(uint8_t* rdram,recomp_context* ctx) {
     int ry=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_RIGHTY);
     int x=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_LEFTX);
     int y=SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_LEFTY);
+    buttons=xb_dialogue_buttons(rdram,buttons);
     uint16_t physical=xb_controller_physical(buttons,SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_TRIGGERLEFT)/32767.0f,SDL_GameControllerGetAxis(pad,SDL_CONTROLLER_AXIS_TRIGGERRIGHT)/32767.0f);
     float mx=x/32768.0f,my=-y/32768.0f;
-    xb_modern_publish(1,mx,my,rx/32768.0f,-ry/32768.0f);
+    publish_sticks(mx,my,rx,ry);
     if(MEM_H(0,(int32_t)0x8013CE0E)==2||MEM_W(0,(int32_t)0x800DD2BC)==1||xb_menu_captures_stick()) {
         if(xb_menu_bindings_active())buttons=physical;
         else {

@@ -14,9 +14,17 @@ limitations. The earlier SDK leak investigation is in
 From `C:\Programming\GitHub\!!ARCHIVED\N64Recomp`:
 
 ```powershell
-.\xbox\tools\build.ps1
+.\xbox\tools\build.ps1 -WithTexturePack
 python xbox/tools/test_xemu.py
 ```
+
+For a hardware install, copy `default.xbe`, the supported ROM and the complete
+`hdtextures` directory from `build/xbox/disc` into the same title folder.
+The builder reads both desktop pack indexes, gives the V1 HD pack priority,
+and scales the images to a maximum edge of 256 pixels. Opaque and
+alpha-bearing images use BC1 and BC3 respectively. Small textures use
+uncompressed color. Once the pack is staged, omit `-WithTexturePack` for
+code-only rebuilds. Regenerate it when source PNGs or bindings change.
 
 Installed tools: `C:\nxdk`, `C:\msys64`, `C:\Program Files\LLVM`, and
 `C:\Games\Emulators\Xemu`. The build links installed SDK libraries without
@@ -144,9 +152,9 @@ or cached to disk.
    and a gameplay scene, then correct rendering and measure performance.
 4. Integrate controller input, EEPROM saves and the existing recompiled audio
    microcode with Xbox audio output. Verify native menu/gameplay transitions.
-5. Add memory-budgeted HD replacements (512x512 limit), output modes, direct
-   SAN playback and OGG upgrades. Reuse source assets and decoder logic; no
-   decoded SAN disk caches. Measure sustained 30 FPS with actual gameplay.
+5. The retail HD pack uses a 256-pixel maximum edge. Continue measuring
+   gameplay performance with the pack enabled at native 720p and verifying
+   direct SAN playback and OGG upgrades.
 
 Issue #27 remains open. Its output requirements are 4:3 480i and widescreen
 480p/720p, plus the optional PC SAN/OGG upgrades. No claim that those later
@@ -349,6 +357,20 @@ Old v1 controls and experimental v2 records are still accepted; the retired
 font slot is ignored and written as zero without losing any control settings.
 Overlay hints are positioned within the conservative SD safe-area target.
 
-This checkpoint requests only **640×480, 4:3**. There are no supported 720p,
-1080i, widescreen or alternative-resolution selectors to validate here. CRT
-overscan/interlacing and physical hardware readability require hardware tests.
+The Xbox build defaults to native **1280×720 progressive, 16:9** when the
+console advertises 720p. Other consoles use 640×480. For an explicit output
+mode, place `xbox-display.cfg` beside the XBE with a line such as
+`mode=720p-16x9`, `mode=480p-16x9`, or `mode=480i-4x3`. The encoder
+determines which modes are available. CRT overscan and interlacing still need
+verification on a CRT.
+
+### Retail HDD texture pack
+
+Build with `xbox/tools/build.ps1 -WithTexturePack`. Install the three files
+`hdtextures/index.bin`, `hdtextures/hash_index.bin` and
+`hdtextures/textures.xhb` together beside the Xbox executable, under
+`hdtextures/`. The bundle contains the existing scaled pixels and mip levels.
+The title keeps it open and streams individual ranges into the texture cache.
+Existing installations with individual texture files still work. To convert
+an existing Xbox pack, run `python xbox/tools/bundle_hd_pack.py PACK OUTPUT`
+with the existing pack directory and a destination named `textures.xhb`.

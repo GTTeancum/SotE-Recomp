@@ -41,9 +41,6 @@ $acceptedSha256 = @(
 )
 
 $sources = @{
-    'Shadows of the Empire.exe' =
-        (Join-Path $releaseDirectory 'sote_recomp.exe')
-    'sandec.dll' = (Join-Path $releaseDirectory 'sandec.dll')
     'SDL2.dll' = (Join-Path $releaseDirectory 'SDL2.dll')
     'dxcompiler.dll' = (Join-Path $releaseDirectory 'dxcompiler.dll')
     'dxil.dll' = (Join-Path $releaseDirectory 'dxil.dll')
@@ -62,7 +59,7 @@ if ($acceptedSha256 -notcontains $actualSha256) {
     throw "Unsupported ROM SHA-256 $actualSha256"
 }
 
-New-Item -ItemType Directory -Path $outputAbsolute -Force | Out-Null
+& (Join-Path $repoRoot 'tools/stage_runtime_executable.ps1') -OutputDirectory $outputAbsolute
 foreach ($entry in $sources.GetEnumerator()) {
     $destination = Join-Path $outputAbsolute $entry.Key
     if ([System.IO.Path]::GetFullPath($entry.Value) -eq
@@ -77,10 +74,6 @@ foreach ($notice in @('LICENSE', 'LICENSES.md')) {
     Copy-Item -LiteralPath (Join-Path $repoRoot $notice) `
         -Destination (Join-Path $outputAbsolute $notice) -Force
 }
-
-# Keep the replaceable LGPL decoder source and license beside the library.
-Copy-Item -LiteralPath (Join-Path $repoRoot 'third_party\sandec') `
-    -Destination (Join-Path $outputAbsolute 'sandec-source') -Recurse -Force
 
 # Install the current control defaults for new portable folders. Existing
 # user tuning remains authoritative when refreshing a playable folder.

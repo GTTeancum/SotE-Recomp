@@ -106,6 +106,9 @@ else()
 endif()
 
 add_executable(sote_recomp ${SOTE_RUNTIME_SOURCES})
+if(WIN32)
+    set_target_properties(sote_recomp PROPERTIES OUTPUT_NAME "Shadows of the Empire")
+endif()
 if(MSVC)
     # Explorer launches a GUI process, without a transient console. Keep main's
     # argument parsing for process-local tests and redirected diagnostics.
@@ -184,6 +187,12 @@ target_include_directories(leebo_voices_harness PRIVATE "${CMAKE_CURRENT_SOURCE_
 add_test(NAME leebo_voices_harness COMMAND leebo_voices_harness
     "${CMAKE_CURRENT_SOURCE_DIR}/SotE_Recompiled"
     "${CMAKE_CURRENT_SOURCE_DIR}/tools/leebo_voice_cases.tsv")
+
+add_executable(camera_projection_harness tools/camera_projection_harness.cpp
+    "${RT64_DIR}/src/common/rt64_math.cpp")
+target_include_directories(camera_projection_harness PRIVATE
+    "${RT64_DIR}/src/common" "${RT64_DIR}/src/contrib/hlslpp/include")
+add_test(NAME camera_projection_harness COMMAND camera_projection_harness)
 
 add_executable(texture_slots_harness tools/texture_slots_harness.cpp)
 target_include_directories(texture_slots_harness PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${RT64_DIR}/src/contrib")

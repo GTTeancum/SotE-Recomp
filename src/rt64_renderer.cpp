@@ -38,6 +38,9 @@ extern std::atomic<int> display_list_count;
 
 namespace {
 
+std::atomic<bool> interpolate_gameplay{false};
+std::atomic<bool> interpolating_scene{false};
+
 // RT64's HLE core interface includes storage for hardware that the modern
 // runtime already schedules. These registers only provide the backing expected
 // by RT64; live VI state is bridged from ultramodern below.
@@ -237,8 +240,8 @@ public:
         app->userConfig.threePointFiltering = false;
         app->userConfig.upscale2D =
             RT64::UserConfiguration::Upscale2D::Original;
-        app->userConfig.refreshRate =
-            RT64::UserConfiguration::RefreshRate::Original;
+        app->userConfig.refreshRate = RT64::UserConfiguration::RefreshRate::Manual;
+        app->userConfig.refreshRateTarget = 60;
         app->userConfig.internalColorFormat =
             RT64::UserConfiguration::InternalColorFormat::Automatic;
         app->userConfig.displayBuffering =
@@ -422,6 +425,7 @@ public:
             last_ucode_size = task->t.ucode_size;
             last_ucode_data_size = task->t.ucode_data_size;
         }
+        app->state->combineSceneClear = interpolating_scene.load(std::memory_order_relaxed);
         app->state->rsp->reset();
         app->interpreter->loadUCodeGBI(ucode, ucode_data, true);
         if (ucode_changed && app->interpreter->hleGBI != nullptr) {
@@ -686,6 +690,9 @@ private:
         using Config = RT64::UserConfiguration;
         app->userConfig.antialiasing = compatibility_active ? Config::Antialiasing::None : normal_config.antialiasing;
         app->userConfig.refreshRate = compatibility_active ? Config::RefreshRate::Original : normal_config.refreshRate;
+        interpolate_gameplay.store(app->userConfig.refreshRate == Config::RefreshRate::Display ||
+            (app->userConfig.refreshRate == Config::RefreshRate::Manual && app->userConfig.refreshRateTarget >= 60),
+            std::memory_order_relaxed);
         app->userConfig.internalColorFormat = compatibility_active ? Config::InternalColorFormat::Standard : normal_config.internalColorFormat;
     }
     bool save_normal_configuration() {
@@ -719,6 +726,12 @@ private:
 };
 
 } // namespace
+
+bool rt64_set_gameplay_pacing(bool gameplay) {
+    const bool enabled = gameplay && interpolate_gameplay.load(std::memory_order_relaxed);
+    interpolating_scene.store(enabled, std::memory_order_relaxed);
+    return enabled;
+}
 
 std::unique_ptr<ultramodern::renderer::RendererContext>
 create_rt64_renderer(

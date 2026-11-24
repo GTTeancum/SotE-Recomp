@@ -91,6 +91,7 @@ struct MenuState {
     bool submenu_bindings = false;
     bool title_start_release = false;
     int title_selection = 0;
+    bool exit_requested = false;
     int profile_action_direction = 1;
     int profile_action_index = -1;
     int requested_profile_action = -1;
@@ -1002,6 +1003,7 @@ void initialize(const std::filesystem::path& data_directory) {
     state.cancel_pause_quit = false;
     state.title_start_release = false;
     state.title_selection = 0;
+    state.exit_requested = false;
     state.profile_action_direction = 1;
     state.requested_title_mode = -1;
     state.reset_options_focus = false;
@@ -1084,6 +1086,13 @@ bool pc_cutscenes_enabled() {
     std::lock_guard lock{state.mutex};
     refresh_cutscene_availability_locked();
     return state.applied.pc_cutscenes;
+}
+
+bool take_exit_request() {
+    std::lock_guard lock{state.mutex};
+    const bool requested = state.exit_requested;
+    state.exit_requested = false;
+    return requested;
 }
 
 bool take_renderer_request(Settings& settings) {
@@ -1298,13 +1307,15 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
     if (view && view->screen == Screen::Title) {
         consume_menu_input();
         const int old_selection = state.title_selection;
-        if (pressed & (n64_du | n64_dl | n64_l)) state.title_selection = 0;
-        if (pressed & (n64_dd | n64_dr | n64_r)) state.title_selection = 1;
+        if (pressed & (n64_du | n64_dl | n64_l)) state.title_selection = std::max(0, old_selection - 1);
+        if (pressed & (n64_dd | n64_dr | n64_r)) state.title_selection = std::min(2, old_selection + 1);
         if (old_selection != state.title_selection) state.menu_sound_pending = true;
         if (pressed & (n64_a | n64_start)) {
             if (state.title_selection == 0) {
                 *buttons |= n64_start;
                 state.title_start_release = true;
+            } else if (state.title_selection == 2) {
+                state.exit_requested = true;
             } else {
                 state.menu_sound_pending = true;
                 state.title_options = true;

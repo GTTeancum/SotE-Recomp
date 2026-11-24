@@ -115,6 +115,35 @@ int main() {
     sote_modern_begin(ram.data(),object);
     sote_modern_yaw(ram.data(),object);
     check(get<float>(ram,object+0xA4)==0,"release stops yaw immediately");
+    // Sweep the actual post-decoder hook, including angles inside the native
+    // strafe minimum, on a circular stick at two radii.
+    for (float radius : {0.5f, 1.0f}) {
+        for (int degrees = 0; degrees < 360; degrees += 5) {
+            const float angle = degrees * 0.01745329252f;
+            Stick raw{radius * std::sin(angle), radius * std::cos(angle)};
+            publish({raw, {}, true});
+            sote_modern_begin(ram.data(), object);
+            sote_modern_decode(ram.data(), object, stack);
+            if (std::abs(raw.x) > 0 && std::abs(raw.x) < .3f)
+                put(ram, stack+0x160, .3f);
+            sote_modern_move_magnitudes(ram.data(), object, stack);
+            const Stick expected = shape_stick(raw,live_tuning.movement_deadzone,1);
+            check(std::abs(get<float>(ram,stack+0x160)-1.25f*std::abs(expected.x)) < .0001f &&
+                  std::abs(get<float>(ram,stack+0x15C)-1.25f*std::abs(expected.y)) < .0001f,
+                  "native ground movement preserves analog heading and magnitude");
+        }
+    }
+    publish({{}, {}, true});
+    sote_modern_begin(ram.data(), object);
+    check(!sote_modern_strafing(ram.data(), object, stack), "released stick keeps retail braking");
+    publish({{1, 0}, {}, true});
+    sote_modern_begin(ram.data(), object);
+    sote_modern_decode(ram.data(), object, stack);
+    check(sote_modern_strafing(ram.data(), object, stack), "held strafe keeps running drag");
+    put<int16_t>(ram, stack + 0x170, 0);
+    check(!sote_modern_strafing(ram.data(), object, stack), "disabled strafe keeps retail braking");
+    publish({{}, {}, true});
+    sote_modern_begin(ram.data(), object);
     const float held_pitch = pitch_degrees();
     sote_modern_begin(ram.data(),object);
     check(pitch_degrees()==held_pitch,"neutral input does not recenter");
@@ -269,6 +298,14 @@ int main() {
         put(memory,0x800DD2B0,uint32_t(0));original=memory;
         cheats.apply(data,flags,2,false,object,true);
         check(memory==original,"non-gameplay state is untouched");
+        put(memory,0x800DD2B0,uint32_t(2));put(memory,0x8013CE0E,int16_t(4));
+        put(memory,object+0xB4,43.0f);put(memory,object+0xC0,7.0f);
+        cheats.apply(data,flags,1,false,0,false);
+        cheats.apply(data,flags,1,true,0,false);
+        check(get<float>(memory,object+0xB4)==100 && get<float>(memory,object+0xC0)==7,
+              "first live actor after loading restores health and seeds ammo from this save");
+        put(memory,object+0xC0,4.0f);cheats.apply(data,flags,1,true,0,false);
+        check(get<float>(memory,object+0xC0)==7,"loaded ammo stays protected");
     }
     {
         sote::cheats::RapidFireGate gate;
@@ -286,6 +323,54 @@ int main() {
             }
             check(edges==rate,"rapid fire produces requested 1-10 pulse rate");
         }
+    }
+    {
+        if (sote::controls_menu::current_scheme(SchemeSlot::OnFoot) != ControlScheme::Modern)
+            sote::controls_menu::cycle_scheme(SchemeSlot::OnFoot,1);
+        std::vector<uint8_t> flight(8*1024*1024);
+        const uint32_t cam=0x80210000;
+        put(flight,0x800D08A4,cam);put(flight,0x800D08A8,int32_t(6));
+        put(flight,0x8013CE0E,int16_t(3));
+        double step=1.0/60;uint64_t step_bits;std::memcpy(&step_bits,&step,8);
+        put(flight,0x8018E998,uint32_t(step_bits>>32));put(flight,0x8018E99C,uint32_t(step_bits));
+        float identity[16]={1,0,0,0,0,1,0,0,0,0,1,0,0,-10,0,1};
+        std::memcpy(flight.data()+(cam&0x7FFFFF)+0x14,identity,sizeof(identity));
+        sote_flight_camera_owner(flight.data(),object,1);
+        publish({{}, {}, true});
+        put(flight,cam+0x28,0.9999f);
+        sote_flight_camera_apply(flight.data());
+        check(get<float>(flight,cam+0x48)==-10,"neutral stick preserves the exact native eye position");
+        put(flight,cam+0x28,1.0f);
+        put(flight,object+0x1004,int16_t(1));
+        const auto untouched=flight;
+        publish({{}, {1,0}, true});
+        for(int n=0;n<30;++n){sote_flight_camera_owner(flight.data(),object+0x1000,1);sote_flight_camera_begin(flight.data());sote_flight_camera_apply(flight.data());}
+        check(get<float>(flight,cam+0x24)>.99f,"flight stick turns view right by ninety degrees");
+        check(get<float>(flight,cam+0x44)<-9.9f,"exterior camera orbits the vehicle");
+        check(std::memcmp(flight.data()+(object&0x7FFFFF),untouched.data()+(object&0x7FFFFF),0x200)==0,"free look never steers vehicle or weapons");
+        sote_flight_camera_begin(flight.data());
+        check(flight==untouched,"camera output restores exactly without simulation feedback");
+        put(flight,0x800D08A8,int32_t(4));publish({{}, {0,-1}, true});
+        sote_flight_camera_apply(flight.data());
+        check(get<float>(flight,cam+0x2C)>0,"up input looks upward");
+        check(get<float>(flight,cam+0x48)==-10,"cockpit eye does not orbit outside ship");
+        sote_flight_camera_begin(flight.data());put(flight,0x800DD2BC,int32_t(1));
+        sote_flight_camera_apply(flight.data());float before=get<float>(flight,cam+0x2C);
+        for(int n=0;n<60;++n){sote_flight_camera_begin(flight.data());sote_flight_camera_apply(flight.data());}
+        check(get<float>(flight,cam+0x2C)==before,"paused flight does not accumulate look");
+        sote_flight_camera_begin(flight.data());publish({});sote_flight_camera_apply(flight.data());
+        check(std::memcmp(flight.data()+(cam&0x7FFFFF)+0x14,identity,sizeof(identity))==0,"disconnect resets free look");
+        put(flight,0x8013CE0E,int16_t(6));publish({{}, {1,1}, true});sote_flight_camera_apply(flight.data());
+        check(std::memcmp(flight.data()+(cam&0x7FFFFF)+0x14,identity,sizeof(identity))==0,"turret sections excluded");
+        put(flight,0x8013CE0E,int16_t(3));put(flight,0x800DD2BC,int32_t(0));
+        sote_flight_camera_apply(flight.data());
+        check(std::memcmp(flight.data()+(cam&0x7FFFFF)+0x14,identity,sizeof(identity))==0,"returning to Hoth requires a fresh player vehicle");
+        sote_flight_camera_owner(flight.data(),object,1);
+        put(flight,0x800D08A8,int32_t(7));sote_flight_camera_apply(flight.data());
+        check(std::memcmp(flight.data()+(cam&0x7FFFFF)+0x14,identity,sizeof(identity))==0,"scripted flyby excluded");
+        sote::controls_menu::cycle_scheme(SchemeSlot::OnFoot,1);
+        put(flight,0x800D08A8,int32_t(6));sote_flight_camera_apply(flight.data());
+        check(std::memcmp(flight.data()+(cam&0x7FFFFF)+0x14,identity,sizeof(identity))==0,"Classic flight camera unchanged");
     }
     std::cout << "Modern controls: " << failures << " failures\n";
     return failures ? 1 : 0;

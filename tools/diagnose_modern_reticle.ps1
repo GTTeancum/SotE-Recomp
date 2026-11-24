@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$ExePath = ".\build\runtime\Release\sote_recomp.exe",
+    [string]$ExePath = ".\build\runtime\Release\Shadows of the Empire.exe",
     [string]$OutputDirectory = ".\build\diagnostics\modern_reticle_probe",
     [switch]$MouseAim,
     [switch]$Idle,

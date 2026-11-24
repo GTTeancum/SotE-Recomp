@@ -1,4 +1,5 @@
 #include "modern_platform.hpp"
+#include "hardware_test.h"
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
@@ -79,8 +80,13 @@ void initialize() {
     FILE* file=std::fopen("D:\\xbox-controls.cfg","rb");
     if(file){char line[128];while(std::fgets(line,sizeof(line),file))
         if(std::strncmp(line,"on_foot=modern",14)==0)values[0]=1;std::fclose(file);}
-    if(!nxIsDriveMounted('E'))nxMountDrive('E',"\\Device\\Harddisk0\\Partition1\\");
-    CreateDirectoryA("E:\\UDATA",nullptr);CreateDirectoryA("E:\\UDATA\\534f5445",nullptr);
+    if(xb_hardware_test) {
+        paths[0]="D:\\controls0.bin";
+        paths[1]="D:\\controls1.bin";
+    } else {
+        if(!nxIsDriveMounted('E'))nxMountDrive('E',"\\Device\\Harddisk0\\Partition1\\");
+        CreateDirectoryA("E:\\UDATA",nullptr);CreateDirectoryA("E:\\UDATA\\534f5445",nullptr);
+    }
     Record a{},b{};bool av=read_record(0,a),bv=read_record(1,b);
     if(av||bv){active=bv&&(!av||(int)(b.generation-a.generation)>0)?1:0;const Record& r=active?b:a;generation=r.generation;std::memcpy(values,r.values,sizeof(values));std::memcpy(extras,r.extras,sizeof(extras));std::memcpy(binding_overrides,r.bindings,sizeof(binding_overrides));pc_movies_preference=r.pc_movies;hd_preference=r.hd_textures;}
     sote_hd_setting[0]=hd_preference;sote_hd_setting[1]=generation;apply();

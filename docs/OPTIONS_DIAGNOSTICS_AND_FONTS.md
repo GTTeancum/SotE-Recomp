@@ -74,11 +74,11 @@ specific return-transition correction, not every possible freeze cause.
 
 ## October 20 follow-up: actual launcher, Echo entry and title tile
 
-The first font update was copied only to `SotE_Recompiled/sote_recomp.exe`.
-The player-facing `Shadows of the Empire.exe` still had the older hash
+On October 20, the first font update missed the player-facing launcher. Its
+previous SHA-256 was
 `2381e1bfc6fe259b5ebee8da90751d0cdd1014ef6db8fb11ebE18f4190fb6e3e`.
-Both filenames are now updated and hash-checked by
-`tools/stage_runtime_executable.ps1`; a locked named launcher fails staging.
+`tools/stage_runtime_executable.ps1` verifies the staged
+`Shadows of the Empire.exe` against the Windows build.
 The existing user fonts.ini was preserved. Native captures show Modern on the
 profile selector and Echo Base summary, including player, difficulty, level,
 lives, time and challenge text. A native Echo communicator also shows the
@@ -155,7 +155,7 @@ and Return to Pause Menu. Across all three runs: nine cycles / 108 changes.
 This closes the observed Return input trap, superseding the earlier open
 verification status for that path; it does not close the separate #14 report.
 
-Both staged executable names were verified against the tested build:
+The staged launcher matched the tested build.
 SHA-256 0A92DF875840C4AF3ABB1E7729A642A1176DF290FA796A26221D38C0CE9D1D28.
 
 ## October 21: windowed mouse and pause-menu quality pass

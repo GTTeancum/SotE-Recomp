@@ -7,7 +7,9 @@ enum {
     XB_MIP_CACHE_WORDS = 8192,
     XB_MIP_CACHE_BYTES = XB_MIP_CACHE_SLOTS * XB_MIP_CACHE_WORDS * sizeof(uint32_t),
     XB_MIP_FALLBACK_BYTES = 1024 * 1024,
-    XB_VERTEX_RING_COUNT = 4095,
+    /* The extended Echo hangar submits about 6,180 screen-space vertices
+       per frame. Keep that task resident until its existing completion fence. */
+    XB_VERTEX_RING_COUNT = 8190,
     XB_VERTEX_STRIDE = 48,
     XB_VERTEX_RING_BYTES = XB_VERTEX_RING_COUNT * XB_VERTEX_STRIDE
 };

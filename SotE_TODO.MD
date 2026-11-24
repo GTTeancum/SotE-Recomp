@@ -1,30 +1,38 @@
 # TODO
 
-GitHub checked November 14, 2026. Four issues remain open. Completed and closed items are omitted.
+Issue #31 was reopened on November 22 after a player retest.
+
+## Local playtest and prototype
+
+- [ ] Review the first-person pose of Dash’s original forearm, hand, and blaster in Escape from Echo Base, including walking bob and firing recoil.
+
+- [ ] In first person, the bolt appears to the left of the visible muzzle. Investigate a view-specific alignment correction and verify the third-person shot trajectory stays intact.
+
+## XBOX
+
+- [x] All ten HD level-select previews use the V1 artwork. Verified all 120 tile draws on the retail Xbox at 720p.
+- [ ] Listen for the intermittent electronic stutter during Battle of Hoth on retail hardware. The same steering and firing run measured 18 gaps before the Xbox audio change and zero afterward.
+- [x] Verified crisp stock N64 text at 720p. The captured Cheats label, value, help, navigation, and return text match the original glyph pixels at 1x or 2x.
+
+- [ ] Confirm Modern vertical look with a physical controller. The retail Xbox passed scripted up/down inputs in Echo Base with Invert Y off and on.
+- [x] Verified B resumes gameplay from all three root pause rows on the retail Xbox. B inside Options returns to the root with Options highlighted.
 
 ## Open GitHub issues
 
-### [#12 - Steam Deck flickering](https://github.com/GTTeancum/SotE-Recomp/issues/12)
+### [#31 - Control stick movement fade](https://github.com/GTTeancum/SotE-Recomp/issues/31)
 
-- [ ] Investigate flickering on Hoth and in the scrapyard. Follow-up reports describe background flicker during sharp snowspeeder turns on Steam Deck and PC, and whole-screen flicker in level two on PC that worsens while firing and persists in both display modes and Compatibility Mode.
+Filed November 17, 2026.
 
-### [#20 - AMD 9070 XT crashes and other issues](https://github.com/GTTeancum/SotE-Recomp/issues/20)
+- [ ] Reproduce the movement fade at the breaking-ice crossing and fix it. The earlier open-ground checks missed the reported behavior.
 
-Filed October 25, 2026.
+### Other open reports as of November 24
 
-- [ ] Verify the reported AMD 9070 XT crash with the new Vulkan default. October 28: first launch overrides saved API selections to Vulkan once; afterward explicit choices are respected and Automatic uses Vulkan. API migration/persistence checks and all eight automated tests pass. The reporter says Vulkan works; 9070 XT hardware/driver validation remains open.
-- [ ] Isolate flickering by level, API, and texture setting. The reporter still sees flickering in most levels on 0.9.7 and reported possible stutter with upscaled textures. Compare with #12.
-- [ ] Reproduce the reported gameplay speed increase at higher output frame rates. Verify the original simulation rate, then evaluate keeping gameplay at that rate while interpolating output to 60 FPS.
-
-The reporter confirmed rebinding works on 0.9.7 and still reported erratic Back navigation. Track the latter with #25.
-
-### [#26 - PC cutscenes do not play](https://github.com/GTTeancum/SotE-Recomp/issues/26)
-
-- [ ] Diagnose missing PC level intros on Windows 11 with 0.9.7 and SAN files reportedly in `Sdata`. The maintainer requested `logs/sote-latest.log` and confirmation of the executable location and the Graphics â†’ Cutscenes setting.
-
-### [#30 - Camera, frame rate and visual options](https://github.com/GTTeancum/SotE-Recomp/issues/30)
-
-- [ ] Assess right-stick free camera in flying sections, frame rates above 60 FPS, keeping high-detail models active, and an option to remove fog.
+- [#26](https://github.com/GTTeancum/SotE-Recomp/issues/26) Verify PC movie timing in a playthrough before closing.
+- [#30](https://github.com/GTTeancum/SotE-Recomp/issues/30) Flying camera only. See [implementation and test notes](docs/ISSUE_30_FLIGHT_CAMERA.md).
+- [#33](https://github.com/GTTeancum/SotE-Recomp/issues/33) Access violation after about 2,150 seconds.
+- [#34](https://github.com/GTTeancum/SotE-Recomp/issues/34) Main section of Options is inaccessible.
+- [#35](https://github.com/GTTeancum/SotE-Recomp/issues/35) Selected Options items need a clearer indicator.
+- [#36](https://github.com/GTTeancum/SotE-Recomp/issues/36) Back leaves the Rename keyboard visible.
 
 ## Working boundaries
 

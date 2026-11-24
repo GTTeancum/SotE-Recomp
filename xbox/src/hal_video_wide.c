@@ -17,6 +17,8 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include "display_mode.h"
+#include "performance.h"
 
 
 // Registers
@@ -59,6 +61,10 @@ static BOOL			flickerSet		= FALSE;
 static BOOL			softenFilter		= FALSE;
 static BOOL			softenSet		= FALSE;
 static GAMMA_RAMP_ENTRY	gammaRampEntries[256];
+static const GAMMA_RAMP_ENTRY blackGammaRamp[256];
+static bool viBlank;
+/* Hardware readback in a profiling run: black edges, visible edges, bad edges. */
+volatile unsigned sote_vi_palette_checks[3];
 
 static KINTERRUPT InterruptObject;
 static KDPC DPCObject;
@@ -467,25 +473,48 @@ void XVideoSetSoftenFilter(BOOL enable)
 	}
 }
 
-void XVideoSetGammaRamp(unsigned int offset, const GAMMA_RAMP_ENTRY *entries, unsigned int count)
+static void writeGammaRamp(const GAMMA_RAMP_ENTRY *ramp)
 {
-	int i;
-
-	assert((offset + count) <= 256);
-	memcpy(&gammaRampEntries[offset], entries, count * sizeof(GAMMA_RAMP_ENTRY));
-
 	/* Partial setting of `count` entries at `offset` would be nice, but
 	   NV2A doesn't seem to support this: Changing the write address will
 	   sometimes mess up the existing table.
 	   To avoid this, we update it all from a cached state. */
 	VIDEOREG8(NV_USER_DAC_WRITE_MODE_ADDRESS) = 0;
-	for(i = 0; i < 256; i++) {
-		VIDEOREG8(NV_USER_DAC_PALETTE_DATA) = gammaRampEntries[i].red;
-		VIDEOREG8(NV_USER_DAC_PALETTE_DATA) = gammaRampEntries[i].green;
-		VIDEOREG8(NV_USER_DAC_PALETTE_DATA) = gammaRampEntries[i].blue;
+	for(int i = 0; i < 256; i++) {
+		VIDEOREG8(NV_USER_DAC_PALETTE_DATA) = ramp[i].red;
+		VIDEOREG8(NV_USER_DAC_PALETTE_DATA) = ramp[i].green;
+		VIDEOREG8(NV_USER_DAC_PALETTE_DATA) = ramp[i].blue;
 	}
 }
 
+void XVideoSetGammaRamp(unsigned int offset, const GAMMA_RAMP_ENTRY *entries, unsigned int count)
+{
+	assert((offset + count) <= 256);
+	memcpy(&gammaRampEntries[offset], entries, count * sizeof(GAMMA_RAMP_ENTRY));
+	if (!viBlank) writeGammaRamp(gammaRampEntries);
+}
+
+/* N64 VI blanking masks the output while the game continues rendering.
+   Latch it at retrace so queued frames and the 720p video signal survive. */
+void xb_display_vi_blank(int black)
+{
+	if (viBlank == (black != 0)) return;
+	viBlank = black != 0;
+	const GAMMA_RAMP_ENTRY *ramp = viBlank ? blackGammaRamp : gammaRampEntries;
+	writeGammaRamp(ramp);
+	if (xb_perf_enabled == XB_PROFILE_RETAIL) {
+		unsigned mismatch = 0;
+		/* VGA DAC read index is the port immediately before the write index. */
+		VIDEOREG8(NV_USER_DAC_WRITE_MODE_ADDRESS - 1) = 0;
+		for (unsigned i = 0; i < 256; i++) {
+			mismatch |= VIDEOREG8(NV_USER_DAC_PALETTE_DATA) ^ ramp[i].red;
+			mismatch |= VIDEOREG8(NV_USER_DAC_PALETTE_DATA) ^ ramp[i].green;
+			mismatch |= VIDEOREG8(NV_USER_DAC_PALETTE_DATA) ^ ramp[i].blue;
+		}
+		sote_vi_palette_checks[viBlank ? 0 : 1]++;
+		sote_vi_palette_checks[2] += mismatch != 0;
+	}
+}
 
 void XVideoWaitForVBlank()
 {

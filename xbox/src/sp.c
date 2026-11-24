@@ -1,6 +1,7 @@
 #include "rdram_guard.h"
 #include <string.h>
 #include "runtime.h"
+#include "performance.h"
 void xb_unsupported(uint32_t id) __attribute__((noreturn));
 void xb_rsp_audio(uint8_t* rdram,const uint32_t* task);
 void xb_post_event(unsigned event);
@@ -18,7 +19,12 @@ void osSpTaskLoad_recomp(uint8_t* rdram,recomp_context* ctx) {
 void osSpTaskStartGo_recomp(uint8_t* rdram,recomp_context* ctx) {
     (void)ctx;if(!valid)xb_unsupported(0xE4000005);
     uint32_t task[16];memcpy(task,sote_sp_task,sizeof(task));valid=0;
-    if(task[0]==2){sote_sp_status.audio++;xb_rsp_audio(rdram,task);}
+    if(task[0]==2){
+        sote_sp_status.audio++;
+        uint64_t timer=xb_perf_begin();
+        xb_rsp_audio(rdram,task);
+        xb_perf_end(XB_PERF_RSP_AUDIO,timer);
+    }
     else {sote_sp_status.graphics++;xb_video_task(rdram,task);}
     sote_sp_status.completed++;xb_post_event(4);
     if(task[0]==1)xb_post_event(9);

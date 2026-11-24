@@ -8,13 +8,16 @@
 #include <stdlib.h>
 #include "runtime.h"
 #include "texture.h"
+#include "hd_texture.h"
 #include "gpu.h"
 #include "aspect_xbox.h"
 #include "cockpit_mask.h"
 #include "wide_fx_state.h"
 #include "amber_fx_state.h"
 #include "display_mode.h"
-extern int xb_pb_ready_for_draw(void);
+#include "starfield.h"
+#include "draw_distance.h"
+#include "hardware_test.h"
 #include "triangle_material.h"
 #include "performance.h"
 #include "console_budget.h"
@@ -34,6 +37,8 @@ static uint32_t registers[256][2],move_memory[256];
 static float matrices[2][32][4][4];
 static unsigned matrix_top[2];
 int xb_wide_projection;
+int xb_stock_draw_distance;
+static float mission_distance_scale=1.0f;
 static int xb_aspect_mode_locked;
 volatile uint32_t sote_geometry[8];
 volatile uint32_t sote_projection_mode[5]; /* wide, raster width/height, perspective and ortho vertex loads */
@@ -47,10 +52,29 @@ static float look_at[2][3]={{0,1,0},{1,0,0}};
 /* F3DWAVE has a 32-entry vertex cache. Retain the original attributes as
    well as homogeneous coordinates: clipping must happen before division. */
 typedef struct {
+    xb_world_transform shader;
+    xb_clip_plane planes[6];
+    float local_light[3], light_length;
+    unsigned references;
+    int lit;
+} world_state;
+static world_state world_states[32], *current_world;
+static uint64_t world_serial;
+static int world_gameplay;
+/* Keep the indexed world shader available for same-frame hardware comparisons. */
+static int test_world_shader;
+static int16_t fog_multiplier=256, fog_offset;
+uint32_t xb_rdp_fog_color;
+typedef struct {
     float clip[4],st[2];
+    float screen[4];
+    uint64_t screen_view;
     uint32_t rgba,valid,clip_mask;
     uint8_t perspective,original_horizontal_outcode;
     int16_t position[3];
+    world_state* world;
+    int resolved;
+    xb_world_vertex source;
 } xb_vertex;
 static xb_vertex vertices[32];
 volatile uint32_t sote_vertex_status[4]; /* loads, vertices, first, count */
@@ -123,6 +147,34 @@ static void fade_witness(uint8_t* rdram,unsigned kind,float x0,float y0,float x1
 }
 static uint32_t current_framebuffer,next_framebuffer;
 static int pending;
+static int gameplay_gpu_pending;
+static void retire_graphics_work(void) {
+    uint64_t timer=xb_perf_begin();
+    while(pb_busy())Sleep(0);
+    xb_perf_end(XB_PERF_TASK_WAIT,timer);
+    xb_gpu_task_retired();
+    gameplay_gpu_pending=0;
+}
+static xb_star_layer stars;
+static int stars_pending, replay_star_task = -1;
+
+void xb_starfield_begin(uint8_t* rdram, uint32_t target) {
+    const int mode = MEM_H(0, (int32_t)0x800D25B0);
+    const int32_t descriptor = (int32_t)0x800D25B4 + 10 * mode;
+    stars.width = MEM_HU(0, descriptor);
+    stars.height = MEM_HU(2, descriptor);
+    stars.bpp = MEM_HU(4, descriptor);
+    if (!stars.width || stars.width > XB_STAR_WIDTH || !stars.height || stars.height > XB_STAR_HEIGHT ||
+        (stars.bpp != 16 && stars.bpp != 32)) xb_unsupported(0xE5030010);
+    stars.target = xb_rdram_offset(target & 0x1fffffff, stars.width * stars.height * (stars.bpp / 8), XB_RDRAM_VIDEO);
+    memset(stars.dirty, 0, ((stars.width * stars.height + 31) / 32) * sizeof(uint32_t));
+    stars_pending = 1;
+}
+void xb_starfield_pixel(unsigned x, unsigned y) {
+    /* Retail bounds-checked x and y before performing this store. */
+    unsigned i = y * stars.width + x;
+    stars.dirty[i / 32] |= 1u << (i % 32);
+}
 void xb_menu_draw(uint8_t* rdram);
 /* Current native predicate and color-only side-band counters, no pack dependence.
    [0] accumulates masked frames; [1..7] event/mode/slot/left/right/pause/present. */
@@ -140,7 +192,7 @@ static void cockpit_before_host_overlays(uint8_t* rdram) {
     sote_cockpit_mask[4]=a.left;sote_cockpit_mask[5]=a.right;
     sote_cockpit_mask[6]=paused;sote_cockpit_mask[7]=sote_video_status.presents;
     if(!a.left || !h)return;
-    xb_gpu_flush();
+    xb_gpu_invalidate_state();
     pb_fill(0,0,a.left,h,0xff000000);
     pb_fill(a.right,0,w-a.right,h,0xff000000);
     sote_cockpit_mask[0]++;
@@ -153,6 +205,10 @@ static void trace(unsigned type,unsigned swap) {
     record[4]=task_rectangles;record[5]=task_fills;record[6]=(uint32_t)pb_back_buffer();record[7]=sote_video_status.presents;
 }
 static int test_probe;
+static int compare_array_pixels;
+static int compare_hangar_culling;
+static unsigned test_lists[24],test_list_count,test_checked;
+static uint8_t* verify_background;
 static int test_disable_dl_cull;
 static int test_flat_lit;
 static int test_late_lit;
@@ -164,7 +220,10 @@ volatile uint32_t sote_dl_cull_status[3]; /* tested, rejected, diagnostic bypass
 void xb_video_init(void) {
     xb_aspect_mode_locked=1;
     xb_texture_memory_selftest();
-    if(pb_init()!=0)xb_unsupported(0xE5000001);
+    xb_hardware_note("pb-init",xb_display_bpp);
+    int result=pb_init();
+    xb_hardware_note("pb-result",(unsigned)result);
+    if(result!=0)xb_unsupported(0xE5000001);
     sote_projection_mode[0]=xb_wide_projection;
     sote_projection_mode[1]=pb_back_buffer_width();sote_projection_mode[2]=pb_back_buffer_height();
     /* Select pbkit scanout once. Its vblank queue rotates completed buffers;
@@ -172,6 +231,9 @@ void xb_video_init(void) {
     pb_show_front_screen();
     FILE* f=fopen("D:\\xbox-test.cfg","rb");
     if(f){char line[96];while(fgets(line,sizeof(line),f)) {
+        if(xb_hardware_test && strstr(line,"compare_array_pixels=1"))compare_array_pixels=1;
+        if(xb_hardware_test && strstr(line,"compare_hangar_culling=1"))compare_hangar_culling=1;
+        if(xb_hardware_test && strstr(line,"stock_draw_distance=1"))xb_stock_draw_distance=1;
         if(strstr(line,"video_probe=1"))test_probe=1;
         if(strstr(line,"fade_probe=1"))test_fade_probe=1;
         if(strstr(line,"hold_fx_frame=mid"))test_fx_hold=1;
@@ -181,12 +243,17 @@ void xb_video_init(void) {
         if(strstr(line,"flat_lit=1"))test_flat_lit=1;
         if(strstr(line,"late_lit=1"))test_late_lit=1;
         if(strstr(line,"profile_renderer=1"))xb_perf_enabled=1;
+        if(strstr(line,"world_shader=1"))test_world_shader=1;
+        if(xb_hardware_test && strstr(line,"profile_retail=1"))xb_perf_enabled=XB_PROFILE_RETAIL;
         if(strstr(line,"budget_probe=1"))xb_budget_frame_probe=1;
     }fclose(f);}
     if(test_late_lit){test_lit_triangles=malloc(1024*3*sizeof(xb_gpu_vertex));if(!test_lit_triangles)xb_unsupported(0xE5000010);}
     sote_lit_probe[0]=test_flat_lit|(test_late_lit<<1);
+    xb_hardware_check_depth();
 }
-void xb_video_wait_vblank(void){pb_wait_for_vbl();}
+void xb_video_wait_vblank(void){
+    pb_wait_for_vbl();
+}
 static uint32_t physical(uint32_t address) {
     /* RSP segment selection uses only four bits, including for 0x8xxxxxxx
        addresses. Preserve wrapping/negative bases used by retail models. */
@@ -199,40 +266,58 @@ static uint32_t physical(uint32_t address) {
 static uint32_t word(uint8_t* rdram,uint32_t address) {
     if((address&3)||address>0x800000-4)xb_unsupported(0xE5000002);
     xb_rdram_offset(address,4,XB_RDRAM_VIDEO);
-    return MEM_W(0,(int32_t)(0x80000000|address));
+    return xb_texture_read_word(rdram+address);
+}
+/* Pentium III SSE1 transforms four coordinates in parallel. Preserve the
+   two separately rounded transforms and the original per-column sum order. */
+typedef float float4 __attribute__((vector_size(16)));
+static inline float4 transform_row(const float p[4],const float m[4][4]) {
+    float4 sum={0,0,0,0};
+    for(unsigned i=0;i<4;i++){
+        float4 row;__builtin_memcpy_inline(&row,m[i],sizeof(row));
+        sum+=p[i]*row;
+    }
+    return sum;
 }
 static void matrix(uint8_t* rdram,uint32_t flags,uint32_t address) {
     unsigned which=flags&1,top=matrix_top[which];
     float incoming[4][4],result[4][4];uint32_t p=physical(address);
+    if(p&3)xb_unsupported(0xE5000002);
+    xb_rdram_offset(p,64,XB_RDRAM_VIDEO);
     for(unsigned i=0;i<16;i++) {
-        uint32_t integer=word(rdram,p+(i/2)*4),fraction=word(rdram,p+32+(i/2)*4);
+        uint32_t integer=xb_texture_read_word(rdram+p+(i/2)*4);
+        uint32_t fraction=xb_texture_read_word(rdram+p+32+(i/2)*4);
         unsigned shift=(i&1)?0:16;
         incoming[i/4][i%4]=(float)(int16_t)(integer>>shift)+(float)((fraction>>shift)&65535)/65536.0f;
     }
     if(flags&2)__builtin_memcpy_inline(result,incoming,sizeof(result));
-    else for(unsigned r=0;r<4;r++)for(unsigned c=0;c<4;c++) {
-        result[r][c]=0;
-        for(unsigned k=0;k<4;k++)result[r][c]+=incoming[r][k]*matrices[which][top][k][c];
+    else for(unsigned r=0;r<4;r++){
+        float4 row=transform_row(incoming[r],matrices[which][top]);
+        __builtin_memcpy_inline(result[r],&row,sizeof(row));
     }
     if(flags&4){if(top==31)xb_unsupported(0xE500000B);matrix_top[which]=++top;}
     __builtin_memcpy_inline(matrices[which][top],result,sizeof(result));
+    current_world=NULL;
 }
-static float light_dot(const float* normal,const float* direction) {
-    float local[3]={0,0,0},length=0,result=0;
-    /* Transform a camera-space light into model space; normalize it there,
-       as the RSP does, rather than renormalizing each vertex normal. */
+typedef struct { float axis[3],length; } model_light;
+static model_light transform_light(const float* direction) {
+    model_light light={0};
     for(unsigned i=0;i<3;i++) {
-        for(unsigned j=0;j<3;j++)local[i]+=matrices[0][matrix_top[0]][i][j]*direction[j];
-        length+=local[i]*local[i];
+        for(unsigned j=0;j<3;j++)light.axis[i]+=matrices[0][matrix_top[0]][i][j]*direction[j];
+        light.length+=light.axis[i]*light.axis[i];
     }
-    if(length>0) {
-        length=sqrtf(length);
-        for(unsigned i=0;i<3;i++)result+=normal[i]*local[i]/length;
-    }
+    if(light.length>0)light.length=sqrtf(light.length);
+    return light;
+}
+static float light_dot(const float* normal,const model_light* light) {
+    float result=0;
+    if(light->length>0)
+        for(unsigned i=0;i<3;i++)result+=normal[i]*light->axis[i]/light->length;
     return result;
 }
 static void load_light(uint8_t* rdram,unsigned type,uint32_t p) {
     if(type<0x82 || type>0x94 || (type&1))return;
+    current_world=NULL;
     uint32_t direction=word(rdram,p+8),color=word(rdram,p);
     float* dir;
     if(type<=0x84)dir=look_at[(type-0x82)/2];
@@ -242,53 +327,163 @@ static void load_light(uint8_t* rdram,unsigned type,uint32_t p) {
     }
     for(unsigned i=0;i<3;i++)dir[i]=(int8_t)(direction>>(24-i*8))/127.0f;
 }
+static world_state* capture_world_state(void) {
+    if(current_world)return current_world;
+    /* The destination slots were released before this call. At least one of
+       these 32 snapshots is free, even across partial vertex-cache reloads. */
+    unsigned i=0;
+    while(i<32 && world_states[i].references)i++;
+    if(i==32)xb_unsupported(0xE5040007);
+    world_state* state=&world_states[i];
+    xb_world_transform* t=&state->shader;
+    for(unsigned c=0;c<4;c++)for(unsigned r=0;r<4;r++){
+        t->model[c][r]=matrices[0][matrix_top[0]][r][c];
+        t->projection[c][r]=matrices[1][matrix_top[1]][r][c];
+    }
+    state->lit=(geometry&0x20000)!=0;
+    state->light_length=0;
+    for(unsigned k=0;k<3;k++){
+        float d=0;
+        if(state->lit && light_count)
+            for(unsigned j=0;j<3;j++)d+=t->model[j][k]*lights[0].direction[j];
+        state->local_light[k]=d;
+        state->light_length+=d*d;
+        t->ambient[k]=state->lit?lights[light_count].color[k]:0;
+        t->diffuse[k]=state->lit && light_count?lights[0].color[k]:0;
+    }
+    state->light_length=sqrtf(state->light_length);
+    for(unsigned j=0;j<3;j++)t->light_direction[j]=state->light_length>0?state->local_light[j]/state->light_length:0;
+    t->light_direction[3]=state->lit?0:1;
+    t->ambient[3]=.5f;
+    t->serial=++world_serial;
+    xb_world_planes(t,state->planes);
+    return current_world=state;
+}
+
+/* Exceptional draws may reference vertices loaded under different matrices or
+   request the provoking vertex's color. Reconstruct the original load here. */
+static void resolve_world_vertex(xb_vertex* v) {
+    if(!v->world || v->resolved)return;
+    const world_state* state=v->world;
+    const xb_world_transform* t=&state->shader;
+    float eye[4],source[4]={v->position[0],v->position[1],v->position[2],1};
+    for(unsigned c=0;c<4;c++){
+        eye[c]=0;
+        for(unsigned r=0;r<4;r++)eye[c]+=source[r]*t->model[c][r];
+    }
+    for(unsigned c=0;c<4;c++){
+        v->clip[c]=0;
+        for(unsigned r=0;r<4;r++)v->clip[c]+=eye[r]*t->projection[c][r];
+    }
+    v->clip[0]=xb_aspect_clip_x(v->clip[0],xb_wide_projection,1);
+    if(state->lit){
+        float intensity=0;
+        if(state->light_length>0)
+            for(unsigned j=0;j<3;j++)intensity+=v->source.color[j]*state->local_light[j]/state->light_length;
+        v->rgba&=255;
+        for(unsigned j=0;j<3;j++){
+            float value=t->ambient[j];
+            if(intensity>0)value+=intensity*t->diffuse[j];
+            unsigned byte=value>255?255:(unsigned)(value+.5f);
+            v->rgba|=byte<<(24-8*j);
+        }
+    }
+    v->resolved=1;
+}
+
+static float channel_unit[256];
 static void load_vertices(uint8_t* rdram,uint32_t w0,uint32_t address) {
+    if(channel_unit[255]==0)for(unsigned i=0;i<256;i++)channel_unit[i]=(float)i/255.0f;
     /* Same encoding as the retail microcode identified in RT64's F3D_WAVE
        table for Shadows: count is bits 9..15, first index is byte / 5. */
     unsigned encoded=(w0>>16)&255,first=encoded/5,count=(w0>>9)&127;
     uint32_t p=physical(address);
-    if(encoded%5 || !count || first+count>32 || p>0x800000-count*16)
+    if(encoded%5 || !count || first+count>32 || p>0x800000-count*16 || (p&3))
         xb_unsupported(0xE5040001);
     xb_rdram_offset(p,count*16,XB_RDRAM_VIDEO);
     const float (*proj)[4]=matrices[1][matrix_top[1]];
     const int perspective=xb_aspect_perspective(proj[0][3],proj[1][3],proj[2][3]);
     const int measure=xb_wide_projection&&perspective;
+    world_state* world=NULL;
+    int candidate=world_gameplay && perspective && !(geometry&0x10000) && !xb_gpu_verify_inline && !test_probe && !test_fade_probe &&
+                  !test_flat_lit && (!(geometry&0x20000) || (!(geometry&0x40000) && light_count<=1));
+    int lo[3]={32767,32767,32767},hi[3]={-32768,-32768,-32768};
+    for(unsigned i=0;i<count;i++){
+        xb_vertex* v=&vertices[first+i];
+        if(v->world)v->world->references--;
+        v->world=NULL;
+        uint32_t xy=xb_texture_read_word(rdram+p+16*i),zf=xb_texture_read_word(rdram+p+16*i+4);
+        v->position[0]=(int16_t)(xy>>16);v->position[1]=(int16_t)xy;v->position[2]=(int16_t)(zf>>16);
+        if(candidate){
+            for(unsigned j=0;j<3;j++){
+                if(v->position[j]<lo[j])lo[j]=v->position[j];
+                if(v->position[j]>hi[j])hi[j]=v->position[j];
+            }
+        }
+    }
+    if(candidate){
+        world_state* state=capture_world_state();
+        if(xb_world_inside(state->planes,lo,hi))world=state;
+    }
     unsigned newly_left=0,newly_right=0;
+    model_light local_lights[8], local_look_at[2];
+    if(!world && (geometry&0x20000)) {
+        if(light_count>=8)xb_unsupported(0xE5040006);
+        for(unsigned i=0;i<light_count;i++)local_lights[i]=transform_light(lights[i].direction);
+        if(geometry&0x40000)for(unsigned i=0;i<2;i++)local_look_at[i]=transform_light(look_at[i]);
+    }
     if(xb_wide_projection)sote_projection_mode[perspective?3:4]++;
     if(measure) {
-        const float w_scale=fmaxf(fabsf(proj[0][3]),fmaxf(fabsf(proj[1][3]),fabsf(proj[2][3])));
+        const float x=__builtin_fabsf(proj[0][3]),y=__builtin_fabsf(proj[1][3]),z=__builtin_fabsf(proj[2][3]);
+        const float w_scale=x>y?(x>z?x:z):(y>z?y:z);
         uint32_t bits;__builtin_memcpy_inline(&bits,&w_scale,sizeof(bits));
         sote_geometry[7]=bits;
     }
     for(unsigned i=0;i<count;i++,p+=16) {
         xb_vertex* v=&vertices[first+i];
-        uint32_t xy=word(rdram,p),zf=word(rdram,p+4),st=word(rdram,p+8);
-        v->position[0]=(int16_t)(xy>>16);v->position[1]=(int16_t)xy;
-        v->position[2]=(int16_t)(zf>>16);
+        uint32_t st=xb_texture_read_word(rdram+p+8);
+        v->st[0]=(int16_t)(st>>16)/32.0f;v->st[1]=(int16_t)st/32.0f;
+        v->rgba=xb_texture_read_word(rdram+p+12);v->valid=1;v->clip_mask=0;
+        v->perspective=perspective;v->screen_view=0;
+        if(world){
+            v->world=world;world->references++;
+            v->resolved=0;v->original_horizontal_outcode=0;
+            v->source.ring_generation=0;
+            for(unsigned j=0;j<3;j++){
+                v->source.position[j]=v->position[j];
+                uint8_t channel=(uint8_t)(v->rgba>>(24-8*j));
+                v->source.color[j]=world->lit?(int8_t)channel/127.0f:channel/255.0f;
+            }
+            v->source.color[3]=(v->rgba&255)/255.0f;
+            v->source.st[0]=v->st[0];v->source.st[1]=v->st[1];
+            continue;
+        }
         float source[4]={v->position[0],v->position[1],v->position[2],1},eye[4];
-        for(unsigned c=0;c<4;c++) {
-            eye[c]=0;
-            for(unsigned r=0;r<4;r++)eye[c]+=source[r]*matrices[0][matrix_top[0]][r][c];
+        float4 transformed=transform_row(source,matrices[0][matrix_top[0]]);
+        __builtin_memcpy_inline(eye,&transformed,sizeof(eye));
+        transformed=transform_row(eye,proj);
+        __builtin_memcpy_inline(v->clip,&transformed,sizeof(v->clip));
+        /* F3D applies the signed G_MW_FOG factors to projected depth at
+           vertex load. Clipped edges must interpolate the clamped weights. */
+        if((geometry&0x10000) && v->clip[3]!=0.0f){
+            float depth=(v->clip[2]>0?v->clip[2]:0.0f)/v->clip[3];
+            /* Fog is specified in post-projection units. Spread its ramp
+               over the longer view so newly visible surfaces retain detail. */
+            if(perspective)depth=1.0f-(1.0f-depth)*mission_distance_scale;
+            float alpha=depth*fog_multiplier+fog_offset;
+            v->rgba=(v->rgba&0xffffff00u)|(unsigned)((alpha>0?(alpha<255?alpha:255):0)+0.5f);
         }
-        for(unsigned c=0;c<4;c++) {
-            v->clip[c]=0;
-            for(unsigned r=0;r<4;r++)v->clip[c]+=eye[r]*proj[r][c];
-        }
-        v->perspective=perspective;
         /* Before F3DWAVE cull-list AND homogeneous clip; a viewport-only
            stretch or a post-clip correction cannot expose new columns. */
         v->original_horizontal_outcode=measure?
             (v->clip[0]<-v->clip[3]?1u:0u)|(v->clip[0]>v->clip[3]?2u:0u):0u;
         v->clip[0]=xb_aspect_clip_x(v->clip[0],xb_wide_projection,perspective);
-        v->st[0]=(int16_t)(st>>16)/32.0f;v->st[1]=(int16_t)st/32.0f;
-        v->rgba=word(rdram,p+12);v->valid=1;v->clip_mask=0;
         if(geometry&0x20000) {
-            if(light_count>=8)xb_unsupported(0xE5040006);
             float normal[3];
             for(unsigned j=0;j<3;j++)normal[j]=(int8_t)(v->rgba>>(24-j*8))/127.0f;
             float color[3];__builtin_memcpy_inline(color,lights[light_count].color,sizeof(color));
             for(unsigned light=0;light<light_count;light++) {
-                float intensity=light_dot(normal,lights[light].direction);
+                float intensity=light_dot(normal,&local_lights[light]);
                 if(intensity>0)for(unsigned j=0;j<3;j++)color[j]+=intensity*lights[light].color[j];
             }
             v->rgba&=255;
@@ -297,11 +492,13 @@ static void load_vertices(uint8_t* rdram,uint32_t w0,uint32_t address) {
                 v->rgba|=value<<(24-j*8);
             }
             if(geometry&0x40000)for(unsigned j=0;j<2;j++) {
-                float dot=light_dot(normal,look_at[j]);if(dot<-1)dot=-1;if(dot>1)dot=1;
+                float dot=light_dot(normal,&local_look_at[j]);if(dot<-1)dot=-1;if(dot>1)dot=1;
                 v->st[j]=(geometry&0x80000)?acosf(-dot)*325.94932f:(dot+1)*512;
             }
         }
         v->clip_mask=xb_aspect_outcode(v->clip);
+        if(!__builtin_isfinite(v->clip[0]) || !__builtin_isfinite(v->clip[1]) ||
+           !__builtin_isfinite(v->clip[2]) || !__builtin_isfinite(v->clip[3]))v->clip_mask|=64;
         if(measure && v->clip[3]>0 && !v->clip_mask) {
             newly_left+=v->original_horizontal_outcode==1;
             newly_right+=v->original_horizontal_outcode==2;
@@ -375,7 +572,8 @@ void xb_vertex_selftest(uint8_t* rdram) {
     float normal[3]={1,0,0},direction[3]={0,1,0};
     matrices[0][0][0][0]=0;matrices[0][0][0][1]=1;
     matrices[0][0][1][0]=-1;matrices[0][0][1][1]=0;
-    VCHECK(light_dot(normal,direction)==1);
+    model_light rotated=transform_light(direction);
+    VCHECK(light_dot(normal,&rotated)==1);
     geometry=0;light_count=0;memset(lights,0,sizeof(lights));
 #undef VCHECK
     memset(matrices,0,sizeof(matrices));memset(vertices,0,sizeof(vertices));
@@ -415,14 +613,17 @@ static void fill(uint32_t w0,uint32_t w1) {
             color=0xff000000|(((r<<3)|(r>>2))<<16)|(((g<<3)|(g>>2))<<8)|((b<<3)|(b>>2));
         } else if(color_size==3)color=(fill_color>>8)|0xff000000;
         else xb_unsupported(0xE5000004);
-        xb_gpu_reserve_commands();
-        xb_gpu_flush();
+        xb_gpu_invalidate_state();
         pb_fill(r.left,r.top,r.right-r.left,r.bottom-r.top,color);
     }
     sote_video_status.fills++;
     task_fills++;
 }
-static float shift_coord(float value,unsigned shift){return shift<=10?value/(1u<<shift):value*(1u<<(16-shift));}
+static float shift_coord(float value,unsigned shift){
+    static const float scale[16]={1,.5f,.25f,.125f,.0625f,1.f/32,1.f/64,1.f/128,
+        1.f/256,1.f/512,1.f/1024,32,16,8,4,2};
+    return value*scale[shift];
+}
 typedef struct {float clip[4],st[2],color[4];} clip_vertex;
 static float plane_distance(const clip_vertex* v,unsigned plane) {
     return v->clip[3]+((plane&1)?-v->clip[plane/2]:v->clip[plane/2]);
@@ -503,6 +704,18 @@ void xb_clip_selftest(void) {
         sote_clip_checks++;
     }
 }
+static inline void vertex_color(float out[4],uint32_t color) {
+    for(unsigned j=0;j<4;j++)out[j]=channel_unit[(color>>(24-j*8))&255];
+}
+static inline uint32_t triangle_color(const xb_vertex* v,const xb_vertex* first,int primitive,int fog){
+    if(!primitive)return (geometry&0x200)?v->rgba:first->rgba;
+    uint32_t color=registers[0xFA][1];
+    return fog?(color&0xffffff00u)|(v->rgba&255u):color;
+}
+static inline int culled_face(const xb_gpu_vertex tri[3]){
+    float area=(tri[1].x-tri[0].x)*(tri[2].y-tri[0].y)-(tri[1].y-tri[0].y)*(tri[2].x-tri[0].x);
+    return area==0 || ((geometry&0x1000)&&area<0) || ((geometry&0x2000)&&area>0);
+}
 static void triangle_impl(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
     unsigned indices[3]={a,b,c};clip_vertex polygon[2][12];unsigned count=3,side=0;
     volatile uint32_t* census=0;
@@ -523,11 +736,12 @@ static void triangle_impl(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
     /* Vertex loading already records the six view-plane outcodes. Reject a
        triangle outside the same plane before preparing colors/materials or
        copying/interpolating vertices. Crossing triangles still use clip_view. */
-    unsigned outside=63,old_horizontal=3;
+    unsigned outside=63,crossing=0,old_horizontal=3;
     int center_ui=xb_wide_projection;
     for(unsigned i=0;i<3;i++) {
         if(indices[i]>=32 || !vertices[indices[i]].valid)xb_unsupported(0xE5040003);
         outside&=vertices[indices[i]].clip_mask;
+        crossing|=vertices[indices[i]].clip_mask;
         old_horizontal&=vertices[indices[i]].original_horizontal_outcode;
         if(vertices[indices[i]].perspective)center_ui=0;
     }
@@ -561,20 +775,31 @@ static void triangle_impl(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
        Vertex RGB must not tint the texture in this replacement mode. */
     int texture_replace=registers[0xFC][0]==0xFCFFFFFF && registers[0xFC][1]==0xFFFCF838 && cycle==1;
     if(!mip_blend && !upper_mip && !texture_shade && !texture_primitive && !primitive_mask && !texture_alpha && !shade_only && !shade_passthrough && !texture_replace)xb_unsupported(0xE5050004);
-    for(unsigned i=0;i<3;i++) {
-        if(indices[i]>=32 || !vertices[indices[i]].valid)xb_unsupported(0xE5040003);
-        xb_vertex* v=&vertices[indices[i]];clip_vertex* d=&polygon[0][i];
-        __builtin_memcpy_inline(d->clip,v->clip,sizeof(d->clip));__builtin_memcpy_inline(d->st,v->st,sizeof(d->st));
-        uint32_t rgba=(geometry&0x200)?v->rgba:vertices[a].rgba;
-        if(primitive_mask || texture_primitive)rgba=registers[0xFA][1];
-        for(unsigned j=0;j<4;j++)d->color[j]=((rgba>>(24-j*8))&255)/255.0f;
+    int mode=texture_replace?7:upper_mip?5:shade_only?4:primitive_modulated?6:primitive_mask?2:texture_alpha?3:shade_alpha;
+    const int fog_blend=(other_lo&0xcccc0000u)==0xc8000000u;
+    if(fog_blend && (texture_primitive || primitive_modulated))
+        mode|=XB_COMBINE_PRIMITIVE_ALPHA|((registers[0xFA][1]&255)<<XB_COMBINE_ALPHA_SHIFT);
+    world_state* world=vertices[a].world;
+    int offload=world_gameplay && !xb_gpu_verify_inline && world && world==vertices[b].world && world==vertices[c].world &&
+        (geometry&0x200) && !fog_blend && !primitive_mask && !texture_primitive;
+    int primitive=primitive_mask || texture_primitive;
+    if(!offload && crossing){
+        for(unsigned i=0;i<3;i++) {
+            xb_vertex* v=&vertices[indices[i]];clip_vertex* d=&polygon[0][i];
+            resolve_world_vertex(v);
+            __builtin_memcpy_inline(d->clip,v->clip,sizeof(d->clip));__builtin_memcpy_inline(d->st,v->st,sizeof(d->st));
+            vertex_color(d->color,triangle_color(v,&vertices[a],primitive,fog_blend));
+        }
+        uint64_t clip_timer=xb_perf_begin();
+        count=clip_view(polygon,&side);
+        xb_perf_end(XB_PERF_CLIPPING,clip_timer);
+        if(count<3){if(census)census[6]++;return;}
     }
-    uint64_t clip_timer=xb_perf_begin();
-    count=clip_view(polygon,&side);
-    xb_perf_end(XB_PERF_CLIPPING,clip_timer);
-    if(count<3){if(census)census[6]++;return;}
     uint32_t vp=move_memory[0x80];if(!vp)xb_unsupported(0xE5050005);
-    uint32_t scale_xy=word(rdram,vp),scale_z=word(rdram,vp+4),trans_xy=word(rdram,vp+8),trans_z=word(rdram,vp+12);
+    if(vp&3)xb_unsupported(0xE5000002);
+    xb_rdram_offset(vp,16,XB_RDRAM_VIDEO);
+    uint32_t scale_xy=xb_texture_read_word(rdram+vp),scale_z=xb_texture_read_word(rdram+vp+4);
+    uint32_t trans_xy=xb_texture_read_word(rdram+vp+8),trans_z=xb_texture_read_word(rdram+vp+12);
     float sx=(int16_t)(scale_xy>>16)/4.0f,sy=(int16_t)scale_xy/4.0f;
     float tx=(int16_t)(trans_xy>>16)/4.0f,ty=(int16_t)trans_xy/4.0f;
     float sz=(int16_t)(scale_z>>16)/1024.0f,tz=(int16_t)(trans_z>>16)/1024.0f;
@@ -582,21 +807,68 @@ static void triangle_impl(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
     if(!mip_blend && !upper_mip)levels=1;
     float ss=(registers[0xBB][1]>>16)/65536.0f,ts=(registers[0xBB][1]&65535)/65536.0f;
     xb_tile* td=&xb_tiles[tile];xb_gpu_vertex projected[12];
+    if(offload){
+        unsigned cull=(geometry>>12)&3;
+        if(cull==3)return;
+        xb_world_vertex* input[3]={&vertices[a].source,&vertices[b].source,&vertices[c].source};
+        const int perspective_uv=(other_hi&0x80000)!=0;
+        const xb_world_view view={
+            {xb_wide_projection?sx*.75f:sx,-sy,sz,perspective_uv},
+            {tx,ty,tz,!perspective_uv},
+            {shift_coord(ss,td->shift_s),shift_coord(ts,td->shift_t),td->left*-.25f,td->top*-.25f}
+        };
+        xb_gpu_world_triangle(tile,(other_hi>>14)&3,levels,other_lo,mode,scissor,cull,&world->shader,&view,input);
+        return;
+    }
+    static uint32_t viewport_words[4];
+    static uint64_t viewport_serial=2;
+    if(viewport_words[0]!=scale_xy || viewport_words[1]!=scale_z ||
+       viewport_words[2]!=trans_xy || viewport_words[3]!=trans_z){
+        viewport_words[0]=scale_xy;viewport_words[1]=scale_z;
+        viewport_words[2]=trans_xy;viewport_words[3]=trans_z;viewport_serial+=2;
+    }
+    const uint64_t view_id=viewport_serial|!!center_ui;
     for(unsigned i=0;i<count;i++) {
-        clip_vertex* v=&polygon[side][i];xb_gpu_vertex* d=&projected[i];
-        if(v->clip[3]<=0)return;
-        float q=1.0f/v->clip[3];
-        d->x=v->clip[0]*q*sx+tx;d->y=-v->clip[1]*q*sy+ty;d->z=v->clip[2]*q*sz+tz;
-        d->x=xb_aspect_ui_x(d->x,center_ui);
-        d->q=(other_hi&0x80000)?q:1;
-        d->s=shift_coord(v->st[0]*ss,td->shift_s)-td->left*0.25f;
-        d->t=shift_coord(v->st[1]*ts,td->shift_t)-td->top*0.25f;
-        __builtin_memcpy_inline(d->color,v->color,sizeof(d->color));
+        xb_gpu_vertex* d=&projected[i];
+        xb_vertex* original=crossing?NULL:&vertices[indices[i]];
+        if(original && original->screen_view==view_id){
+            d->x=original->screen[0];d->y=original->screen[1];d->z=original->screen[2];d->q=original->screen[3];
+        }else{
+            if(original)resolve_world_vertex(original);
+            const float* clip=original?original->clip:polygon[side][i].clip;
+            if(clip[3]<=0)return;
+            d->q=1.0f/clip[3];
+            d->x=xb_aspect_ui_x(clip[0]*d->q*sx+tx,center_ui);
+            d->y=-clip[1]*d->q*sy+ty;d->z=clip[2]*d->q*sz+tz;
+            if(original){
+                original->screen[0]=d->x;original->screen[1]=d->y;original->screen[2]=d->z;
+                original->screen[3]=d->q;original->screen_view=view_id;
+            }
+        }
+        if(!(other_hi&0x80000))d->q=1;
+    }
+    int tested_face=count==3 && !shade_only;
+    if(tested_face && culled_face(projected)){if(census)census[7]++;return;}
+    for(unsigned i=0;i<count;i++){
+        xb_gpu_vertex* d=&projected[i];
+        const float* st;
+        if(crossing){
+            st=polygon[side][i].st;
+            __builtin_memcpy_inline(d->color,polygon[side][i].color,sizeof(d->color));
+        }else{
+            xb_vertex* v=&vertices[indices[i]];
+            st=v->st;vertex_color(d->color,triangle_color(v,&vertices[a],primitive,fog_blend));
+        }
+        d->s=shift_coord(st[0]*ss,td->shift_s)-td->left*0.25f;
+        d->t=shift_coord(st[1]*ts,td->shift_t)-td->top*0.25f;
     }
     void (*submit)(unsigned,unsigned,unsigned,uint32_t,int,const int*,const xb_gpu_vertex*)=
         center_ui ? xb_gpu_ui_triangle : xb_gpu_triangle;
     for(unsigned i=1;i+1<count;i++) {
-        xb_gpu_vertex tri[3]={projected[0],projected[i],projected[i+1]};
+        xb_gpu_vertex fan[3],*tri=projected;
+        if(i!=1){
+            fan[0]=projected[0];fan[1]=projected[i];fan[2]=projected[i+1];tri=fan;
+        }
         if(shade_only)observe_overlay(rdram,1,
             fminf(tri[0].x,fminf(tri[1].x,tri[2].x)),fminf(tri[0].y,fminf(tri[1].y,tri[2].y)),
             fmaxf(tri[0].x,fmaxf(tri[1].x,tri[2].x)),fmaxf(tri[0].y,fmaxf(tri[1].y,tri[2].y)),vertices[a].rgba);
@@ -607,8 +879,7 @@ static void triangle_impl(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
               a1,fmaxf(tri[0].y,fmaxf(tri[1].y,tri[2].y)),vertices[a].rgba,
               sote_video_status.w0,0,0,geometry,8,vertices[b].rgba,vertices[c].rgba,center_ui);
         }
-        float area=(tri[1].x-tri[0].x)*(tri[2].y-tri[0].y)-(tri[1].y-tri[0].y)*(tri[2].x-tri[0].x);
-        if(area==0 || ((geometry&0x1000)&&area<0) || ((geometry&0x2000)&&area>0)) {
+        if(!tested_face && culled_face(tri)) {
             if(census)census[7]++;continue;
         }
         if(census) {
@@ -621,9 +892,9 @@ static void triangle_impl(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
             for(unsigned j=0;j<3;j++){tri[j].color[0]=1;tri[j].color[1]=0;tri[j].color[2]=1;tri[j].color[3]=1;}
             sote_lit_probe[1]++;
             for(unsigned j=0;j<3;j++)__builtin_memcpy_inline((void*)&sote_lit_probe[2+j*3],&tri[j].x,3*sizeof(float));
-            if(test_late_lit && test_lit_count<1024){__builtin_memcpy_inline(test_lit_triangles+test_lit_count*3,tri,sizeof(tri));test_lit_count++;}
+            if(test_late_lit && test_lit_count<1024){__builtin_memcpy_inline(test_lit_triangles+test_lit_count*3,tri,sizeof(fan));test_lit_count++;}
             submit(tile,0,1,other_lo&~0x5000u,4,scissor,tri);
-        } else submit(tile,(other_hi>>14)&3,levels,other_lo,texture_replace?7:upper_mip?5:shade_only?4:primitive_modulated?6:primitive_mask?2:texture_alpha?3:shade_alpha,scissor,tri);
+        } else submit(tile,(other_hi>>14)&3,levels,other_lo,mode,scissor,tri);
     }
 }
 static void triangle(uint8_t* rdram,unsigned a,unsigned b,unsigned c) {
@@ -720,11 +991,14 @@ static void list(uint8_t* rdram,uint32_t address,unsigned depth,unsigned* budget
     uint32_t pc=physical(address);
     for(;;) {
         if(!(*budget)--)xb_unsupported(0xE5000006);
-        uint32_t w0=word(rdram,pc),w1=word(rdram,pc+4),op=w0>>24;
+        if(pc&3)xb_unsupported(0xE5000002);
+        xb_rdram_offset(pc,8,XB_RDRAM_VIDEO);
+        uint32_t w0=xb_texture_read_word(rdram+pc),w1=xb_texture_read_word(rdram+pc+4),op=w0>>24;
         sote_video_status.pc=pc;sote_video_status.w0=w0;sote_video_status.w1=w1;
         sote_video_status.commands++;registers[op][0]=w0;registers[op][1]=w1;pc+=8;
-        if(xb_texture_command(rdram,w0,op==0xFD?physical(w1):w1))continue;
         switch(op) {
+        case 0xFD:case 0xF5:case 0xF2:case 0xF3:case 0xF4:case 0xF0:
+            xb_texture_command(rdram,w0,op==0xFD?physical(w1):w1);break;
         case 0:case 0xC0:case 0xE6:case 0xE7:case 0xE8:case 0xE9:break; /* Synchronization, no geometry. */
         case 0x06: if((w0>>16)&1){pc=physical(w1);}else list(rdram,w1,depth+1,budget);break;
         case 0xB8:return;
@@ -749,7 +1023,7 @@ static void list(uint8_t* rdram,uint32_t address,unsigned depth,unsigned* budget
         case 0xBD: {
             unsigned which=w1&1;
             if(!matrix_top[which])xb_unsupported(0xE500000C);
-            matrix_top[which]--;break;
+            matrix_top[which]--;current_world=NULL;break;
         }
         case 0x03: {
             unsigned type=(w0>>16)&255;sote_move_mem_counts[type]++;
@@ -761,20 +1035,25 @@ static void list(uint8_t* rdram,uint32_t address,unsigned depth,unsigned* budget
             else if((w0&255)==2) {
                 if(w1<0x80000020 || ((w1-0x80000000)&31))xb_unsupported(0xE5040006);
                 light_count=((w1-0x80000000)>>5)-1;if(light_count>=8)xb_unsupported(0xE5040006);
+                current_world=NULL;
+            } else if((w0&255)==8) {
+                fog_multiplier=(int16_t)(w1>>16);fog_offset=(int16_t)w1;
             } else if((w0&255)==10) {
                 unsigned index=((w0>>8)&65535)/32;if(index>=8)xb_unsupported(0xE5040006);
                 for(unsigned i=0;i<3;i++)lights[index].color[i]=(w1>>(24-i*8))&255;
+                current_world=NULL;
             }
             break;
-        case 0xB6:geometry&=~w1;break;
-        case 0xB7:geometry|=w1;break;
+        case 0xB6:if(geometry&w1&0x20000)current_world=NULL;geometry&=~w1;break;
+        case 0xB7:if(~geometry&w1&0x20000)current_world=NULL;geometry|=w1;break;
         case 0xBA:case 0xB9: {
             unsigned shift=(w0>>8)&255,length=w0&255;
             if(!length || length>32 || shift+length>32)xb_unsupported(0xE5000008);
             uint32_t mask=(uint32_t)(((1ULL<<length)-1)<<shift);
             uint32_t* state=op==0xBA?&other_hi:&other_lo;*state=(*state&~mask)|(w1&mask);break;
         }
-        case 0xBB:case 0xB3:case 0xB4:case 0xFC:case 0xF8:case 0xF9:case 0xFA:case 0xFB:break; /* State retained above. */
+        case 0xF8:xb_rdp_fog_color=w1;break;
+        case 0xBB:case 0xB3:case 0xB4:case 0xFC:case 0xF9:case 0xFA:case 0xFB:break; /* State retained above. */
         case 0xED:scissor[0]=((w0>>12)&0xfff)/4;scissor[1]=(w0&0xfff)/4;
             scissor[2]=((w1>>12)&0xfff)/4;scissor[3]=(w1&0xfff)/4;break;
         case 0xFE:sote_video_status.depth=physical(w1);break;
@@ -786,29 +1065,102 @@ static void list(uint8_t* rdram,uint32_t address,unsigned depth,unsigned* budget
         }
     }
 }
+static int frame_needs_comparison(uint8_t* rdram) {
+    extern volatile uint32_t sote_scene_fixture_status[4],sote_input_status[8];
+    unsigned event=MEM_HU(0,(int32_t)0x8013CE0E);
+    return event>0 && event<31 && !(test_checked&(1u<<event)) && event==sote_scene_fixture_status[2] &&
+           sote_input_status[0]-sote_scene_fixture_status[3]>=275 &&
+           MEM_W(0,(int32_t)0x800DD2BC)!=1 && MEM_HU(0,(int32_t)0x800DD2D0)!=1;
+}
+static void compare_frame(uint8_t* rdram) {
+    if(!verify_background)return;
+    unsigned event=MEM_HU(0,(int32_t)0x8013CE0E);
+    test_checked|=1u<<event;
+    if(!test_list_count || test_list_count>24){
+        xb_hardware_note("frame-list-overflow",event);
+        free(verify_background);verify_background=NULL;return;
+    }
+    /* Both replays use the completed frame's display lists while the guest is
+       stopped. Compare them with each other and with the original rendering. */
+    const unsigned bytes=pb_back_buffer_pitch()*pb_back_buffer_height();
+    uint8_t* live_output=malloc(bytes);
+    if(!live_output){
+        xb_hardware_note("frame-copy-unavailable",bytes);
+        free(verify_background);verify_background=NULL;return;
+    }
+    xb_hardware_note("original-rgb",xb_hardware_rgb_hash());
+    memcpy(live_output,pb_back_buffer(),bytes);
+    const int check_hangar=compare_hangar_culling && event==4 && !test_disable_dl_cull;
+    const int saved_disable_dl_cull=test_disable_dl_cull;
+    for(unsigned pass=0;pass<(check_hangar?4u:2u);pass++){
+        xb_gpu_verify_inline=pass==0;
+        xb_gpu_verify_unfogged=pass==3;
+        test_disable_dl_cull=saved_disable_dl_cull || pass==2;
+        unsigned rejected_before=sote_dl_cull_status[1];
+        xb_gpu_invalidate_state();
+        while(pb_busy())Sleep(0);
+        /* Space-flight effects blend over the previous contents. Replays
+           must see the same starting surface as the original display lists. */
+        memcpy(pb_back_buffer(),verify_background,bytes);
+        __asm__ volatile("sfence" ::: "memory");
+        xb_gpu_clear_depth(0,0,pb_back_buffer_width(),pb_back_buffer_height());
+        for(unsigned n=0;n<test_list_count;n++){
+            unsigned remaining=100000;
+            if ((int)n == replay_star_task) xb_gpu_starfield(rdram, &stars);
+            list(rdram,test_lists[n],0,&remaining);
+            xb_gpu_flush();
+            while(pb_busy())Sleep(0);
+        }
+        const char* labels[]={"inline-rgb","array-rgb","unculled-rgb","unfogged-rgb"};
+        xb_hardware_note(labels[pass],xb_hardware_rgb_hash());
+        if(check_hangar && pass>0){
+            if(pass<=2)xb_hardware_note(pass==1?"rejected-lists":"bypassed-lists",sote_dl_cull_status[1]-rejected_before);
+            if(!xb_hardware_capture(39+pass))xb_hardware_note("capture-failed",pass);
+        }
+    }
+    xb_gpu_verify_unfogged=0;
+    test_disable_dl_cull=saved_disable_dl_cull;
+    /* Present and capture the real game's completed frame. */
+    memcpy(pb_back_buffer(),live_output,bytes);
+    __asm__ volatile("sfence" ::: "memory");
+    free(live_output);free(verify_background);verify_background=NULL;
+    xb_hardware_note("restored-rgb",xb_hardware_rgb_hash());
+    xb_hardware_note("compare-event",event);
+}
 void xb_video_task(uint8_t* rdram,const uint32_t* task) {
     if(task[0]!=1)xb_unsupported(0xE5000009);
-    xb_perf_scene(MEM_HU(0,(int32_t)0x8013CE0E));
+    unsigned event=MEM_HU(0,(int32_t)0x8013CE0E);
+    mission_distance_scale=xb_camera_distance_scale(event);
+    if(!sote_video_status.tasks)xb_texture_track_sources=xb_hd_session_active();
+    world_gameplay=test_world_shader && xb_mission_camera(event) && MEM_W(0,(int32_t)0x800DD2BC)!=1;
+    xb_perf_scene(event);
     unsigned serial=sote_video_status.tasks+1;
+    if(xb_hardware_test && serial<=12)xb_hardware_note("task",serial);
     sote_graphics_tasks[serial%4][0]=serial;
     sote_graphics_tasks[serial%4][1]=task[12];
     sote_graphics_tasks[serial%4][2]=task[13];
     /* The game can submit multiple graphics tasks before requesting a VI
        swap. Keep their drawing in order on the same pending backbuffer. */
     if(!pending){
+        /* pb_finished queues its own idle-and-present command. Retire that
+           frame before choosing/checking a new target or recycling vertices.
+           CPU game and audio work between frames can overlap its raster time. */
+        if(gameplay_gpu_pending)retire_graphics_work();
         /* Local pbkit fixes dropped presentations. Keep asynchronous drawing,
            but never clear a buffer that the display still owns. */
         unsigned target=(uint32_t)pb_back_buffer()&0x03ffffff;
         unsigned wait_start=GetTickCount();
         sote_present_sync[0]=target;sote_present_sync[3]=1;
-        if(sote_video_status.presents && (VIDEOREG(PCRTC_START)==target || !xb_pb_ready_for_draw())) {
+        if(sote_video_status.presents && (VIDEOREG(PCRTC_START)==target)) {
             sote_scanout_waits++;
-            while(VIDEOREG(PCRTC_START)==target || !xb_pb_ready_for_draw()) {
+            uint64_t timer=xb_perf_begin();
+            while(VIDEOREG(PCRTC_START)==target) {
                 sote_present_sync[1]=VIDEOREG(PCRTC_START);
                 sote_present_sync[2]=GetTickCount()-wait_start;
                 if(sote_present_sync[2]>2000)xb_unsupported(0xE5000010);
                 Sleep(1);
             }
+            xb_perf_end(XB_PERF_SCANOUT,timer);
         }
         sote_present_sync[3]=0;
         xb_gpu_invalidate_state();pb_reset();pb_target_back_buffer();test_lit_count=0;
@@ -822,12 +1174,39 @@ void xb_video_task(uint8_t* rdram,const uint32_t* task) {
     unsigned budget=100000;
     task_rectangles=task_fills=0;
     uint64_t timer=xb_perf_begin();
+    if(compare_array_pixels){
+        if(!pending && frame_needs_comparison(rdram)){
+            test_list_count=0;replay_star_task=-1;
+            unsigned bytes=pb_back_buffer_pitch()*pb_back_buffer_height();
+            verify_background=malloc(bytes);
+            if(verify_background){
+                while(pb_busy())Sleep(0);
+                memcpy(verify_background,pb_back_buffer(),bytes);
+            }else xb_hardware_note("frame-copy-unavailable",bytes);
+        }
+        if(verify_background){
+            if(test_list_count<24)test_lists[test_list_count]=task[12];
+            test_list_count++;
+        }
+    }
+    /* The first task clears the destination. The retail CPU paints stars
+       before the second task submits the ships, scenery and HUD. */
+    if (pending && stars_pending && sote_video_status.color == stars.target) {
+        xb_gpu_starfield(rdram, &stars);
+        if (verify_background) replay_star_task = (int)test_list_count - 1;
+        stars_pending = 0;
+    }
     list(rdram,task[12],0,&budget);
+    if(xb_hardware_test && serial<=12)xb_hardware_note("listed",serial);
     xb_perf_end(XB_PERF_DISPLAY_LIST,timer);
-    timer=xb_perf_begin();
     xb_gpu_flush();
-    while(pb_busy())Sleep(0);
-    xb_perf_end(XB_PERF_TASK_WAIT,timer);
+    /* Display-list and guest vertices have been copied at this point. NV2A
+       reads the native ring and texture pools. The ring wrap, texture writes
+       and CPU framebuffer readbacks each fence before reusing their storage. */
+    if(xb_mission_camera(event) && MEM_W(0,(int32_t)0x800DD2BC)!=1)
+        gameplay_gpu_pending=1;
+    else retire_graphics_work();
+    if(xb_hardware_test && serial<=12)xb_hardware_note("drawn",serial);
     pending=1;sote_video_status.tasks++;
     trace(1,0);
 }
@@ -838,13 +1217,16 @@ void osViSwapBuffer_recomp(uint8_t* rdram,recomp_context* ctx) {
         if(test_late_lit){const int full[4]={0,0,320,240};for(unsigned i=0;i<test_lit_count;i++)xb_gpu_triangle(0,0,1,0,4,full,test_lit_triangles+i*3);}
         /* At this point all native gameplay/HUD art is queued. Mask it
            once, then allow the host pause/options overlay on top. */
+        if(compare_array_pixels)compare_frame(rdram);
+        uint64_t overlay_timer=xb_perf_begin();
         cockpit_before_host_overlays(rdram);
         xb_menu_draw(rdram);
         xb_budget_present(MEM_HU(0,(int32_t)0x8013CE0E),MEM_W(0,(int32_t)0x800DD2BC)==1);
         extern void xb_hd_probe_present(unsigned, unsigned);
         xb_hd_probe_present(MEM_HU(0,(int32_t)0x8013CE0E),MEM_W(0,(int32_t)0x800DD2BC)==1);
         xb_gpu_flush();
-        if(test_probe){pb_fill(0,0,8,8,0xffff0000);while(pb_busy())Sleep(0);}
+        xb_perf_end(XB_PERF_OVERLAYS,overlay_timer);
+        if(test_probe){xb_gpu_invalidate_state();pb_fill(0,0,8,8,0xffff0000);while(pb_busy())Sleep(0);}
         sote_video_capture[0]=(uint32_t)pb_back_buffer();
         sote_video_capture[1]=pb_back_buffer_width();sote_video_capture[2]=pb_back_buffer_height();
         sote_video_capture[3]=pb_back_buffer_pitch();
@@ -852,7 +1234,7 @@ void osViSwapBuffer_recomp(uint8_t* rdram,recomp_context* ctx) {
             sote_boot_ownership[2]++;
             sote_boot_ownership[3]+=VIDEOREG(PCRTC_START)==((uint32_t)pb_back_buffer()&0x03ffffff);
         }
-        if(xb_perf_enabled && MEM_HU(0,(int32_t)0x8013CE0E)==0) {
+        if(xb_perf_enabled==XB_PROFILE_LEGACY && MEM_HU(0,(int32_t)0x8013CE0E)==0) {
             while(pb_busy())Sleep(0);
             const volatile DWORD* surface=pb_back_buffer();
             unsigned stride=pb_back_buffer_pitch()/(xb_display_bpp/8),count=0,hash=2166136261u;
@@ -865,10 +1247,17 @@ void osViSwapBuffer_recomp(uint8_t* rdram,recomp_context* ctx) {
             record[0]=sote_video_status.presents;record[1]=(uint32_t)surface;
             record[2]=count;record[3]=hash;
         }
+        if(xb_hardware_test){
+            uint64_t sample_timer=xb_perf_begin();
+            xb_hardware_frame(rdram,sote_video_status.presents);
+            xb_perf_end(XB_PERF_TEST_SAMPLE,sample_timer);
+        }
         uint64_t timer=xb_perf_begin();
+        if(xb_hardware_test && sote_video_status.presents<12)xb_hardware_note("swap",sote_video_status.presents);
         while(pb_finished())Sleep(0);
+        if(xb_hardware_test && sote_video_status.presents<12)xb_hardware_note("submitted",sote_video_status.presents);
         xb_perf_end(XB_PERF_PRESENT_WAIT,timer);
-        current_framebuffer=next_framebuffer;pending=0;sote_video_status.presents++;
+        current_framebuffer=next_framebuffer;pending=0;stars_pending=0;sote_video_status.presents++;
         xb_perf_present();
         if(test_fx_hold && sote_fx_hold[0]==1) {
             /* Bounded private QA still frame AFTER normal submit and actual ownership;

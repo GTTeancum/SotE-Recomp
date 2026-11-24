@@ -577,7 +577,7 @@ int main(int argc, char** argv) {
         for (int row = 0; row < 80; ++row)
             title.half(0x80111110 + row * 4, 0xfc18);
         sote_capture_menu(title.bytes.data());
-        check(latest_screen_is(sote::menu_skin::Screen::Title), "native title publishes two-choice menu");
+        check(latest_screen_is(sote::menu_skin::Screen::Title), "native title publishes action menu");
         sote::graphics_menu::take_menu_sound();
         press(0x0400);
         sote_capture_menu(title.bytes.data());
@@ -585,7 +585,14 @@ int main(int argc, char** argv) {
         check(sote::graphics_menu::take_menu_sound(), "title selection queues retail sound");
         check(!sote::graphics_menu::take_menu_sound(), "menu cue drains exactly once");
         press(0x0400);
-        check(!sote::graphics_menu::take_menu_sound(), "unchanged title selection is silent");
+        sote_capture_menu(title.bytes.data());
+        check(latest_snapshot().focused_setting == 2, "Down highlights Exit to Desktop");
+        press(0x8000);
+        check(sote::graphics_menu::take_exit_request(), "confirm requests exit");
+        check(!sote::graphics_menu::take_exit_request(), "exit request is consumed once");
+        press(0x0800);
+        sote_capture_menu(title.bytes.data());
+        check(latest_snapshot().focused_setting == 1, "Up returns to Options");
         press(0x8000);
         sote_update_graphics_menu(title.bytes.data());
         title.native_options();
@@ -691,6 +698,21 @@ int main(int argc, char** argv) {
         bindings::NativeTable table;
         table.modern_foot = true;
         const auto modern_layout = bindings::make_layout(table);
+        for (int group : {1, 4}) {
+            bindings::Assignments defaults;
+            bindings::PhysicalInput raw{};
+            raw.connected = true;
+            raw.axes[2] = 18000;
+            raw.axes[3] = -12000;
+            auto mapped = defaults.apply(raw, modern_layout[group]);
+            check(mapped.axes[2] == raw.axes[2] && mapped.axes[3] == raw.axes[3] &&
+                !mapped.axes[0] && !mapped.axes[1],
+                "flight free look retains analog axes without steering");
+            raw = {}; raw.connected = true; raw.buttons[8] = 1;
+            mapped = defaults.apply(raw, modern_layout[group]);
+            check(mapped.buttons[8] && !mapped.axes[2] && !mapped.axes[3],
+                "flight view click remains separate from free look");
+        }
         for (int group : {1, 2, 4}) {
             check(modern_layout[group][0].targets[0].front() == bindings::key('W') &&
                 modern_layout[group][2].targets[0].front() == bindings::key('A'),

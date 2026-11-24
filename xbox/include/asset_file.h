@@ -4,6 +4,9 @@
 #define XB_ASSET_MAX_BYTES (4u*1024u*1024u)
 /* Initialize once in bootstrap before renderer workers run. */
 void xb_asset_io_init(void);
+void xb_asset_open_bundle(const void* slots,unsigned slot_bytes,const void* hashes,unsigned hash_bytes);
+int xb_asset_read_hd(unsigned asset,const char* path,const char* legacy,void* dst,
+                     uint32_t size,uint32_t begin,uint32_t bytes);
 /* Return 1 only when exact index size was verified and every byte was read.
    Caller owns capacity, invalidates old readers before entry, and never
    publishes a partially transferred slot. Optional legacy path is tried

@@ -12,7 +12,7 @@ passes its SAN filename to the movie player at `0x464460`.
 
 | Movie | PC event | N64 runtime placement | Evidence in this project |
 | --- | ---: | --- | --- |
-| `L01INTRO.SAN` | 3 | 2 | Hoth boot film before title/selection. |
+| `L01INTRO.SAN` | 3 | 2 → 3 | Confirming Battle of Hoth on the level screen plays the film before mission loading. In PC mode the pre-title Part I crawl leads to the title, with the original comic as fallback if the Hoth film cannot open. |
 | `L02INTRO.SAN` | 4 | 4 | Escape opening before mission dialogue. |
 | `L03INTRO.SAN` | 6 | 6 | Asteroid Field approach before briefing. |
 | `L04INTRO.SAN` | 8 | 7 | Ord Mantell story before playable train event 8. |
@@ -22,6 +22,16 @@ passes its SAN filename to the movie player at `0x464460`.
 | `L07INTRO.SAN` | 20 | 18 or 19 | Freighter story before interior/event 20; direct selection enters 19. |
 | `L08INTRO.SAN` | 25 | 24 | Sewers story before objective/event 25. |
 | `L10INTRO.SAN` | 29 | 28 | Skyhook story before turret/event 29. |
+
+**Hoth timing, November 21 (#26).** A Windows run went through the Part I
+crawl, title, saved player and Battle of Hoth selection. Confirming the
+mission started the 1,239-frame film. The game frame stayed at 4,262 until
+the film finished, SDL received non-silent movie audio, and event 3 loaded.
+A separate run skipped the film and entered the same mission. Leaving the
+title idle launched the native demo without the Hoth film. Choosing Echo Base
+started only its own film. With N64 selected or the Hoth SAN missing, the
+original pre-title comic reached its native background draw. Run logs are
+under `.local/issue26/`.
 
 The Freighter's second entry has now been checked through the complete film:
 a direct PC-mode N64 event-18 replay starts `L07INTRO.SAN`, advances straight
@@ -161,7 +171,7 @@ Original N64 mode repeats the same physical trigger and native command 10
 at VI 1700, starts no SAN, and renders the native arena/Slave I camera reveal
 at present 1800 (`gall_lift_n64_confirmed_20261008/`).
 Reproduction: `tools/diagnose_san_placement.ps1 -ExePath
-build/runtime/Release/sote_recomp.exe -PlacePlayer '15:1200:-139:268:520'
+'build/runtime/Release/Shadows of the Empire.exe' -PlacePlayer '15:1200:-139:268:520'
 -DirectEventOnly -EventJumps '600:15' -TraceGallBoss -AudioProbe -StopVi 2300
 -CapturePresents '1500,1700'` with a fresh output directory and the existing
 SAN cache beside the runtime executable.

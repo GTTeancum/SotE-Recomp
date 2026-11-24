@@ -3,7 +3,7 @@
 
 No ROM, SDL, full RT64 build, GPU, or game executable is required. The fixture
 uses the shipped top-level sote_recomp include block and RT64 shader-generation
-functions verbatim. Only menu_skin's CPU surface provider is stubbed.
+functions verbatim. The probe stubs the game state consumed by the renderer.
 
 On Linux, --dxil-branch also compiles the _WIN32-only renderer branch with the
 host compiler; that is NOT an MSVC/Windows binary or graphics-driver test.
@@ -19,6 +19,9 @@ import sys
 PROBE = r'''
 #include "menu_renderer.hpp"
 #include "menu_skin.hpp"
+#include "modern_controls.hpp"
+#include "control_bindings.hpp"
+#include "san_movies.hpp"
 #include "rhi/rt64_render_hooks.h"
 #include "shaders/FullScreenVS.hlsl.spirv.h"
 #include "shaders/TextureCopyPS.hlsl.spirv.h"
@@ -39,7 +42,16 @@ namespace sote::menu_skin {
 void set_renderer_available(bool state) { available = state; }
 std::shared_ptr<const Snapshot> latest() { return {}; }
 Image render(const Snapshot&, unsigned, unsigned) { return {}; }
+std::shared_ptr<const NativeText> latest_native_text() { return {}; }
+void composite_native_text(Image&, const NativeText&) {}
+uint64_t font_revision() { return 0; }
 }
+namespace sote::san_movies { MovieFrame latest_frame() { return {}; } }
+namespace sote::modern_controls {
+bool on_foot_active() { return false; }
+bool reticle_visible() { return false; }
+}
+namespace sote::control_bindings { bool context_active(Context) { return false; } }
 int main() {
     const unsigned char spirv_magic[] = {0x03, 0x02, 0x23, 0x07};
     require(FullScreenVSBlobSPIRV_size == sizeof(FullScreenVSBlobSPIRV), "vertex SPIR-V C linkage and size");
@@ -104,6 +116,7 @@ set(RT64_DIR "${{SOTE_SOURCE_ROOT}}/third_party/rt64")
 set(N64_MODERN_RUNTIME "${{SOTE_SOURCE_ROOT}}/third_party/N64ModernRuntime")
 add_subdirectory(rt64 "${{CMAKE_BINARY_DIR}}/rt64")
 add_executable(sote_recomp "${{SOTE_SOURCE_ROOT}}/src/menu_renderer.cpp" probe.cpp)
+set_target_properties(sote_recomp PROPERTIES OUTPUT_NAME menu_shader_probe)
 {dependency}
 {includes}
 target_include_directories(sote_recomp PRIVATE "${{SOTE_SOURCE_ROOT}}/src")
@@ -162,7 +175,7 @@ endif()
         print("PASS: original missing shader header failure reproduced.")
         return 0
     suffix = ".exe" if os.name == "nt" else ""
-    candidates = [build / ("sote_recomp" + suffix), build / "Release" / ("sote_recomp" + suffix)]
+    candidates = [build / ("menu_shader_probe" + suffix), build / "Release" / ("menu_shader_probe" + suffix)]
     executable = next((p for p in candidates if p.is_file()), None)
     if not executable:
         raise RuntimeError("Build returned success without the probe executable.")

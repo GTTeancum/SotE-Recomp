@@ -3,6 +3,9 @@
 
 #include <cmath>
 #include <cstring>
+#ifdef SOTE_XBOX
+#include "rdram_guard.h"
+#endif
 
 extern "C" void func_800BBAA0(uint8_t*, recomp_context*);
 
@@ -16,6 +19,9 @@ constexpr uint32_t arena_base = 0x801158E0, arena_size = 0x139C8;
 constexpr uint32_t viewport = 0x800E7AE0, mesh_stack_flag = 0x800E7C38;
 
 bool valid(uint32_t addr, unsigned bytes) {
+#ifdef SOTE_XBOX
+    if (addr < 0x80000000U || !xb_rdram_range_valid(addr-0x80000000U,bytes,xb_rdram_committed_limit)) return false;
+#endif
     return !(addr & 3) && addr >= 0x80000000U && addr <= 0x80800000U - bytes;
 }
 template<class T> T read(const uint8_t* ram, uint32_t addr) {
@@ -39,21 +45,23 @@ uint32_t child(const uint8_t* ram, uint32_t transform, unsigned index) {
 // game's own bounds, submeshes, material bindings, vertices and triangles.
 struct RightArm {
     uint32_t wrist, forearm, hand, blaster;
-    bool resolve(const uint8_t* ram, uint32_t player) {
-        if (!valid(player, 0x258) || read<uint32_t>(ram, player) != 0x48756D6E) return false;
-        const auto chest = read<uint32_t>(ram, player + 0x254);
+    bool resolve(const uint8_t* ram, uint32_t player, bool train) {
+        if (!valid(player, train ? 0x264 : 0x258) ||
+            read<uint32_t>(ram, player) != (train ? 0x48756D54u : 0x48756D6Eu)) return false;
+        const auto chest = read<uint32_t>(ram, player + (train ? 0x260 : 0x254));
         const auto shoulder = child(ram, chest, 0);
         const auto elbow = child(ram, shoulder, 0);
         wrist = child(ram, elbow, 0);
         forearm = child(ram, elbow, 1);
         hand = child(ram, wrist, 0);
-        blaster = child(ram, wrist, 1);
-        for (auto part : {forearm, hand, blaster}) {
+        // The train actor has a single wrist mesh containing both glove and gun.
+        blaster = train ? 0 : child(ram, wrist, 1);
+        const auto mesh_valid = [ram](uint32_t part) {
             if (!valid(part, 0x18) || read<uint16_t>(ram, part) != 0x3064) return false;
             const auto groups = read<uint32_t>(ram, part + 0xC);
-            if (!groups || groups > 8 || !valid(read<uint32_t>(ram, part + 0x10), groups * 4)) return false;
-        }
-        return true;
+            return groups && groups <= 8 && valid(read<uint32_t>(ram, part + 0x10), groups * 4);
+        };
+        return mesh_valid(forearm) && mesh_valid(hand) && (train || mesh_valid(blaster));
     }
 };
 
@@ -114,10 +122,13 @@ void draw_part(uint8_t* ram, recomp_context& ctx, uint32_t scratch_node, uint32_
 }
 
 extern "C" void sote_draw_first_person_blaster(uint8_t* ram, void* context) {
-    const auto pose = sote::first_person_blaster::animation.current();
-    if (!pose.visible || read<uint32_t>(ram, 0x800DD2B0) != 2 || read<uint16_t>(ram, 0x8018DDE8) != 0) return;
+    auto pose = sote::first_person_blaster::animation.current();
+    if (!pose.visible || read<uint32_t>(ram, 0x800DD2B0) != 2) return;
+    const bool train = read<uint16_t>(ram, 0x8013CE0E) == 8;
+    if (train ? read<uint32_t>(ram, 0x800D08A8) != 4 :
+                (read<uint16_t>(ram, 0x8018DDE8) != 0 || pose.player != read<uint32_t>(ram, 0x80112B30))) return;
     RightArm arm{};
-    if (!arm.resolve(ram, read<uint32_t>(ram, 0x80112B30))) return;
+    if (!arm.resolve(ram, pose.player, train)) return;
     auto ctx = *static_cast<recomp_context*>(context);
     const auto stack = static_cast<uint32_t>(ctx.r29);
     const auto frame = read<uint32_t>(ram, frame_pointer);
@@ -136,7 +147,34 @@ extern "C" void sote_draw_first_person_blaster(uint8_t* ram, void* context) {
     // 60 degrees vertically, 4:3 before RT64's widescreen correction, near 4 / far 320.
     const Matrix projection = {{{1.299038f, 0, 0, 0}, {0, 1.732051f, 0, 0},
                                {0, 0, -1.025316f, -1}, {0, 0, -8.101266f, 0}}};
-    const auto hand = wrist_in_view(pose);
+    // HumT is authored at 3/5 the size of HumN, including the wrist mesh
+    // and skeleton translations. Normalize both before posing the weapon.
+    const float scale = train ? 5.f / 3.f : 1.f;
+    const auto skeleton = read<uint32_t>(ram, pose.player + (train ? 0x19c : 0x188));
+    const auto hips = child(ram, skeleton, 0);
+    const auto spine = child(ram, hips, 2);
+    const auto chest = child(ram, spine, 0);
+    const auto shoulder = child(ram, chest, 0);
+    if (valid(shoulder, 0x48) && read<uint16_t>(ram, shoulder) == 0xD065) {
+        // Follow Dash's animated right shoulder in actor space, before the
+        // actor's world transform moves him with the train. The translations
+        // between bones are fixed; the parent rotations produce the stride.
+        std::array<float, 3> position{};
+        for (uint32_t joint : {shoulder, chest, spine, hips}) {
+            const auto local = position;
+            for (unsigned i = 0; i < 3; ++i) {
+                position[i] = read<float>(ram, joint + 0x38 + 4 * i);
+                for (unsigned j = 0; j < 3; ++j)
+                    position[i] += local[j] * read<float>(ram, joint + 0x14 + 4 * (3*j + i));
+            }
+        }
+        // Neutral shoulder coordinates in HumN bone units.
+        pose.sway = scale * position[0] + 3.77506f;
+        pose.lift = scale * position[2] - 10.54454f;
+    }
+    auto hand = wrist_in_view(pose);
+    for (unsigned row = 0; row < 3; ++row)
+        for (unsigned col = 0; col < 3; ++col) hand[row][col] *= scale;
     if (!write_matrix(ram, projection_addr, projection) || !write_matrix(ram, wrist, hand) ||
         !write_matrix(ram, elbow, product(elbow_from_wrist(ram, arm.wrist), hand))) return;
     std::memcpy(ram + (vp & 0x7fffff), ram + (viewport & 0x7fffff), 16);
@@ -155,7 +193,7 @@ extern "C" void sote_draw_first_person_blaster(uint8_t* ram, void* context) {
     draw_part(ram, ctx, scratch, arm.forearm);
     command(ram, 0x01020040, wrist);
     draw_part(ram, ctx, scratch, arm.hand);
-    draw_part(ram, ctx, scratch, arm.blaster);
+    if (arm.blaster) draw_part(ram, ctx, scratch, arm.blaster);
     write(ram, mesh_stack_flag, old_stack);
     command(ram, 0xBD000000, 0);
     command(ram, 0x01030040, frame + 0xC0);
@@ -166,12 +204,14 @@ extern "C" void sote_draw_first_person_blaster(uint8_t* ram, void* context) {
     write(ram, 0x80192F44, UINT32_MAX);
     static const bool trace=std::getenv("SOTE_TRACE_FIRST_PERSON_BLASTER")!=nullptr;
     if (trace) {
+        ::printf("[sote][blaster-pose] frame=%u sway=%.5f lift=%.5f recoil=%.3f\n",
+            read<uint32_t>(ram, 0x8018E9B0), pose.sway, pose.lift, pose.recoil);
         static int previous=-1;
         const int state=pose.flash ? 2 : std::hypot(pose.lift,pose.sway)>.08f;
         if (state!=previous) {
             previous=state;
-            std::printf("[sote][blaster-instance] forearm=%08X hand=%08X blaster=%08X motion=%d recoil=%.3f\n",
-                arm.forearm,arm.hand,arm.blaster,state,pose.recoil);
+            ::printf("[sote][blaster-instance] forearm=%08X hand=%08X blaster=%08X motion=%d recoil=%.3f\n",
+                arm.forearm,arm.hand,train ? arm.hand : arm.blaster,state,pose.recoil);
         }
     }
 }

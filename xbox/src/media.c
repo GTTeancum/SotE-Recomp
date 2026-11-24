@@ -4,6 +4,30 @@ extern volatile uint32_t sote_input_status[8];
 /* Observe native communicator timing/input without advancing its state. */
 volatile uint32_t sote_communicator_trace[64][10];
 static unsigned comm_serial,last_poll,last_state,last_input;
+static unsigned was_a,consume_a,advance;
+unsigned xb_dialogue_buttons(uint8_t* rdram,unsigned buttons) {
+    unsigned a=buttons&0x8000;
+    int state=MEM_H(0,(int32_t)0x800DD2D0);
+    unsigned word=MEM_W(0,(int32_t)0x800D07FC);
+    int visible=MEM_W(0,(int32_t)0x800D07F0)!=-1 && (int32_t)word>0;
+    int dialogue=MEM_H(0,(int32_t)0x8013CE0E)!=2 && MEM_W(0,(int32_t)0x800DD2BC)!=1 &&
+        (state==1 || ((state==0 || state==10) && visible));
+    if(!a)consume_a=0;
+    if(a && !was_a && dialogue){consume_a=1;advance=1;}
+    was_a=a;
+    return consume_a?(buttons&~0x8000u):buttons;
+}
+uint32_t sote_take_communicator_advance(void) {
+    unsigned pending=advance;advance=0;return pending;
+}
+void sote_communicator_input_state(uint8_t* rdram) {
+    int state=MEM_H(0,(int32_t)0x800DD2D0);
+    if(state!=1 && sote_take_communicator_advance() && (state==0 || state==10)){
+        MEM_W(0,(int32_t)0x800D07FC)=0;
+        MEM_H(0,(int32_t)0x800DD2D0)=0;
+    }
+}
+
 /* Native media hooks only. Direct SAN integration remains pending. */
 volatile struct {uint32_t frames,text,cues,intro_sprites;} sote_media_status;
 void sote_pc_voice_frame(uint8_t* rdram){

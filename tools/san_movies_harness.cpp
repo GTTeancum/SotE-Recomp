@@ -188,6 +188,10 @@ int main(int argc, char** argv) {
         "missing SAN lookup is empty");
 
     sote::san_movies::initialize(scratch);
+    fs::create_directories(scratch / "Sdata");
+    write_file(scratch / "Sdata/truncated.SAN", {'A','N','I','M',0,0,0,0});
+    check(!sote::san_movies::can_play_movie("truncated.SAN"), "unplayable film preserves native comic");
+    check(!sote::san_movies::can_play_movie("missing.SAN"), "absent film preserves native comic");
     check(!sote::san_movies::play_movie("missing.SAN"), "missing SAN fails without cache fallback");
     if (argc > 2 && fs::is_directory(argv[2])) {
         const auto runtime = fs::path{argv[2]}.parent_path();
@@ -200,6 +204,8 @@ int main(int argc, char** argv) {
             check(first.valid(), "direct decoder supplies a video frame");
             const auto token = sote::san_movies::playback_token();
             check(token != 0, "direct playback receives a token");
+            check(sote::san_movies::can_play_movie("L01INTRO.SAN") &&
+                sote::san_movies::playback_token() == token, "probing Hoth leaves current movie playing");
             (void)sote::san_movies::next_audio();
             std::this_thread::sleep_for(std::chrono::milliseconds(150));
             const auto second = sote::san_movies::latest_frame();

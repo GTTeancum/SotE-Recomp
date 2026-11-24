@@ -1,14 +1,9 @@
-/* Xbox host-only presentation port of PC src/menu_canvas.cpp at 8016d37.
-   Layout coordinates, palette, panels and focus chrome are intentionally the
-   PC design. Platform exclusions are supplied by the caller. The PC960x540
-   layout coordinates map into the conservative SD544x408 safe rectangle.
-   Glyph aspect is retained with vertical scale and width fitting. This
-   disclosed4:3 readability adaptation is not Xbox certification.
-   Render at native 640x480 so original glyph detail is not lost to a
-   320x240 downsample followed by 2x display expansion. */
+/* Xbox rasterizer for the PC menu layout. Use original ROM glyphs and the
+   central 4:3 safe area at the active output resolution. */
 #include "rdram_guard.h"
 #include "menu_canvas_xbox.h"
 #include "gpu.h"
+#include "display_mode.h"
 #include <stddef.h>
 #include <string.h>
 #include <math.h>
@@ -16,12 +11,12 @@
 typedef uint32_t Color; /* RRGGBBAA, as in the PC canvas. */
 static const Color gold=0xA8802EFF,green=0x79F06AFF,teal=0x3F8078FF;
 static const Color cyan=0x6FE9FFFF,purple=0x6A63C9FF;
-enum { CANVAS_WIDTH=640, CANVAS_HEIGHT=480 };
-static uint32_t pixels[CANVAS_WIDTH*CANVAS_HEIGHT]; /* host-owned; never borrows guest allocations */
+static int canvas_width, band_height;
+static uint32_t pixels[640*480]; /* host-owned; never borrows guest allocations */
 typedef struct { int advance,by,bx,x,y,w,h; } Glyph;
 typedef struct { Glyph glyphs[95]; uint8_t alpha[64*128]; int line_height; } Font;
 static Font font;
-static const float scale=544.0f/960.0f,scale_y=408.0f/540.0f,offset_x=48.0f,offset_y=36.0f;
+static float scale,scale_y,offset_x,offset_y;
 static int imin(int a,int b){return a<b?a:b;}
 static int imax(int a,int b){return a>b?a:b;}
 static int iround(float v){return (int)floorf(v+0.5f);}
@@ -45,23 +40,23 @@ static int load_font(const uint8_t *r){
     return 1;
 }
 static void pixel(int x,int y,Color c,unsigned coverage){
-    if(x<0||x>=CANVAS_WIDTH||y<0||y>=CANVAS_HEIGHT)return;
+    if(x<0||x>=canvas_width||y<0||y>=band_height)return;
     unsigned a=(c&255)*coverage/255;if(!a)return;
-    uint32_t old=pixels[y*CANVAS_WIDTH+x];unsigned oa=old>>24,na=a+(oa*(255-a)+127)/255;
+    uint32_t old=pixels[y*canvas_width+x];unsigned oa=old>>24,na=a+(oa*(255-a)+127)/255;
     uint32_t v=na<<24;
     for(unsigned k=0;k<3;k++){
         unsigned channel=(c>>(24-k*8))&255,previous=(old>>(16-k*8))&255;
         unsigned out=(channel*a+previous*oa*(255-a)/255+na/2)/na;
         v|=out<<(16-k*8);
     }
-    pixels[y*CANVAS_WIDTH+x]=v;
+    pixels[y*canvas_width+x]=v;
 }
 static void rect(float x,float y,float w,float h,Color c){
     int x0=imax(0,iround(offset_x+x*scale)),y0=imax(0,iround(offset_y+y*scale_y));
-    int x1=imin(CANVAS_WIDTH,iround(offset_x+(x+w)*scale)),y1=imin(CANVAS_HEIGHT,iround(offset_y+(y+h)*scale_y));
+    int x1=imin(canvas_width,iround(offset_x+(x+w)*scale)),y1=imin(band_height,iround(offset_y+(y+h)*scale_y));
     /* Keep one-design-pixel dividers visible at SD output. */
-    if(w>0&&x1<=x0)x1=imin(CANVAS_WIDTH,x0+1);
-    if(h>0&&y1<=y0)y1=imin(CANVAS_HEIGHT,y0+1);
+    if(w>0&&x1<=x0)x1=imin(canvas_width,x0+1);
+    if(h>0&&y1<=y0)y1=imin(band_height,y0+1);
     for(int yy=y0;yy<y1;yy++)for(int xx=x0;xx<x1;xx++)pixel(xx,yy,c,255);
 }
 static void border(float x,float y,float w,float h,Color c,float t){
@@ -73,6 +68,14 @@ static void text(const char*s,float x,float y,float height,Color color,float max
     float ph=height*scale_y,width=measure(s,ph);if(width>max_width*scale)ph*=max_width*scale/width;
     if(ph<1)ph=1;
     float pen=offset_x+x*scale,top=offset_y+y*scale_y,k=ph/font.line_height;
+    if(xb_display_height==720){
+        /* Keep every atlas texel the same size when the whole label fits. */
+        int step=imax(1,iround(k));
+        float unit_width=measure(s,font.line_height);
+        if(unit_width>0 && unit_width*step>max_width*scale)
+            step=(int)(max_width*scale/unit_width);
+        if(step>0){k=(float)step;ph=k*font.line_height;}
+    }
     float measured=measure(s,ph);if(align==1)pen-=measured/2;else if(align==2)pen-=measured;
     if(box_height>0){
         float advance=0,left=1e9f,right=-1e9f,upper=1e9f,lower=-1e9f;
@@ -88,9 +91,7 @@ static void text(const char*s,float x,float y,float height,Color color,float max
     for(;*s;s++){unsigned c=(unsigned char)*s;if(c<32||c>126)continue;Glyph*g=&font.glyphs[c-32];
         int l=iround(pen-g->bx*k),r=iround(pen+(g->w-g->bx)*k),t=iround(top-g->by*k),b=iround(top+(g->h-g->by)*k);
         for(int yy=t;yy<b;yy++)for(int xx=l;xx<r;xx++){
-            /* Match PC original-font raster sampling. At native640x480 the
-               glyphs retain their interior gaps; max-coverage pooling into
-               a320px surface merged those gaps and made letters blocky. */
+            /* A whole-number k replicates the original alpha texels exactly. */
             int gx=imin(g->w-1,imax(0,(int)((xx-l)/k)));
             int gy=imin(g->h-1,imax(0,(int)((yy-t)/k)));
             pixel(xx,yy,color,font.alpha[(g->y+gy)*64+g->x+gx]);
@@ -211,13 +212,26 @@ static void bindings(const xb_menu_snapshot*s){
 int xb_menu_canvas_render(const uint8_t*r,const xb_menu_snapshot*s){
     if(!r||!s||!load_font(r))return 0;
     uint32_t background=s->page==XB_MENU_TITLE?0:(s->pause_background||s->page==XB_MENU_PAUSE?0xC0000000:0xFF000000);
-    for(unsigned i=0;i<CANVAS_WIDTH*CANVAS_HEIGHT;i++)pixels[i]=background;
-    if(s->page!=XB_MENU_TITLE&&!s->pause_background&&s->page!=XB_MENU_PAUSE)stars();
-    switch(s->page){
-        case XB_MENU_TITLE:title(s);break;case XB_MENU_OPTIONS:options(s);break;
-        case XB_MENU_SCHEMES:case XB_MENU_CHEATS:schemes(s);break;
-        case XB_MENU_PAUSE:pause_page(s);break;case XB_MENU_PROFILES:profiles(s);break;
-        case XB_MENU_BINDINGS:bindings(s);break;default:return 0;
+    /* A 960x720 raster fits 1:1 in the 720p UI area. Reuse the SD buffer
+       in three bands, each retired by the GPU before the next upload. */
+    int hd=xb_display_height==720;
+    int full_height=hd?720:480;
+    canvas_width=hd?960:640;
+    band_height=hd?240:480;
+    scale=canvas_width*.85f/960;
+    scale_y=full_height*.85f/540;
+    offset_x=canvas_width*.075f;
+    for(int band=0;band<full_height;band+=band_height){
+        offset_y=full_height*.075f-band;
+        for(int i=0;i<canvas_width*band_height;i++)pixels[i]=background;
+        if(s->page!=XB_MENU_TITLE&&!s->pause_background&&s->page!=XB_MENU_PAUSE)stars();
+        switch(s->page){
+            case XB_MENU_TITLE:title(s);break;case XB_MENU_OPTIONS:options(s);break;
+            case XB_MENU_SCHEMES:case XB_MENU_CHEATS:schemes(s);break;
+            case XB_MENU_PAUSE:pause_page(s);break;case XB_MENU_PROFILES:profiles(s);break;
+            case XB_MENU_BINDINGS:bindings(s);break;default:return 0;
+        }
+        xb_gpu_canvas(pixels,canvas_width,band_height,background,band,full_height);
     }
-    xb_gpu_canvas(pixels,CANVAS_WIDTH,CANVAS_HEIGHT,background);return 1;
+    return 1;
 }

@@ -16,10 +16,10 @@ int main(void){
     }
     assert(!xb_linear_rect(UINT_MAX,1,&p) && !xb_linear_rect(1,UINT_MAX,&p));
     assert(!xb_linear_rect(0,1,&p) && !xb_linear_rect(1,0,&p));
-    for(unsigned w=0;w<=641;w++)for(unsigned h=0;h<=481;h++){
+    for(unsigned w=0;w<=961;w++)for(unsigned h=0;h<=481;h++){
         assert(xb_linear_story(w,h)==(w>0 && h>0 && w<=320 && h<=240 && !(w&15)));
-        assert(xb_linear_canvas(w,h)==(w==640 && h==480));
+        assert(xb_linear_canvas(w,h)==((w==640 && h==480)||(w==960 && h==240)));
         if(xb_linear_story(w,h)||xb_linear_canvas(w,h))assert(w*h*4<=XB_LINEAR_UPLOAD_BYTES);
     }
-    puts("All 1,048,576 RDP tile extents + 309,444 story/canvas extents: same acceptance, all fit; 212 pages saved");
+    puts("All 1,048,576 RDP tile extents + SD and HD canvas bands fit; 212 pages saved");
 }

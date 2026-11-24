@@ -1,6 +1,8 @@
 #include "rdram_guard.h"
+#include "hardware_test.h"
 #include <cassert>
 #include <cstring>
+#include <mmintrin.h>
 #include "librecomp/rsp.hpp"
 extern RspExitReason aspMain(uint8_t*,uint32_t);
 extern "C" void xb_unsupported(uint32_t) __attribute__((noreturn));
@@ -30,7 +32,10 @@ extern "C" void xb_rsp_audio(uint8_t* rdram,const uint32_t* task) {
     xb_rdram_offset(task[12]&0x1fffffff, task[13], XB_RDRAM_SP);
     std::memcpy(dmem+0xFC0,task,64);
     dma_rdram_to_dmem(rdram,0,data,0xF80-1);
-    if(aspMain(rdram,task[4])!=RspExitReason::Broke)xb_unsupported(0xE4000003);
+    if(xb_audio_replay_poll)xb_hardware_capture_audio_task(rdram,dmem);
+    RspExitReason exit=aspMain(rdram,task[4]);
+    _mm_empty(); // Release the MMX/x87 register file for the game.
+    if(exit!=RspExitReason::Broke)xb_unsupported(0xE4000003);
 }
 extern "C" unsigned xb_rsp_selftest(uint8_t* rdram) {
     constexpr uint32_t data=0x780000,commands=0x77F000;

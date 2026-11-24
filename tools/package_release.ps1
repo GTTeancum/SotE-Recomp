@@ -18,12 +18,12 @@ if (-not $CrtDirectory) {
     $crt = Get-ChildItem -LiteralPath "$vs\VC\Redist\MSVC" -Directory | Where-Object { $_.Name -match '^14\.' } | Sort-Object Name -Descending | Select-Object -First 1
     $CrtDirectory = Join-Path $crt.FullName 'x64\Microsoft.VC143.CRT'
 }
-foreach ($name in @('sote_recomp.exe','SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll')) {
+$runtimeFiles = @('Shadows of the Empire.exe','SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll')
+foreach ($name in $runtimeFiles) {
     if (-not (Test-Path -LiteralPath "$buildDir\$name")) { throw "Missing runtime: $name" }
 }
 New-Item -ItemType Directory -Path $staging -Force | Out-Null
-Copy-Item -LiteralPath "$buildDir\sote_recomp.exe" -Destination "$staging\Shadows of the Empire.exe"
-foreach ($name in @('SDL2.dll','dxcompiler.dll','dxil.dll','sandec.dll')) { Copy-Item -LiteralPath "$buildDir\$name" -Destination $staging }
+foreach ($name in $runtimeFiles) { Copy-Item -LiteralPath "$buildDir\$name" -Destination $staging }
 foreach ($name in @('msvcp140.dll','msvcp140_1.dll','msvcp140_2.dll','msvcp140_atomic_wait.dll','msvcp140_codecvt_ids.dll','vcruntime140.dll','vcruntime140_1.dll','concrt140.dll','vcruntime140_threads.dll')) {
     Copy-Item -LiteralPath "$CrtDirectory\$name" -Destination $staging
 }

@@ -75,8 +75,8 @@ int main(void){
     assert(sote_budget_by_scene[4][1]==XB_BUDGET_TARGET+4096);
     /* At first-use the native liability is not real occupancy. Its release
        must exactly offset new real pages, including the vertex tail. */
-    assert(XB_NATIVE_GPU_ALL_PENDING==6668288 && sote_budget_native_gpu[0]==6668288);
-    assert(sote_budget_native_gpu[1]==0 && XB_VERTEX_RING_BYTES==196560);
+    assert(XB_NATIVE_GPU_ALL_PENDING==6864896 && sote_budget_native_gpu[0]==6864896);
+    assert(sote_budget_native_gpu[1]==0 && XB_VERTEX_RING_BYTES==393120);
     frees=4096;
     uint32_t cold_room=11u*1024*1024-XB_NATIVE_GPU_ALL_PENDING;
     assert(!xb_budget_optional_reserve(cold_room+1));
@@ -86,7 +86,7 @@ int main(void){
            sote_budget_native_gpu[0]==XB_NATIVE_GPU_ALL_PENDING);
     fail_native=0;
     const unsigned sites[]={XB_BUDGET_LINEAR,XB_BUDGET_TEXCACHE,XB_BUDGET_OVERSIZE,XB_BUDGET_VERTEX};
-    const unsigned bytes[]={1228800,4194304,1048576,196560};
+    const unsigned bytes[]={1228800,4194304,1048576,393120};
     unsigned pending=XB_NATIVE_GPU_ALL_PENDING;
     for(unsigned i=0;i<4;i++) {
         unsigned old=frees;
@@ -126,9 +126,9 @@ int main(void){
     for(unsigned i=0;i<3;i++)assert(!pthread_join(workers[i],NULL));
     assert(atomic_load(&admitted)==1 && !sote_budget_optional[6]);
     frees=1024; /* Native mandatory allocation is not denied at 60 MiB. */
-    assert(xb_budget_native_gpu_allocate(XB_BUDGET_VERTEX) && frees==976);
+    assert(xb_budget_native_gpu_allocate(XB_BUDGET_VERTEX) && frees==928);
     assert(!sote_budget_native_gpu[0] && sote_budget_native_gpu[3]==1);
-    puts("Native lazy GPU hold 6,668,288 B; correct page handoff/failure/repeat, no double count, native not gated: PASS");
+    printf("Native GPU reservation %u B, allocation and release checks passed\n",XB_NATIVE_GPU_ALL_PENDING);
     puts("Optional reservations: page rounding, one-MiB cushion, no double-spend, exact fit/over, failure and stale/full-ticket handling PASS");
     puts("64 MiB physical ledger, 60 MiB crossing, component units, per-site/scene/paused/repeat/optional marks, query errors, concurrent recording PASS");
 }

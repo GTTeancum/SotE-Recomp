@@ -1,5 +1,7 @@
 #include "modern_controls.hpp"
+#ifndef SOTE_XBOX
 #include "texture_proof_camera.hpp"
+#endif
 #include "controls_menu.hpp"
 
 #include <algorithm>
@@ -322,6 +324,27 @@ extern "C" void sote_modern_decode(uint8_t* ram, uint32_t object, uint32_t stack
     write<float>(ram, stack + 0x15C, std::fabs(frame.move.y));
 }
 
+extern "C" void sote_modern_move_magnitudes(uint8_t* ram, uint32_t object, uint32_t stack) {
+    using namespace sote::modern_controls;
+    if (!active || owner != object) return;
+    // The retail decoder boosts forward by 1.25 and snaps shallow strafing
+    // to 0.3. Keep its full running speed across the stick circle. Read its
+    // direction gates back so stun, death and scripted input locks still win.
+    constexpr float run_scale = 1.25f;
+    if (read<int16_t>(ram, stack + 0x172) || read<int16_t>(ram, stack + 0x170))
+        write<float>(ram, stack + 0x160, std::fabs(frame.move.x) * run_scale);
+    if (read<int16_t>(ram, stack + 0x17E) || read<int16_t>(ram, stack + 0x17C))
+        write<float>(ram, stack + 0x15C, std::fabs(frame.move.y) * run_scale);
+}
+
+// The retail drag calculation multiplies by another 0.9 when there is no
+// forward/back input. Keep that braking behavior for a released stick.
+extern "C" uint32_t sote_modern_strafing(uint8_t* ram, uint32_t object, uint32_t stack) {
+    using namespace sote::modern_controls;
+    return active && owner == object && frame.move.x != 0.0f &&
+        (read<int16_t>(ram, stack + 0x172) || read<int16_t>(ram, stack + 0x170));
+}
+
 extern "C" void sote_modern_train_begin(uint8_t* ram, uint32_t object) {
     sote_modern_begin(ram, object);
     // Train cameras have their own native update; never request the ordinary
@@ -420,9 +443,112 @@ extern "C" void sote_modern_camera_offset(uint8_t* ram, uint32_t object, uint32_
         write<float>(ram, cameras + 6*128 + 0x6C + axis*4,
             read<float>(ram, object + 0x118 + axis*4)*20.0f);
     }
+#ifndef SOTE_XBOX
     if (sote::texture_proof::apply(ram,object,stack)) {
         // 80069454 adds Modern's 1.2-unit shoulder lift immediately after
         // this hook; cancel it for the explicitly positioned proof camera.
         write<float>(ram,stack+0x94,read<float>(ram,stack+0x94)-1.2f);
+    }
+#endif
+}
+
+// Flight free look is applied only to the finished camera transform. Never
+// rotate the vehicle, its weapons, or the native controller's input vectors.
+namespace {
+struct FlightView {
+    uint32_t object=0, camera=0;
+    int event=-1, mode=-1;
+    float yaw=0, pitch=0;
+    float original[16]{}, applied[16]{};
+    bool saved=false;
+} flight_view;
+struct FlightVec { float x,y,z; };
+FlightVec operator+(FlightVec a,FlightVec b){return {a.x+b.x,a.y+b.y,a.z+b.z};}
+FlightVec operator-(FlightVec a,FlightVec b){return {a.x-b.x,a.y-b.y,a.z-b.z};}
+FlightVec operator*(FlightVec a,float b){return {a.x*b,a.y*b,a.z*b};}
+float flight_dot(FlightVec a,FlightVec b){return a.x*b.x+a.y*b.y+a.z*b.z;}
+bool flight_address(uint32_t a){return a>=0x80000000U && a<=0x807FFE00U;}
+}
+extern "C" void sote_flight_camera_begin(uint8_t* ram) {
+    using namespace sote::modern_controls;
+    // Restore only our own previous output; native transitions may already
+    // have replaced this slot. No offsets feed back into the next simulation.
+    auto& v=flight_view;
+    if(v.saved && flight_address(v.camera)) {
+        auto* matrix=ram+(v.camera&0x7FFFFF)+0x14;
+        if(std::memcmp(matrix,v.applied,sizeof(v.applied))==0)
+            std::memcpy(matrix,v.original,sizeof(v.original));
+    }
+    v.saved=false;
+}
+extern "C" void sote_flight_camera_owner(uint8_t* ram,uint32_t object,int context) {
+    using namespace sote::modern_controls;
+    int event=read<int16_t>(ram,0x8013CE0E);
+    if(!((event==3 && context==1)||(event==30 && context==4))) return;
+    // Native Hoth input is decoded only for the zero-index player vehicle.
+    if(!flight_address(object) || (event==3 && read<int16_t>(ram,object+4)!=0)) return;
+    if(flight_view.object!=object || flight_view.event!=event) {
+        sote_flight_camera_begin(ram);
+        flight_view={};flight_view.object=object;flight_view.event=event;
+    }
+}
+extern "C" void sote_flight_camera_apply(uint8_t* ram) {
+    using namespace sote::modern_controls;
+    auto& v=flight_view;
+    const int event=read<int16_t>(ram,0x8013CE0E);
+    const int mode=read<int32_t>(ram,0x800D08A8);
+    Input input;
+    {std::lock_guard lock{input_mutex};input=latest;}
+    if (event != v.event) {
+        v = {};
+        return;
+    }
+    if((event!=3 && event!=30) || !flight_address(v.object) ||
+        sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot)!=
+            sote::controls_menu::ControlScheme::Modern || !input.connected ||
+        (mode!=4 && mode!=6)) {
+        v.yaw=v.pitch=0;v.mode=-1;return;
+    }
+    if(v.mode!=mode){v.yaw=v.pitch=0;v.mode=mode;}
+    // Pausing does not accumulate stick motion or rotate the frozen view.
+    if(!read<int32_t>(ram,0x800DD2BC)) {
+        const auto tune=sote::controls_menu::modern_controls_tuning().on_foot;
+        const Stick look=shape_stick(input.look,tune.aim_deadzone,tune.aim_curve);
+        uint64_t bits=(uint64_t(read<uint32_t>(ram,0x8018E998))<<32)|read<uint32_t>(ram,0x8018E99C);
+        double dt;std::memcpy(&dt,&bits,sizeof(dt));
+        if(std::isfinite(dt)&&dt>0) {
+            dt=std::min(dt,0.1);
+            v.yaw=std::remainder(v.yaw+look.x*tune.yaw_speed*float(dt),360.0f);
+            v.pitch=std::clamp(v.pitch-look.y*(tune.invert_y?-1.f:1.f)*tune.pitch_speed*float(dt),-70.f,70.f);
+        }
+    }
+    // Preserve the native chase transform exactly at rest. Projecting the
+    // eye through a rounded camera basis can move it even at zero rotation.
+    if (v.yaw == 0.0f && v.pitch == 0.0f) return;
+    const uint32_t camera=read<uint32_t>(ram,0x800D08A4);
+    if(!flight_address(camera))return;
+    auto* matrix=ram+(camera&0x7FFFFF)+0x14;
+    std::memcpy(v.original,matrix,sizeof(v.original));
+    FlightVec r{v.original[0],v.original[1],v.original[2]};
+    FlightVec f{v.original[4],v.original[5],v.original[6]};
+    FlightVec u{v.original[8],v.original[9],v.original[10]};
+    for(float value:v.original)if(!std::isfinite(value))return;
+    constexpr float radians=3.14159265358979323846f/180.f;
+    const float cy=std::cos(v.yaw*radians),sy=std::sin(v.yaw*radians);
+    const float cp=std::cos(v.pitch*radians),sp=std::sin(v.pitch*radians);
+    const FlightVec nr=r*cy-f*sy, nf=(f*cy+r*sy)*cp+u*sp, nu=u*cp-(f*cy+r*sy)*sp;
+    auto rotate=[&](FlightVec a){return nr*flight_dot(a,r)+nf*flight_dot(a,f)+nu*flight_dot(a,u);};
+    std::memcpy(v.applied,v.original,sizeof(v.applied));
+    auto set=[&](int index,FlightVec a){v.applied[index]=a.x;v.applied[index+1]=a.y;v.applied[index+2]=a.z;};
+    set(0,nr);set(4,nf);set(8,nu);
+    if(mode==6) {
+        FlightVec pivot=read<FlightVec>(ram,v.object+0x50);
+        FlightVec eye{v.original[12],v.original[13],v.original[14]};
+        set(12,pivot+rotate(eye-pivot));
+    }
+    std::memcpy(matrix,v.applied,sizeof(v.applied));v.camera=camera;v.saved=true;
+    if(std::getenv("SOTE_TRACE_FLIGHT_LOOK")) {
+        std::printf("[sote][flight-look] event=%d mode=%d yaw=%.3f pitch=%.3f input=%.3f,%.3f forward=%.4f,%.4f,%.4f\n",
+            event,mode,v.yaw,v.pitch,input.look.x,input.look.y,nf.x,nf.y,nf.z);
     }
 }

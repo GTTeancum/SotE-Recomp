@@ -319,12 +319,12 @@ void return_footer(Canvas& c, const Row& row, const char* role, bool focused) {
     c.text(row.text, role, 480, 510, 24, focused ? cyan : teal, 432, 1);
 }
 void title(Canvas& c, const Snapshot& s) {
-    constexpr const char* labels[] = {"START GAME", "OPTIONS"};
-    constexpr const char* roles[] = {"title.start", "title.options"};
-    // Keep the two lines around the original Press Start position.
+    constexpr const char* labels[] = {"START GAME", "OPTIONS", "EXIT TO DESKTOP"};
+    constexpr const char* roles[] = {"title.start", "title.options", "title.exit"};
+    // Center the choices around the original Press Start position.
     constexpr float outline = 1.5f;
-    for (int i = 0; i < 2; ++i) {
-        const float y = 404.0f + i * 24;
+    for (int i = 0; i < 3; ++i) {
+        const float y = 392.0f + i * 24;
         for (int dy = -1; dy <= 1; ++dy) {
             for (int dx = -1; dx <= 1; ++dx) {
                 if (dx || dy)

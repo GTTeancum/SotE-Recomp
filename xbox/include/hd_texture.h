@@ -5,6 +5,8 @@
    GPU profiles are fixed at boot; UI changes apply after saving/restarting. */
 int xb_hd_texture(unsigned tile,unsigned tlut,unsigned width,unsigned height,unsigned levels,
                   uint32_t** pixels,unsigned* format);
+int xb_hd_rectangle(unsigned tile,unsigned tlut,unsigned width,unsigned height,int consecutive,
+                    uint32_t** pixels,unsigned* format);
 int xb_hd_pack_available(void);
 int xb_hd_session_active(void);
 unsigned xb_hd_boot_texture_slots(void);

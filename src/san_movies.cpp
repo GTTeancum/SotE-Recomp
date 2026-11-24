@@ -52,7 +52,6 @@ constexpr std::string_view expected_movies[] = {
 
 std::mutex playback_mutex;
 std::filesystem::path movie_runtime_root;
-MovieFrame current_frame;
 uint64_t frame_serial = 1;
 uint64_t movie_serial = 1;
 bool current_music_is_main_menu = false;
@@ -61,6 +60,7 @@ bool hold_last_frame = false;
 
 struct StreamPlayback {
     std::ifstream input;
+    MovieFrame frame;
     void* decoder = nullptr;
     sanio io{};
     std::deque<int16_t> audio;
@@ -249,6 +249,7 @@ void receive_video(void* user, unsigned char* data, uint32_t size,
         stream.failed = true;
         return;
     }
+    auto& current_frame = stream.frame;
     current_frame.width = width;
     current_frame.height = height;
     current_frame.rgba.resize(size_t(width) * height * 4);
@@ -273,8 +274,7 @@ void receive_video(void* user, unsigned char* data, uint32_t size,
     stream.frame_duration = duration ? duration / 1000000.0 : 1.0 / 15.0;
 }
 
-bool decode_frame_locked() {
-    auto& stream = *active_playback;
+bool decode_frame_locked(StreamPlayback& stream) {
     if (stream.done || stream.failed) return false;
     const int status = sandec_decode_next_frame(stream.decoder);
     if (status == SANDEC_DONE) { stream.done = true; return false; }
@@ -288,31 +288,33 @@ bool decode_frame_locked() {
     return true;
 }
 
-bool start_movie_locked(std::string_view name) {
-    hold_last_frame = false;
-    active_playback.reset();
-    current_frame = {};
+std::unique_ptr<StreamPlayback> open_movie_locked(std::string_view name) {
     const auto path = find_movie(movie_runtime_root, name);
-    if (path.empty()) return false;
-    active_playback = std::make_unique<StreamPlayback>();
-    auto& stream = *active_playback;
+    if (path.empty()) return nullptr;
+    auto playback = std::make_unique<StreamPlayback>();
+    auto& stream = *playback;
     stream.input.open(path, std::ios::binary);
     stream.io = {read_stream, receive_video, receive_audio, &stream, 0};
     if (!stream.input || sandec_init(&stream.decoder) != SANDEC_OK ||
         sandec_open(stream.decoder, &stream.io) != SANDEC_OK) {
-        active_playback.reset();
-        return false;
+        return nullptr;
     }
     stream.frames = std::max(0, sandec_get_framecount(stream.decoder));
     // Some files begin with palette/audio-only frames. Preserve their timeline.
-    while (!current_frame.valid() && decode_frame_locked()) {}
-    if (!current_frame.valid() || stream.failed) {
-        active_playback.reset(); current_frame = {}; return false;
-    }
+    while (!stream.frame.valid() && decode_frame_locked(stream)) {}
+    if (!stream.frame.valid() || stream.failed) return nullptr;
+    return playback;
+}
+
+bool start_movie_locked(std::string_view name) {
+    hold_last_frame = false;
+    active_playback = open_movie_locked(name);
+    if (!active_playback) return false;
+    auto& stream = *active_playback;
     stream.token = movie_serial++;
     stream.started = playback_now();
     std::printf("[sote][san] direct SAN playback: %s %ux%u frames=%u (no disk cache)\n",
-        path.filename().string().c_str(), current_frame.width, current_frame.height, stream.frames);
+        std::string(name).c_str(), stream.frame.width, stream.frame.height, stream.frames);
     std::fflush(stdout);
     return true;
 }
@@ -459,6 +461,11 @@ std::filesystem::path find_movie(
     return {};
 }
 
+bool can_play_movie(std::string_view name) {
+    std::lock_guard lock{playback_mutex};
+    return open_movie_locked(name) != nullptr;
+}
+
 bool play_movie(std::string_view name) {
     std::lock_guard lock{playback_mutex};
     queued_movies.clear();
@@ -487,8 +494,7 @@ bool play_startup_sequence() {
 
 bool stop_playback() {
     std::lock_guard lock{playback_mutex};
-    const bool was_active = current_frame.valid();
-    current_frame = {};
+    const bool was_active = active_playback != nullptr;
     active_playback = {};
     queued_movies.clear();
     hold_last_frame = false;
@@ -500,11 +506,11 @@ bool stop_playback() {
 
 bool finish_playback() {
     std::lock_guard lock{playback_mutex};
-    if (!active_playback || !current_frame.valid()) return false;
+    if (!active_playback) return false;
     hold_last_frame = true;
     active_playback->discard_audio = true;
     active_playback->audio.clear();
-    while (decode_frame_locked()) {}
+    while (decode_frame_locked(*active_playback)) {}
     active_playback->audio_frames = 0;
     active_playback->started = playback_now() -
         std::chrono::duration_cast<std::chrono::steady_clock::duration>(
@@ -514,12 +520,12 @@ bool finish_playback() {
 
 bool playback_active() {
     std::lock_guard lock{playback_mutex};
-    return current_frame.valid();
+    return active_playback != nullptr;
 }
 
 uint64_t playback_token() {
     std::lock_guard lock{playback_mutex};
-    return current_frame.valid() && active_playback ? active_playback->token : 0;
+    return active_playback ? active_playback->token : 0;
 }
 
 double playback_remaining_seconds() {
@@ -574,23 +580,21 @@ MovieFrame latest_frame() {
     if (active_playback) {
         const double elapsed = std::chrono::duration<double>(
             playback_now() - active_playback->started).count();
-        while (elapsed >= active_playback->frame_end && decode_frame_locked()) {}
+        while (elapsed >= active_playback->frame_end && decode_frame_locked(*active_playback)) {}
         if (active_playback->failed || (active_playback->done && !hold_last_frame && active_playback->audio.empty() &&
             elapsed >= std::max(active_playback->frame_end, active_playback->audio_frames / 22050.0))) {
-            current_frame = {};
             active_playback.reset();
             ++frame_serial;
             (void)start_next_queued_locked();
         }
     }
-    return current_frame;
+    return active_playback ? active_playback->frame : MovieFrame{};
 }
 
 void initialize(const std::filesystem::path& runtime_directory) {
     {
         std::lock_guard lock{playback_mutex};
             movie_runtime_root = runtime_directory;
-            current_frame = {};
             active_playback = {};
             queued_movies.clear();
             hold_last_frame = false;

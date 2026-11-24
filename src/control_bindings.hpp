@@ -117,6 +117,7 @@ bool capturing();
 EditorView editor_view();
 PhysicalInput remap(const PhysicalInput& input, bool native_menu_visible);
 bool context_active(Context context);
+bool on_foot_camera_cycle_only();
 uint16_t map_on_foot_buttons(uint16_t canonical);
 bool turret_skyhook_active();
 uint16_t bike_button(bool accelerate);

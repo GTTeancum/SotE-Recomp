@@ -56,7 +56,35 @@ retail_source=''.join(traced)
 anchor='sote_native_text_begin(rdram, (uint32_t)ctx->r5);'
 assert retail_source.count(anchor)==1
 retail_source=retail_source.replace(anchor,anchor+' if (xb_native_pause_heading(rdram, (uint32_t)ctx->r5)) return;')
-(OUT/'retail.c').write_text('#include "recomp.h"\n#include "funcs.h"\n#include "recomp_hooks.h"\nvoid xb_trace(uint32_t);\nint xb_native_pause_heading(uint8_t*,uint32_t);\n'+retail_source)
+# Apply the scale to consumers of the authored range. The retail camera keeps
+# its unmodified value so resetting the FOV cannot multiply a previous edit.
+for pc, load, register in (
+    ('800C1230', 'MEM_W(ctx->r29, 0X7C)', 'f6'),  # guPerspective zFar
+    ('800BAF40', 'MEM_W(ctx->r1, 0X2F20)', 'f10'),  # squared-distance visibility test
+):
+    anchor = re.search(r'// 0x' + pc + r':[^\n]+\n    ctx->' + register +
+                       r'\.u32l = ' + re.escape(load) + ';', retail_source)
+    assert anchor, f'Missing camera instruction {pc}'
+    scale = 'xb_camera_distance_scale(MEM_HU(0, (int32_t)0x8013CE0E))'
+    retail_source = retail_source.replace(anchor[0], anchor[0] + f'\n    ctx->{register}.fl *= {scale};', 1)
+retail_source = '#include "draw_distance.h"\n' + retail_source
+# The retail star painter runs on the CPU between two graphics tasks. Keep
+# every original store, including the dim edge samples. Mark a 32-bit pixel
+# only after both halfwords have been written.
+anchor = 'func_8001DFB0(rdram, ctx);'
+assert retail_source.count(anchor) == 1
+retail_source = retail_source.replace(anchor, 'xb_starfield_begin(rdram, (uint32_t)ctx->r5);\n    ' + anchor)
+for pc, expected in [('8001DEB8', 2), ('8001DF00', 2), ('8001DF20', 2), ('8001DF24', 1)]:
+    pattern = rf'(// 0x{pc}: sh[^\n]*\n\s*MEM_H\(0X0, ctx->r2\) = ctx->r\d+;)'
+    retail_source, count = re.subn(pattern, r'\1\n        xb_starfield_pixel((unsigned)ctx->r5, (unsigned)ctx->r6);', retail_source)
+    assert count == expected, f'Missing star framebuffer store at {pc}'
+# Match the world projection horizontally before the retail screen bounds
+# check, so turning the ship moves distant stars with the world in widescreen.
+pattern = r'(// 0x8001DCFC: lwc1)'
+retail_source, count = re.subn(pattern, r'if (xb_wide_projection) ctx->f6.fl *= 0.75f;\n    \1', retail_source)
+assert count == 1
+retail_source = '#include "starfield.h"\n' + retail_source
+(OUT/'retail.c').write_text('#include <string.h>\n#include "recomp.h"\n#include "funcs.h"\n#include "recomp_hooks.h"\nvoid xb_trace(uint32_t);\nint xb_native_pause_heading(uint8_t*,uint32_t);\n'+retail_source)
 (OUT/'funcs.h').write_text((ROOT/'generated/RecompiledFuncs/funcs.h').read_text())
 # Temporary fail-fast import boundaries are named and recorded, never successful
 # stubs. They disappear as each real Xbox service is implemented.
@@ -76,6 +104,10 @@ for name in ('modern_controls','modern_aim'):
         old='return std::chrono::duration_cast<std::chrono::milliseconds>(\n        std::chrono::steady_clock::now().time_since_epoch()).count();'
         assert source.count(old)==1
         source=source.replace(old,'return GetTickCount();')
+    if name=='modern_aim':
+        anchor='if (!address(projectile,0xb0)) return;'
+        assert source.count(anchor)==1
+        source='#include "hardware_test.h"\n'+source.replace(anchor,anchor+'\n    xb_hardware_player_shot(shooter);')
     (OUT/f'{name}_xbox.cpp').write_text(source)
 implemented=set(re.findall(r'\b(?:void|int|uint32_t|double)\s+(\w+)\s*\([^;{}]*\)\s*\{',native))
 imports=sorted(set(re.findall(r'\b(\w+_recomp)\(rdram, ctx\)',retail_source))-selected-implemented)
@@ -120,8 +152,66 @@ for length in ('rd_len','wr_len'):
     needle=f'    assert(dmem_addr + {length} <= 0x1000);'
     assert rsp.count(needle)==1
     rsp=rsp.replace(needle,needle+f'\n    xb_rdram_offset(dram_addr,{length},XB_RDRAM_SP);')
+# Both memories are word-swapped. A whole aligned word is byte-identical in
+# either store. Leave partial and unaligned transfers on the original path.
+for length,destination,source in (
+    ('rd_len','dmem + dmem_addr','rdram + dram_addr'),
+    ('wr_len','rdram + dram_addr','dmem + dmem_addr'),
+):
+    loop=f'    for (uint32_t i = 0; i < {length}; i++)'
+    assert rsp.count(loop)==1
+    rsp=rsp.replace(loop,f'''    if (((dmem_addr | {length}) & 3) == 0) {{
+        __builtin_memcpy({destination}, {source}, {length});
+        return;
+    }}
+'''+loop)
+# The scalar audio command interpreter frequently reads aligned commands and
+# coefficients. The upstream byte loops still handle misalignment and wrapping.
+for name,size,store in (
+    ('W_LOAD',4,False),('W_STORE',4,True),('HU_LOAD',2,False),
+    ('H_LOAD',2,False),('H_STORE',2,True),
+):
+    method=re.compile(r'(static inline \w+ RSP_MEM_'+name+r'\([^)]*\) \{\n)')
+    signed='int16_t' if name=='H_LOAD' else f'uint{size*8}_t'
+    body=(f'{signed} value=({signed})val; __builtin_memcpy_inline(ptr,&value,{size}); return;'
+          if store else f'{signed} value; __builtin_memcpy_inline(&value,ptr,{size}); return value;')
+    mask=4-size
+    rsp,n=method.subn(r'\1'+f'''    if (((addr+offset)&{size-1})==0) {{
+        uint8_t* ptr=dmem+(((addr+offset)&4095)^{mask});
+        {body}
+    }}
+''',rsp)
+    assert n==1
 (OUT/'librecomp').mkdir(exist_ok=True)
 (OUT/'librecomp/rsp.hpp').write_text(rsp)
+# Keep the translated audio program and its register layout. Replace the
+# multiply instructions with kernels for this CPU, in the Xbox include path.
+vu=(ROOT/'third_party/N64ModernRuntime/librecomp/include/librecomp/rsp_vu_impl.hpp').read_text()
+for op in ('VMUDL','VMUDM','VMUDN','VMUDH','VMADH','VMADM','VMADN','VMULF','VMACF'):
+    head=f'auto RSP::{op}(r128& vd, cr128& vs, cr128& vt) -> void {{'
+    assert vu.count(head)==1,op
+    condition='if constexpr (!U) ' if op in ('VMULF','VMACF') else ''
+    vu=vu.replace(head,head+f'\n    {condition}return xb_audio::multiply<xb_audio::Multiply::{op},e>(*this,vd,vs,vt);')
+for op,implementation in (('VADD','vector_add<e>'),('VGE','envelope_compare<false,e>'),
+                          ('VCL','envelope_compare<true,e>')):
+    head=f'auto RSP::{op}(r128& vd, cr128& vs, cr128& vt) -> void {{'
+    assert vu.count(head)==1,op
+    vu=vu.replace(head,head+f'\n    return xb_audio::{implementation}(*this,vd,vs,vt);')
+for op in ('LQV','LRV','SQV','LDV','SDV'):
+    head=re.compile(r'(auto RSP::'+op+r'\([^)]*\) -> void \{\n    auto address = rs \+ imm \* \d+;)')
+    if op=='LRV': element,addr,size='16-(address&15)','address&~15u','address&15'
+    elif op in ('SQV','LQV'): element,addr,size='0','address','16-(address&15)'
+    else: element,addr,size='e','address','8'
+    condition='e==0' if op in ('LRV','LQV','SQV') else '(e==0 || e==8)'
+    store='true' if op.startswith('S') else 'false'
+    samples=f'if(!(address&1))return xb_audio::transfer_samples<{store}>(vt,dmem,e,address);' if op in ('LDV','SDV') else ''
+    vu,n=head.subn(r'\1'+f'''
+    if constexpr({condition}) {{
+        if(!(address&3))return xb_audio::transfer_words<{store}>(vt,dmem,{element},{addr},{size});
+        {samples}
+    }}''',vu)
+    assert n==1,op
+(OUT/'librecomp/rsp_vu_impl.hpp').write_text('#include "rsp_audio_mmx.hpp"\n#include "rsp_audio_words.hpp"\n'+vu)
 # Exact shared cheat logic; native guest pointers receive the same range guard.
 cheats=(ROOT/'src/cheats.hpp').read_text()
 needle='((address&0x7fffff)^(sizeof(T)==2?2:0))'

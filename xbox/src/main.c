@@ -17,6 +17,7 @@
 #include "aspect_xbox.h"
 #include "multiply_vectors.h"
 #include "runtime.h"
+#include "hardware_test.h"
 
 /* Read-only emulator telemetry. Stage 7 is an unresolved entry, NOT gameplay. */
 volatile struct {
@@ -78,11 +79,13 @@ void xb_rdram_bounds_fault(uint32_t kind,uint64_t offset,uint32_t bytes) {
     xb_unsupported(0xE8000001u);
 }
 static void fail(uint32_t error) {
+    xb_hardware_note("bootstrap-failure",error);
     sote_xbox_status.error=error;
     debugPrint("Bootstrap failed: %lu\n",(unsigned long)error);
     for(;;) Sleep(1000);
 }
 void xb_unsupported(uint32_t id) {
+    xb_hardware_note("unsupported",id);
     sote_xbox_status.pending_entry=id;
     sote_xbox_status.stage=8;
     for(;;)Sleep(1000);
@@ -144,6 +147,7 @@ static DWORD WINAPI vi_run(LPVOID unused) {
     (void)unused;
     for(;;) {
         xb_video_wait_vblank();
+        xb_display_vi_blank(vi_black);
         sote_xbox_status.vi_ticks++;
         xb_services_vblank();
     }
@@ -159,13 +163,6 @@ void osCreateViManager_recomp(uint8_t* rdram,recomp_context* ctx) {
 void osViBlack_recomp(uint8_t* rdram,recomp_context* ctx) {
     (void)rdram;
     InterlockedExchange(&vi_black,ctx->r4!=0);
-    /* Before a renderer is connected the only display is this diagnostic FB.
-       Blanking really clears it; it does not pretend to present guest pixels. */
-    if(vi_black && !(xb_display_bpp==16 && xb_display_width==1280)) {
-        VIDEO_MODE mode=XVideoGetMode();
-        memset(XVideoGetFB(),0,(size_t)mode.width*mode.height*(mode.bpp/8));
-        XVideoFlushFB();
-    }
 }
 void osCreatePiManager_recomp(uint8_t* rdram,recomp_context* ctx) {
     (void)rdram;
@@ -173,6 +170,7 @@ void osCreatePiManager_recomp(uint8_t* rdram,recomp_context* ctx) {
     sote_xbox_status.pi_queue=(uint32_t)ctx->r5;
 }
 int main(void) {
+    xb_hardware_test_init();
     xb_budget_init();
     xb_asset_io_init();
     /* Mount/read the settings journal before renderer/input threads can first use it.
@@ -180,7 +178,9 @@ int main(void) {
     if(!xb_display_boot(xb_hd_textures_preferred()))fail(18);
     xb_budget_mark(XB_BUDGET_DISPLAY,xb_display_width*xb_display_height*(xb_display_bpp/8));
     xb_video_set_widescreen(xb_display_wide);
+    xb_hardware_note("before-video",(xb_display_width<<16)|xb_display_height);
     xb_video_init();
+    xb_hardware_note("video",0);
     xb_budget_mark(XB_BUDGET_PBKIT,0);
     debugPrint("Shadows of the Empire - Xbox bootstrap\n");
     debugPrint("Development milestone; not yet playable.\n");
@@ -204,6 +204,7 @@ int main(void) {
     sote_xbox_status.rdram_address=(uint32_t)(uintptr_t)rdram;
     xb_runtime_init(rdram);
     xb_services_init();
+    xb_hardware_note("runtime",0);
     int rom_result=xb_rom_open(); /* validated size; CRC still checked below */
     if(rom_result)fail(rom_result==XB_ROM_NO_FILE?3:4);
     if(atexit(xb_rom_close)!=0){xb_rom_close();fail(3);}
@@ -213,6 +214,7 @@ int main(void) {
     xb_texture_selftest(rdram);
     xb_vertex_selftest(rdram);
     xb_clip_selftest();
+    xb_hardware_note("save-test",0);
     xb_save_selftest();
     xb_player_selftest();
     xb_bike_selftest();
@@ -272,6 +274,7 @@ int main(void) {
     debugPrint("Original ROM and decompressed executable verified.\n");
     memset(rdram+0xEE740,0,0x113440-0xEE740);
     ctx.r29=(int32_t)0x80113440;
+    xb_hardware_note("game-boot",sote_xbox_status.rom_crc);
     sote_xbox_status.stage=4;
     func_80017B60(rdram,&ctx);
     if(sote_xbox_status.thread_entry!=0x80017BBC ||

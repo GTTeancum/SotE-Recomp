@@ -15,17 +15,23 @@ fi
 "$NXDK_DIR/tools/cg/win/cgc.exe" -profile vp20 -o build/xbox/screen.vp xbox/shaders/screen.vs.cg
 python xbox/tools/verify_screen_shader.py build/xbox/screen.vp
 build/xbox/vp20compiler.exe build/xbox/screen.vp > build/xbox/screen.inl
+build/xbox/vp20compiler.exe xbox/shaders/world.vp > build/xbox/world.inl
 objects=()
 python xbox/tools/prepare_pbkit.py "$(cygpath -w "$NXDK_DIR/lib/pbkit/pbkit.c")" build/xbox/pbkit_local.c
 nxdk-cc -O2 -I"$NXDK_DIR/lib/pbkit" -c build/xbox/pbkit_local.c -o build/xbox/pbkit_local.obj
 objects+=(build/xbox/pbkit_local.obj)
+sdl_audio="$NXDK_DIR/lib/sdl/SDL2/src/audio"
+python xbox/tools/prepare_sdl_audio.py "$(cygpath -w "$sdl_audio/SDL_audiocvt.c")" build/xbox/sdl_audiocvt.c
+nxdk-cc -O2 -std=gnu11 -DXBOX -D__XBOX__ -Wno-pragma-pack -I"$sdl_audio" -I"$NXDK_DIR/lib/sdl/SDL2/include" -Ixbox/include \
+    -c build/xbox/sdl_audiocvt.c -o build/xbox/sdl_audiocvt.obj
+objects+=(build/xbox/sdl_audiocvt.obj)
 for src in xbox/src/*.c build/xbox/retail.c build/xbox/imports.c; do
     object="build/xbox/$(basename "${src%.c}").obj"
     nxdk-cc -O2 -std=gnu11 -DSOTE_XBOX -D__XBOX__ -Wno-pragma-pack -fno-strict-aliasing -ffunction-sections -fdata-sections \
         -Ixbox/include -Ibuild/xbox -Isrc -I"$NXDK_DIR/lib/sdl/SDL2/include" -c "$src" -o "$object"
     objects+=("$object")
 done
-for src in xbox/src/rsp.cpp xbox/src/modern_platform.cpp generated/aspMain.cpp build/xbox/modern_controls_xbox.cpp build/xbox/modern_aim_xbox.cpp; do
+for src in xbox/src/rsp.cpp xbox/src/modern_platform.cpp src/first_person_blaster.cpp xbox/src/blaster_pose.cpp generated/aspMain.cpp build/xbox/modern_controls_xbox.cpp build/xbox/modern_aim_xbox.cpp; do
     object="build/xbox/$(basename "${src%.cpp}").obj"
     nxdk-cxx -O2 -std=c++17 -DSOTE_XBOX -D__XBOX__ -fno-exceptions -fno-rtti \
         -ffunction-sections -fdata-sections -Ixbox/include -Ibuild/xbox -Isrc \

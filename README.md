@@ -299,6 +299,10 @@ Scale to Fit, Widescreen, 4x MSAA, and Windowed mode. Renderer options are
 saved in `SotE_Recompiled\rt64.json`; output resolution and display mode are
 saved in `SotE_Recompiled\sote_options.json`. Both files are created
 automatically.
+New desktop installs target 60 FPS with interpolated gameplay. To enable this
+on an existing install, close the game and set `refreshRate` to `"Manual"` and
+`refreshRateTarget` to `60` under `configuration` in `rt64.json`. Compatibility
+Mode uses the original presentation rate.
 Pressing `F11` or `Alt+Enter` also toggles borderless mode and keeps the
 in-game setting synchronized.
 
@@ -401,6 +405,9 @@ and Right. The `Controls` submenu offers a single player-facing choice:
   B crouches, and LB/RB cycles weapons. Modern uses a right-shoulder camera
   looking along the weapon direction, with native camera collision checks.
   Stick release stops turning and holds vertical aim.
+  In the Hoth snowspeeder and the piloted Outrider, the right stick looks
+  around independently of steering. Click the stick to switch between cockpit
+  and chase views.
   Speeder-bike stages use right trigger for throttle, left trigger for brake,
   left stick steering, and LB/RB for the native left/right ram actions.
   The bike has no blaster fire action. Bike steering uses a

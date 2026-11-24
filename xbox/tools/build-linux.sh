@@ -47,6 +47,7 @@ export TMPDIR="$root/$out/tmp" TEMP="$root/$out/tmp" TMP="$root/$out/tmp"
 "$CGC" -profile vp20 -o "$out/screen.vp" xbox/shaders/screen.vs.cg
 "$PYTHON" xbox/tools/verify_screen_shader.py "$out/screen.vp"
 "$out/vp20compiler-linux" "$out/screen.vp" > "$out/screen.inl"
+"$out/vp20compiler-linux" xbox/shaders/world.vp > "$out/world.inl"
 "$PYTHON" xbox/tools/prepare_pbkit.py "$NXDK_DIR/lib/pbkit/pbkit.c" "$out/pbkit_local.c"
 nxdk-cc -O2 -I"$NXDK_DIR/lib/pbkit" -c "$out/pbkit_local.c" -o "$out/pbkit_local.obj"
 if [[ $mode == --smoke ]]; then
@@ -54,13 +55,18 @@ if [[ $mode == --smoke ]]; then
     exit 0
 fi
 objects=("$out/pbkit_local.obj")
+sdl_audio="$NXDK_DIR/lib/sdl/SDL2/src/audio"
+"$PYTHON" xbox/tools/prepare_sdl_audio.py "$sdl_audio/SDL_audiocvt.c" "$out/sdl_audiocvt.c"
+nxdk-cc -O2 -std=gnu11 -DXBOX -D__XBOX__ -Wno-pragma-pack -I"$sdl_audio" -I"$NXDK_DIR/lib/sdl/SDL2/include" -Ixbox/include \
+    -c "$out/sdl_audiocvt.c" -o "$out/sdl_audiocvt.obj"
+objects+=("$out/sdl_audiocvt.obj")
 for src in xbox/src/*.c "$out/retail.c" "$out/imports.c"; do
     object="$out/$(basename "${src%.c}").obj"
     nxdk-cc -O2 -std=gnu11 -DSOTE_XBOX -D__XBOX__ -Wno-pragma-pack -fno-strict-aliasing -ffunction-sections -fdata-sections \
         -Ixbox/include -I"$out" -Isrc -I"$NXDK_DIR/lib/sdl/SDL2/include" -c "$src" -o "$object"
     objects+=("$object")
 done
-for src in xbox/src/rsp.cpp xbox/src/modern_platform.cpp generated/aspMain.cpp "$out/modern_controls_xbox.cpp" "$out/modern_aim_xbox.cpp"; do
+for src in xbox/src/rsp.cpp xbox/src/modern_platform.cpp src/first_person_blaster.cpp xbox/src/blaster_pose.cpp generated/aspMain.cpp "$out/modern_controls_xbox.cpp" "$out/modern_aim_xbox.cpp"; do
     object="$out/$(basename "${src%.cpp}").obj"
     nxdk-cxx -O2 -std=c++17 -DSOTE_XBOX -D__XBOX__ -fno-exceptions -fno-rtti \
         -ffunction-sections -fdata-sections -Ixbox/include -I"$out" -Isrc \

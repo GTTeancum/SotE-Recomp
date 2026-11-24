@@ -1095,10 +1095,17 @@ void poll_input() {
             raw_ry, controls.aim_deadzone, controls.aim_sensitivity, true);
         const bool aim_up = aim_direction_pressed(
             raw_ry, controls.aim_deadzone, controls.aim_sensitivity, false);
-        if (aim_right) buttons |= n64_cr;
-        if (aim_left) buttons |= n64_cl;
-        if (aim_down) buttons |= n64_cd;
-        if (aim_up) buttons |= n64_cu;
+        const bool flight_look = !menu &&
+            sote::controls_menu::current_scheme(sote::controls_menu::SchemeSlot::OnFoot) ==
+                sote::controls_menu::ControlScheme::Modern &&
+            (classic_snow_pad || classic_outrider_pad);
+        if (flight_look && pressed(SDL_CONTROLLER_BUTTON_RIGHTSTICK)) buttons |= n64_cr;
+        if (!flight_look) {
+            if (aim_right) buttons |= n64_cr;
+            if (aim_left) buttons |= n64_cl;
+            if (aim_down) buttons |= n64_cd;
+            if (aim_up) buttons |= n64_cu;
+        }
 
         raw_lx = mapped_axis(
             controller,
@@ -1106,15 +1113,23 @@ void poll_input() {
         raw_ly = mapped_axis(
             controller,
             SDL_CONTROLLER_AXIS_LEFTY);
-        x = normalize_axis(raw_lx, controls);
-        y = -normalize_axis(raw_ly, controls);
-
-        const bool on_foot_modern = !menu &&
-            (sote::modern_controls::on_foot_active() ||
-             control_bindings::context_active(control_bindings::Context::OnFoot)) &&
-            sote::controls_menu::current_scheme(
-                sote::controls_menu::SchemeSlot::OnFoot) ==
-                sote::controls_menu::ControlScheme::Modern;
+        const bool on_foot = !menu && (sote::modern_controls::on_foot_active() ||
+            control_bindings::context_active(control_bindings::Context::OnFoot));
+        const bool on_foot_modern = on_foot && sote::controls_menu::current_scheme(
+            sote::controls_menu::SchemeSlot::OnFoot) == sote::controls_menu::ControlScheme::Modern;
+        if (on_foot) {
+            const float deadzone = on_foot_modern ? controls.on_foot.movement_deadzone : controls.movement_deadzone;
+            const auto movement = sote::modern_controls::shape_stick(
+                {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)}, deadzone, 1.0f);
+            const float magnitude = std::hypot(movement.x, movement.y);
+            const float sensitivity = on_foot_modern ? 1.0f : controls.movement_sensitivity;
+            const float gain = magnitude > 0 ? std::min(sensitivity, 1.0f / magnitude) : 0;
+            x = movement.x * gain * n64_stick_scale;
+            y = movement.y * gain * n64_stick_scale;
+        } else {
+            x = normalize_axis(raw_lx, controls);
+            y = -normalize_axis(raw_ly, controls);
+        }
         if (on_foot_modern) {
             // The right stick travels separately to the guest's analog hooks.
             // Never turn look input into jetpack/crouch/weapon C-button events.
@@ -1126,18 +1141,18 @@ void poll_input() {
             if (pressed(SDL_CONTROLLER_BUTTON_Y)) buttons |= n64_cl;
             if (pressed(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) ||
                 pressed(SDL_CONTROLLER_BUTTON_LEFTSHOULDER)) buttons |= n64_cu;
-            if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP)) buttons |= n64_l;
+            // Presets with directional cameras already handled Up above. The
+            // extra view-cycle bit would immediately switch away from first person.
+            if (pressed(SDL_CONTROLLER_BUTTON_DPAD_UP) && control_bindings::on_foot_camera_cycle_only()) {
+                buttons &= ~n64_du;
+                buttons |= n64_l;
+            }
             if (mapped_axis(controller,
                 SDL_CONTROLLER_AXIS_TRIGGERRIGHT) > 3276) buttons |= n64_b;
             buttons = apply_rapid_fire(pad_rapid_fire, buttons, n64_b);
             buttons = sote::modern_controls::on_foot_active() ?
                 sote::modern_controls::map_buttons(buttons) :
                 control_bindings::map_on_foot_buttons(buttons);
-            const auto movement = sote::modern_controls::shape_stick(
-                {raw_axis_to_unit(raw_lx), -raw_axis_to_unit(raw_ly)},
-                controls.on_foot.movement_deadzone, 1.0f);
-            x = movement.x * n64_stick_scale;
-            y = movement.y * n64_stick_scale;
         }
 
         const bool bike_modern_active =
@@ -1164,7 +1179,7 @@ void poll_input() {
                 look_snap_back_active = false;
             } else if (right_stick_was_active) {
                 right_stick_was_active = false;
-                look_snap_back_queued = !on_foot_modern && controls.look_snap_back_enabled;
+                look_snap_back_queued = !on_foot_modern && !flight_look && controls.look_snap_back_enabled;
                 right_stick_release_time = now;
             }
 
@@ -1182,7 +1197,7 @@ void poll_input() {
                             controls.look_snap_back_duration_seconds));
             }
 
-            if (on_foot_modern) {
+            if (on_foot_modern || flight_look) {
                 look_snap_back_active = false;
                 look_snap_back_queued = false;
             }

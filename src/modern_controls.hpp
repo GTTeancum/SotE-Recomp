@@ -43,6 +43,8 @@ bool owns_player(uint32_t object);
 
 extern "C" {
 void sote_modern_begin(uint8_t* rdram, uint32_t object);
+void sote_modern_move_magnitudes(uint8_t* ram, uint32_t object, uint32_t stack);
+uint32_t sote_modern_strafing(uint8_t* ram, uint32_t object, uint32_t stack);
 void sote_modern_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_yaw(uint8_t* rdram, uint32_t object);
 void sote_modern_train_begin(uint8_t* rdram, uint32_t object);
@@ -50,3 +52,7 @@ void sote_modern_train_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_train_yaw(uint8_t* rdram, uint32_t object);
 uint32_t sote_modern_train_pose(uint8_t* rdram, uint32_t object, uint32_t stack);
 }
+
+extern "C" void sote_flight_camera_begin(uint8_t* ram);
+extern "C" void sote_flight_camera_apply(uint8_t* ram);
+extern "C" void sote_flight_camera_owner(uint8_t* ram, uint32_t object, int context);

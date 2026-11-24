@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "runtime.h"
+#include "hardware_test.h"
 
 /* Two independently checksummed copies. Never truncate the active copy;
    advance the in-memory image only after the other copy is flushed/verified. */
@@ -32,7 +33,7 @@ static int read_copy(const char* path,record* r) {
 }
 static int open_journal(journal* j,const char* stem) {
     memset(j,0,sizeof(*j));j->active=-1;
-    for(unsigned i=0;i<2;i++)snprintf(j->path[i],sizeof(j->path[i]),"E:\\UDATA\\534f5445\\%s%u.bin",stem,i);
+    for(unsigned i=0;i<2;i++)snprintf(j->path[i],sizeof(j->path[i]),xb_hardware_test?"D:\\%s%u.bin":"E:\\UDATA\\534f5445\\%s%u.bin",stem,i);
     record copies[2];int state[2]={read_copy(j->path[0],&copies[0]),read_copy(j->path[1],&copies[1])};
     if(state[0]==1)j->active=0;
     if(state[1]==1 && (j->active<0 || (int32_t)(copies[1].generation-copies[0].generation)>0))j->active=1;
@@ -66,6 +67,7 @@ static int directory(const char* path) {
     return attributes!=INVALID_FILE_ATTRIBUTES && (attributes&FILE_ATTRIBUTE_DIRECTORY);
 }
 static int mount_save(void) {
+    if(xb_hardware_test)return 1;
     if(!nxIsDriveMounted('E') && !nxMountDrive('E',"\\Device\\Harddisk0\\Partition1\\"))return 0;
     return directory("E:\\UDATA") && directory("E:\\UDATA\\534f5445");
 }
@@ -103,7 +105,7 @@ static void verify(int ok) {
 void xb_save_selftest(void) {
     /* Isolated fixture files; never touch campaign EEPROM copies. */
     verify(mount_save());journal test;
-    for(unsigned i=0;i<2;i++){char p[96];snprintf(p,sizeof(p),"E:\\UDATA\\534f5445\\fixture%u.bin",i);DeleteFileA(p);}
+    for(unsigned i=0;i<2;i++){char p[96];snprintf(p,sizeof(p),xb_hardware_test?"D:\\fixture%u.bin":"E:\\UDATA\\534f5445\\fixture%u.bin",i);DeleteFileA(p);}
     verify(open_journal(&test,"fixture"));
     for(unsigned i=0;i<512;i++)verify(test.image.bytes[i]==255);
     uint8_t first[512],second[512];for(unsigned i=0;i<512;i++){first[i]=(i*37)^0xa5;second[i]=first[i]^255;}

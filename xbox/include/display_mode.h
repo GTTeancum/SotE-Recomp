@@ -23,7 +23,8 @@ static inline xb_display_mode xb_mode(unsigned q,unsigned encoder,unsigned avail
         m.request=q;m.wide=1;m.reason=XB_DISPLAY_OK;return m;
     }
     if(q==XB_DISPLAY_720W && hd && (encoder&XB_DISP_720) && (available&XB_DISP_AVAILABLE_720)){
-        /* Require retail-class memory. Native 720p uses two RGB565 color surfaces and Z24S8; HD policy is unchanged. */
+        /* The HAL scanout, pbkit color buffers and Z24S8 depth buffer use
+           the same native surface layout as the SD renderer. */
         if(physical<XB_DISP_64MIB){m.reason=XB_DISPLAY_HD_RAM;return m;}
         m.request=q;m.reason=XB_DISPLAY_OK;m.w=1280;m.h=720;m.wide=m.progressive=1;
     }
@@ -43,4 +44,5 @@ static inline unsigned xb_display_surface_bytes(unsigned w,unsigned h) {
 }
 extern unsigned xb_display_width,xb_display_height,xb_display_wide,xb_display_bpp;
 int xb_display_boot(int hd_wanted);
+void xb_display_vi_blank(int black);
 #endif

@@ -1,6 +1,6 @@
 param(
     [string]$Name = "baseline_visible_capture",
-    [string]$ExePath = "./build/runtime/Release/sote_recomp.exe"
+    [string]$ExePath = "./build/runtime/Release/Shadows of the Empire.exe"
 )
 
 $ErrorActionPreference = "Stop"

@@ -1,3 +1,4 @@
+#include "blaster_pose.h"
 #include <stdio.h>
 #include <string.h>
 #include "runtime.h"
@@ -25,6 +26,7 @@ void sote_diagnostic_ord_region(uint8_t* rdram,uint32_t object,uint32_t position
     sote_diagnostic_status[5]=position;sote_diagnostic_status[6]=after_collision;
 }
 void sote_diagnostic_active_player(uint8_t* rdram,uint32_t object) {
+    xb_update_blaster(rdram,object,0);
     sote_diagnostic_status[3]++;sote_diagnostic_status[4]=object;
     sote_diagnostic_status[7]=MEM_H(0,(int32_t)0x8013CE0E);
     if(object<0x80000000u || object>0x807ffe0cu)return;

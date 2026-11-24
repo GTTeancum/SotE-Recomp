@@ -30,7 +30,7 @@ Keep source exports outside the installed `textures` directory.
 ## Runtime-generated surfaces
 
 ```powershell
-pwsh -File tools/texture_coverage_capture.ps1 -ExePath build/runtime/Release/sote_recomp.exe -AllLevels -IncludeUi -DumpTextures -OutputDirectory build/texture_capture
+pwsh -File tools/texture_coverage_capture.ps1 -ExePath 'build/runtime/Release/Shadows of the Empire.exe' -AllLevels -IncludeUi -DumpTextures -OutputDirectory build/texture_capture
 python tools/sote_texture_pack.py build/texture_capture build/static_source --jobs 2
 python tools/build_dynamic_texture_pack.py build/texture_capture build/changing_source
 ```

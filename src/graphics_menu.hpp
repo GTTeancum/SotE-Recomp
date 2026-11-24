@@ -42,6 +42,7 @@ void initialize(const std::filesystem::path& data_directory);
 void sync_display_resolution(int width, int height);
 void sync_from_renderer(const Settings& settings);
 void sync_window_mode(bool borderless);
+bool take_exit_request();
 bool take_renderer_request(Settings& settings);
 bool take_window_request(Settings& settings);
 bool front_end_picker_active();

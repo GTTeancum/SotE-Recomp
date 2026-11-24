@@ -203,21 +203,16 @@ int main(int argc,char** argv) {
         }
     }
     auto& blaster = sote::first_person_blaster::animation;
-    blaster.update(player, 0, 0, true, 1.0/60);
+    blaster.update(player, 1.0/60);
     put(ram, stack+0x68, target);
     sote_modern_projectile(ram, &c);
     put(ram, stack+0x68, player);
     check(!blaster.current().flash, "enemy fire cannot animate Dash's blaster");
     sote_modern_projectile(ram, &c);
     check(blaster.current().flash && blaster.current().recoil == 1, "the player's native shot animates in Classic");
-    for (int i=1; i<=30; ++i) blaster.update(player, i * .15f, 0, true, 1.0/60);
-    const auto walking = blaster.current();
-    check(std::hypot(walking.sway, walking.lift) > .1f && !walking.flash,
-          "walking advances the view bob while the muzzle flash expires");
-    for (int i=0; i<60; ++i) blaster.update(player, 4.5f, 0, true, 1.0/60);
-    const auto idle = blaster.current();
-    check(std::hypot(idle.sway, idle.lift) < .001f, "standing still settles the blaster");
-    blaster.update(0, 0, 0, false, 0);
+    for (int i=0; i<30; ++i) blaster.update(player, 1.0/60);
+    check(!blaster.current().flash && blaster.current().recoil < .001f, "shot recoil expires");
+    blaster.update(0, 0);
     blaster.fire(player);
     check(!blaster.current().visible && !blaster.current().flash, "unequipping clears the view and ignores shots");
     std::cout<<"modern aim failures="<<failures<<'\n';return failures?1:0;

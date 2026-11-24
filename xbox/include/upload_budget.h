@@ -28,5 +28,5 @@ static inline int xb_linear_story(unsigned w, unsigned h) {
     return w && h && w <= XB_STORY_MAX_W && h <= XB_STORY_MAX_H && !(w & 15u);
 }
 static inline int xb_linear_canvas(unsigned w, unsigned h) {
-    return w == XB_CANVAS_W && h == XB_CANVAS_H;
+    return (w == XB_CANVAS_W && h == XB_CANVAS_H) || (w == 960 && h == 240);
 }

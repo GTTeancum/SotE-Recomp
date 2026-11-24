@@ -15,13 +15,8 @@ void sote_menu_sound_frame(uint8_t* rdram, void* context);
 void sote_diagnostic_communicators(uint8_t* rdram, void* context);
 void sote_diagnostic_palace_ray(uint8_t* rdram, uint32_t object);
 void sote_modern_projectile(uint8_t* rdram, void* context);
-// The desktop runtime owns this foreground pass. Xbox consumes the same generated C.
-#ifdef SOTE_XBOX
-#define SOTE_FIRST_PERSON_DRAW(rdram, context) ((void)0)
-#else
 void sote_draw_first_person_blaster(uint8_t* rdram, void* context);
 #define SOTE_FIRST_PERSON_DRAW sote_draw_first_person_blaster
-#endif
 void sote_modern_impact(uint8_t* rdram, void* context);
 
 // Native-command music replacement. Keep effects on the original sound path.
@@ -41,6 +36,9 @@ void sote_enter_player_controller(
     uint32_t controller,
     uint32_t action);
 void sote_wait_for_game_frame(void);
+uint32_t sote_use_elapsed_game_time(void);
+void sote_follow_descending_floor(uint8_t* rdram, uint32_t player,
+    uint32_t previous_sector, float floor_z, const float previous_xy[2]);
 void sote_native_text_begin(uint8_t* rdram, uint32_t text);
 int sote_native_text_glyph(uint8_t* rdram, uint32_t list, uint32_t character, int x, int y);
 void sote_publish_native_text(void);
@@ -125,6 +123,8 @@ void sote_modern_train_begin(uint8_t* rdram, uint32_t object);
 void sote_modern_train_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_train_yaw(uint8_t* rdram, uint32_t object);
 uint32_t sote_modern_train_pose(uint8_t* rdram, uint32_t object, uint32_t stack);
+void sote_modern_move_magnitudes(uint8_t* ram, uint32_t object, uint32_t stack);
+uint32_t sote_modern_strafing(uint8_t* ram, uint32_t object, uint32_t stack);
 void sote_modern_decode(uint8_t* rdram, uint32_t object, uint32_t stack);
 void sote_modern_yaw(uint8_t* rdram, uint32_t object);
 uint32_t sote_modern_aim(uint8_t* rdram, uint32_t stack);
@@ -142,6 +142,9 @@ int sote_intro_story_sprite(uint8_t* rdram, uint32_t sprite);
 void sote_before_story_load(uint8_t* rdram, uint32_t event, uint32_t caller);
 void sote_hide_communicator_slot(uint32_t slot, int32_t x);
 void sote_modern_camera_resolve(uint8_t* rdram, void* context);
+void sote_flight_camera_begin(uint8_t* ram);
+void sote_flight_camera_apply(uint8_t* ram);
+void sote_flight_camera_owner(uint8_t* ram, uint32_t object, int context);
 #ifdef __cplusplus
 }
 #endif

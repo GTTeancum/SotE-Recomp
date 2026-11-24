@@ -6,13 +6,18 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#ifdef SOTE_XBOX
+#include "modern_platform.hpp"
+#else
 #include <mutex>
+#endif
 
 namespace sote::first_person_blaster {
 struct Pose {
     bool visible = false;
     float sway = 0, lift = 0, recoil = 0;
     bool flash = false;
+    uint32_t player = 0;
 };
 
 using Matrix = std::array<std::array<float, 4>, 4>;
@@ -32,40 +37,29 @@ inline Matrix wrist_in_view(const Pose& pose) {
 // The actor update advances the pose and the foreground draw takes a snapshot.
 class Animation {
 public:
-    void update(uint32_t player, float x, float y, bool grounded, double seconds) {
-        std::lock_guard lock(mutex);
+    void update(uint32_t player, double seconds) {
+        Guard lock(mutex);
         if (player != owner) {
-            if (tracing()) std::printf("[sote][blaster] visible=%d owner=%08X\n", player != 0, player);
+            if (tracing()) ::printf("[sote][blaster] visible=%d owner=%08X\n", player != 0, player);
             owner = player;
-            phase = strength = 0;
             shot_age = 1;
-            last_x = x;
-            last_y = y;
             pose = {};
         }
         if (!player) return;
         const float dt = std::isfinite(seconds) ? float(std::clamp(seconds, 0.0, 0.1)) : 0;
-        const float distance = std::hypot(x - last_x, y - last_y);
-        last_x = x;
-        last_y = y;
-        const float stride = grounded && distance < 4 ? distance : 0;
-        phase = std::fmod(phase + stride * 0.95f, 6.2831853f);
-        const float target = dt > 0 ? std::min(1.f, stride / (10.f * dt)) : 0;
-        strength += (target - strength) * std::min(1.f, 12.f * dt);
         shot_age = std::min(1.f, shot_age + dt);
-        pose = {true, strength * std::sin(phase), strength * std::cos(2 * phase),
-            std::exp(-16.f * shot_age), shot_age < 0.055f};
+        pose = {true, 0, 0, std::exp(-16.f * shot_age), shot_age < 0.055f, player};
     }
     void fire(uint32_t shooter) {
-        std::lock_guard lock(mutex);
+        Guard lock(mutex);
         if (!pose.visible || shooter != owner) return;
         shot_age = 0;
         pose.flash = true;
         pose.recoil = 1;
-        if (tracing()) std::printf("[sote][blaster] shot owner=%08X sway=%.3f lift=%.3f\n", shooter, pose.sway, pose.lift);
+        if (tracing()) ::printf("[sote][blaster] shot owner=%08X\n", shooter);
     }
     Pose current() {
-        std::lock_guard lock(mutex);
+        Guard lock(mutex);
         return pose;
     }
 private:
@@ -73,9 +67,15 @@ private:
         static const bool enabled = std::getenv("SOTE_TRACE_FIRST_PERSON_BLASTER") != nullptr;
         return enabled;
     }
+#ifdef SOTE_XBOX
+    using Guard = XboxInputGuard;
+    XboxInputMutex mutex;
+#else
+    using Guard = std::lock_guard<std::mutex>;
     std::mutex mutex;
+#endif
     uint32_t owner = 0;
-    float last_x = 0, last_y = 0, phase = 0, strength = 0, shot_age = 1;
+    float shot_age = 1;
     Pose pose{};
 };
 inline Animation animation;

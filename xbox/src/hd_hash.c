@@ -4,13 +4,39 @@
 #define XXH_VECTOR 0
 #include "../../third_party/N64ModernRuntime/thirdparty/xxHash/xxhash.h"
 #include "hd_hash.h"
-typedef struct {XXH3_state_t state;const uint8_t* mem;uint64_t bits[4];unsigned siz,tlut,size;} hash_ctx;
+typedef struct {XXH3_state_t state;const uint8_t* mem;uint32_t bits[8];unsigned siz,tlut,size;} hash_ctx;
+/* Cover exactly the possible banks and conservatively include row padding.
+   Odd-row byte exchange stays inside its aligned 8-byte TMEM word. TLUT
+   accesses are in the upper bank even if the tile's base address wraps. */
+unsigned xb_hd_hash_pages(const xb_tile* t,unsigned width,unsigned height,unsigned tlut) {
+    unsigned split=t->size==3 && t->format==0;
+    unsigned bank_pages=split||tlut?8:16;
+    unsigned start=(t->tmem*8)&(bank_pages*256-1);
+    unsigned row=(width<<(split?2:t->size))>>1;
+    unsigned span=(height-1)*t->line*8+(((row?row:1)+7)&~7u);
+    unsigned n=((start&255)+span+255)>>8;
+    unsigned mask=(1u<<bank_pages)-1, pages=mask;
+    if(n<bank_pages){
+        unsigned run=((1u<<n)-1)<<(start>>8);
+        pages=(run|(run>>bank_pages))&mask;
+    }
+    if(split)pages|=pages<<8;
+    if(tlut)pages|=t->size==0?1u<<(8+t->palette/2):0xff00u;
+    return pages;
+}
 static void update(hash_ctx* c,unsigned start,unsigned n,int palette) {
  if(start>=4096)return;if(n>4096-start)n=4096-start;
  XXH3_64bits_update(&c->state,c->mem+start,n);
- if(c->tlut&&!palette)for(unsigned i=0;i<n;i++){
-  unsigned v=c->mem[start+i];if(c->siz==0){c->bits[0]|=1ULL<<(v&15);c->bits[0]|=1ULL<<(v>>4);}
-  else c->bits[v>>6]|=1ULL<<(v&63);
+ if(c->tlut&&!palette){
+  if(c->siz==0){
+   unsigned used=c->bits[0];
+   for(unsigned i=0;i<n && used!=0xffff;i++){
+    unsigned v=c->mem[start+i];used|=(1u<<(v&15))|(1u<<(v>>4));
+   }
+   c->bits[0]=used;
+  }else for(unsigned i=0;i<n;i++){
+   unsigned v=c->mem[start+i];c->bits[v>>5]|=1u<<(v&31);
+  }
  }
 }
 static void part(hash_ctx* c,unsigned base,unsigned bank,unsigned n,int odd) {
@@ -29,9 +55,16 @@ uint64_t xb_hd_hash(const uint8_t* memory,const xb_tile* t,unsigned width,unsign
  }else {part(&c,addr,0,n,0);if(rgba32)part(&c,addr,c.size,n,0);}
  if(tlut){unsigned ci4=t->size==0,pal=2048+(ci4?t->palette<<7:0);
   if(ci4&&c.bits[0]==0xffff)update(&c,pal,128,1);
-  else for(unsigned i=0;i<(ci4?1u:4u);i++){
-   uint64_t bits=c.bits[i];if(bits==UINT64_MAX){update(&c,pal+i*512,512,1);continue;}
-   while(bits){unsigned j=__builtin_ctzll(bits);update(&c,pal+(i*64+j)*8,8,1);bits&=bits-1;}
+  else for(unsigned i=0;i<(ci4?1u:8u);i++){
+   uint32_t bits=c.bits[i];
+   while(bits){
+    unsigned first=__builtin_ctz(bits);
+    uint32_t rest=~(bits>>first);
+    unsigned count=rest?__builtin_ctz(rest):32;
+    update(&c,pal+(i*32+first)*8,count*8,1);
+    if(first+count==32)break;
+    bits&=~((1u<<(first+count))-1);
+   }
   }
  }
  uint16_t w=width,h=height,line=t->line;uint32_t lut=tlut;uint8_t size=t->size,fmt=t->format;

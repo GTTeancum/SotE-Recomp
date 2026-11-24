@@ -44,7 +44,13 @@ void xb_services_vblank(void) {
     xb_post_event(7); /* OS_EVENT_VI */
     xb_frame_tick();
 }
-void sote_wait_for_game_frame(void){xb_wait_frame();}
+uint32_t sote_use_elapsed_game_time(void){return 0;}
+#include "performance.h"
+void sote_wait_for_game_frame(void){
+    uint64_t timer=xb_perf_begin();
+    xb_wait_frame();
+    xb_perf_end(XB_PERF_FRAME_GATE,timer);
+}
 void osCreateMesgQueue_recomp(uint8_t* rdram,recomp_context* ctx) {
     (void)rdram;xb_queue_create(ctx->r4,ctx->r5,(int)ctx->r6);
 }
@@ -98,7 +104,10 @@ void osInvalDCache_recomp(uint8_t* rdram,recomp_context* ctx){(void)rdram;(void)
 void osWritebackDCache_recomp(uint8_t* rdram,recomp_context* ctx){(void)rdram;(void)ctx;}
 void osWritebackDCacheAll_recomp(uint8_t* rdram,recomp_context* ctx){(void)rdram;(void)ctx;}
 static int rom_read(uint8_t* rdram,uint32_t device,uint32_t target,uint32_t size) {
-    return xb_rom_guest(rdram, device & 0x0fffffffu, target & 0x1fffffffu, size);
+    uint64_t timer=xb_perf_begin();
+    int result=xb_rom_guest(rdram, device & 0x0fffffffu, target & 0x1fffffffu, size);
+    xb_perf_end(XB_PERF_ROM_DMA,timer);
+    return result;
 }
 void osPiReadIo_recomp(uint8_t* rdram,recomp_context* ctx) {
     ctx->r2=rom_read(rdram,ctx->r4,ctx->r5,4);

@@ -61,6 +61,7 @@ std::string_view expected_movie_name(int index);
 std::filesystem::path find_movie(
     const std::filesystem::path& runtime_directory,
     std::string_view name);
+bool can_play_movie(std::string_view name);
 bool play_movie(std::string_view name);
 bool play_sequence(std::initializer_list<std::string_view> names);
 bool play_startup_sequence();
