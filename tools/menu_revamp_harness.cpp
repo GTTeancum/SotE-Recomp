@@ -188,24 +188,27 @@ bool latest_screen_is(sote::menu_skin::Screen screen) {
     return latest && latest->screen == screen;
 }
 
-void check_edit_visual(const sote::menu_skin::Snapshot& browsing,
-    const sote::menu_skin::Snapshot& editing, int bar_x, int bar_y,
-    int value_left, int value_right, int value_top, int value_bottom) {
+void check_edit_visual(sote::menu_skin::Snapshot browsing,
+    sote::menu_skin::Snapshot editing, int border_x, int interior_x, int y) {
+    // The paused canvas has a uniform translucent background, so distinguish
+    // a genuinely unfilled row from one painted black.
+    browsing.pause_background = editing.pause_background = true;
     const auto before = sote::menu_skin::render(browsing, 960, 540);
     const auto after = sote::menu_skin::render(editing, 960, 540);
-    const auto index = [](int x, int y) { return (size_t(y) * 960 + x) * 4; };
-    const size_t bar = index(bar_x, bar_y);
-    check(before.valid() && after.valid() && after.rgba[bar] < before.rgba[bar],
-        "selected setting bar darkens in adjust mode");
-    if (!before.valid() || !after.valid()) return;
-    const auto cyan = [](const sote::menu_skin::Image& image, size_t p) {
-        return image.rgba[p + 1] >= 120 && image.rgba[p + 2] >= 160;
+    const auto is_pixel = [y](const sote::menu_skin::Image& image, int x, uint32_t color) {
+        if (!image.valid()) return false;
+        const size_t p = (size_t(y) * 960 + x) * 4;
+        for (unsigned channel = 0; channel < 4; ++channel)
+            if (image.rgba[p + channel] != ((color >> (24 - channel * 8)) & 0xff))
+                return false;
+        return true;
     };
-    bool value_ink_changed = false;
-    for (int y = value_top; y < value_bottom; ++y)
-        for (int x = value_left; x < value_right; ++x)
-            value_ink_changed |= cyan(before, index(x, y)) != cyan(after, index(x, y));
-    check(value_ink_changed, "adjust mode changes the value glyphs, not just bar color or footer");
+    check(!browsing.adjusting && editing.adjusting &&
+        is_pixel(before, border_x, 0x6FE9FFFF) && is_pixel(after, border_x, 0x6FE9FFFF),
+        "browsing and editing retain the same cyan outline");
+    check(is_pixel(before, interior_x, 0x000000C0) &&
+        is_pixel(after, interior_x, 0x17383CFF),
+        "the original fill appears only while editing");
 }
 
 } // namespace
@@ -444,7 +447,7 @@ int main(int argc, char** argv) {
     const auto browsing_options = latest_snapshot();
     press(0x8000);
     sote_capture_native_options(memory.bytes.data());
-    check_edit_visual(browsing_options, latest_snapshot(), 190, 140, 660, 835, 126, 156);
+    check_edit_visual(browsing_options, latest_snapshot(), 184, 190, 140);
     press(0x4000);
     sote_capture_native_options(memory.bytes.data());
     check(!latest_snapshot().adjusting && latest_screen_is(sote::menu_skin::Screen::Options),
@@ -466,7 +469,7 @@ int main(int argc, char** argv) {
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().adjusting && latest_snapshot().rows[65].text == "PC",
         "Enter opens adjust mode without changing the selected value");
-    check_edit_visual(browsing_graphics, latest_snapshot(), 168, 280, 612, 836, 272, 294);
+    check_edit_visual(browsing_graphics, latest_snapshot(), 162, 168, 280);
     press(0x4000);
     adjust_right();
     sote_capture_native_options(memory.bytes.data());
@@ -567,7 +570,7 @@ int main(int argc, char** argv) {
     const auto browsing_controls = latest_snapshot();
     press(0x8000);
     sote_capture_native_options(memory.bytes.data());
-    check_edit_visual(browsing_controls, latest_snapshot(), 102, 136, 540, 811, 128, 151);
+    check_edit_visual(browsing_controls, latest_snapshot(), 98, 102, 136);
     press(0x0100);
     press(0x4000);
     sote_capture_native_options(memory.bytes.data());
@@ -593,7 +596,7 @@ int main(int argc, char** argv) {
     const auto browsing_cheats = latest_snapshot();
     press(0x8000);
     sote_capture_native_options(memory.bytes.data());
-    check_edit_visual(browsing_cheats, latest_snapshot(), 102, 136, 540, 811, 128, 151);
+    check_edit_visual(browsing_cheats, latest_snapshot(), 98, 102, 136);
     press(0x4000);
     for (int row=1;row<=9;++row) {
         if (row > 1) press(0x0400);

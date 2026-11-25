@@ -312,12 +312,9 @@ bool selected(const Row& r) {
     return ((r.color >> 24) & 255) >= 0xA0 && ((r.color >> 16) & 255) >= 0xD0 && ((r.color >> 8) & 255) >= 0xA0;
 }
 void setting_highlight(Canvas& c, float x, float y, float w, float h, bool adjusting) {
-    c.rect(x, y, w, h, adjusting ? 0x0B2228FF : 0x17383CFF);
-    c.border(x, y, w, h, cyan);
-}
-std::string setting_value(const Row& row, bool adjusting) {
-    // ASCII arrows work with the original ROM font as well as modern fonts.
-    return adjusting && !row.text.empty() ? "< " + row.text + " >" : row.text;
+    if (adjusting) c.rect(x, y, w, h, 0x17383CFF);
+    // Keep all four edges visible even when the canvas scales below 1:1.
+    c.border(x, y, w, h, cyan, std::max(1.0f, 1.01f / c.scale));
 }
 void return_footer(Canvas& c, const Row& row, const char* role, bool focused) {
     if (focused) {
@@ -394,7 +391,7 @@ void options(Canvas& c, const Snapshot& s) {
         const bool adjusting = focus && s.adjusting;
         if (focus) setting_highlight(c, 184, y - 3, 665, 36, adjusting);
         c.text(s.rows[row].text, "options.label." + std::to_string(row), 200, y, 27, focus ? cyan : teal, 375);
-        c.text(setting_value(s.rows[row + 1], adjusting), "options.value." + std::to_string(row), 660, y, 27, focus ? cyan : teal, 174);
+        c.text(s.rows[row + 1].text, "options.value." + std::to_string(row), 660, y, 27, focus ? cyan : teal, 189);
         ++index;
     }
     c.rect(92, 430, 776, 2, purple);
@@ -435,7 +432,7 @@ void graphics(Canvas& c, const Snapshot& s) {
         const Color row_color = unavailable ? 0x697388FF : focus ? cyan : teal;
         if (focus) setting_highlight(c, 162, 109.0f + i * 32, 686, 30, adjusting);
         c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 112.0f + i * 32, 24, row_color, 420);
-        c.text(setting_value(s.rows[value_row], adjusting), "graphics.value." + std::to_string(i), 612, 112.0f + i * 32, 24, row_color, 224);
+        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 112.0f + i * 32, 24, row_color, 224);
     }
     for (int row : {67, 68}) if (s.rows[row].visible())
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 411, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
@@ -581,7 +578,7 @@ void schemes(Canvas& c, const Snapshot& s) {
             row_selected ? cyan : 0x8F9ADEFF,
             300);
         c.text(
-            setting_value(s.rows[value_row], adjusting),
+            s.rows[value_row].text,
             "schemes.row.value",
             810,
             y,
