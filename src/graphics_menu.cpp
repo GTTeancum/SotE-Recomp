@@ -608,6 +608,12 @@ std::string cheat_row_value(int selection) {
 }
 
 constexpr const char* cheats_header = "Options   Graphics   Controls   < Cheats >";
+constexpr const char* controls_header = "Options   Graphics   < Controls >   Cheats";
+constexpr const char* graphics_header = "Options   < Graphics >   Controls   Cheats";
+
+const char* options_return_label() {
+    return state.title_options ? "Back to Title" : "Back to Pause Menu";
+}
 
 void adjust_selected_setting_locked(int direction) {
     if (state.category == TopCategory::Cheats) {
@@ -697,7 +703,7 @@ void draw_controls_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         52,
-        "~s~cOptions   Graphics   < Controls >   Cheats",
+        std::string{"~s~c"} + controls_header,
         160,
         50,
         normal_color);
@@ -768,7 +774,7 @@ void draw_controls_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         75,
-        "~s~cReturn to previous menu",
+        std::string{"~s~c"} + options_return_label(),
         105,
         220,
         label_color(0));
@@ -796,7 +802,7 @@ void draw_cheats_submenu(uint8_t* rdram) {
         set_row(rdram, text_row, "~s" + cheat_row_label(selection), 60, y, color(selection, false));
         set_row(rdram, text_row + 1, "~s" + cheat_row_value(selection), 176, y, color(selection, true));
     }
-    set_row(rdram, 75, "~s~cReturn to previous menu", 160, 220, color(0, false));
+    set_row(rdram, 75, std::string{"~s~c"} + options_return_label(), 160, 220, color(0, false));
 }
 
 void draw_graphics_submenu(uint8_t* rdram) {
@@ -819,7 +825,7 @@ void draw_graphics_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         52,
-        "~s~cOptions   < Graphics >   Controls   Cheats",
+        std::string{"~s~c"} + graphics_header,
         160,
         50,
         normal_color);
@@ -940,7 +946,7 @@ void draw_graphics_submenu(uint8_t* rdram) {
     set_row(
         rdram,
         64,
-        "~s~cReturn to previous menu",
+        std::string{"~s~c"} + options_return_label(),
         160,
         220,
         label_color(0));
@@ -1458,7 +1464,10 @@ void filter_input(uint16_t* buttons, float* x, float* y) {
                     state.adjusting = true;
                 }
             } else if (state.submenu_selection <= 9) {
-                state.adjusting = true;
+                if (state.submenu_selection == 6) refresh_cutscene_availability_locked(true);
+                state.adjusting =
+                    !(state.submenu_selection == 4 && state.editing.compatibility) &&
+                    !(state.submenu_selection == 6 && !pc_movies_available);
             } else if (state.submenu_selection == 10) {
                 queue_apply_locked();
             } else {
@@ -1579,10 +1588,11 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         const bool focus = selection >= 0 && selection == state.submenu_selection;
         view.rows[row] = {x, y, focus ? selected_color : normal_color, plain_text(text)};
     };
+    const char* return_label = options_return_label();
     if (!state.submenu_active) {
         if (!state.title_options) view.rows[63].text = "Control Bindings";
-        view.rows[52].text = "Return to previous menu";
-        constexpr const char* help[] = {"Return to the previous screen.",
+        view.rows[52].text = return_label;
+        const char* help[] = {return_label,
             "Show or hide on-screen gameplay information.", "Choose the seeker camera behavior.",
             "Adjust sound effects volume.", "Adjust music volume.",
             "Choose the sound channel arrangement.", "Enter / A: open keyboard, mouse and gamepad bindings."};
@@ -1593,7 +1603,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
     view.rows = {};
     if (state.category == TopCategory::Cheats) {
         view.screen = Screen::Schemes;
-        constexpr const char* help[] = {"Return to previous menu.",
+        const char* help[] = {return_label,
             "Restore nonlethal damage. Lethal damage still allows respawn.",
             "Prevent life loss and maintain at least three spare lives.",
             "Keep acquired ammunition from decreasing.", "Keep acquired vehicle missiles from decreasing.",
@@ -1601,19 +1611,19 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
             "Pulse held fire in Modern on-foot controls.", "Choose fire pulses per second. Weapon cooldowns still apply.",
             "Adjust how strongly Modern aim follows nearby targets.", "Adjust the angle in which aim assistance finds targets."};
         view.option_help=help[std::clamp(state.submenu_selection,0,9)];
-        put(52, std::string{state.title_options ? "" : "Main   "} + cheats_header, 160, 50);
+        put(52, cheats_header, 160, 50);
         for (int selection = 1; selection < cheats_item_count(); ++selection) {
             const int text_row = 53 + (selection - 1) * 2;
             const int y = 66 + (selection - 1) * 14;
             put(text_row, cheat_row_label(selection), 60, y, selection);
             put(text_row + 1, cheat_row_value(selection), 176, y, selection);
         }
-        put(75, "Return to previous menu", 160, 220, 0);
+        put(75, return_label, 160, 220, 0);
         return;
     }
     if (state.category == TopCategory::Controls) {
         view.screen = Screen::Schemes;
-        if(state.submenu_selection==0) view.option_help="Return to previous menu.";
+        if(state.submenu_selection==0) view.option_help=return_label;
         else if(state.submenu_selection==1) view.option_help="Choose Modern aiming or Classic PC controls on foot.";
         else if(state.submenu_selection==2) view.option_help="Choose Modern triggers or Classic controls for the speeder bike.";
         else {
@@ -1633,8 +1643,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
                 "Change keyboard, mouse-button and gamepad bindings for every gameplay context." :
                 "Save control schemes and tuning settings.";
         }
-        put(52, state.title_options ? "Options   Graphics   < Controls >   Cheats" :
-            "Main   Options   Graphics   < Controls >   Cheats", 160, 50);
+        put(52, controls_header, 160, 50);
         put(53, "On Foot", 52, 66, 1);
         put(54, controls_menu::current_scheme(controls_menu::SchemeSlot::OnFoot) == controls_menu::ControlScheme::Modern ? "Modern" : "Classic", 166, 66, 1);
         put(55, "Speeder Bike", 52, 78, 2);
@@ -1649,12 +1658,12 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
             put(text_row, row.label, 52, y, selection);
             put(text_row + 1, std::string{row.slider} + " " + row.value, 166, y, selection);
         }
-        put(75, "Return to previous menu", 105, 220, 0);
+        put(75, return_label, 105, 220, 0);
         put(76, "Apply", 220, 220, 3 + tuning_count);
         put(77, "Edit Bindings", 270, 220, 4 + tuning_count);
     } else {
         view.screen = Screen::Graphics;
-        constexpr const char* help[] = {"Return to previous menu without applying pending changes.",
+        constexpr const char* help[] = {"Leave without applying pending graphics changes.",
             "Choose the game window's output resolution.", "Higher render scales sharpen 3D graphics and use more GPU power.",
             "Choose original 4:3 proportions or a widescreen view.", "Smooth jagged edges. Higher settings use more GPU power.",
             "Choose a bordered window or borderless display.", "Choose original N64 scenes or PC video cutscenes.",
@@ -1668,8 +1677,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
             view.option_help="PC cutscenes require SAN files in Sdata beside the executable.";
         if(state.submenu_selection==4 && state.editing.compatibility)
             view.option_help="Compatibility Mode disables antialiasing. Turn it off to restore your setting.";
-        put(52, state.title_options ? "Options   < Graphics >   Controls   Cheats" :
-            "Main   Options   < Graphics >   Controls   Cheats", 160, 50);
+        put(52, graphics_header, 160, 50);
         put(53, "Resolution", 72, 70, 1); put(54, output_resolution_name(state.editing), 160, 70, 1);
         put(55, "Render Scale", 72, 86, 2); put(56, resolution_name(state.editing.resolution), 160, 86, 2);
         put(57, "Aspect Ratio", 72, 102, 3); put(58, state.editing.widescreen ? "Widescreen" : "Original 4:3", 160, 102, 3);
@@ -1681,7 +1689,7 @@ void decorate_native_snapshot(sote::menu_skin::Snapshot& view) {
         put(71,"Compatibility Mode",42,181,8); put(72,state.editing.compatibility ? "On" : "Off",200,181,8);
         put(73,"HD Textures",72,194,9); put(74,state.editing.hd_textures ? "On" : "Off",200,194,9);
         put(67, "Apply", 110, 208, 10); put(68, "Reset", 210, 208, 11);
-        put(64, "Return to previous menu", 160, 220, 0);
+        put(64, return_label, 160, 220, 0);
     }
 }
 
@@ -1725,6 +1733,11 @@ void update_guest_menu(uint8_t* rdram) {
                 write_half(rdram, 0x800DD754, 0);
                 write_half(rdram, 0x800DD758, 0);
                 write_half(rdram, 0x800DD75A, 0);
+                // Match the retail name-entry teardown (also used on Xbox).
+                // The keyboard renderer outlives this input mode unless both
+                // its state and its text pointer are cleared.
+                MEM_W(0, guest_address(0x800DD724)) = 0;
+                MEM_W(0, guest_address(0x800DD768)) = 0;
                 // Clear uses footer index 3 as its confirmation state.
                 if (read_half(rdram, 0x800DD750) == 3)
                     write_half(rdram, 0x800DD750, 2);

@@ -70,6 +70,13 @@ struct Memory {
         half(address + 2, value);
     }
 
+    uint32_t read_word(uint32_t address) const {
+        uint32_t result = 0;
+        for (uint32_t offset = 0; offset < 4; ++offset)
+            result = (result << 8) | bytes[((address + offset) & 0x7fffffU) ^ 3U];
+        return result;
+    }
+
     uint32_t text(const std::string& value) {
         const uint32_t address = strings;
         for (char ch : value) {
@@ -179,6 +186,26 @@ const sote::menu_skin::Snapshot& latest_snapshot() {
 bool latest_screen_is(sote::menu_skin::Screen screen) {
     const auto latest = sote::menu_skin::latest();
     return latest && latest->screen == screen;
+}
+
+void check_edit_visual(const sote::menu_skin::Snapshot& browsing,
+    const sote::menu_skin::Snapshot& editing, int bar_x, int bar_y,
+    int value_left, int value_right, int value_top, int value_bottom) {
+    const auto before = sote::menu_skin::render(browsing, 960, 540);
+    const auto after = sote::menu_skin::render(editing, 960, 540);
+    const auto index = [](int x, int y) { return (size_t(y) * 960 + x) * 4; };
+    const size_t bar = index(bar_x, bar_y);
+    check(before.valid() && after.valid() && after.rgba[bar] < before.rgba[bar],
+        "selected setting bar darkens in adjust mode");
+    if (!before.valid() || !after.valid()) return;
+    const auto cyan = [](const sote::menu_skin::Image& image, size_t p) {
+        return image.rgba[p + 1] >= 120 && image.rgba[p + 2] >= 160;
+    };
+    bool value_ink_changed = false;
+    for (int y = value_top; y < value_bottom; ++y)
+        for (int x = value_left; x < value_right; ++x)
+            value_ink_changed |= cyan(before, index(x, y)) != cyan(after, index(x, y));
+    check(value_ink_changed, "adjust mode changes the value glyphs, not just bar color or footer");
 }
 
 } // namespace
@@ -412,6 +439,16 @@ int main(int argc, char** argv) {
         check(view.option_help=="Adjust sound effects volume.","cached Options describes the selected row");
     }
 
+    memory.half(0x800dd5e0, 1);
+    sote_capture_native_options(memory.bytes.data());
+    const auto browsing_options = latest_snapshot();
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check_edit_visual(browsing_options, latest_snapshot(), 190, 140, 660, 835, 126, 156);
+    press(0x4000);
+    sote_capture_native_options(memory.bytes.data());
+    check(!latest_snapshot().adjusting && latest_screen_is(sote::menu_skin::Screen::Options),
+        "Back leaves adjust mode without leaving Options");
     press(0x0100);
     sote_capture_native_options(memory.bytes.data());
     check(latest_screen_is(sote::menu_skin::Screen::Graphics),
@@ -424,10 +461,12 @@ int main(int argc, char** argv) {
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[65].text == "PC",
         "Graphics starts with PC FMV cutscenes");
+    const auto browsing_graphics = latest_snapshot();
     press(0x8000);
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().adjusting && latest_snapshot().rows[65].text == "PC",
         "Enter opens adjust mode without changing the selected value");
+    check_edit_visual(browsing_graphics, latest_snapshot(), 168, 280, 612, 836, 272, 294);
     press(0x4000);
     adjust_right();
     sote_capture_native_options(memory.bytes.data());
@@ -457,9 +496,10 @@ int main(int argc, char** argv) {
         "compatibility footer explains restart");
     check(!sote::graphics_menu::compatibility_enabled(), "compatibility waits for Apply");
     for(int i=0;i<4;++i) press(0x0800);
-    adjust_right(); // Attempt to edit AA while compatibility preview is on.
+    press(0x8000); // Attempt to enter AA edit mode while compatibility preview is on.
     sote_capture_native_options(memory.bytes.data());
-    check(latest_snapshot().rows[60].text == "OFF", "AA is locked while compatibility is on");
+    check(latest_snapshot().rows[60].text == "OFF" && !latest_snapshot().adjusting,
+        "AA cannot enter edit mode while compatibility is on");
     for(int i=0;i<6;++i) press(0x0400);
     press(0x8000);
     sote::graphics_menu::Settings requested;
@@ -524,7 +564,12 @@ int main(int argc, char** argv) {
         latest_snapshot().rows[52].text.find("< Controls >") != std::string::npos,
         "Controls page title is selected");
 
-    adjust_right();
+    const auto browsing_controls = latest_snapshot();
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check_edit_visual(browsing_controls, latest_snapshot(), 102, 136, 540, 811, 128, 151);
+    press(0x0100);
+    press(0x4000);
     sote_capture_native_options(memory.bytes.data());
     check(
         latest_snapshot().rows[54].text == "Modern",
@@ -545,6 +590,11 @@ int main(int argc, char** argv) {
     sote_capture_native_options(memory.bytes.data());
     check(latest_snapshot().rows[52].text.find("< Cheats >") != std::string::npos,
         "Controls advances to Cheats");
+    const auto browsing_cheats = latest_snapshot();
+    press(0x8000);
+    sote_capture_native_options(memory.bytes.data());
+    check_edit_visual(browsing_cheats, latest_snapshot(), 102, 136, 540, 811, 128, 151);
+    press(0x4000);
     for (int row=1;row<=9;++row) {
         if (row > 1) press(0x0400);
         adjust_right();
@@ -599,12 +649,14 @@ int main(int argc, char** argv) {
         sote_capture_native_options(title.bytes.data());
         press(0);
         check(latest_snapshot().title_options, "title Options retains its origin");
+        check(latest_snapshot().rows[52].text == "Back to Title",
+            "title Options names its actual return destination");
         press(0x0100);
         sote_capture_native_options(title.bytes.data());
         check(latest_screen_is(sote::menu_skin::Screen::Graphics), "Right advances title Options to Graphics");
-        check(latest_snapshot().rows[64].text == "Return to previous menu" &&
+        check(latest_snapshot().rows[64].text == "Back to Title" &&
             latest_snapshot().option_help.find("output resolution") != std::string::npos,
-            "Graphics starts on Resolution and uses the common footer");
+            "title Graphics starts on Resolution and names the title return");
         press(0x0200);
         sote_capture_native_options(title.bytes.data());
         check(latest_screen_is(sote::menu_skin::Screen::Options), "Left returns to title game settings");
@@ -926,11 +978,12 @@ int main(int argc, char** argv) {
         sote_capture_native_options(absent.bytes.data());
         press(0x0010);sote_capture_native_options(absent.bytes.data());
         for(int i=0;i<5;++i)press(0x0400);
-        adjust_right();
+        press(0x8000);
         sote_capture_native_options(absent.bytes.data());
-        check(latest_snapshot().rows[65].text=="N64" && !latest_snapshot().pc_cutscenes_available,
-            "missing files lock N64 against directional and confirm input");
-        press(0x0400);press(0x0400);press(0x0400);press(0x8000);
+        check(latest_snapshot().rows[65].text=="N64" && !latest_snapshot().pc_cutscenes_available &&
+            !latest_snapshot().adjusting, "missing files prevent Cutscenes from entering edit mode");
+        for (int i=0;i<4;++i) press(0x0400);
+        press(0x8000);
         check(!sote::graphics_menu::pc_cutscenes_enabled(),"Apply cannot bypass missing-files gate");
         press(0x0400);press(0x8000);sote_capture_native_options(absent.bytes.data());
         check(latest_snapshot().rows[65].text=="N64", "Reset cannot display unavailable PC mode");
@@ -949,8 +1002,27 @@ int main(int argc, char** argv) {
         options.native_options();
         sote::graphics_menu::observe_other_screen(true);
         sote_capture_native_options(options.bytes.data());
-        check(latest_snapshot().rows[52].text == "Return to previous menu",
-            "pause Options uses the common return label");
+        check(latest_snapshot().rows[52].text == "Back to Pause Menu",
+            "pause Options names its actual return destination");
+        const auto check_page = [&](const char* tabs, int return_row) {
+            sote_capture_native_options(options.bytes.data());
+            check(latest_snapshot().rows[52].text == tabs &&
+                latest_snapshot().rows[return_row].text == "Back to Pause Menu",
+                "paused settings page lists only selectable tabs and names the pause return");
+        };
+        press(0x0010);
+        check_page("Options   < Graphics >   Controls   Cheats", 64);
+        press(0x0010);
+        check_page("Options   Graphics   < Controls >   Cheats", 75);
+        press(0x0010);
+        check_page("Options   Graphics   Controls   < Cheats >", 75);
+        press(0x0010);
+        sote_capture_native_options(options.bytes.data());
+        check(latest_screen_is(sote::menu_skin::Screen::Options),
+            "right shoulder wraps from Cheats to Options, not the pause menu");
+        press(0x0020);
+        check_page("Options   Graphics   Controls   < Cheats >", 75);
+        press(0x0010);
         options.half(0x800dd5e0, 3);
         sote_capture_native_options(options.bytes.data());
         press(0x4000);
@@ -1063,6 +1135,19 @@ int main(int argc, char** argv) {
         sote_update_graphics_menu(memory.bytes.data());
         check(memory.bytes[(0x000dd751U)^3U] == 1,
             "Right reaches Rename without a separate shoulder-button action");
+        memory.word(0x800dd758, 1);
+        memory.word(0x800dd724, 1);
+        memory.word(0x800dd768, memory.text("Uncommitted name"));
+        sote_update_graphics_menu(memory.bytes.data());
+        check(memory.read_word(0x800dd724) != 0 && memory.read_word(0x800dd768) != 0,
+            "Rename keeps the keyboard state and text while the dialog is open");
+        press(0x4000);
+        sote_update_graphics_menu(memory.bytes.data());
+        check(memory.read_word(0x800dd758) == 0 &&
+            memory.bytes[(0x000dd751U)^3U] == 1,
+            "Back cancels Rename and keeps the picker on Rename");
+        check(memory.read_word(0x800dd724) == 0 && memory.read_word(0x800dd768) == 0,
+            "Back tears down the Rename keyboard state and text pointer");
         press(0x0100);
         sote_update_graphics_menu(memory.bytes.data());
         check(memory.bytes[(0x000dd751U)^3U] == 2, "Right advances to Clear");

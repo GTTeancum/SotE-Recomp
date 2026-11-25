@@ -311,6 +311,14 @@ public:
 bool selected(const Row& r) {
     return ((r.color >> 24) & 255) >= 0xA0 && ((r.color >> 16) & 255) >= 0xD0 && ((r.color >> 8) & 255) >= 0xA0;
 }
+void setting_highlight(Canvas& c, float x, float y, float w, float h, bool adjusting) {
+    c.rect(x, y, w, h, adjusting ? 0x0B2228FF : 0x17383CFF);
+    c.border(x, y, w, h, cyan);
+}
+std::string setting_value(const Row& row, bool adjusting) {
+    // ASCII arrows work with the original ROM font as well as modern fonts.
+    return adjusting && !row.text.empty() ? "< " + row.text + " >" : row.text;
+}
 void return_footer(Canvas& c, const Row& row, const char* role, bool focused) {
     if (focused) {
         c.rect(254, 507, 452, 31, 0x17383CFF);
@@ -374,8 +382,7 @@ void menu_background(Canvas& c, const Snapshot& s) {
 void options(Canvas& c, const Snapshot& s) {
     menu_background(c,s);
     c.heading("Options", "options.heading");
-    c.text(s.title_options ? "< Options >   Graphics   Controls   Cheats" :
-        "Main   < Options >   Graphics   Controls   Cheats", "options.tabs",
+    c.text("< Options >   Graphics   Controls   Cheats", "options.tabs",
         480, 84, 18, 0x697388FF, 820, 1);
     int index = 0;
     for (int row = 53; row <= 67; row += 2) {
@@ -384,9 +391,10 @@ void options(Canvas& c, const Snapshot& s) {
         if (y > 447) break;
         const bool focus = s.focused_setting >= 0 ?
             s.focused_setting == (row - 51) / 2 : selected(s.rows[row]);
-        if (focus) { c.rect(184, y - 3, 665, 36, 0x17383CFF); c.border(184, y - 3, 665, 36, cyan); }
+        const bool adjusting = focus && s.adjusting;
+        if (focus) setting_highlight(c, 184, y - 3, 665, 36, adjusting);
         c.text(s.rows[row].text, "options.label." + std::to_string(row), 200, y, 27, focus ? cyan : teal, 375);
-        c.text(s.rows[row + 1].text, "options.value." + std::to_string(row), 660, y, 27, focus ? cyan : teal, 201);
+        c.text(setting_value(s.rows[row + 1], adjusting), "options.value." + std::to_string(row), 660, y, 27, focus ? cyan : teal, 174);
         ++index;
     }
     c.rect(92, 430, 776, 2, purple);
@@ -422,10 +430,12 @@ void graphics(Canvas& c, const Snapshot& s) {
         const int row = label_rows[i];
         const bool focus = selected(s.rows[row]);
         const int value_row = i == 5 ? 65 : row + 1;
-        const Color row_color = ((i == 5 && !s.pc_cutscenes_available) || (i == 3 && s.compatibility)) ? 0x697388FF : focus ? cyan : teal;
-        if (focus) { c.rect(162, 109.0f + i * 32, 686, 30, 0x17383CFF); c.border(162, 109.0f + i * 32, 686, 30, cyan); }
+        const bool unavailable = (i == 5 && !s.pc_cutscenes_available) || (i == 3 && s.compatibility);
+        const bool adjusting = focus && s.adjusting && !unavailable;
+        const Color row_color = unavailable ? 0x697388FF : focus ? cyan : teal;
+        if (focus) setting_highlight(c, 162, 109.0f + i * 32, 686, 30, adjusting);
         c.text(s.rows[row].text, "graphics.label." + std::to_string(i), 174, 112.0f + i * 32, 24, row_color, 420);
-        c.text(s.rows[value_row].text, "graphics.value." + std::to_string(i), 612, 112.0f + i * 32, 24, row_color, 224);
+        c.text(setting_value(s.rows[value_row], adjusting), "graphics.value." + std::to_string(i), 612, 112.0f + i * 32, 24, row_color, 224);
     }
     for (int row : {67, 68}) if (s.rows[row].visible())
         c.text(s.rows[row].text, "graphics.action." + std::to_string(row), float(s.rows[row].x * 3), 411, 25, selected(s.rows[row]) ? cyan : teal, 205, 1);
@@ -560,7 +570,8 @@ void schemes(Canvas& c, const Snapshot& s) {
         const int y = 128 + index * 30;
         const bool row_selected = selected(s.rows[label_row]) ||
             selected(s.rows[value_row]);
-        if (row_selected) { c.rect(98, y - 3, 748, 28, 0x17383CFF); c.border(98, y - 3, 748, 28, cyan); }
+        const bool adjusting = row_selected && s.adjusting;
+        if (row_selected) setting_highlight(c, 98, y - 3, 748, 28, adjusting);
         c.text(
             s.rows[label_row].text,
             "schemes.row.label",
@@ -570,7 +581,7 @@ void schemes(Canvas& c, const Snapshot& s) {
             row_selected ? cyan : 0x8F9ADEFF,
             300);
         c.text(
-            s.rows[value_row].text,
+            setting_value(s.rows[value_row], adjusting),
             "schemes.row.value",
             810,
             y,
