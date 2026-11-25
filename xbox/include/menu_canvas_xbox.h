@@ -9,7 +9,7 @@ typedef struct {
     enum xb_menu_page page;
     int pause_background, title_focus;
     const char *title, *tabs, *help, *navigation, *return_label;
-    int return_selected;
+    int return_selected, adjusting;
     xb_menu_row rows[16];
     unsigned row_count;
     xb_menu_row actions[2];

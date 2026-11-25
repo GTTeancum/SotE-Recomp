@@ -81,10 +81,6 @@ static int pc_options_input(uint8_t* rdram,uint16_t* buttons,uint16_t pressed) {
  int count=pc_tab==0?8:pc_tab==1?xb_pc_control_count()+2:xb_cheat_count();
  if(pc_selection>count)pc_selection=1;
  if(!pc_adjusting && (pressed&0x0300)) {
-  if(MEM_H(0,(int32_t)0x8013CE0E)!=2&&((pc_tab==0&&(pressed&0x0200))||(pc_tab==2&&(pressed&0x0100)))) {
-   if(!xb_controls_save()){controls_save_error=1;*buttons=0;return 1;}
-   controls_open=0;pc_tab=0;pc_selection=1;*buttons=0x1000;back_release=1;restore_pause_options=1;return 1;
-  }
   pc_tab=(pc_tab+((pressed&0x0100)?1:2))%3;pc_selection=1;*buttons=0;return 1;
  }
  if(!pc_adjusting) {
@@ -99,7 +95,7 @@ static int pc_options_input(uint8_t* rdram,uint16_t* buttons,uint16_t pressed) {
  if(pc_tab==0) {
   if(pc_selection==7 || pc_selection==8) {
    /* Host-only rows: never pass their indices or edit inputs into retail Options. */
-   if(pressed&0x8000)pc_adjusting=!pc_adjusting;
+   if((pressed&0x8000) && (pc_selection!=7 || xb_pc_movies_available()))pc_adjusting=!pc_adjusting;
    if(pc_adjusting&&(pressed&0x0300)){if(pc_selection==7)xb_pc_movies_toggle();else xb_hd_textures_toggle();}
    *buttons=0;return 1;
   }
@@ -200,9 +196,18 @@ void xb_menu_input(uint8_t* rdram,uint16_t* buttons,int x,int y) {
         return;
     }
     if(mode!=2 && mode!=3)return;
+    int footer=MEM_H(0,(int32_t)0x800DD750);
+    int dialog=MEM_W(0,(int32_t)0x800DD758)!=0 || MEM_H(0,(int32_t)0x800DD754)!=0 || footer==3;
+    /* The picker displays Rename (1) and Clear (2). Route horizontal pad
+       presses to those actions only while the native picker owns input. */
+    if(mode==3 && !dialog && (*buttons&0x0300) && !(pressed&0x4000)) {
+        unsigned direction=pressed&0x0300;
+        if(direction==0x0100 || direction==0x0200)
+            MEM_H(0,(int32_t)0x800DD750)=footer<0?(direction==0x0100?1:2):(footer==1?2:1);
+        *buttons&=~0x0300;
+    }
     if(pressed&0x4000) {
         back_release=1;
-        int dialog=MEM_W(0,(int32_t)0x800DD758)!=0 || MEM_H(0,(int32_t)0x800DD754)!=0 || MEM_H(0,(int32_t)0x800DD750)==3;
         if(mode==2)requested_mode=3;
         else if(dialog)cancel_dialog=1;
         else {requested_mode=0;title_selection=0;}
@@ -375,7 +380,7 @@ void xb_menu_draw(uint8_t* rdram) {
  xb_menu_snapshot s={0};char labels[16][96]={{0}},values[16][96]={{0}},preset[96];
  if(story==2&&mode==0){s.page=XB_MENU_TITLE;s.title_focus=title_selection;xb_menu_canvas_render(rdram,&s);return;}
  if(native_options(rdram)) {
-  s.pause_background=story!=2;s.return_label="Return to previous menu";s.return_selected=pc_selection==0;
+  s.pause_background=story!=2;s.adjusting=pc_adjusting;s.return_label=story==2?"Back to Title":"Back to Pause Menu";s.return_selected=pc_selection==0;
   s.navigation=pc_adjusting?"D-Pad Left/Right: adjust   A/B: done":"D-Pad or LT/RT: page   Up/Down: select   A: adjust   B: back";
   s.help=controls_save_error?"Save failed. A/B retries; settings remain open.":"";
   if(pc_bindings) {
@@ -383,8 +388,8 @@ void xb_menu_draw(uint8_t* rdram) {
    s.navigation=binding_capture?"Press a button; Start cancels":"Up/Down: action   A: change   X: clear   Y: reset   B: save";s.help=binding_status;
    if(binding_capture){s.modal_title="Change Controller Binding";s.modal_detail="Press the controller button to assign. Start remains reserved for pause and cancels this change.";s.modal_hint="Press a button to assign; Start to cancel.";}
   } else if(pc_tab==0) {
-   s.page=XB_MENU_OPTIONS;s.title="Options";s.tabs=story==2?"< Options >   Controls   Cheats":"Main   < Options >   Controls   Cheats";
-   const char* help[]={"Return to the previous screen.","Show or hide on-screen gameplay information.","Choose the seeker camera behavior.","Adjust sound effects volume.","Adjust music volume.","Choose the sound channel arrangement.","Inspect controller bindings and choose a native preset."};
+   s.page=XB_MENU_OPTIONS;s.title="Options";s.tabs="< Options >   Controls   Cheats";
+   const char* help[]={s.return_label,"Show or hide on-screen gameplay information.","Choose the seeker camera behavior.","Adjust sound effects volume.","Adjust music volume.","Choose the sound channel arrangement.","Inspect controller bindings and choose a native preset."};
    s.help=help[pc_selection>=0&&pc_selection<=6?pc_selection:0];
    for(int i=1;i<=6;i++) {
     guest_text(rdram,MEM_W(i*4,(int32_t)0x800DD5E8),labels[i-1],96);profile_option(rdram,i,values[i-1],96);
@@ -404,7 +409,7 @@ void xb_menu_draw(uint8_t* rdram) {
    s.row_count=8;
   } else {
    int n=pc_tab==1?xb_pc_control_count():xb_cheat_count();s.page=pc_tab==1?XB_MENU_SCHEMES:XB_MENU_CHEATS;s.title=pc_tab==1?"Controls":"Cheats";
-   s.tabs=pc_tab==1?(story==2?"Options   < Controls >   Cheats":"Main   Options   < Controls >   Cheats"):(story==2?"Options   Controls   < Cheats >":"Main   Options   Controls   < Cheats >");
+   s.tabs=pc_tab==1?"Options   < Controls >   Cheats":"Options   Controls   < Cheats >";
    for(int i=0;i<n&&i<16;i++) {
     snprintf(values[i],96,"%s",pc_tab==1?xb_pc_control_value(i):xb_cheat_value(i));
     s.rows[i]=(xb_menu_row){pc_tab==1?xb_pc_control_label(i):xb_cheat_label(i),values[i],pc_selection==i+1};

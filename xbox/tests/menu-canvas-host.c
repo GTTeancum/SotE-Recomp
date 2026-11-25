@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 #include "../src/menu_canvas_xbox.c"
+unsigned xb_rdram_committed_limit=XB_RDRAM_RESERVED;
+void xb_rdram_bounds_fault(uint32_t kind,uint64_t offset,uint32_t bytes){
+ (void)kind;(void)offset;(void)bytes;abort();
+}
 static unsigned submits;
 unsigned xb_display_height=480;
 void xb_gpu_canvas(const uint32_t *p,unsigned w,unsigned h,uint32_t background,unsigned top,unsigned full_height){
@@ -34,5 +38,15 @@ int main(void){
  assert(submits==8);assert(memcmp(copy,r,0x800000)==0);
  xb_display_height=720;assert(xb_menu_canvas_render(r,&s));assert(submits==11);
  wh(r,base+4,0);assert(!xb_menu_canvas_render(r,&s));assert(submits==11);
+ /* A pixel between label and value distinguishes browsing from editing. */
+ wh(r,base+4,13);xb_display_height=480;s.pause_background=1;
+ for(int page=XB_MENU_OPTIONS;page<=XB_MENU_CHEATS;page++){
+    s.page=page;s.row_count=1;s.rows[0].selected=1;s.adjusting=0;
+    assert(xb_menu_canvas_render(r,&s));
+    int y=iround(offset_y+135*scale_y),x=iround(offset_x+515*scale);
+    unsigned browse=pixels[y*canvas_width+x];
+    s.adjusting=1;assert(xb_menu_canvas_render(r,&s));
+    assert(browse!=0xff17383c && pixels[y*canvas_width+x]==0xff17383c);
+ }
  free(copy);free(r);puts("canvas pages/bounds/invalid-atlas/no-guest-write tests passed");
 }

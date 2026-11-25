@@ -120,7 +120,7 @@ static void options(const xb_menu_snapshot*s){
     heading(s->title?s->title:"Options");text(s->tabs,480,84,18,0x697388FF,820,1,0);
     for(unsigned i=0;i<s->row_count&&i<8;i++){const xb_menu_row*r=&s->rows[i];float y=s->row_count==8 ? 122+i*38 : 126+i*40;
         if(y>447)break;
-        if(r->selected){rect(184,y-3,665,36,0x17383CFF);border(184,y-3,665,36,cyan,1);}
+        if(r->selected){if(s->adjusting)rect(184,y-3,665,36,0x17383CFF);border(184,y-3,665,36,cyan,1);}
         text(r->label,200,y,27,r->selected?cyan:teal,375,0,0);text(r->value,660,y,27,r->selected?cyan:teal,201,0,0);}
     rect(92,430,776,2,purple);text(s->help,480,450,16,0x98B6D0FF,776,1,0);
     text(nav(s),480,480,14,0xB1BDE3FF,850,1,0);footer(s);
@@ -129,7 +129,7 @@ static void schemes(const xb_menu_snapshot*s){
     heading(s->title?s->title:(s->page==XB_MENU_CHEATS?"Cheats":"Controls"));
     text(s->tabs,480,84,18,0x697388FF,820,1,0);rect(92,104,776,1,purple);
     for(unsigned i=0;i<s->row_count&&i<11;i++){const xb_menu_row*r=&s->rows[i];float y=128+i*30;
-        if(r->selected){rect(98,y-3,748,28,0x17383CFF);border(98,y-3,748,28,cyan,1);}
+        if(r->selected){if(s->adjusting)rect(98,y-3,748,28,0x17383CFF);border(98,y-3,748,28,cyan,1);}
         text(r->label,106,y,19,r->selected?cyan:0x8F9ADEFF,300,0,0);text(r->value,810,y,18,r->selected?cyan:teal,520,2,0);}
     rect(92,445,776,2,purple);
     for(unsigned i=0;i<2;i++){const xb_menu_row*r=&s->actions[i];float x=i?625:335;
