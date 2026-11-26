@@ -6,6 +6,27 @@ installing extracted artwork or diagnostic replacements.
 
 See [the user guide](TEXTURE_PACKS_USER.md) for installation and portable commands.
 
+## 0.9.8 released pack coverage
+
+The downloadable pack contains manifest-bound replacements for Imperial Sewers
+(55 PNGs) and the main Xizor's Palace group (43 PNGs). Sample **pixel dimensions**
+from the download:
+
+| Level | Sample dimensions |
+| --- | --- |
+| Hoth | 256 × 256 |
+| Echo Base | 384 × 384 |
+| Imperial Sewers | 128 × 128; 256 × 256 |
+| Xizor's Palace | 128 × 256; 384 × 384 |
+
+Those sizes show the late levels do contain higher-resolution artwork, with
+dimensions overlapping the early levels. They do not establish the upscale
+factor without matching each file to its original texture. PNG byte size also
+depends on compression. Neither package inspection nor a manifest match proves
+that a particular wall uses its replacement in game. If a surface looks stock,
+capture it in that level and compare the runtime-bound texture with the shipped
+manifest before changing the pack.
+
 ## Authoring from the ROM
 
 ```powershell

@@ -8,6 +8,11 @@ Updated November 24, 2026. Continue in GTTeancum/SotE-Recomp on `main`. The late
 2. Check the first-person blaster while walking, standing still on the moving train, and firing. Native 720p frames on retail hardware showed the original blaster in Escape from Echo Base and Ord Mantell. The ammo HUD overlaps the lower model in both. Bob and recoil still need visual review. The reported bolt offset is a separate TODO.
 3. Reproduce issue #31 at the breaking-ice crossing. Earlier open-ground tests missed it. For #26, the latest maintainer comment requests a playthrough of the PC cutscene timing before closure. For #30, only the flying camera is in scope. Review #33 through #36 for the crash and menu reports.
 
+## November 25 desktop follow-up
+
+- [Issue #33](https://github.com/GTTeancum/SotE-Recomp/issues/33) is a Windows 0.9.8 read access violation after about 36 minutes. Mapping the shipped executable's stack places the fault in the emulated audio scheduler, at the saved-return-address read in `func_80011F04`. This localizes the fault, not what made the guest stack unreadable. The report does not establish whether the player was quitting, changing scenes, or actively playing. Newer source changes audio-thread shutdown ordering, but that is not a verified fix. Keep exit, level/menu transitions, and active play distinct when reproducing.
+- [Pack audit](docs/TEXTURE_PACKS.md#098-released-pack-coverage) records what was found in the 0.9.8 package for Imperial Sewers and Xizor's Palace. Package coverage is not proof that every surface uses a replacement at runtime.
+
 ## Build and deployment
 
 The existing checkout is `C:\Programming\GitHub\!!ARCHIVED\N64Recomp`. Use this checkout to retain the private pack and hardware proofs. With a fresh checkout, initialize the pinned submodules recursively and follow the [build instructions](README.md) with your own supported USA revision 1.2 ROM. From the repository root run:
